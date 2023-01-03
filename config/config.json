@@ -1,0 +1,40 @@
+{
+    "endpointToModule": 
+    [
+        {
+            "ip": "1.2.3.4",
+            "port": 80,
+            "modules": [
+                {
+                    "moduleName": "autonomy",
+                    "moduleId": 5
+                },
+                {
+                    "moduleName": "action",
+                    "moduleId": 4
+                }
+            ]
+        }
+    ],
+    "moduleToEndpoint": [
+        {
+            "moduleName": "autonomy",
+            "moduleId": 10,
+            "endpointIp": "1.2.3.4",
+            "endpointPort": 80
+        },
+        {
+            "moduleName": "action",
+            "moduleId": 4,
+            "endpointIp": "1.2.3.4",
+            "endpointPort": 80
+        },
+        {
+            "moduleName": "moduleX",
+            "moduleId": 7,
+            "endpointIp": "9.9.9.9",
+            "endpointPort": 80
+        }
+
+    ]
+}
