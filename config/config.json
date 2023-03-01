@@ -1,40 +1,32 @@
 {
-    "endpointToModule": 
+    "carId": "CAR1",
+    "vehicleName": "BringAutoCAR1",
+    "company": "BringAuto",
+    "endpoints":
     [
         {
-            "ip": "1.2.3.4",
-            "port": 80,
+            "ip": "127.0.0.1",
+            "port": 9999,
             "modules": [
                 {
-                    "moduleName": "autonomy",
-                    "moduleId": 5
+                    "moduleName": "mission",
+                    "moduleId": 1
                 },
                 {
-                    "moduleName": "action",
-                    "moduleId": 4
+                    "moduleName": "car accessory",
+                    "moduleId": 2
+                }
+            ]
+        },
+        {
+            "ip": "10.10.10.10",
+            "port": 1234,
+            "modules": [
+                {
+                    "moduleName": "module10",
+                    "moduleId": 10
                 }
             ]
         }
-    ],
-    "moduleToEndpoint": [
-        {
-            "moduleName": "autonomy",
-            "moduleId": 10,
-            "endpointIp": "1.2.3.4",
-            "endpointPort": 80
-        },
-        {
-            "moduleName": "action",
-            "moduleId": 4,
-            "endpointIp": "1.2.3.4",
-            "endpointPort": 80
-        },
-        {
-            "moduleName": "moduleX",
-            "moduleId": 7,
-            "endpointIp": "9.9.9.9",
-            "endpointPort": 80
-        }
-
     ]
 }
