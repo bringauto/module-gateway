@@ -1,3 +1,5 @@
 rich>=13
 protobuf>=4.21
-pydantic>=1.10
+paho-mqtt>=1.6.1
+asyncio_mqtt>=0.16.1
+pydantic>=1.10.4
