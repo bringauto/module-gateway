@@ -1,5 +1,3 @@
-__all__ = (
-    "ExternalClient",
-)
+__all__ = ("ExternalClient",)
 
-from .ExternalClient import ExternalClient
+from .external_client import ExternalClient
