@@ -1,6 +1,6 @@
 import json
 
-from .module_lib import ModuleBase, ModuleManagerBase, exceptions
+from .module_lib import ModuleBase, ModuleManagerBase
 
 
 class CarAccessoryModuleManager(ModuleManagerBase):

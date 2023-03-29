@@ -3,7 +3,7 @@ from enum import Enum
 from pydantic import BaseModel, ValidationError
 from pydantic.dataclasses import dataclass
 
-from .module_lib import ModuleBase, ModuleManagerBase, exceptions
+from .module_lib import ModuleBase, ModuleManagerBase
 
 
 @dataclass
