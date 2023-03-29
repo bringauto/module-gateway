@@ -68,7 +68,7 @@ class Server:
         d_module = device.module
         d_type = device.deviceType
         d_role = device.deviceRole
-        priority = connect.priority
+        priority = device.priority
         self.connected_devices[d_module][d_type][d_role].priority = priority
         queue = self.connected_devices[d_module][d_type][d_role].queue
         new_device = True
@@ -134,7 +134,7 @@ class Server:
         module = device.module
         d_type = device.deviceType
         d_role = device.deviceRole
-        priority = connect.priority
+        priority = device.priority
         connected_device_priority = self.connected_devices[module][d_type][d_role].priority
         if connected_device_priority == priority:
             return ResponseType.ALREADY_CONNECTED
