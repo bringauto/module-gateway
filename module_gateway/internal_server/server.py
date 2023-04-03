@@ -108,7 +108,7 @@ class Server:
             return None
         while len(data) < Server.MESSAGE_SIZE:
             data += (await reader.read(Server.MESSAGE_SIZE - len(data)))
-        actual_message_size = int.from_bytes(data, 'big')
+        actual_message_size = int.from_bytes(data, 'little')
         data = (await reader.read(actual_message_size))
         while len(data) < actual_message_size:
             data += (await reader.read(actual_message_size - len(data)))
@@ -147,7 +147,7 @@ class Server:
         return ResponseType.OK
 
     async def _send_message(self, writer: asyncio.streams.StreamWriter, message) -> None:
-        writer.write(len(message).to_bytes(Server.MESSAGE_SIZE, byteorder='big'))
+        writer.write(len(message).to_bytes(Server.MESSAGE_SIZE, byteorder='little'))
         writer.write(message)
         await writer.drain()
 
