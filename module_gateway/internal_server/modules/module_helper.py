@@ -7,9 +7,11 @@ import module_gateway.protobuf.InternalProtocol_pb2 as internal_protocol
 
 
 def create_connect_response(type) -> internal_protocol.DeviceConnectResponse:
-    message = internal_protocol.DeviceConnectResponse()
-    message.responseType = type.value
-    return message
+    dconnectresponse_msg = internal_protocol.DeviceConnectResponse()
+    dconnectresponse_msg.responseType = type.value
+    message = internal_protocol.InternalServer()
+    message.deviceConnectResponse.CopyFrom(dconnectresponse_msg)
+    return message.SerializeToString()
 
 
 def check_supported_device_for_module(module: int, device_type: int) -> bool:
