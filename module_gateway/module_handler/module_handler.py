@@ -10,7 +10,7 @@ from .modules_manager import ModulesManager
 
 class ModuleMQTTHandler:
     """Handler of IPC communication using MQTT"""
-    
+
     def __init__(self, mqtt_url, mqtt_port):
         self.mqtt_port = mqtt_port
         self.mqtt_url = mqtt_url
@@ -18,8 +18,9 @@ class ModuleMQTTHandler:
         self.module_manager = ModulesManager()
 
     def on_from_internal(self, client, payload):
-        is_new_device, status = pickle.loads(payload)
-        status = ip.DeviceStatus.FromString(status)
+        is_new_device, message = pickle.loads(payload)
+        internal_client_msg = ip.InternalClient.FromString(message)
+        status = internal_client_msg.deviceStatus
         dev = status.device
 
         DeviceCommandB, status_ready_to_sent = self.module_manager.handle_status(

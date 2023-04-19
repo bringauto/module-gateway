@@ -92,4 +92,5 @@ class IPCCommunication:
         return status
 
     def pass_command(self, command: ExternalProtocolProtob.Command):
-        self.send_msg(self.PASS_COMMAND_TOPIC, command.SerializeToString())
+        external_client_msg = ExternalProtocolProtob.ExternalServer(command=command)
+        self.send_msg(self.PASS_COMMAND_TOPIC, external_client_msg.SerializeToString())
