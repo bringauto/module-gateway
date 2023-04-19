@@ -76,12 +76,18 @@ class ModuleMQTTHandler:
     def on_get_last_device_status(self, client, payload):
         device = ip.Device.FromString(payload)
         last_device_status = self.module_manager.get_last_device_status(device)
+        if last_device_status is None:
+            device_status = ip.DeviceStatus(
+                device=device,
+                statusData=b""
+            )
+            internal_client_msg = ip.InternalClient(deviceStatus=device_status)
+            last_device_status = internal_client_msg.SerializeToString()
 
-        payload = b"" if last_device_status is None else last_device_status
         logging.info("Sending last-device-status")
         client.publish(
             topic="last-device-status",
-            payload=payload
+            payload=last_device_status
         )
 
     def on_pass_command(self, _client, payload):
