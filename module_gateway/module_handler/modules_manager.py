@@ -136,16 +136,18 @@ class ModulesManager:
         return internal_client_msg.SerializeToString()
 
     def update_command(self, external_command: ep.Command) -> None:
-        if external_command.device.module not in self.modules:
+        device = external_command.deviceCommand.device
+        module = device.module
+        if module not in self.modules:
             logging.error(
-                f"Update command on not supported module: {external_command.device.module}")
+                f"Update command on not supported module: {module}")
             return
 
         try:
-            self.modules[external_command.device.module].update_command(
+            self.modules[module].update_command(
                 command_data=external_command.deviceCommand.commandData,
-                device_type=external_command.device.deviceType,
-                device_role=external_command.device.deviceRole
+                device_type=device.deviceType,
+                device_role=device.deviceRole
             )
         except (module_exc.DeviceNotRegistered, module_exc.InvalidCommandData) as e:
             logging.error(f"Update command unsuccessful: {e}")
