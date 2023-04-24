@@ -57,9 +57,8 @@ class ExternalClient:
                 return
             logging.info(f"Handling event: {new_event.event_type.name}")
             if new_event.event_type == Event.EventType.EV_SEND_STATUS:
-                status_proto = InternalProtocolProtob.DeviceStatus.FromString(
-                    new_event.values["status-to-send"]
-                )
+                internal_client_msg = InternalProtocolProtob.InternalClient.FromString(new_event.values["status-to-send"])
+                status_proto = internal_client_msg.deviceStatus
                 self.handle_device_status(status_proto)
             elif (
                 new_event.event_type == Event.EventType.EV_STATUS_RESPONSE_TIMEOUT
@@ -75,9 +74,8 @@ class ExternalClient:
                 connection.end_connection()
                 self._connect_to_endpoint(new_event.values["endpoint"])
             elif new_event.event_type == Event.EventType.EV_DEVICE_DISCONNECT:
-                status_proto = InternalProtocolProtob.DeviceStatus.FromString(
-                    new_event.values["status-to-send"]
-                )
+                internal_client_msg = InternalProtocolProtob.InternalClient.FromString(new_event.values["status-to-send"])
+                status_proto = internal_client_msg.deviceStatus
                 self.handle_device_status(status_proto)
             elif new_event.event_type == Event.EventType.EV_DISCONNECT:
                 connection = self.get_connection(new_event.values["endpoint"])
@@ -114,7 +112,7 @@ class ExternalClient:
         Send status to endpoint, which is defined in json config.
         It is sending via ExternalConnection (one endpoint == one ExternalConnection).
         Device is extracted from status. If there is no connection to desired endpoint, connect sequence is started.
-        
+
         If was ExternalConnection disconnects, status message is passed to error aggregator.
         """
         module_id = self._get_module_id_from_status(stat)

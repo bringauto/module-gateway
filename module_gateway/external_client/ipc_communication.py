@@ -88,7 +88,7 @@ class IPCCommunication:
             self.LAST_DEVICE_STATUS_ASK_TOPIC, device.get_protobuf().SerializeToString()
         )
         raw_status = self._last_status_queue.get()
-        status = InternalProtocolProtob.DeviceStatus().FromString(raw_status)
+        status = InternalProtocolProtob.InternalClient().FromString(raw_status)
         return status
 
     def pass_command(self, command: ExternalProtocolProtob.Command):

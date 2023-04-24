@@ -189,6 +189,7 @@ class ExternalConnection:
                     f"Device does not have any statuses in error aggregator, adding latest status."
                 )
                 last_status = self._ipc_communication.get_last_device_status(device)
+                last_status = last_status.deviceStatus
                 self._error_aggregator.add_status_to_error_aggregator(last_status)
 
             # error aggregation
@@ -233,7 +234,7 @@ class ExternalConnection:
                 )
 
         self.last_command_counter = command.messageCounter
-        if self.sent_messages_handler.is_device_connected(command.device):
+        if self.sent_messages_handler.is_device_connected(command.deviceCommand.device):
             response_type = ExternalProtocolProtob.CommandResponse.Type.OK
             self._ipc_communication.pass_command(command)
         else:

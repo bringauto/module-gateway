@@ -10,7 +10,7 @@ from .modules_manager import ModulesManager
 
 class ModuleMQTTHandler:
     """Handler of IPC communication using MQTT"""
-    
+
     def __init__(self, mqtt_url, mqtt_port):
         self.mqtt_port = mqtt_port
         self.mqtt_url = mqtt_url
@@ -18,30 +18,31 @@ class ModuleMQTTHandler:
         self.module_manager = ModulesManager()
 
     def on_from_internal(self, client, payload):
-        is_new_device, status = pickle.loads(payload)
-        status = ip.DeviceStatus.FromString(status)
+        is_new_device, message = pickle.loads(payload)
+        internal_client_msg = ip.InternalClient.FromString(message)
+        status = internal_client_msg.deviceStatus
         dev = status.device
 
-        DeviceCommandB, status_ready_to_sent = self.module_manager.handle_status(
+        InternalServerB, status_ready_to_sent = self.module_manager.handle_status(
             is_new_device, status)
 
         to_internal_topic = f"to-internal/{dev.module}/{dev.deviceType}/{dev.deviceRole}"
         device_str = f"(module={dev.module}, role={dev.deviceRole}, name={dev.deviceName})"
 
-        if DeviceCommandB is None:
+        if InternalServerB is None:
             logging.info(f"Disconnecting device: {device_str}")
             payload = pickle.dumps((True, b""))
         else:
             logging.info(
                 f"Sending command for device {device_str} to topic: {to_internal_topic}")
-            payload = pickle.dumps((False, DeviceCommandB))
+            payload = pickle.dumps((False, InternalServerB))
 
         client.publish(
             topic=to_internal_topic,
             payload=payload
         )
 
-        if DeviceCommandB is not None and status_ready_to_sent:
+        if InternalServerB is not None and status_ready_to_sent:
             self.send_all_device_statuses(client, dev)
 
     def send_all_device_statuses(self, client, device: ip.Device):
@@ -75,12 +76,18 @@ class ModuleMQTTHandler:
     def on_get_last_device_status(self, client, payload):
         device = ip.Device.FromString(payload)
         last_device_status = self.module_manager.get_last_device_status(device)
+        if last_device_status is None:
+            device_status = ip.DeviceStatus(
+                device=device,
+                statusData=b""
+            )
+            internal_client_msg = ip.InternalClient(deviceStatus=device_status)
+            last_device_status = internal_client_msg.SerializeToString()
 
-        payload = b"" if last_device_status is None else last_device_status
         logging.info("Sending last-device-status")
         client.publish(
             topic="last-device-status",
-            payload=payload
+            payload=last_device_status
         )
 
     def on_pass_command(self, _client, payload):

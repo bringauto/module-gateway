@@ -39,7 +39,7 @@ def callaback_factory(mqtt_client, msg_payload) -> Callable:
 
 
 class PeriodChecker:
-    def __init__(self, mqtt_url: str, mqtt_port: int, period_s: float = 5.0):
+    def __init__(self, mqtt_url: str, mqtt_port: int, period_s: float = 5.0) -> None:
         self.mqtt_url = mqtt_url
         self.mqtt_port = mqtt_port
         self.period_s = period_s
@@ -49,7 +49,8 @@ class PeriodChecker:
     @classmethod
     def parse_device(cls, payload: bytes, message_is_deviceStatus: bool = False) -> str:
         if message_is_deviceStatus:
-            status = ip.DeviceStatus.FromString(payload)
+            internal_client_msg = ip.InternalClient.FromString(payload)
+            status = internal_client_msg.deviceStatus
             device = status.device
         else:
             device = ip.Device.FromString(payload)

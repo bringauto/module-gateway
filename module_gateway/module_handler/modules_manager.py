@@ -52,8 +52,9 @@ class ModulesManager:
         device_command = ip.DeviceCommand(
             commandData=command_data
         )
+        msg = ip.InternalServer(deviceCommand=device_command)
 
-        return device_command.SerializeToString(), ready_to_sent_count
+        return msg.SerializeToString(), ready_to_sent_count
 
     def get_all_device_statuses(self, device: ip.Device) -> list[bytes] | None:
         if device.module not in self.modules:
@@ -71,11 +72,9 @@ class ModulesManager:
                 return None
             if status_data is None:
                 break
+            status = ip.DeviceStatus(device=device, statusData=status_data)
             statuses.append(
-                ip.DeviceStatus(
-                    device=device,
-                    statusData=status_data
-                ).SerializeToString()
+                ip.InternalClient(deviceStatus=status).SerializeToString()
             )
 
         return statuses
@@ -133,19 +132,22 @@ class ModulesManager:
             device=device,
             statusData=possible_status_data
         )
-        return device_status.SerializeToString()
+        internal_client_msg = ip.InternalClient(deviceStatus=device_status)
+        return internal_client_msg.SerializeToString()
 
     def update_command(self, external_command: ep.Command) -> None:
-        if external_command.device.module not in self.modules:
+        device = external_command.deviceCommand.device
+        module = device.module
+        if module not in self.modules:
             logging.error(
-                f"Update command on not supported module: {external_command.device.module}")
+                f"Update command on not supported module: {module}")
             return
 
         try:
-            self.modules[external_command.device.module].update_command(
+            self.modules[module].update_command(
                 command_data=external_command.deviceCommand.commandData,
-                device_type=external_command.device.deviceType,
-                device_role=external_command.device.deviceRole
+                device_type=device.deviceType,
+                device_role=device.deviceRole
             )
         except (module_exc.DeviceNotRegistered, module_exc.InvalidCommandData) as e:
             logging.error(f"Update command unsuccessful: {e}")
@@ -162,15 +164,17 @@ class ModulesManager:
             device_type=device.deviceType,
             device_role=device.deviceRole
         )
-        
+
         if not device_removed:
             return None
-        
+
         if last_device_status is None:
             # generate deviceStatus message with not statusData
-            return ip.DeviceStatus(
+            device_status = ip.DeviceStatus(
                 device=device,
                 statusData=b""
-            ).SerializeToString()
+            )
+            internal_client_msg = ip.InternalClient(deviceStatus=device_status)
+            return internal_client_msg.SerializeToString()
         else:
             return last_device_status
