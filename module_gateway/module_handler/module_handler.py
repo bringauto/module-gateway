@@ -23,26 +23,26 @@ class ModuleMQTTHandler:
         status = internal_client_msg.deviceStatus
         dev = status.device
 
-        DeviceCommandB, status_ready_to_sent = self.module_manager.handle_status(
+        InternalServerB, status_ready_to_sent = self.module_manager.handle_status(
             is_new_device, status)
 
         to_internal_topic = f"to-internal/{dev.module}/{dev.deviceType}/{dev.deviceRole}"
         device_str = f"(module={dev.module}, role={dev.deviceRole}, name={dev.deviceName})"
 
-        if DeviceCommandB is None:
+        if InternalServerB is None:
             logging.info(f"Disconnecting device: {device_str}")
             payload = pickle.dumps((True, b""))
         else:
             logging.info(
                 f"Sending command for device {device_str} to topic: {to_internal_topic}")
-            payload = pickle.dumps((False, DeviceCommandB))
+            payload = pickle.dumps((False, InternalServerB))
 
         client.publish(
             topic=to_internal_topic,
             payload=payload
         )
 
-        if DeviceCommandB is not None and status_ready_to_sent:
+        if InternalServerB is not None and status_ready_to_sent:
             self.send_all_device_statuses(client, dev)
 
     def send_all_device_statuses(self, client, device: ip.Device):
