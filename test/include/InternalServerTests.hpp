@@ -26,7 +26,6 @@ protected:
 										Logger::Verbosity::Debug };
 		Logger::init(params);
 	}
-
 	void SetUp() override {
 		initLogger();
 	}
