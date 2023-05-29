@@ -1,0 +1,12 @@
+{
+    "general-settings": {
+    	"log-path": "./",
+    	"verbose": false
+    },
+    "internal-server-settings": {
+    	"port": 8888
+    },
+    "module-handler-settings": {
+      "module-paths": []
+    }
+}

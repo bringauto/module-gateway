@@ -1,0 +1,41 @@
+#pragma once
+
+#include <string>
+
+
+
+namespace bringauto::settings {
+/**
+ * @brief timeout that is defined in fleet protocol,
+ * active connection between Internal Client and internal Server is disconnected and removed after this timeout
+ */
+const std::chrono::seconds fleet_protocol_timeout_length { 30 };
+/**
+ * @brief time between checks of atomic queue used for one-way communication from Module Handler to Internal Server
+ */
+const std::chrono::seconds queue_timeout_length { 3 };
+/**
+ * &brief Fleet Protocol defines messages as always starting with 4 bytes header
+ */
+const uint8_t header { 4 };
+/**
+ * @brief maximal amount of bytes received, that can be processed in one cycle
+ */
+const size_t buffer_length = 1024;
+
+
+/// constant strings for parsing command line arguments
+
+const std::string CONFIG_PATH { "config-path" };
+const std::string VERBOSE { "verbose" };
+const std::string LOG_PATH { "log-path" };
+const std::string HELP { "help" };
+const std::string PORT { "port" };
+
+const std::string MODULE_PATHS { "module-paths" };
+
+const std::string GENERAL_SETTINGS { "general-settings" };
+const std::string INTERNAL_SERVER_SETTINGS { "internal-server-settings" };
+const std::string MODULE_HANDLER_SETTINGS { "module-handler-settings" };
+
+}
