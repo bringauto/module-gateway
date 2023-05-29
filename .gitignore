@@ -3,3 +3,5 @@ _build/
 build/
 .idea/
 cmake-build-*
+_tmp/
+.clang-format

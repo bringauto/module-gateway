@@ -1,0 +1,49 @@
+#include <bringauto/structures/DeviceIdentification.hpp>
+
+
+
+namespace bringauto::structures {
+DeviceIdentification::DeviceIdentification(const InternalProtocol::Device &device) {
+	module_ = device.module();
+	deviceType_ = device.devicetype();
+	deviceRole_ = device.devicerole();
+	deviceName_ = device.devicename();
+	priority_ = device.priority();
+}
+
+DeviceIdentification::DeviceIdentification(const device_identification &device) {
+	module_ = device.module;
+	deviceType_ = device.device_type;
+	deviceRole_ = std::string(device.device_role);
+	deviceName_ = std::string(device.device_name);
+	priority_ = device.priority;
+}
+
+uint32_t DeviceIdentification::getPriority() const {
+	return priority_;
+}
+
+uint32_t DeviceIdentification::getModule() const {
+	return module_;
+}
+
+uint32_t DeviceIdentification::getDeviceType() const {
+	return deviceType_;
+}
+
+const std::string &DeviceIdentification::getDeviceRole() const {
+	return deviceRole_;
+}
+
+const std::string &DeviceIdentification::getDeviceName() const {
+	return deviceName_;
+}
+
+bool DeviceIdentification::isSame(const std::shared_ptr<DeviceIdentification> &toCompare) {
+	return module_ == toCompare->getModule() &&
+		   deviceType_ == toCompare->getDeviceType() &&
+		   deviceRole_ == toCompare->getDeviceRole() &&
+		   deviceName_ == toCompare->getDeviceName();
+}
+
+}
