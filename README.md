@@ -51,7 +51,7 @@ make
 ### CMAKE arguments
 
 * CMLIB_DIR=\<PATH>
-* BRINGAUTO_TESTS=ON/OFF 
+* BRINGAUTO_TESTS=ON/OFF
   - DEFAULT: OFF
   - if on enable build/configure of tests
   - if off disable build/configure of tests
@@ -68,7 +68,7 @@ make
 
 * BRINGAUTO_SYSTEM_DEP=ON/OFF
   - DEFAULT: OFF
-  
+
 
 * CURRENTLY UNUSED
   * BRINGAUTO_SAMPLES=ON/OFF

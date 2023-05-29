@@ -17,27 +17,37 @@ class ModuleHandler {
 
 public:
 	ModuleHandler(
-			std::shared_ptr<structures::GlobalContext> &context, // probably move setting to other directory then internal_server
-			std::shared_ptr<structures::AtomicQueue<InternalProtocol::InternalClient>> &fromInternalQueue,
-			std::shared_ptr<structures::AtomicQueue<InternalProtocol::InternalServer>> &toInternalQueue)
+			std::shared_ptr <structures::GlobalContext> &context,
+			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &fromInternalQueue,
+			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> &toInternalQueue)
 			: context_ { context }, fromInternalQueue_ { fromInternalQueue }, toInternalQueue_ { toInternalQueue } {}
 
+	/**
+	 * @brief Start Module handler
+	 *
+	 * Initializes all modules and handles incoming messages from Internal Server through queues
+	 *
+	 */
 	void run();
 
+	/**
+	 * @brief Stop Module handler and clean all initialized modules
+	 *
+	 */
 	void destroy();
 
 private:
-	std::shared_ptr<structures::AtomicQueue<InternalProtocol::InternalClient>> fromInternalQueue_;
+	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> fromInternalQueue_;
 
-	std::shared_ptr<structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
+	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
 
-	std::shared_ptr<structures::GlobalContext> context_;
+	std::shared_ptr <structures::GlobalContext> context_;
 
 	std::unordered_map<unsigned int, StatusAggregator> modules_ {};
 
 	void init_modules();
 
-	void init_module(const char *path);
+	void init_module(const std::string &path);
 
 	void handle_messages();
 

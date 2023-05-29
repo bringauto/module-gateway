@@ -1,54 +1,53 @@
 #include <bringauto/modules/ModuleHandler.hpp>
+#include <bringauto/logging/Logger.hpp>
+#include <bringauto/settings/Constants.hpp>
 #include <memory_management.h>
 
 
 
 namespace bringauto::modules {
 
-const std::chrono::seconds queue_timeout_length { 3 };
 namespace ip = InternalProtocol;
+using log = bringauto::logging::Logger;
 
 void ModuleHandler::destroy() {
-	std::cout << "Module handler stopped\n";
+	log::logInfo("Module handler stopped");
 	for(auto it = modules_.begin(); it != modules_.end(); it++)
 		it->second.destroy_status_aggregator();
 }
 
 void ModuleHandler::run() {
+	log::logInfo("Module handler started");
 	init_modules();
 	handle_messages();
 }
 
 void ModuleHandler::init_modules() {
-	init_module("./libbutton_module.so");
-	init_module("./libmission_module.so");
+    for(auto const & path: context_->settings->modulePaths){
+	    init_module(path);
+    }
 }
 
-void ModuleHandler::init_module(const char *path) {
+void ModuleHandler::init_module(const std::string &path) {
 	StatusAggregator status_agg {};
 	status_agg.init_status_aggregator(path);
-	std::cout << "Module number: " << status_agg.get_module_number() << "\n";
+	log::logInfo("Module with number: {} started", status_agg.get_module_number());
 	modules_.insert({ status_agg.get_module_number(), status_agg });
 }
 
 void ModuleHandler::handle_messages() {
 	while(not context_->ioContext.stopped()) {
-		std::cout << "Waitting for new message\n";
-		if(fromInternalQueue_->waitForValueWithTimeout(queue_timeout_length)) {
-			std::cout << "Timeout: empty queue\n";
-			continue; // queue is empty after timeout so probably disconnect or something(clear all devices?)
+		if(fromInternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
+			continue;
 		}
 
 		auto &message = fromInternalQueue_->front();
-
 		if(message.has_deviceconnect()) {
-			std::cout << "Received Connect message\n";
 			handle_connect(message.deviceconnect());
 		} else if(message.has_devicestatus()) {
-			std::cout << "Received Status message\n";
 			handle_status(message.devicestatus());
 		} else {
-			std::cout << "Received message is not Connect or Status\n";
+			log::logInfo("Received message is not Connect or Status");
 		}
 
 		fromInternalQueue_->pop();
@@ -56,65 +55,79 @@ void ModuleHandler::handle_messages() {
 }
 
 void ModuleHandler::handle_connect(const ip::DeviceConnect &connect) {
+	const auto &device = connect.device();
+	const auto &module = device.module();
+	log::logInfo("Received Connect message from device: {}", device.devicename());
+
 	auto response_type = ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_OK;
-	const auto &module = connect.device().module();
-	if(not modules_.contains(module))
-	response_type =
-			ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_MODULE_NOT_SUPPORTED;
-	else if(modules_[module].is_device_type_supported(connect.device().devicetype()) == NOT_OK)
-	response_type =
-			ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_DEVICE_NOT_SUPPORTED;
+	if(not modules_.contains(module)) {
+		response_type =
+				ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_MODULE_NOT_SUPPORTED;
+	} else if(modules_[module].is_device_type_supported(device.devicetype()) == NOT_OK) {
+		response_type =
+				ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_DEVICE_NOT_SUPPORTED;
+	}
 
 	auto response = new ip::DeviceConnectResponse();
 	response->set_responsetype(response_type);
-	response->set_allocated_device(new ip::Device(connect.device()));
+	response->set_allocated_device(new ip::Device(device));
 	ip::InternalServer msg {};
 	msg.set_allocated_deviceconnectresponse(response);
 	toInternalQueue_->pushAndNotify(msg);
-	std::cout << "New client connected, sending response " << response_type << "\n";
+	log::logInfo("New device {} is trying to connect, sending response {}", device.devicename(), response_type);
 }
 
 ::device_identification ModuleHandler::mapToDeviceId(const InternalProtocol::Device &device) {
-	return ::device_identification {
-			.module = device.module(),
-			.device_type = device.devicetype(), // change in device_identification to unsigned int
-			.device_role = device.devicerole().c_str(), .device_name = device.devicename().c_str(),
-			.priority = device.priority() // change in device_identification to unsigned int
-	};
+	return ::device_identification { .module = device.module(),
+			.device_type = device.devicetype(),
+			.device_role = device.devicerole().c_str(),
+			.device_name = device.devicename().c_str(),
+			.priority = device.priority() };
 }
 
 void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
-	auto &device = status.device();
+	const auto &device = status.device();
 	const auto &moduleNumber = device.module();
+	log::logInfo("Received Status message from device: {}", device.devicename());
+
 	if(not modules_.contains(moduleNumber)) {
-		std::cout << "Module number: " << moduleNumber << " is not supported\n";
+		log::logWarning("Module number: {} is not supported", moduleNumber);
 		return;
 	}
 
 	struct ::buffer status_buffer {};
-	status_buffer.data = malloc(status.ByteSizeLong());
-	status_buffer.size_in_bytes = status.ByteSizeLong();
-	status.SerializeToArray(status_buffer.data, status_buffer.size_in_bytes);
+	const auto &statusData = status.statusdata();
+	if(allocate(&status_buffer, statusData.size() + 1) == NOT_OK) {
+		log::logError("Could not allocate memory for status message");
+		return;
+	}
+	strcpy(static_cast<char *>(status_buffer.data), statusData.c_str());
 
 	const struct ::device_identification deviceId = mapToDeviceId(device);
 
-	struct ::buffer command_buffer {};
-	command_buffer.data = malloc(40);
-	command_buffer.size_in_bytes = 40;
+	int ret = modules_[moduleNumber].add_status_to_aggregator(status_buffer, deviceId);
+	if(ret < 0) {
+		log::logWarning("Add status to aggregator failed with return code: {}", ret);
+		return;
+	}
 
-	int ret = modules_[moduleNumber].get_command(status_buffer, deviceId, &command_buffer);
-	if(ret <= 0) {
-		std::cout << "Retrieving command failed with return code: " << ret << "\n";
+	struct ::buffer command_buffer {};
+	ret = modules_[moduleNumber].get_command(status_buffer, deviceId, &command_buffer);
+	if(ret != OK) {
+		log::logWarning("Retrieving command failed with return code: {}", ret);
 		return;
 	}
 
 	auto deviceCommand = new ip::DeviceCommand();
-	deviceCommand->ParseFromArray(command_buffer.data, command_buffer.size_in_bytes);
-	free(command_buffer.data);
+	deviceCommand->set_allocated_commanddata(new std::string(static_cast<char *>(command_buffer.data), command_buffer.size_in_bytes - 1));
+	deviceCommand->set_allocated_device(new InternalProtocol::Device(device));
 	ip::InternalServer msg {};
 	msg.set_allocated_devicecommand(deviceCommand);
 	toInternalQueue_->pushAndNotify(msg);
-	std::cout << "Command succesfully retrieved and sent\n";
+	log::logInfo("Command succesfully retrieved and sent to device: {}", device.devicename());
+
+    deallocate(&command_buffer);
+	deallocate(&status_buffer);
 }
 
 }
