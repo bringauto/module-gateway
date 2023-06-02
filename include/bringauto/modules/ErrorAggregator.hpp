@@ -60,7 +60,7 @@ public:
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/error_aggregator.h
 	 *
-	 * @param error_status user allocated message_buffer for the error status. Look at 'memory management' section
+	 * @param status user allocated message_buffer for the error status. Look at 'memory management' section
 	 * @param device identification of the device
 	 *
 	 * @return OK if successful
@@ -68,7 +68,7 @@ public:
 	 * @return DEVICE_NOT_REGISTERED if device was not registered
 	 * @return NOT_OK for other errors
 	 */
-	int get_error_status(struct buffer *error_status, const struct device_identification device);
+	int get_last_status(struct buffer *status, const struct device_identification device);
 
 	/**
 	 * @short Get error message from error aggregator for a specific device.
@@ -111,8 +111,8 @@ public:
 
 private:
 	struct DeviceState {
-		// std::queue<struct buffer> aggregatedMessages; // TODO shouldn't be necessary
 		struct buffer errorMessage {};
+		struct buffer lastStatus {};
 
 		DeviceState() = default;
 
