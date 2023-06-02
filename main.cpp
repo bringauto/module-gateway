@@ -30,6 +30,9 @@ void initLogger(const std::string &logPath, bool verbose) {
 	Logger::init(params);
 }
 
+void loadLibraries(std::map<int, bringauto::modules::ModuleManagerLibraryHandler> modules) {
+
+}
 
 
 int main(int argc, char **argv) {
@@ -43,6 +46,7 @@ int main(int argc, char **argv) {
 			return 0;}
 		context->settings = settingsParser.getSettings();
 		initLogger(context->settings->logPath, context->settings->verbose);
+		loadLibraries(context->modules);
 	} catch(std::exception &e) {
 		std::cerr << "[ERROR] Error occurred during initialization: " << e.what() << std::endl;
 		return 1;

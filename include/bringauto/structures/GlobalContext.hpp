@@ -1,6 +1,8 @@
 #pragma once
 
 #include <bringauto/settings/Settings.hpp>
+#include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
+
 #include <boost/asio.hpp>
 
 
@@ -16,6 +18,9 @@ struct GlobalContext {
 	 * @brief io_context shared across Module Gateway
 	 */
 	boost::asio::io_context ioContext;
+
+	std::map<int, modules::ModuleManagerLibraryHandler> modules;
+
 	/**
 	 * @brief settings used in the project
 	 */

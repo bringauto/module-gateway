@@ -115,7 +115,7 @@ void SettingsParser::fillSettings() {
 
 	fillGeneralSettings(file);
 	fillInternalServerSettings(file);
-	fillModuleHandlerSettings(file);
+	fillModulePathsSettings(file);
 }
 
 void SettingsParser::fillGeneralSettings(const nlohmann::json &file) {
@@ -139,11 +139,13 @@ void SettingsParser::fillInternalServerSettings(const nlohmann::json &file) {
 	}
 }
 
-void SettingsParser::fillModuleHandlerSettings(const nlohmann::json &file) {
+void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) {
 	if(cmdArguments_.count(MODULE_PATHS)) {
-		settings_->modulePaths = cmdArguments_[MODULE_PATHS].as<std::vector<std::string>>();
+		settings_->modulePaths = cmdArguments_[MODULE_PATHS].as<std::map<int, std::string>>();
 	} else {
-		settings_->modulePaths = std::vector<std::string>(file[MODULE_HANDLER_SETTINGS][MODULE_PATHS]);
+		for (auto& [key, val] : file[MODULE_PATHS].items()) {
+			settings_->modulePaths[stoi(key)] = val;
+		}
 	}
 }
 

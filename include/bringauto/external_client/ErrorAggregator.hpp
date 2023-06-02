@@ -1,13 +1,12 @@
 #pragma once
+#include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
 
 #include <memory_management.h>
 #include <device_management.h>
 
-#include <queue>
-#include <string>
-#include <map>
 #include <functional>
 #include <filesystem>
+#include <map>
 
 
 
@@ -28,7 +27,7 @@ public:
 	 * @return OK if initialization was successful
 	 * @return NOT_OK if an error occurred
 	 */
-	int init_error_aggregator(std::filesystem::path path);
+	int init_error_aggregator(const ModuleManagerLibraryHandler& library);
 
 	/**
 	 * @short Clean up.
@@ -99,7 +98,7 @@ public:
 	 *
 	 * @see fleet-protocol/lib/common_headers/include/device_management.h
 	 */
-	int get_module_number();
+	int get_module_number() const;
 
 	/**
      * @short Check if device is supported
@@ -122,13 +121,9 @@ private:
 
 	static std::string getId(const ::device_identification &device);
 
-	void *module { nullptr };
+	ModuleManagerLibraryHandler module_ {};
 
-	std::map <std::string, DeviceState> devices {};
-
-	std::function<int()> getModuleNumber {};
-	std::function<int(unsigned int)> isDeviceTypeSupported {};
-	std::function<int(struct buffer* error_message, const struct buffer current_error_message, const struct buffer status, unsigned int device_type)> aggregateError;
+	std::map<std::string, DeviceState> devices_ {};
 };
 
 }

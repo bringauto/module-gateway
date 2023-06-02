@@ -36,6 +36,11 @@ const std::string MODULE_PATHS { "module-paths" };
 
 const std::string GENERAL_SETTINGS { "general-settings" };
 const std::string INTERNAL_SERVER_SETTINGS { "internal-server-settings" };
-const std::string MODULE_HANDLER_SETTINGS { "module-handler-settings" };
+
+const std::string EXTERNAL_ENDPOINTS { "external-endpoints" };
+const std::string SERVER_IP { "server-ip" };
+const std::string MODULES { "modules" };
+
+
 
 }

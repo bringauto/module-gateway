@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <vector>
 #include <string>
+#include <map>
 
 
 namespace bringauto::settings {
@@ -26,7 +27,7 @@ struct Settings {
 	/**
 	 * @brief paths to shared module libraries
 	 */
-	std::vector<std::string> modulePaths;
+	std::map<int, std::string> modulePaths;
 
 
 };

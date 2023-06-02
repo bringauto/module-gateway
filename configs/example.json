@@ -6,10 +6,21 @@
   "internal-server-settings": {
     "port": 8888
   },
-  "module-handler-settings": {
-    "module-paths": [
-      "./libs/button_module/libbutton_module.so",
-      "./libs/mission_module/libmission_module.so"
-    ]
-  }
+  "module-paths": {
+    "1": "./libs/mission_module/libmission_module.so",
+    "2": "./libs/button_module/libbutton_module.so"
+  },
+  "external-endpoints" :
+  [
+    {
+      "server-ip": "127.0.0.1",
+      "port": 9999,
+      "modules": [ 1,2 ]
+    },
+    {
+      "server-ip": "10.10.10.10",
+      "port": 1234,
+      "modules": [ 10 ]
+    }
+  ]
 }

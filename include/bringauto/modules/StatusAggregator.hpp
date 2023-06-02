@@ -1,4 +1,5 @@
 #pragma once
+#include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
 
 #include <functional>
 #include <map>
@@ -25,7 +26,7 @@ public:
 	 *
      * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int init_status_aggregator(std::filesystem::path path);
+	int init_status_aggregator(const ModuleManagerLibraryHandler &library);
 
 	/**
 	 * @short Clean up.
@@ -136,18 +137,9 @@ private:
 
 	std::string getId(const ::device_identification &device);
 
-	void *module { nullptr };
+	ModuleManagerLibraryHandler module { };
 
 	std::map <std::string, device_state> devices {};
-
-	std::function<int()> getModuleNumber {};
-	std::function<int(unsigned int)> isDeviceTypeSupported {};
-	std::function<int(struct buffer *, unsigned int)> generateFirstCommand {};
-	std::function<int(struct buffer, unsigned int)> statusDataValid {};
-	std::function<int(struct buffer, unsigned int)> commandDataValid {};
-	std::function<int(struct buffer, struct buffer, unsigned int)> sendStatusCondition {};
-	std::function<int(struct buffer *, struct buffer, struct buffer, unsigned int)> aggregateStatus {};
-	std::function<int(struct buffer *, struct buffer, struct buffer, struct buffer, unsigned int)> generateCommand {};
 };
 
 }

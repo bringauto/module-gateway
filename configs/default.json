@@ -6,7 +6,13 @@
     "internal-server-settings": {
     	"port": 8888
     },
-    "module-handler-settings": {
-      "module-paths": []
+  "module-paths": {  },
+  "external-endpoints" :
+  [
+    {
+      "server-ip": "127.0.0.1",
+      "port": 9999,
+      "modules": [ ]
     }
+  ]
 }

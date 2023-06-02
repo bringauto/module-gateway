@@ -11,14 +11,6 @@
 
 namespace bringauto::modules {
 
-template <typename T>
-struct FunctionTypeDeducer;
-
-template<typename R, typename ...Args>
-struct FunctionTypeDeducer<std::function<R(Args...)>>{
-	using fncptr = R (*)(Args...);
-};
-
 using log = bringauto::logging::Logger;
 
 std::string ErrorAggregator::getId(const ::device_identification &device) {
@@ -27,23 +19,12 @@ std::string ErrorAggregator::getId(const ::device_identification &device) {
 	return ss.str();
 }
 
-int bringauto::modules::ErrorAggregator::init_error_aggregator(std::filesystem::path path) {
-	module = dlopen(path.c_str(), RTLD_LAZY | RTLD_DEEPBIND);
-	if(module == nullptr) {
-		return NOT_OK;
-	}
-	isDeviceTypeSupported = reinterpret_cast<FunctionTypeDeducer<decltype(isDeviceTypeSupported)>::fncptr>(dlsym(module, "is_device_type_supported"));
-	getModuleNumber = reinterpret_cast<FunctionTypeDeducer<decltype(getModuleNumber)>::fncptr>(dlsym(module, "get_module_number"));
-	aggregateError = reinterpret_cast<FunctionTypeDeducer<decltype(aggregateError)>::fncptr>(dlsym(module, "aggregate_error"));
+int bringauto::modules::ErrorAggregator::init_error_aggregator(const ModuleManagerLibraryHandler& library) {
+	module_ = library;
 	return OK;
 }
 
 int ErrorAggregator::destroy_error_aggregator() {
-	if(module == nullptr) {
-		return OK;
-	}
-	dlclose(module);
-	module = nullptr;
 	clear_error_aggregator();
 	return OK;
 }
@@ -61,11 +42,11 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 		return NOT_OK;
 	}
 
-	if(not devices.contains(id)) {
-		devices.insert({ id, { } });
+	if(not devices_.contains(id)) {
+		devices_.insert({ id, { } });
 	}
 
-	auto &lastStatus = devices[id].lastStatus;
+	auto &lastStatus = devices_[id].lastStatus;
 	if (status.size_in_bytes > lastStatus.size_in_bytes) {
 		deallocate(&lastStatus);
 		allocate(&lastStatus, status.size_in_bytes);
@@ -74,9 +55,9 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 	lastStatus.size_in_bytes = status.size_in_bytes;
 
 	struct buffer errorMessageBuffer {};
-	auto &currentError = devices[id].errorMessage;
+	auto &currentError = devices_[id].errorMessage;
 
-	auto retCode = aggregateError(&errorMessageBuffer, currentError, status, device_type);
+	auto retCode = module_.aggregateError(&errorMessageBuffer, currentError, status, device_type);
 	if (retCode == WRONG_FORMAT) {
 		log::logWarning("Wrong status format in Error aggregator for device: {}", id);
 		return NOT_OK;
@@ -91,11 +72,11 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 
 int ErrorAggregator::get_last_status(struct buffer *status, const struct device_identification device) {
 	std::string id = getId(device);
-	if (not devices.contains(id)) {
+	if (not devices_.contains(id)) {
 		return DEVICE_NOT_REGISTERED;
 	}
 
-	auto &lastStatus = devices[id].lastStatus;
+	auto &lastStatus = devices_[id].lastStatus;
 
 	if (lastStatus.data == nullptr || lastStatus.size_in_bytes == 0) {
 		return NO_MESSAGE_AVAILABLE;
@@ -108,11 +89,11 @@ int ErrorAggregator::get_last_status(struct buffer *status, const struct device_
 
 int ErrorAggregator::get_error(struct buffer *error, const struct device_identification device) {
 	std::string id = getId(device);
-	if (not devices.contains(id)) {
+	if (not devices_.contains(id)) {
 		return DEVICE_NOT_REGISTERED;
 	}
 
-	auto &currentError = devices[id].errorMessage;
+	auto &currentError = devices_[id].errorMessage;
 
 	if (currentError.data == nullptr || currentError.size_in_bytes == 0) {
 		return NO_MESSAGE_AVAILABLE;
@@ -124,20 +105,20 @@ int ErrorAggregator::get_error(struct buffer *error, const struct device_identif
 }
 
 int ErrorAggregator::clear_error_aggregator() {
-	for (auto& [key, device] : devices) {
+	for (auto& [key, device] : devices_) {
 		deallocate(&device.lastStatus);
 		deallocate(&device.errorMessage);
 	}
-	devices.clear();
+	devices_.clear();
 	return OK;
 }
 
-int ErrorAggregator::get_module_number() {
-	return getModuleNumber();
+int ErrorAggregator::get_module_number() const {
+	return module_.getModuleNumber();
 }
 
 int ErrorAggregator::is_device_type_supported(unsigned int device_type) {
-	return isDeviceTypeSupported(device_type);
+	return module_.isDeviceTypeSupported(device_type);
 }
 
 }
