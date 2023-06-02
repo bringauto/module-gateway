@@ -54,7 +54,6 @@ public:
 	 */
 	int add_status_to_error_aggregator(const struct buffer status, const struct device_identification device);
 
-//todo this function might be not needed
 	/**
 	 * @short Get status from error aggregator for a specific device.
 	 *

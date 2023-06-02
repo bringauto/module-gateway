@@ -1,4 +1,4 @@
-#include <bringauto/modules/ErrorAggregator.hpp>
+#include <bringauto/external_client/ErrorAggregator.hpp>
 
 #include <module_manager.h>
 #include <bringauto/logging/Logger.hpp>
