@@ -23,17 +23,12 @@ void ModuleHandler::run() {
 }
 
 void ModuleHandler::init_modules() {
-    for(auto const & path: context_->settings->modulePaths){
+    for(auto const & path: context_->moduleLibraries){
 	    init_module(path.second);
     }
 }
 
-void ModuleHandler::init_module(const std::string &path) {
-	ModuleManagerLibraryHandler libraryHandler {}; // TODO load before
-
-	if (libraryHandler.loadLibrary(path) != OK) {
-		// TODO throw error
-	}
+void ModuleHandler::init_module(const bringauto::modules::ModuleManagerLibraryHandler &libraryHandler) {
 	StatusAggregator status_agg {};
 	status_agg.init_status_aggregator(libraryHandler);
 	log::logInfo("Module with number: {} started", status_agg.get_module_number());

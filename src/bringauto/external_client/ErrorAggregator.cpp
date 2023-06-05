@@ -4,7 +4,6 @@
 #include <bringauto/logging/Logger.hpp>
 #include <mg_error_codes.h>
 
-#include <dlfcn.h>
 #include <sstream>
 
 

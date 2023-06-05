@@ -30,8 +30,13 @@ void initLogger(const std::string &logPath, bool verbose) {
 	Logger::init(params);
 }
 
-void loadLibraries(std::map<int, bringauto::modules::ModuleManagerLibraryHandler> modules) {
-
+void loadLibraries(std::map<int, bringauto::modules::ModuleManagerLibraryHandler> modules, std::map<int, std::string> libPaths) {
+	for (auto& [key, val] : modules) {
+		modules[key] = bringauto::modules::ModuleManagerLibraryHandler();
+		if (modules[key].loadLibrary(libPaths[key]) != OK) {
+			throw std::runtime_error("Unable to load library " + libPaths[key]);
+		}
+	}
 }
 
 
@@ -46,7 +51,7 @@ int main(int argc, char **argv) {
 			return 0;}
 		context->settings = settingsParser.getSettings();
 		initLogger(context->settings->logPath, context->settings->verbose);
-		loadLibraries(context->modules);
+		loadLibraries(context->moduleLibraries, context->settings->modulePaths);
 	} catch(std::exception &e) {
 		std::cerr << "[ERROR] Error occurred during initialization: " << e.what() << std::endl;
 		return 1;

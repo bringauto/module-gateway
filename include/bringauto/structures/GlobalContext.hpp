@@ -19,7 +19,7 @@ struct GlobalContext {
 	 */
 	boost::asio::io_context ioContext;
 
-	std::map<int, modules::ModuleManagerLibraryHandler> modules;
+	std::map<int, modules::ModuleManagerLibraryHandler> moduleLibraries;
 
 	/**
 	 * @brief settings used in the project
