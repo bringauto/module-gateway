@@ -10,7 +10,7 @@
 
 
 
-namespace bringauto::modules {
+namespace bringauto::external_client {
 
 /**
  * @brief Class created from file error_aggregator.h in fleet-protocol
@@ -27,7 +27,7 @@ public:
 	 * @return OK if initialization was successful
 	 * @return NOT_OK if an error occurred
 	 */
-	int init_error_aggregator(const ModuleManagerLibraryHandler& library);
+	int init_error_aggregator(const modules::ModuleManagerLibraryHandler &library);
 
 	/**
 	 * @short Clean up.

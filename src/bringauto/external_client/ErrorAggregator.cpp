@@ -8,7 +8,7 @@
 
 
 
-namespace bringauto::modules {
+namespace bringauto::external_client {
 
 using log = bringauto::logging::Logger;
 
@@ -18,7 +18,7 @@ std::string ErrorAggregator::getId(const ::device_identification &device) {
 	return ss.str();
 }
 
-int bringauto::modules::ErrorAggregator::init_error_aggregator(const ModuleManagerLibraryHandler& library) {
+int ErrorAggregator::init_error_aggregator(const modules::ModuleManagerLibraryHandler &library) {
 	module_ = library;
 	return OK;
 }
