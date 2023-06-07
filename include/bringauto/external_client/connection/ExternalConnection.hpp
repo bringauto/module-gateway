@@ -1,7 +1,11 @@
 #pragma once
 
+#include <bringauto/external_client/connection/communication/ICommunicationChannel.hpp>
+#include <bringauto/structures/GlobalContext.hpp>
+
 #include <string>
 #include <vector>
+
 
 
 namespace bringauto::external_client::connection {
@@ -9,10 +13,12 @@ namespace bringauto::external_client::connection {
  * @brief Class representing connection to one external server endpoint
  */
 class ExternalConnection {
+public:
+	ExternalConnection(structures::GlobalContext context);
 private:
 	int messageCounter_ {};
 	std::string sessionId_ {};
-// TODO generic connection
+	std::unique_ptr<communication::ICommunicationChannel> communicationChannel_;
 	// Settings - TODO save only context and extract this
 	std::string ip_; // TODO merge into boost buffer?
 	u_int16_t port_;

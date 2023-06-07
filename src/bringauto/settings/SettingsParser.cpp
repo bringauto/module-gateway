@@ -1,5 +1,7 @@
 #include <bringauto/settings/SettingsParser.hpp>
 #include <bringauto/settings/Constants.hpp>
+#include <bringauto/common_utils/EnumUtils.hpp>
+#include <bringauto/structures/ExternalConnectionSettings.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -116,6 +118,7 @@ void SettingsParser::fillSettings() {
 	fillGeneralSettings(file);
 	fillInternalServerSettings(file);
 	fillModulePathsSettings(file);
+	fillExternalConnectionSettings(file);
 }
 
 void SettingsParser::fillGeneralSettings(const nlohmann::json &file) {
@@ -146,6 +149,42 @@ void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) {
 		for (auto& [key, val] : file[MODULE_PATHS].items()) {
 			settings_->modulePaths[stoi(key)] = val;
 		}
+	}
+}
+
+void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) {
+	if(cmdArguments_.count(VEHICLE_NAME)) {
+		settings_->vehicleName = cmdArguments_[VEHICLE_NAME].as<std::string>();
+	} else {
+		settings_->vehicleName = file[EXTERNAL_CONNECTION][VEHICLE_NAME];
+	}
+	if(cmdArguments_.count(COMPANY)) {
+		settings_->company = cmdArguments_[COMPANY].as<std::string>();
+	} else {
+		settings_->company = file[EXTERNAL_CONNECTION][COMPANY];
+	}
+
+	for (const auto& endpoint : file[EXTERNAL_CONNECTION][EXTERNAL_ENDPOINTS]) {
+		structures::ExternalConnectionSettings externalConnectionSettings;
+		externalConnectionSettings.serverIp = endpoint[SERVER_IP];
+		externalConnectionSettings.port = endpoint[PORT];
+		externalConnectionSettings.modules = endpoint[MODULES].get<std::vector<int>>();
+
+		externalConnectionSettings.protocolType = common_utils::EnumUtils::stringToProtocolType(endpoint[PROTOCOL_TYPE]);
+		std::string settingsName {};
+		switch (externalConnectionSettings.protocolType) {
+			case structures::ProtocolType::MQTT:
+				settingsName = MQTT_SETTINGS;
+				break;
+			case structures::ProtocolType::INVALID:
+				std::cerr << "Invalid protocol type: " << endpoint[PROTOCOL_TYPE] << std::endl;
+				continue;
+		}
+		for (auto& [key, val] : endpoint[settingsName].items()) {
+			externalConnectionSettings.protocolSettings[key] = to_string(val);
+		}
+
+		settings_->externalConnectionSettingsList.push_back(externalConnectionSettings);
 	}
 }
 

@@ -49,5 +49,7 @@ private:
 	void fillInternalServerSettings(const nlohmann::json &file);
 
 	void fillModulePathsSettings(const nlohmann::json &file);
+
+	void fillExternalConnectionSettings(const nlohmann::json &file);
 };
 }

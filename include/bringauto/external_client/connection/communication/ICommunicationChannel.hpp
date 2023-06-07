@@ -1,6 +1,7 @@
 #pragma once
 
-#include <bringauto/settings/Settings.hpp>
+#include <bringauto/structures/ExternalConnectionSettings.hpp>
+#include <utility>
 
 namespace bringauto::external_client::connection::communication {
 
@@ -9,11 +10,20 @@ namespace bringauto::external_client::connection::communication {
  */
 class ICommunicationChannel {
 public:
-	ICommunicationChannel(settings::Settings settings);
+	explicit ICommunicationChannel(structures::ExternalConnectionSettings settings);
 
 	virtual ~ICommunicationChannel() = default;
 
+	virtual int initializeConnection() = 0;
 
+	virtual int sendMessage() = 0;
+
+	// TODO getCommand, or just add Commands to CommandQueue from listening thread
+
+	virtual void closeConnection() = 0;
+
+protected:
+	structures::ExternalConnectionSettings settings_;
 };
 
 }

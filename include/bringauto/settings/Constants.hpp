@@ -37,8 +37,15 @@ const std::string MODULE_PATHS { "module-paths" };
 const std::string GENERAL_SETTINGS { "general-settings" };
 const std::string INTERNAL_SERVER_SETTINGS { "internal-server-settings" };
 
-const std::string EXTERNAL_ENDPOINTS { "external-endpoints" };
+const std::string EXTERNAL_CONNECTION { "external-connection" };
+const std::string VEHICLE_NAME { "vehicle-name" };
+const std::string COMPANY { "company" };
+const std::string EXTERNAL_ENDPOINTS { "endpoints" };
 const std::string SERVER_IP { "server-ip" };
+const std::string PROTOCOL_TYPE { "protocol-type" };
+
+const std::string MQTT_SETTINGS { "mqtt-settings" };
+
 const std::string MODULES { "modules" };
 
 

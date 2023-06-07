@@ -10,17 +10,31 @@
     "1": "./libs/mission_module/libmission_module.so",
     "2": "./libs/button_module/libbutton_module.so"
   },
-  "external-endpoints" :
-  [
-    {
-      "server-ip": "127.0.0.1",
-      "port": 9999,
-      "modules": [ 1,2 ]
-    },
-    {
-      "server-ip": "10.10.10.10",
-      "port": 1234,
-      "modules": [ 10 ]
-    }
-  ]
+  "external-connection" : {
+    "company" : "BringAuto",
+    "vehicle-name" : "VirtualVehicle",
+    "endpoints" :
+    [
+      {
+        "protocol-type" : "mqtt",
+        "mqtt-settings" : {
+          "ssl" : false
+        },
+        "server-ip": "127.0.0.1",
+        "port": 9999,
+        "modules": [ 1,2 ]
+      },
+      {
+        "protocol-type" : "example",
+        "example-settings" : {
+          "username" : "user",
+          "token" : "A342vds3"
+        },
+        "server-ip": "10.10.10.10",
+        "port": 1234,
+        "modules": [ 10 ]
+      }
+    ]
+  }
+
 }

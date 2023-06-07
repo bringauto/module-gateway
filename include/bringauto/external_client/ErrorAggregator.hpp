@@ -121,7 +121,7 @@ private:
 
 	static std::string getId(const ::device_identification &device);
 
-	ModuleManagerLibraryHandler module_ {};
+	modules::ModuleManagerLibraryHandler module_ {};
 
 	std::map<std::string, DeviceState> devices_ {};
 };
