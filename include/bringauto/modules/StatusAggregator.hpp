@@ -21,12 +21,16 @@ namespace bringauto::modules {
  */
 class StatusAggregator {
 public:
+
+    StatusAggregator() = default;
+
+    StatusAggregator(const std::shared_ptr<ModuleManagerLibraryHandler> &module): module_{module} {};
 	/**
 	 * @short Status aggregator init.
 	 *
      * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int init_status_aggregator(const ModuleManagerLibraryHandler &library);
+	int init_status_aggregator();
 
 	/**
 	 * @short Clean up.
@@ -137,7 +141,7 @@ private:
 
 	std::string getId(const ::device_identification &device);
 
-	ModuleManagerLibraryHandler module { };
+	const std::shared_ptr<ModuleManagerLibraryHandler> module_{};
 
 	std::map <std::string, device_state> devices {};
 };

@@ -24,8 +24,7 @@ std::string StatusAggregator::getId(const ::device_identification &device) {
 	return ss.str();
 }
 
-int StatusAggregator::init_status_aggregator(const ModuleManagerLibraryHandler &library) {
-	module = library;
+int StatusAggregator::init_status_aggregator() {
 	return OK;
 }
 
@@ -78,22 +77,16 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	if(is_device_type_supported(device_type) == NOT_OK) {
 		return DEVICE_NOT_SUPPORTED;
 	}
-<<<<<<< HEAD
 
 	std::string id = getId(device);
-
-	if(status.size_in_bytes == 0 || statusDataValid(status, device_type) == NOT_OK) {
+	if(status.size_in_bytes == 0 || module_->statusDataValid(status, device_type) == NOT_OK) {
 		log::logWarning("Invalid status data on device id: {}", id);
-=======
-	if(status.size_in_bytes == 0 || module.statusDataValid(status, device_type) == NOT_OK) {
-		log::logWarning("Invalid status data");
->>>>>>> 1762d6e (Share module library)
 		return NOT_OK;
 	}
 
 	if(not devices.contains(id)) {
 		struct buffer commandBuffer {};
-		module.generateFirstCommand(&commandBuffer, device_type);
+		module_->generateFirstCommand(&commandBuffer, device_type);
 		struct buffer buf {};
 		allocate(&buf, status.size_in_bytes);
 		strncpy(static_cast<char *>(buf.data), static_cast<char *>(status.data), status.size_in_bytes - 1);
@@ -103,9 +96,9 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 
 	auto &currStatus = devices[id].status;
 	auto &aggregatedMessages = devices[id].aggregatedMessages;
-	if(module.sendStatusCondition(currStatus, status, device_type) == OK) {
+	if(module_->sendStatusCondition(currStatus, status, device_type) == OK) {
 		struct buffer aggregatedStatusBuff {};
-		module.aggregateStatus(&aggregatedStatusBuff, currStatus, status, device_type);
+		module_->aggregateStatus(&aggregatedStatusBuff, currStatus, status, device_type);
         deallocate(&currStatus);
         currStatus = aggregatedStatusBuff;
 	} else {
@@ -174,7 +167,7 @@ int StatusAggregator::is_device_valid(const struct ::device_identification devic
 	return NOT_OK;
 }
 
-int StatusAggregator::get_module_number() { return module.getModuleNumber(); }
+int StatusAggregator::get_module_number() { return module_->getModuleNumber(); }
 
 int StatusAggregator::update_command(const struct ::buffer command, const struct ::device_identification device) {
 	const auto &device_type = device.device_type;
@@ -187,7 +180,7 @@ int StatusAggregator::update_command(const struct ::buffer command, const struct
 		return DEVICE_NOT_REGISTERED;
 	}
 
-    if(module.commandDataValid(command, device_type) == NOT_OK){
+    if(module_->commandDataValid(command, device_type) == NOT_OK){
         log::logWarning("Invalid status data");
 		return COMMAND_INVALID;
 	}
@@ -217,7 +210,7 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 	}
 
 	struct buffer generatedCommandBuffer {};
-	module.generateCommand(&generatedCommandBuffer, status, currStatus, currCommand, device_type);
+	module_->generateCommand(&generatedCommandBuffer, status, currStatus, currCommand, device_type);
 	deallocate(&currCommand);
 	currCommand = generatedCommandBuffer;
 
@@ -232,5 +225,5 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 	return OK;
 }
 
-int StatusAggregator::is_device_type_supported(unsigned int device_type) { return module.isDeviceTypeSupported(device_type); }
+int StatusAggregator::is_device_type_supported(unsigned int device_type) { return module_->isDeviceTypeSupported(device_type); }
 }

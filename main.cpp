@@ -30,11 +30,11 @@ void initLogger(const std::string &logPath, bool verbose) {
 	Logger::init(params);
 }
 
-void loadLibraries(std::map<int, bringauto::modules::ModuleManagerLibraryHandler> modules, std::map<int, std::string> libPaths) {
-	for (auto& [key, val] : modules) {
-		modules[key] = bringauto::modules::ModuleManagerLibraryHandler();
-		if (modules[key].loadLibrary(libPaths[key]) != OK) {
-			throw std::runtime_error("Unable to load library " + libPaths[key]);
+void loadLibraries(std::map<int, std::shared_ptr<bringauto::modules::ModuleManagerLibraryHandler>> &modules, const std::map<int, std::string> &libPaths) {
+	for (auto const & [key, path] : libPaths) {
+        modules.emplace(key, std::make_shared<bringauto::modules::ModuleManagerLibraryHandler>());
+		if (modules[key]->loadLibrary(path) != OK) {
+			throw std::runtime_error("Unable to load library " + path);
 		}
 	}
 }

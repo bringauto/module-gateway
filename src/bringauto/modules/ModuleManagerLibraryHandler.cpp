@@ -51,6 +51,9 @@ int ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path& path) 
 }
 
 ModuleManagerLibraryHandler::~ModuleManagerLibraryHandler() {
-	dlclose(module_);
+    if(module_ != nullptr){
+    	dlclose(module_);
+        module_ == nullptr;
+    }
 }
 }

@@ -12,11 +12,21 @@ enum class ProtocolType {
 };
 
 struct ExternalConnectionSettings {
-	ProtocolType protocolType;
-	std::map<std::string, std::string> protocolSettings;
-	std::string serverIp;
-	u_int16_t port;
-	std::vector<int> modules;
+	/**
+	 * Communication protocol
+	 */
+    ProtocolType protocolType;
 
+	std::map<std::string, std::string> protocolSettings;
+
+    std::string serverIp;
+
+    u_int16_t port;
+
+    /**
+     * Supported modules
+     */
+	std::vector<int> modules;
 };
+
 }
