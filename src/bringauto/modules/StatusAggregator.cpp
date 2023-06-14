@@ -80,7 +80,7 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 
 	std::string id = getId(device);
 	if(status.size_in_bytes == 0 || module_->statusDataValid(status, device_type) == NOT_OK) {
-		log::logWarning("Invalid status data on device id: {}", id);
+		log::logWarning("Invalid status data on device: {}", id);
 		return NOT_OK;
 	}
 
@@ -99,14 +99,12 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	if(module_->sendStatusCondition(currStatus, status, device_type) == OK) {
 		struct buffer aggregatedStatusBuff {};
 		module_->aggregateStatus(&aggregatedStatusBuff, currStatus, status, device_type);
-        deallocate(&currStatus);
-        currStatus = aggregatedStatusBuff;
+		deallocate(&currStatus);
+		currStatus = aggregatedStatusBuff;
 	} else {
 		aggregatedMessages.push(currStatus);
-		struct buffer buf {};
-		allocate(&buf, status.size_in_bytes);
-		strncpy(static_cast<char *>(buf.data), static_cast<char *>(status.data), status.size_in_bytes - 1);
-		currStatus = buf;
+		allocate(&currStatus, status.size_in_bytes);
+		strncpy(static_cast<char *>(currStatus.data), static_cast<char *>(status.data), status.size_in_bytes - 1);
 	}
 
 	return aggregatedMessages.size();
@@ -124,7 +122,7 @@ int StatusAggregator::get_aggregated_status(struct ::buffer *generated_status,
 		return NO_MESSAGE_AVAILABLE;
 	}
 
-	auto status = aggregatedMessages.front();
+	auto &status = aggregatedMessages.front();
 	aggregatedMessages.pop();
 	generated_status->data = status.data;
 	generated_status->size_in_bytes = status.size_in_bytes;
@@ -132,20 +130,12 @@ int StatusAggregator::get_aggregated_status(struct ::buffer *generated_status,
 }
 
 int StatusAggregator::get_unique_devices(struct ::buffer *unique_devices_buffer) {
-	if(devices.empty()) {
-		return 0;
-	}
 	std::stringstream output {};
 	for(auto const &[key, value]: devices) {
 		output << key << ",";
 	}
-	std::string unique_devices = output.str();
-	unique_devices.pop_back();
-	size_t size = unique_devices.size();
-	if(allocate(unique_devices_buffer, size + 1) == NOT_OK) {
-		return NOT_OK;
-	}
-	strcpy(static_cast<char *>(unique_devices_buffer->data), unique_devices.c_str());
+	output.seekp(-1, std::ios_base::end);
+	unique_devices_buffer->data = static_cast<void *>(new std::string(output.str()));
 	return devices.size();
 }
 
@@ -180,8 +170,8 @@ int StatusAggregator::update_command(const struct ::buffer command, const struct
 		return DEVICE_NOT_REGISTERED;
 	}
 
-    if(module_->commandDataValid(command, device_type) == NOT_OK){
-        log::logWarning("Invalid status data");
+	if(module_->commandDataValid(command, device_type) == NOT_OK) {
+		log::logWarning("Invalid status data on device: {}", id);
 		return COMMAND_INVALID;
 	}
 
@@ -204,7 +194,7 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 	auto &currStatus = devices[id].status;
 	auto &currCommand = devices[id].command;
 
-	if(status.size_in_bytes == 0 || statusDataValid(status, device_type) == NOT_OK) {
+	if(status.size_in_bytes == 0 || module_->statusDataValid(status, device_type) == NOT_OK) {
 		log::logWarning("Invalid status data on device id: {}", id);
 		return STATUS_INVALID;
 	}
@@ -225,5 +215,8 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 	return OK;
 }
 
-int StatusAggregator::is_device_type_supported(unsigned int device_type) { return module_->isDeviceTypeSupported(device_type); }
+int StatusAggregator::is_device_type_supported(unsigned int device_type) {
+	return module_->isDeviceTypeSupported(device_type);
+}
+
 }

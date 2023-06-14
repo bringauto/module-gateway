@@ -3,9 +3,9 @@
 
 
 
-bringauto::external_client::connection::ExternalConnection::ExternalConnection(
-		bringauto::structures::GlobalContext context) {
+// bringauto::external_client::connection::ExternalConnection::ExternalConnection(
+// 		ExternalConnectionSettings &settings) {
 
-	//structures::ExternalConnectionSettings settings {};
-	//communicationChannel_ = std::make_unique<communication::MqttCommunication>(settings); TODO something like this, but it does not work
-}
+//structures::ExternalConnectionSettings settings {};
+//communicationChannel_ = std::make_unique<communication::MqttCommunication>(settings); TODO something like this, but it does not work
+// }

@@ -12,27 +12,13 @@ using log = bringauto::logging::Logger;
 
 void ModuleHandler::destroy() {
 	log::logInfo("Module handler stopped");
-	for(auto it = modules_.begin(); it != modules_.end(); it++)
-		it->second.destroy_status_aggregator();
+	// for(auto it = modules_.begin(); it != modules_.end(); it++)
+	// 	it->second.destroy_status_aggregator();
 }
 
 void ModuleHandler::run() {
 	log::logInfo("Module handler started");
-	init_modules();
 	handle_messages();
-}
-
-void ModuleHandler::init_modules() {
-    for(auto const & [key, path]: context_->moduleLibraries){
-	    init_module(path);
-    }
-}
-
-void ModuleHandler::init_module(const std::shared_ptr<ModuleManagerLibraryHandler> &libraryHandler) {
-	StatusAggregator status_agg {libraryHandler};
-	status_agg.init_status_aggregator();
-	log::logInfo("Module with number: {} started", status_agg.get_module_number());
-	modules_.insert({ status_agg.get_module_number(), status_agg });
 }
 
 void ModuleHandler::handle_messages() {
@@ -57,13 +43,14 @@ void ModuleHandler::handle_messages() {
 void ModuleHandler::handle_connect(const ip::DeviceConnect &connect) {
 	const auto &device = connect.device();
 	const auto &module = device.module();
+    auto &statusAggregators = context_->statusAggregators;
 	log::logInfo("Received Connect message from device: {}", device.devicename());
 
 	auto response_type = ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_OK;
-	if(not modules_.contains(module)) {
+	if(not statusAggregators.contains(module)) {
 		response_type =
 				ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_MODULE_NOT_SUPPORTED;
-	} else if(modules_[module].is_device_type_supported(device.devicetype()) == NOT_OK) {
+	} else if(statusAggregators[module]->is_device_type_supported(device.devicetype()) == NOT_OK) {
 		response_type =
 				ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_DEVICE_NOT_SUPPORTED;
 	}
@@ -88,9 +75,11 @@ void ModuleHandler::handle_connect(const ip::DeviceConnect &connect) {
 void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 	const auto &device = status.device();
 	const auto &moduleNumber = device.module();
-	log::logInfo("Received Status message from device: {}", device.devicename());
+	const auto &deviceName = device.devicename();
+    auto &statusAggregators = context_->statusAggregators;
+	log::logInfo("Received Status message from device: {}", deviceName);
 
-	if(not modules_.contains(moduleNumber)) {
+	if(not statusAggregators.contains(moduleNumber)) {
 		log::logWarning("Module number: {} is not supported", moduleNumber);
 		return;
 	}
@@ -105,14 +94,26 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 
 	const struct ::device_identification deviceId = mapToDeviceId(device);
 
-	int ret = modules_[moduleNumber].add_status_to_aggregator(status_buffer, deviceId);
+	auto &statusAggregator = statusAggregators[moduleNumber];
+	int ret = statusAggregator->add_status_to_aggregator(status_buffer, deviceId);
 	if(ret < 0) {
 		log::logWarning("Add status to aggregator failed with return code: {}", ret);
 		return;
+	} else if(ret > 0) {
+		struct ::buffer aggregatedStatusBuffer {};
+		statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
+		auto aggregatedStatus = new ip::DeviceStatus();
+		aggregatedStatus->set_allocated_statusdata(new std::string(static_cast<char *>(aggregatedStatusBuffer.data),
+																   aggregatedStatusBuffer.size_in_bytes - 1));
+		aggregatedStatus->set_allocated_device(new InternalProtocol::Device(device));
+		ip::InternalClient msg {};
+		msg.set_allocated_devicestatus(aggregatedStatus);
+		toExternalQueue_->pushAndNotify(msg);
+		deallocate(&aggregatedStatusBuffer);
 	}
 
 	struct ::buffer command_buffer {};
-	ret = modules_[moduleNumber].get_command(status_buffer, deviceId, &command_buffer);
+	ret = statusAggregator->get_command(status_buffer, deviceId, &command_buffer);
 	if(ret != OK) {
 		log::logWarning("Retrieving command failed with return code: {}", ret);
 		return;
@@ -125,7 +126,7 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 	ip::InternalServer msg {};
 	msg.set_allocated_devicecommand(deviceCommand);
 	toInternalQueue_->pushAndNotify(msg);
-	log::logInfo("Command succesfully retrieved and sent to device: {}", device.devicename());
+	log::logInfo("Command succesfully retrieved and sent to device: {}", deviceName);
 
 	deallocate(&command_buffer);
 	deallocate(&status_buffer);

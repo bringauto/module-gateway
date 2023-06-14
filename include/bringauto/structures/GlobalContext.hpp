@@ -2,6 +2,7 @@
 
 #include <bringauto/settings/Settings.hpp>
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
+#include <bringauto/modules/StatusAggregator.hpp>
 
 #include <boost/asio.hpp>
 
@@ -21,7 +22,9 @@ struct GlobalContext {
 	 */
 	boost::asio::io_context ioContext;
 
-	std::map<int, std::shared_ptr<modules::ModuleManagerLibraryHandler>> moduleLibraries {};
+	std::map<unsigned int, std::shared_ptr<modules::ModuleManagerLibraryHandler>> moduleLibraries {};
+
+    std::map<unsigned int, std::shared_ptr<modules::StatusAggregator>> statusAggregators {};
 
 	/**
 	 * @brief settings used in the project

@@ -11,7 +11,9 @@ namespace bringauto::external_client::connection::communication {
 
 class MqttCommunication : ICommunicationChannel {
 public:
-	explicit MqttCommunication(structures::ExternalConnectionSettings settings);
+	explicit MqttCommunication(structures::ExternalConnectionSettings &settings);
+
+    void init();
 
 	~MqttCommunication() override;
 

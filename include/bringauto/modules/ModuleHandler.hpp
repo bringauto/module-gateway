@@ -19,8 +19,10 @@ public:
 	ModuleHandler(
 			std::shared_ptr <structures::GlobalContext> &context,
 			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &fromInternalQueue,
-			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> &toInternalQueue)
-			: context_ { context }, fromInternalQueue_ { fromInternalQueue }, toInternalQueue_ { toInternalQueue } {}
+			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> &toInternalQueue,
+			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &toExternalQueue)
+			: context_ { context }, fromInternalQueue_ { fromInternalQueue }, toInternalQueue_ { toInternalQueue },
+			  toExternalQueue_ { toExternalQueue } {}
 
 	/**
 	 * @brief Start Module handler
@@ -83,9 +85,11 @@ private:
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
 
+	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> toExternalQueue_;
+
 	std::shared_ptr <structures::GlobalContext> context_;
 
-	std::unordered_map<unsigned int, StatusAggregator> modules_ {};
+	// std::unordered_map<unsigned int, StatusAggregator> modules_ {};
 };
 
 }

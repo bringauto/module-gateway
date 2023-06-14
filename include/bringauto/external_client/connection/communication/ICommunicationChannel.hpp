@@ -10,7 +10,7 @@ namespace bringauto::external_client::connection::communication {
  */
 class ICommunicationChannel {
 public:
-	explicit ICommunicationChannel(structures::ExternalConnectionSettings settings);
+	explicit ICommunicationChannel(structures::ExternalConnectionSettings &settings) : settings_{settings}{};
 
 	virtual ~ICommunicationChannel() = default;
 
