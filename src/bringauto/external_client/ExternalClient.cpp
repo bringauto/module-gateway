@@ -6,6 +6,7 @@
 
 namespace bringauto::external_client {
 
+namespace ip = InternalProtocol;
 using log = bringauto::logging::Logger;
 
 void ExternalClient::destroy() {
@@ -20,10 +21,10 @@ void ExternalClient::run() {
 
 void ExternalClient::initConnections() {
 	for(auto const &connection: context_->settings->externalConnectionSettingsList) {
-		externalConnections_.push_back(connection::ExternalConnection(connection));
-		auto &created_connection = externalConnections_.back();
+		externalConnectionsVec_.push_back(connection::ExternalConnection(connection));
+		auto &created_connection = externalConnectionsVec_.back();
 		for(auto const &module: connection.modules) {
-			connectionMap_.emplace(module, created_connection);
+			externalConnectionMap_.emplace(module, created_connection);
 		}
 	}
 }
@@ -40,8 +41,10 @@ void ExternalClient::handleAggregatedMessages() {
 	}
 }
 
-void ExternalClient::sendMessage(InternalProtocol::InternalClient &message) {
-
+void ExternalClient::sendMessage(ip::InternalClient &message) {
+	const auto &moduleNumber = message.devicestatus().device().module();
+    // auto &connection = externalConnectionMap_.at(moduleNumber).get();
+    // auto &connection = externalConnectionMap_[moduleNumber];
 }
 
 }

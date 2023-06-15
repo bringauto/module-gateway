@@ -41,19 +41,6 @@ public:
 private:
 
 	/**
-	 * @brief Initialize all modules defined in config file
-	 *
-	 */
-	void init_modules();
-
-	/**
-	 * @brief Initialize single module
-	 *
-	 * @param path path to the module
-	 */
-	void init_module(const std::string &path);
-
-	/**
 	 * @brief Process all incoming messages
 	 *
 	 */

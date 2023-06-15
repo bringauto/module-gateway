@@ -54,8 +54,7 @@ int main(int argc, char **argv) {
 	externalClientThread.join();
 	externalClient.destroy();
 
-	for(auto it = context->statusAggregators.begin(); it != context->statusAggregators.end(); it++)
-		it->second->destroy_status_aggregator();
+    std::for_each(context->statusAggregators.cbegin(), context->statusAggregators.cend(), [](auto& pair) { pair.second->destroy_status_aggregator(); });
 
 	return 0;
 }
