@@ -18,7 +18,10 @@
       {
         "protocol-type" : "mqtt",
         "mqtt-settings" : {
-          "ssl" : false
+          "ssl" : false,
+          "ca-file" : "ca.pem",
+          "client-cert" : "client.pem",
+          "client-key" : "key.pem"
         },
         "server-ip": "127.0.0.1",
         "port": 9999,

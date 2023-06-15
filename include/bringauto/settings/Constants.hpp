@@ -45,6 +45,11 @@ const std::string SERVER_IP { "server-ip" };
 const std::string PROTOCOL_TYPE { "protocol-type" };
 
 const std::string MQTT_SETTINGS { "mqtt-settings" };
+const std::string SSL = "ssl";
+const std::string CA_FILE = "ca-file";
+const std::string CLIENT_CERT = "client-cert";
+const std::string CLIENT_KEY = "client-key";
+
 
 const std::string MODULES { "modules" };
 

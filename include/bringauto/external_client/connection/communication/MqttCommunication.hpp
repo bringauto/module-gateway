@@ -5,32 +5,30 @@
 
 #include <mqtt/async_client.h>
 
+#include <string_view>
 
 
 namespace bringauto::external_client::connection::communication {
 
 class MqttCommunication : ICommunicationChannel {
 public:
-	explicit MqttCommunication(structures::ExternalConnectionSettings &settings, std::string company,
-							   std::string vehicleName);
-
-    void init();
+	explicit MqttCommunication(structures::ExternalConnectionSettings &settings, const std::string& company,
+							   const std::string& vehicleName);
 
 	~MqttCommunication() override;
 
 	int initializeConnection() override;
 
-	int sendMessage() override;
+	int sendMessage(ExternalProtocol::ExternalClient *message) override;
 
-	// TODO getCommand, or just add Commands to CommandQueue from listening thread
+	std::shared_ptr<ExternalProtocol::ExternalServer> receiveMessage() override;
 
 	void closeConnection() override;
 
 	static std::string createClientId(const std::string& company, const std::string& vehicleName);
 
 private:
-
-	void connect(std::string topic);
+	void connect();
 
 	static std::string createPublishTopic(const std::string& company, const std::string& vehicleName);
 	static std::string createSubscribeTopic(const std::string& company, const std::string& vehicleName);
@@ -40,9 +38,19 @@ private:
 	 */
 	std::unique_ptr<mqtt::async_client> client_ { nullptr };
 
+	std::string clientId_ {};
+
 	std::string publishTopic_ {};
 
 	std::string subscribeTopic_ {};
+
+	mqtt::connect_options connopts_ {};
+	std::string serverAddress_ {};
+
+	/**
+	 * MQTT QOS level. Level 0 has no assurance of delivery and does not buffer messages.
+	 */
+	constexpr static int8_t qos { 0 };
 };
 
 }
