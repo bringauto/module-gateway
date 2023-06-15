@@ -1,6 +1,8 @@
 #pragma once
 
 #include <bringauto/structures/ExternalConnectionSettings.hpp>
+#include <ExternalProtocol.pb.h>
+
 #include <utility>
 
 namespace bringauto::external_client::connection::communication {
@@ -16,9 +18,9 @@ public:
 
 	virtual int initializeConnection() = 0;
 
-	virtual int sendMessage() = 0;
+	virtual int sendMessage(ExternalProtocol::ExternalClient *message) = 0;
 
-	// TODO getCommand, or just add Commands to CommandQueue from listening thread
+	virtual std::shared_ptr<ExternalProtocol::ExternalServer> receiveMessage() = 0;
 
 	virtual void closeConnection() = 0;
 

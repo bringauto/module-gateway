@@ -1,4 +1,5 @@
 #include <bringauto/external_client/connection/communication/MqttCommunication.hpp>
+#include <bringauto/settings/Constants.hpp>
 
 #include <bringauto/logging/Logger.hpp>
 
@@ -6,24 +7,52 @@
 
 namespace bringauto::external_client::connection::communication {
 
-MqttCommunication::MqttCommunication(structures::ExternalConnectionSettings &settings, std::string company,
-									 std::string vehicleName): ICommunicationChannel(
+MqttCommunication::MqttCommunication(structures::ExternalConnectionSettings &settings, const std::string& company,
+									 const std::string& vehicleName): ICommunicationChannel(
 		settings) {
+	settings_ = settings;
 	publishTopic_ = createPublishTopic(company, vehicleName);
 	subscribeTopic_ = createSubscribeTopic(company, vehicleName);
+	clientId_ = createClientId(company, vehicleName);
 
-	if (settings.protocolSettings.contains("ssl") && settings.protocolSettings["ssl"] == "true") { 	// TODO move settings constants somewhere
-		// TODO check true string, or use lowercase
+	serverAddress_ = { settings_.serverIp
+							+ ":" + std::to_string(settings_.port) };
+
+	if (settings_.protocolSettings.contains(settings::SSL) && settings_.protocolSettings[settings::SSL] == "true") {
+		if (settings.protocolSettings.contains(settings::CA_FILE)
+			&& settings.protocolSettings.contains(settings::CLIENT_CERT)
+			&& settings.protocolSettings.contains(settings::CLIENT_KEY)
+			) {
+			serverAddress_ = "ssl://" + serverAddress_;
+			auto sslopts = mqtt::ssl_options_builder()
+					.trust_store(settings_.protocolSettings[settings::CA_FILE])
+					.private_key(settings_.protocolSettings[settings::CLIENT_KEY])
+					.key_store(settings_.protocolSettings[settings::CLIENT_CERT])
+					.error_handler([](const std::string &msg) {
+						logging::Logger::logError("MQTT: SSL Error: {}", msg);
+					})
+					.finalize();
+			connopts_.set_ssl(sslopts);
+
+		} else {
+			logging::Logger::logError("MQTT: Settings doesn't contain all required files for SSL");
+			// TODO throw error?? Or maybe move this to connect
+		}
 	}
 }
 
-// TODO parse settings, create Topic etc.
 
 
-void MqttCommunication::connect(std::string topic) {
-	std::string address = { settings_.serverIp
-							+ ":" + std::to_string(settings_.port) };
-	client_->connect();
+void MqttCommunication::connect() {
+	mqtt::connect_options connopts;
+	client_ = std::make_unique<mqtt::async_client>(serverAddress_, clientId_, mqtt::create_options(MQTTVERSION_5)); // TODO do I have to create new client every time?
+
+	client_->start_consuming();
+	mqtt::token_ptr conntok = client_->connect(connopts);
+	conntok->wait();
+	logging::Logger::logInfo("Connected to MQTT server {}", serverAddress_);
+
+	client_->subscribe(subscribeTopic_, qos)->get_subscribe_response();
 }
 
 MqttCommunication::~MqttCommunication() {
@@ -32,23 +61,53 @@ MqttCommunication::~MqttCommunication() {
 
 int MqttCommunication::initializeConnection() {
 	try {
-		connect(std::string());
+		connect();
 	} catch(std::exception &e) {
 		logging::Logger::logError("Unable to connect to MQTT {}", e.what());
 	}
 	return 0;
 }
 
-int MqttCommunication::sendMessage() {
-	// client_->publish("test", );
-	return 0;
+int MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
+	if(!client_->is_connected()) {
+		return -1;
+	}
+	unsigned int size = message->ByteSizeLong();
+	uint8_t buffer[size];
+	memset(buffer, '\0', size);
+	message->SerializeToArray(buffer, static_cast<int>(size));
+	client_->publish(publishTopic_, buffer, size, qos, false);
+}
+
+std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMessage() {
+	mqtt::const_message_ptr msg { nullptr };
+	if(client_->is_connected()) {
+		msg = client_->try_consume_message_for(std::chrono::seconds(10));
+	} else {
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+
+	if(!msg) {
+		return nullptr;
+	}
+
+	std::shared_ptr<ExternalProtocol::ExternalServer> ptr { nullptr };
+
+	auto *incommingMessage = new ExternalProtocol::ExternalServer();
+	incommingMessage->ParseFromString(msg->get_payload());
+	ptr.reset(incommingMessage);
+	return ptr;
 }
 
 void MqttCommunication::closeConnection() {
 	if(client_ == nullptr) {
 		return;
 	}
-	client_->disconnect();
+	if(client_->is_connected()) {
+		client_->unsubscribe(subscribeTopic_);
+		client_->disconnect();
+	}
+	client_.reset();
 }
 
 std::string MqttCommunication::createClientId(const std::string& company, const std::string& vehicleName) {
@@ -62,5 +121,6 @@ std::string MqttCommunication::createPublishTopic(const std::string &company, co
 std::string MqttCommunication::createSubscribeTopic(const std::string &company, const std::string &vehicleName) {
 	return company + std::string("/") + vehicleName + std::string("/external_server");
 }
+
 
 }
