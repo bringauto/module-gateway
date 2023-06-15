@@ -11,9 +11,9 @@ namespace bringauto::modules {
 template <typename T>
 struct FunctionTypeDeducer;
 
-template<typename R, typename ...Args>
-struct FunctionTypeDeducer<std::function<R(Args...)>>{
-    using fncptr = R (*)(Args...);
+template <typename R, typename ...Args>
+struct FunctionTypeDeducer<std::function < R(Args...)>> {
+using fncptr = R (*)(Args...);
 };
 
 using log = bringauto::logging::Logger;
@@ -29,14 +29,22 @@ int StatusAggregator::init_status_aggregator(std::filesystem::path path) {
 	if(module == nullptr) {
 		return NOT_OK;
 	}
-	isDeviceTypeSupported = reinterpret_cast<FunctionTypeDeducer<decltype(isDeviceTypeSupported)>::fncptr>(dlsym(module, "is_device_type_supported"));
-	getModuleNumber = reinterpret_cast<FunctionTypeDeducer<decltype(getModuleNumber)>::fncptr>(dlsym(module, "get_module_number"));
-	generateFirstCommand = reinterpret_cast<FunctionTypeDeducer<decltype(generateFirstCommand)>::fncptr>(dlsym(module, "generate_first_command"));
-	statusDataValid = reinterpret_cast<FunctionTypeDeducer<decltype(statusDataValid)>::fncptr>(dlsym(module, "status_data_valid"));
-	commandDataValid = reinterpret_cast<FunctionTypeDeducer<decltype(commandDataValid)>::fncptr>(dlsym(module, "command_data_valid"));
-	sendStatusCondition = reinterpret_cast<FunctionTypeDeducer<decltype(sendStatusCondition)>::fncptr>(dlsym(module, "send_status_condition"));
-	aggregateStatus = reinterpret_cast<FunctionTypeDeducer<decltype(aggregateStatus)>::fncptr>(dlsym(module, "aggregate_status"));
-	generateCommand = reinterpret_cast<FunctionTypeDeducer<decltype(generateCommand)>::fncptr>(dlsym(module, "generate_command"));
+	isDeviceTypeSupported = reinterpret_cast<FunctionTypeDeducer<decltype(isDeviceTypeSupported)>::fncptr>(dlsym(module,
+																												 "is_device_type_supported"));
+	getModuleNumber = reinterpret_cast<FunctionTypeDeducer<decltype(getModuleNumber)>::fncptr>(dlsym(module,
+																									 "get_module_number"));
+	generateFirstCommand = reinterpret_cast<FunctionTypeDeducer<decltype(generateFirstCommand)>::fncptr>(dlsym(module,
+																											   "generate_first_command"));
+	statusDataValid = reinterpret_cast<FunctionTypeDeducer<decltype(statusDataValid)>::fncptr>(dlsym(module,
+																									 "status_data_valid"));
+	commandDataValid = reinterpret_cast<FunctionTypeDeducer<decltype(commandDataValid)>::fncptr>(dlsym(module,
+																									   "command_data_valid"));
+	sendStatusCondition = reinterpret_cast<FunctionTypeDeducer<decltype(sendStatusCondition)>::fncptr>(dlsym(module,
+																											 "send_status_condition"));
+	aggregateStatus = reinterpret_cast<FunctionTypeDeducer<decltype(aggregateStatus)>::fncptr>(dlsym(module,
+																									 "aggregate_status"));
+	generateCommand = reinterpret_cast<FunctionTypeDeducer<decltype(generateCommand)>::fncptr>(dlsym(module,
+																									 "generate_command"));
 	return OK;
 }
 
@@ -51,17 +59,17 @@ int StatusAggregator::destroy_status_aggregator() {
 }
 
 int StatusAggregator::clear_all_devices() {
-	for (auto& [key, device] : devices){
-        auto &aggregatedMessages = device.aggregatedMessages;
-        while(not aggregatedMessages.empty()){
-            auto message = aggregatedMessages.front();
-            if (message.data != nullptr){
-                deallocate(&message);
-            }
-            aggregatedMessages.pop();
-        }
-	    deallocate(&device.status);
-	    deallocate(&device.command);
+	for(auto &[key, device]: devices) {
+		auto &aggregatedMessages = device.aggregatedMessages;
+		while(not aggregatedMessages.empty()) {
+			auto message = aggregatedMessages.front();
+			if(message.data != nullptr) {
+				deallocate(&message);
+			}
+			aggregatedMessages.pop();
+		}
+		deallocate(&device.status);
+		deallocate(&device.command);
 	}
 	devices.clear();
 	return OK;
@@ -94,18 +102,20 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	if(is_device_type_supported(device_type) == NOT_OK) {
 		return DEVICE_NOT_SUPPORTED;
 	}
+
+	std::string id = getId(device);
+
 	if(status.size_in_bytes == 0 || statusDataValid(status, device_type) == NOT_OK) {
-		log::logWarning("Invalid status data");
+		log::logWarning("Invalid status data on device id: {}", id);
 		return NOT_OK;
 	}
 
-	std::string id = getId(device);
 	if(not devices.contains(id)) {
 		struct buffer commandBuffer {};
 		generateFirstCommand(&commandBuffer, device_type);
 		struct buffer buf {};
-        allocate(&buf, status.size_in_bytes);
-        strncpy(static_cast<char *>(buf.data), static_cast<char *>(status.data), status.size_in_bytes -1);
+		allocate(&buf, status.size_in_bytes);
+		strncpy(static_cast<char *>(buf.data), static_cast<char *>(status.data), status.size_in_bytes - 1);
 		devices.insert({ id, { commandBuffer, buf }});
 		return 0;
 	}
@@ -115,13 +125,13 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	if(sendStatusCondition(currStatus, status, device_type) == OK) {
 		struct buffer aggregatedStatusBuff {};
 		aggregateStatus(&aggregatedStatusBuff, currStatus, status, device_type);
-        deallocate(&currStatus);
-        currStatus = aggregatedStatusBuff;
+		deallocate(&currStatus);
+		currStatus = aggregatedStatusBuff;
 	} else {
 		aggregatedMessages.push(currStatus);
-        struct buffer buf {};
-        allocate(&buf, status.size_in_bytes);
-        strncpy(static_cast<char *>(buf.data), static_cast<char *>(status.data), status.size_in_bytes - 1);
+		struct buffer buf {};
+		allocate(&buf, status.size_in_bytes);
+		strncpy(static_cast<char *>(buf.data), static_cast<char *>(status.data), status.size_in_bytes - 1);
 		currStatus = buf;
 	}
 
@@ -148,12 +158,20 @@ int StatusAggregator::get_aggregated_status(struct ::buffer *generated_status,
 }
 
 int StatusAggregator::get_unique_devices(struct ::buffer *unique_devices_buffer) {
-    std::stringstream output {};
-	for(auto const &[key, value]: devices) {
-        output << key << ",";
+	if(devices.empty()) {
+		return 0;
 	}
-    output.seekp(-1, std::ios_base::end);
-	unique_devices_buffer->data = static_cast<void *>(new std::string(output.str()));
+	std::stringstream output {};
+	for(auto const &[key, value]: devices) {
+		output << key << ",";
+	}
+	std::string unique_devices = output.str();
+	unique_devices.pop_back();
+	size_t size = unique_devices.size();
+	if(allocate(unique_devices_buffer, size + 1) == NOT_OK) {
+		return NOT_OK;
+	}
+	strcpy(static_cast<char *>(unique_devices_buffer->data), unique_devices.c_str());
 	return devices.size();
 }
 
@@ -188,10 +206,10 @@ int StatusAggregator::update_command(const struct ::buffer command, const struct
 		return DEVICE_NOT_REGISTERED;
 	}
 
-    if(commandDataValid(command, device_type) == NOT_OK){
-        log::logWarning("Invalid status data");
+	if(commandDataValid(command, device_type) == NOT_OK) {
+		log::logWarning("Invalid command data on device id: {}", id);
 		return COMMAND_INVALID;
-    }
+	}
 
 	auto &currCommand = devices[id].command;
 	deallocate(&currCommand);
@@ -199,6 +217,7 @@ int StatusAggregator::update_command(const struct ::buffer command, const struct
 	return OK;
 }
 
+// maybe not registered
 int StatusAggregator::get_command(const struct ::buffer status, const struct ::device_identification device,
 								  struct ::buffer *command) {
 	const auto &device_type = device.device_type;
@@ -207,13 +226,14 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 		return DEVICE_NOT_SUPPORTED;
 	}
 
-	if(status.size_in_bytes == 0) {
-		return STATUS_INVALID;
-	}
-
 	std::string id = getId(device);
 	auto &currStatus = devices[id].status;
 	auto &currCommand = devices[id].command;
+
+	if(status.size_in_bytes == 0 || statusDataValid(status, device_type) == NOT_OK) {
+		log::logWarning("Invalid status data on device id: {}", id);
+		return STATUS_INVALID;
+	}
 
 	struct buffer generatedCommandBuffer {};
 	generateCommand(&generatedCommandBuffer, status, currStatus, currCommand, device_type);
@@ -232,4 +252,5 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 }
 
 int StatusAggregator::is_device_type_supported(unsigned int device_type) { return isDeviceTypeSupported(device_type); }
+
 }

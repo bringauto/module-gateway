@@ -106,7 +106,7 @@ public:
 	int get_command(const struct ::buffer status, const struct ::device_identification device,
 					struct ::buffer *command);
 
-    /**
+	/**
 	 * @short Get number of the module
 	 *
 	 * @see fleet-protocol/lib/common_headers/include/device_management.h

@@ -9,9 +9,14 @@ Module Gateway is  composed of:
 
 The internal server handles the connection and incoming data from the Internal Clients (devices).
 After verification the data are parsed into protobuf message that is sent to Module Handler.
-Internal server then receives response to the message  and sends it back to Internal Client.
+Internal server then receives response to the message and sends it back to Internal Client.
 
 ### Module Handler
+
+The module handler is responsible for receiving protobuf messages from internal clients via the internal server.
+It processes these messages using the status aggregator and subsequently sends corresponding commands back to the internal client.
+Each status aggregator holds information about the connected internal client, including aggregated statuses, commands, and the actual status.
+The external client updates the command for each connected device and subsequently transmits the aggregated messages to the external server.
 
 ### External Client
 

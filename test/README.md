@@ -14,7 +14,7 @@ Each test is composed of main three different components:
 * For each received device TestHandler will constructs Dummy "Internal Client" which will offer TestHandler with operations (connect, disconnect, and versions of send and receive message). These operations test for correct responses(behavior of Internal Server).
 
 Tests can be split into 5 different groups:
-* Testing for multiplicity of different Clients creating multiple Connections. 
+* Testing for multiplicity of different Clients creating multiple Connections.
   - Is done by parallel running threads each handling the entire communication between each "Internal Client" and Internal Server.
 * Testing repeated responses to connect from the "same" device with different priority.
   - main thread runs serially all communication between client and server. Starting with try to connect all devices, then running communication for period of time. Testing for correct responses to connects, and disconnection of overridden lower priority deice.
@@ -27,9 +27,9 @@ Tests can be split into 5 different groups:
 * Testing for correct behavior of timeouts when Client does not send whole message.
   - NOTICE: both the behavior and tests for it are not implemented
 
-### ExternalClientTests suite:
-
 ### ModuleHandlerTests suite:
+
+### ExternalClientTests suite:
 
 ## Requirements
 
