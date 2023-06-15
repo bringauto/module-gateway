@@ -11,7 +11,8 @@ namespace bringauto::external_client::connection::communication {
 
 class MqttCommunication : ICommunicationChannel {
 public:
-	explicit MqttCommunication(structures::ExternalConnectionSettings &settings);
+	explicit MqttCommunication(structures::ExternalConnectionSettings &settings, std::string company,
+							   std::string vehicleName);
 
     void init();
 
@@ -25,14 +26,23 @@ public:
 
 	void closeConnection() override;
 
+	static std::string createClientId(const std::string& company, const std::string& vehicleName);
+
 private:
 
-	void connect();
+	void connect(std::string topic);
+
+	static std::string createPublishTopic(const std::string& company, const std::string& vehicleName);
+	static std::string createSubscribeTopic(const std::string& company, const std::string& vehicleName);
 
 	/**
 	 * MQTT client
 	 */
 	std::unique_ptr<mqtt::async_client> client_ { nullptr };
+
+	std::string publishTopic_ {};
+
+	std::string subscribeTopic_ {};
 };
 
 }
