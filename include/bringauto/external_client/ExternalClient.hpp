@@ -38,15 +38,13 @@ private:
 
 	void sendMessage(InternalProtocol::InternalClient &message);
 
-	std::map<unsigned int, std::reference_wrapper<connection::ExternalConnection>> connectionMap_;
+	std::map<unsigned int, std::reference_wrapper<connection::ExternalConnection>> externalConnectionMap_;
 
-	std::vector <connection::ExternalConnection> externalConnections_;
+	std::vector <connection::ExternalConnection> externalConnectionsVec_;
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> toExternalQueue_;
 
 	std::shared_ptr <structures::GlobalContext> context_;
-
-	// TODO timers map<connection, timer>
 };
 
 }

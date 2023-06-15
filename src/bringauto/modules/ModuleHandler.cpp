@@ -12,8 +12,6 @@ using log = bringauto::logging::Logger;
 
 void ModuleHandler::destroy() {
 	log::logInfo("Module handler stopped");
-	// for(auto it = modules_.begin(); it != modules_.end(); it++)
-	// 	it->second.destroy_status_aggregator();
 }
 
 void ModuleHandler::run() {
@@ -42,15 +40,15 @@ void ModuleHandler::handle_messages() {
 
 void ModuleHandler::handle_connect(const ip::DeviceConnect &connect) {
 	const auto &device = connect.device();
-	const auto &module = device.module();
+	const auto &moduleNumber = device.module();
     auto &statusAggregators = context_->statusAggregators;
 	log::logInfo("Received Connect message from device: {}", device.devicename());
 
 	auto response_type = ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_OK;
-	if(not statusAggregators.contains(module)) {
+	if(not statusAggregators.contains(moduleNumber)) {
 		response_type =
 				ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_MODULE_NOT_SUPPORTED;
-	} else if(statusAggregators[module]->is_device_type_supported(device.devicetype()) == NOT_OK) {
+	} else if(statusAggregators[moduleNumber]->is_device_type_supported(device.devicetype()) == NOT_OK) {
 		response_type =
 				ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_DEVICE_NOT_SUPPORTED;
 	}
