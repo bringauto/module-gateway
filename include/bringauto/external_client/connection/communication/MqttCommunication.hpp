@@ -10,9 +10,9 @@
 
 namespace bringauto::external_client::connection::communication {
 
-class MqttCommunication : ICommunicationChannel {
+class MqttCommunication : public ICommunicationChannel {
 public:
-	explicit MqttCommunication(structures::ExternalConnectionSettings &settings, const std::string& company,
+	explicit MqttCommunication(const structures::ExternalConnectionSettings &settings, const std::string& company,
 							   const std::string& vehicleName);
 
 	~MqttCommunication() override;

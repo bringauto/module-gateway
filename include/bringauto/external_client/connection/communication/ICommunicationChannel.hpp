@@ -12,7 +12,8 @@ namespace bringauto::external_client::connection::communication {
  */
 class ICommunicationChannel {
 public:
-	explicit ICommunicationChannel(structures::ExternalConnectionSettings &settings) : settings_{settings}{};
+	explicit ICommunicationChannel(const structures::ExternalConnectionSettings &settings, const std::string& company,
+								   const std::string& vehicleName) : settings_{settings}{};
 
 	virtual ~ICommunicationChannel() = default;
 

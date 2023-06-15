@@ -7,9 +7,9 @@
 
 namespace bringauto::external_client::connection::communication {
 
-MqttCommunication::MqttCommunication(structures::ExternalConnectionSettings &settings, const std::string& company,
+MqttCommunication::MqttCommunication(const structures::ExternalConnectionSettings &settings, const std::string& company,
 									 const std::string& vehicleName): ICommunicationChannel(
-		settings) {
+		settings, company, vehicleName) {
 	settings_ = settings;
 	publishTopic_ = createPublishTopic(company, vehicleName);
 	subscribeTopic_ = createSubscribeTopic(company, vehicleName);
