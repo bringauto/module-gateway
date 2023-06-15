@@ -75,8 +75,6 @@ private:
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> toExternalQueue_;
 
 	std::shared_ptr <structures::GlobalContext> context_;
-
-	// std::unordered_map<unsigned int, StatusAggregator> modules_ {};
 };
 
 }

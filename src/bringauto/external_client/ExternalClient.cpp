@@ -23,8 +23,8 @@ void ExternalClient::initConnections() {
 	for(auto const &connection: context_->settings->externalConnectionSettingsList) {
 		externalConnectionsVec_.push_back(connection::ExternalConnection(connection));
 		auto &created_connection = externalConnectionsVec_.back();
-		for(auto const &module: connection.modules) {
-			externalConnectionMap_.emplace(module, created_connection);
+		for(auto const &moduleNumber: connection.modules) {
+			externalConnectionMap_.emplace(moduleNumber, created_connection);
 		}
 	}
 }
@@ -43,8 +43,7 @@ void ExternalClient::handleAggregatedMessages() {
 
 void ExternalClient::sendMessage(ip::InternalClient &message) {
 	const auto &moduleNumber = message.devicestatus().device().module();
-    // auto &connection = externalConnectionMap_.at(moduleNumber).get();
-    // auto &connection = externalConnectionMap_[moduleNumber];
+    auto &connection = externalConnectionMap_.at(moduleNumber).get();
 }
 
 }
