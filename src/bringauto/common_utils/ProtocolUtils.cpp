@@ -42,24 +42,15 @@ InternalProtocol::InternalClient ProtocolUtils::CreateClientMessage(const Intern
 	return message;
 }
 
-InternalProtocol::Device ProtocolUtils::CreateDevice(const InternalProtocol::Device_Module &
-
-module,
-size_t type,
-const std::string &role,
-const std::string &name, size_t
-priority) {
-InternalProtocol::Device device;
-device.set_module(module);
-device.
-set_devicetype(type);
-device.
-set_devicerole(role);
-device.
-set_devicename(name);
-device.
-set_priority(priority);
-return
-device;
+InternalProtocol::Device
+ProtocolUtils::CreateDevice(const InternalProtocol::Device_Module &module, size_t type, const std::string &role,
+							const std::string &name, size_t priority) {
+	InternalProtocol::Device device;
+	device.set_module(module);
+	device.set_devicetype(type);
+	device.set_devicerole(role);
+	device.set_devicename(name);
+	device.set_priority(priority);
+	return device;
 }
 }

@@ -23,9 +23,9 @@ void ModuleHandler::run() {
 }
 
 void ModuleHandler::init_modules() {
-    for(auto const & path: context_->settings->modulePaths){
-	    init_module(path);
-    }
+	for(auto const &path: context_->settings->modulePaths) {
+		init_module(path);
+	}
 }
 
 void ModuleHandler::init_module(const std::string &path) {
@@ -119,14 +119,15 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 	}
 
 	auto deviceCommand = new ip::DeviceCommand();
-	deviceCommand->set_allocated_commanddata(new std::string(static_cast<char *>(command_buffer.data), command_buffer.size_in_bytes - 1));
+	deviceCommand->set_allocated_commanddata(
+			new std::string(static_cast<char *>(command_buffer.data), command_buffer.size_in_bytes - 1));
 	deviceCommand->set_allocated_device(new InternalProtocol::Device(device));
 	ip::InternalServer msg {};
 	msg.set_allocated_devicecommand(deviceCommand);
 	toInternalQueue_->pushAndNotify(msg);
 	log::logInfo("Command succesfully retrieved and sent to device: {}", device.devicename());
 
-    deallocate(&command_buffer);
+	deallocate(&command_buffer);
 	deallocate(&status_buffer);
 }
 

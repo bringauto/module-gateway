@@ -37,6 +37,48 @@ public:
 	void destroy();
 
 private:
+
+	/**
+	 * @brief Initialize all modules defined in config file
+	 *
+	 */
+	void init_modules();
+
+	/**
+	 * @brief Initialize single module
+	 *
+	 * @param path path to the module
+	 */
+	void init_module(const std::string &path);
+
+	/**
+	 * @brief Process all incoming messages
+	 *
+	 */
+	void handle_messages();
+
+	/**
+	 * @brief Process connect message
+	 *
+	 * @param connect Connect message
+	 */
+	void handle_connect(const InternalProtocol::DeviceConnect &connect);
+
+	/**
+	 * @brief Process status message
+	 *
+	 * @param status Status message
+	 */
+	void handle_status(const InternalProtocol::DeviceStatus &status);
+
+	/**
+	 * @brief Creates device_identification from protobuf device
+	 *
+	 * @param device internal protocol device
+	 * @return ::device_identification
+	 */
+	::device_identification mapToDeviceId(const InternalProtocol::Device &device);
+
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> fromInternalQueue_;
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
@@ -44,18 +86,6 @@ private:
 	std::shared_ptr <structures::GlobalContext> context_;
 
 	std::unordered_map<unsigned int, StatusAggregator> modules_ {};
-
-	void init_modules();
-
-	void init_module(const std::string &path);
-
-	void handle_messages();
-
-	void handle_connect(const InternalProtocol::DeviceConnect &connect);
-
-	void handle_status(const InternalProtocol::DeviceStatus &status);
-
-	::device_identification mapToDeviceId(const InternalProtocol::Device &device);
 };
 
 }
