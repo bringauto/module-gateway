@@ -3,9 +3,10 @@
 
 
 
-// bringauto::external_client::connection::ExternalConnection::ExternalConnection(
-// 		ExternalConnectionSettings &settings) {
+namespace bringauto::external_client::connection {
 
-//structures::ExternalConnectionSettings settings {};
-//communicationChannel_ = std::make_unique<communication::MqttCommunication>(settings); TODO something like this, but it does not work
-// }
+void ExternalConnection::send(){
+
+}
+
+}

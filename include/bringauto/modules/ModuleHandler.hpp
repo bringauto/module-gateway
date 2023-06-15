@@ -60,14 +60,6 @@ private:
 	 */
 	void handle_status(const InternalProtocol::DeviceStatus &status);
 
-	/**
-	 * @brief Creates device_identification from protobuf device
-	 *
-	 * @param device internal protocol device
-	 * @return ::device_identification
-	 */
-	::device_identification mapToDeviceId(const InternalProtocol::Device &device);
-
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> fromInternalQueue_;
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;

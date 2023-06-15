@@ -1,6 +1,7 @@
 #include <bringauto/modules/ModuleHandler.hpp>
 #include <bringauto/logging/Logger.hpp>
 #include <bringauto/settings/Constants.hpp>
+#include <bringauto/utils/utils.hpp>
 #include <memory_management.h>
 
 
@@ -62,14 +63,6 @@ void ModuleHandler::handle_connect(const ip::DeviceConnect &connect) {
 	log::logInfo("New device {} is trying to connect, sending response {}", device.devicename(), response_type);
 }
 
-::device_identification ModuleHandler::mapToDeviceId(const InternalProtocol::Device &device) {
-	return ::device_identification { .module = device.module(),
-			.device_type = device.devicetype(),
-			.device_role = device.devicerole().c_str(),
-			.device_name = device.devicename().c_str(),
-			.priority = device.priority() };
-}
-
 void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 	const auto &device = status.device();
 	const auto &moduleNumber = device.module();
@@ -90,7 +83,7 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 	}
 	strcpy(static_cast<char *>(status_buffer.data), statusData.c_str());
 
-	const struct ::device_identification deviceId = mapToDeviceId(device);
+	const struct ::device_identification deviceId = utils::mapToDeviceId(device);
 
 	auto &statusAggregator = statusAggregators[moduleNumber];
 	int ret = statusAggregator->add_status_to_aggregator(status_buffer, deviceId);

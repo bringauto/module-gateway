@@ -52,4 +52,12 @@ void initLogger(const std::string &logPath, bool verbose) {
 	Logger::init(params);
 }
 
+::device_identification mapToDeviceId(const InternalProtocol::Device &device) {
+	return ::device_identification { .module = device.module(),
+			.device_type = device.devicetype(),
+			.device_role = device.devicerole().c_str(),
+			.device_name = device.devicename().c_str(),
+			.priority = device.priority() };
+}
+
 }

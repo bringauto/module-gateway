@@ -16,6 +16,8 @@ namespace bringauto::external_client::connection {
 class ExternalConnection {
 public:
 	ExternalConnection(const structures::ExternalConnectionSettings &settings): ip_{settings.serverIp}, port_{settings.port} {};
+
+    void send();
 private:
 	int messageCounter_ {};
 	std::string sessionId_ {};

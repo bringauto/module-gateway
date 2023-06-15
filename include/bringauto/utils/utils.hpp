@@ -2,6 +2,7 @@
 
 #include <bringauto/structures/GlobalContext.hpp>
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
+#include <InternalProtocol.pb.h>
 
 #include <memory>
 
@@ -15,5 +16,13 @@ void initStatusAggregators(std::shared_ptr <bringauto::structures::GlobalContext
 
 void loadLibraries(std::map<unsigned int, std::shared_ptr<bringauto::modules::ModuleManagerLibraryHandler>> &modules,
 				   const std::map<int, std::string> &libPaths);
+
+/**
+ * @brief Creates device_identification from protobuf device
+ *
+ * @param device internal protocol device
+ * @return ::device_identification
+ */
+::device_identification mapToDeviceId(const InternalProtocol::Device &device);
 
 }

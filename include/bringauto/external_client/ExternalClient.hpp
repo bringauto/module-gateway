@@ -17,8 +17,7 @@ class ExternalClient {
 public:
 
 	ExternalClient(std::shared_ptr <structures::GlobalContext> &context,
-				   std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &toExternalQueue)
-			: context_ { context }, toExternalQueue_ { toExternalQueue } {};
+				   std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &toExternalQueue);
 
 	/**
 	 * @brief Initialize connections, error aggregators ?Queue?
@@ -36,6 +35,10 @@ private:
 
 	void handleAggregatedMessages();
 
+    void handleCommands();
+
+    void handleCommand(const InternalProtocol::DeviceCommand &deviceCommand);
+
 	void sendMessage(InternalProtocol::InternalClient &message);
 
 	std::map<unsigned int, std::reference_wrapper<connection::ExternalConnection>> externalConnectionMap_;
@@ -43,6 +46,10 @@ private:
 	std::vector <connection::ExternalConnection> externalConnectionsVec_;
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> toExternalQueue_;
+
+    std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> fromExternalQueue_;
+
+    std::thread fromExternalClientThread_;
 
 	std::shared_ptr <structures::GlobalContext> context_;
 };
