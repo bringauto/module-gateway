@@ -6,16 +6,23 @@
 
 namespace bringauto::external_client::connection::communication {
 
-MqttCommunication::MqttCommunication(structures::ExternalConnectionSettings &settings): ICommunicationChannel(
-		settings) {}
+MqttCommunication::MqttCommunication(structures::ExternalConnectionSettings &settings, std::string company,
+									 std::string vehicleName): ICommunicationChannel(
+		settings) {
+	publishTopic_ = createPublishTopic(company, vehicleName);
+	subscribeTopic_ = createSubscribeTopic(company, vehicleName);
 
-// TODO address struktura s car, company, address, port
-// TODO parse settings, create Topic etc.
-void MqttCommunication::init() {
-
+	if (settings.protocolSettings.contains("ssl") && settings.protocolSettings["ssl"] == "true") { 	// TODO move settings constants somewhere
+		// TODO check true string, or use lowercase
+	}
 }
 
-void MqttCommunication::connect() {
+// TODO parse settings, create Topic etc.
+
+
+void MqttCommunication::connect(std::string topic) {
+	std::string address = { settings_.serverIp
+							+ ":" + std::to_string(settings_.port) };
 	client_->connect();
 }
 
@@ -25,7 +32,7 @@ MqttCommunication::~MqttCommunication() {
 
 int MqttCommunication::initializeConnection() {
 	try {
-		connect();
+		connect(std::string());
 	} catch(std::exception &e) {
 		logging::Logger::logError("Unable to connect to MQTT {}", e.what());
 	}
@@ -42,6 +49,18 @@ void MqttCommunication::closeConnection() {
 		return;
 	}
 	client_->disconnect();
+}
+
+std::string MqttCommunication::createClientId(const std::string& company, const std::string& vehicleName) {
+	return company + std::string("/") + vehicleName; // TODO should have session ID or that is only inside protocol?
+}
+
+std::string MqttCommunication::createPublishTopic(const std::string &company, const std::string &vehicleName) {
+	return company + std::string("/") + vehicleName + std::string("/module_gateway");
+}
+
+std::string MqttCommunication::createSubscribeTopic(const std::string &company, const std::string &vehicleName) {
+	return company + std::string("/") + vehicleName + std::string("/external_server");
 }
 
 }
