@@ -1,16 +1,16 @@
 #pragma once
+
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
+
+#include <command_manager.h>
+#include <module_manager.h>
 
 #include <functional>
 #include <map>
 #include <queue>
 #include <string>
 #include <filesystem>
-
-#include <command_manager.h>
-#include <module_manager.h>
-
-
+#include <mutex>
 
 namespace bringauto::modules {
 

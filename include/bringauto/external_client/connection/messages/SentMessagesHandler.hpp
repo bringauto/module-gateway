@@ -8,7 +8,7 @@ namespace bringauto::external_client::connection::messages {
 
 class SentMessagesHandler {
 public:
-	SentMessagesHandler();
+	SentMessagesHandler() {};
 
 	/**
 	 * @brief call this method for each sent status - will add status as not acknowledged

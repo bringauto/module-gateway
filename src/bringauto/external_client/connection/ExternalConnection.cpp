@@ -29,4 +29,9 @@ ExternalConnection::ExternalConnection(std::shared_ptr <structures::GlobalContex
 	// TODO listening thread
 }
 
+void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status, ExternalProtocol::Status::DeviceState deviceState){
+
+}
+
+
 }

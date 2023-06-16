@@ -29,7 +29,7 @@ public:
 	 */
 	void initializeConnection();
 	void endConnection();
-    void sendStatus(InternalProtocol::DeviceStatus, ExternalProtocol::Status::DeviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING);
+    void sendStatus(const InternalProtocol::DeviceStatus &status, ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING);
 
 	bool hasAnyDeviceConnected();
 private:
