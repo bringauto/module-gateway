@@ -13,7 +13,7 @@ using log = bringauto::logging::Logger;
 ExternalClient::ExternalClient(std::shared_ptr <structures::GlobalContext> &context,
 							   std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &toExternalQueue)
 		: context_ { context }, toExternalQueue_ { toExternalQueue } {
-	fromExternalQueue_ = std::make_shared < structures::AtomicQueue < InternalProtocol::InternalServer >> ();
+	fromExternalQueue_ = std::make_shared < structures::AtomicQueue < InternalProtocol::DeviceCommand >> ();
     fromExternalClientThread_ = std::thread(&ExternalClient::handleCommands, this);
 };
 
@@ -30,7 +30,7 @@ void ExternalClient::run() {
 
 void ExternalClient::initConnections() {
 	for(auto const &connection: context_->settings->externalConnectionSettingsList) {
-		externalConnectionsVec_.push_back(connection::ExternalConnection(connection));
+		externalConnectionsVec_.emplace_back(context_, connection, std::string(), std::string(), fromExternalQueue_);
 		auto &created_connection = externalConnectionsVec_.back();
 		for(auto const &moduleNumber: connection.modules) {
 			externalConnectionMap_.emplace(moduleNumber, created_connection);
@@ -46,7 +46,7 @@ void ExternalClient::handleCommands(){
         log::logInfo("External client received command");
 
         auto &message = fromExternalQueue_->front();
-        handleCommand(message.devicecommand());
+        handleCommand(message);
         fromExternalQueue_->pop();
     }
 }
@@ -88,10 +88,10 @@ void ExternalClient::handleAggregatedMessages() {
 	}
 }
 
-void ExternalClient::sendMessage(ip::InternalClient &message) {
+void ExternalClient::sendMessage(ip::InternalClient &message) { // TODO rename to sendStatus? from external client nothing else is sent, so its better to be explicit
 	const auto &moduleNumber = message.devicestatus().device().module();
 	auto &connection = externalConnectionMap_.at(moduleNumber).get();
-	connection.send();
+	connection.sendStatus(message.devicestatus()); // TODO device state
 }
 
 }

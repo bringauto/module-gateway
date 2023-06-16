@@ -47,7 +47,7 @@ private:
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> toExternalQueue_;
 
-    std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> fromExternalQueue_;
+    std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> fromExternalQueue_;
 
     std::thread fromExternalClientThread_;
 

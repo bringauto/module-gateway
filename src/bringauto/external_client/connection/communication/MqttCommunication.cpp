@@ -1,6 +1,7 @@
 #include <bringauto/external_client/connection/communication/MqttCommunication.hpp>
 #include <bringauto/settings/Constants.hpp>
 
+#include <general_error_codes.h>
 #include <bringauto/logging/Logger.hpp>
 
 
@@ -44,11 +45,10 @@ MqttCommunication::MqttCommunication(const structures::ExternalConnectionSetting
 
 
 void MqttCommunication::connect() {
-	mqtt::connect_options connopts;
 	client_ = std::make_unique<mqtt::async_client>(serverAddress_, clientId_, mqtt::create_options(MQTTVERSION_5)); // TODO do I have to create new client every time?
 
 	client_->start_consuming();
-	mqtt::token_ptr conntok = client_->connect(connopts);
+	mqtt::token_ptr conntok = client_->connect(connopts_);
 	conntok->wait();
 	logging::Logger::logInfo("Connected to MQTT server {}", serverAddress_);
 
@@ -64,19 +64,21 @@ int MqttCommunication::initializeConnection() {
 		connect();
 	} catch(std::exception &e) {
 		logging::Logger::logError("Unable to connect to MQTT {}", e.what());
+		return NOT_OK;
 	}
-	return 0;
+	return OK;
 }
 
 int MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
 	if(!client_->is_connected()) {
-		return -1;
+		return NOT_OK;
 	}
 	unsigned int size = message->ByteSizeLong();
 	uint8_t buffer[size];
 	memset(buffer, '\0', size);
 	message->SerializeToArray(buffer, static_cast<int>(size));
 	client_->publish(publishTopic_, buffer, size, qos, false);
+	return OK;
 }
 
 std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMessage() {

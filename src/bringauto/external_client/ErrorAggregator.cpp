@@ -18,7 +18,7 @@ std::string ErrorAggregator::getId(const ::device_identification &device) {
 	return ss.str();
 }
 
-int ErrorAggregator::init_error_aggregator(const modules::ModuleManagerLibraryHandler &library) {
+int ErrorAggregator::init_error_aggregator(const std::shared_ptr<modules::ModuleManagerLibraryHandler> &library) {
 	module_ = library;
 	return OK;
 }
@@ -56,7 +56,7 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 	struct buffer errorMessageBuffer {};
 	auto &currentError = devices_[id].errorMessage;
 
-	auto retCode = module_.aggregateError(&errorMessageBuffer, currentError, status, device_type);
+	auto retCode = module_->aggregateError(&errorMessageBuffer, currentError, status, device_type);
 	if (retCode == WRONG_FORMAT) {
 		log::logWarning("Wrong status format in Error aggregator for device: {}", id);
 		return NOT_OK;
@@ -113,11 +113,11 @@ int ErrorAggregator::clear_error_aggregator() {
 }
 
 int ErrorAggregator::get_module_number() const {
-	return module_.getModuleNumber();
+	return module_->getModuleNumber();
 }
 
 int ErrorAggregator::is_device_type_supported(unsigned int device_type) {
-	return module_.isDeviceTypeSupported(device_type);
+	return module_->isDeviceTypeSupported(device_type);
 }
 
 }

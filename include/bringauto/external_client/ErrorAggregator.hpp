@@ -27,7 +27,7 @@ public:
 	 * @return OK if initialization was successful
 	 * @return NOT_OK if an error occurred
 	 */
-	int init_error_aggregator(const modules::ModuleManagerLibraryHandler &library);
+	int init_error_aggregator(const std::shared_ptr<modules::ModuleManagerLibraryHandler> &library);
 
 	/**
 	 * @short Clean up.
@@ -121,7 +121,7 @@ private:
 
 	static std::string getId(const ::device_identification &device);
 
-	modules::ModuleManagerLibraryHandler module_ {};
+	std::shared_ptr<modules::ModuleManagerLibraryHandler> module_ {};
 
 	std::map<std::string, DeviceState> devices_ {};
 };
