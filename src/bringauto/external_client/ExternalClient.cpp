@@ -83,12 +83,12 @@ void ExternalClient::handleAggregatedMessages() {
 		}
 		log::logInfo("External client received aggregated status, number of aggregated statuses in queue {}", toExternalQueue_->size());
 		auto &message = toExternalQueue_->front();
-		sendMessage(message);
+		sendStatus(message);
 		toExternalQueue_->pop();
 	}
 }
 
-void ExternalClient::sendMessage(ip::InternalClient &message) { // TODO rename to sendStatus? from external client nothing else is sent, so its better to be explicit
+void ExternalClient::sendStatus(ip::InternalClient &message) {
 	const auto &moduleNumber = message.devicestatus().device().module();
 	auto &connection = externalConnectionMap_.at(moduleNumber).get();
 	connection.sendStatus(message.devicestatus()); // TODO device state

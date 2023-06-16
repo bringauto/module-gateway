@@ -39,7 +39,7 @@ private:
 
     void handleCommand(const InternalProtocol::DeviceCommand &deviceCommand);
 
-	void sendMessage(InternalProtocol::InternalClient &message);
+	void sendStatus(InternalProtocol::InternalClient &message);
 
 	std::map<unsigned int, std::reference_wrapper<connection::ExternalConnection>> externalConnectionMap_;
 
