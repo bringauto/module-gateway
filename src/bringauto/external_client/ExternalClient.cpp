@@ -55,7 +55,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
     const auto &device = deviceCommand.device();
     const auto &moduleNumber = device.module();
     if (not context_->statusAggregators.contains(moduleNumber)){
-        log::logWarning("Module with id {} does no exists", moduleNumber);
+        log::logWarning("Module with module number {} does no exists", moduleNumber);
         return;
     }
 

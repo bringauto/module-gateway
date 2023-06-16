@@ -52,10 +52,12 @@ private:
 	 */
 	void receivingHandlerLoop();
 
-
 	u_int32_t clientMessageCounter_ {};
+
 	u_int32_t serverMessageCounter_ {};
+
 	std::string sessionId_ {};
+
 	std::unique_ptr<communication::ICommunicationChannel> communicationChannel_ {};
 	bool isConnected { false };
 
@@ -70,7 +72,9 @@ private:
 	// std::vector<int> modules_; // TODO change to map aggregators?
 
 	std::string carId_ {}; // TODO not needed
+
 	std::string vehicleName_ {};
+
 	std::string company_ {};
 };
 

@@ -44,6 +44,7 @@ int StatusAggregator::clear_all_devices() {
 			aggregatedMessages.pop();
 		}
 		deallocate(&device.status);
+        std::lock_guard<std::mutex> lock(mutex_);
 		deallocate(&device.command);
 	}
 	devices.clear();
@@ -87,10 +88,10 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	if(not devices.contains(id)) {
 		struct buffer commandBuffer {};
 		module_->generateFirstCommand(&commandBuffer, device_type);
-		struct buffer buf {};
-		allocate(&buf, status.size_in_bytes);
-		strncpy(static_cast<char *>(buf.data), static_cast<char *>(status.data), status.size_in_bytes - 1);
-		devices.insert({ id, { commandBuffer, buf }});
+		struct buffer statusBuffer {};
+		allocate(&statusBuffer, status.size_in_bytes);
+		strncpy(static_cast<char *>(statusBuffer.data), static_cast<char *>(status.data), status.size_in_bytes - 1);
+		devices.insert({ id, { commandBuffer, statusBuffer}});
 		return 0;
 	}
 
@@ -175,6 +176,7 @@ int StatusAggregator::update_command(const struct ::buffer command, const struct
 		return COMMAND_INVALID;
 	}
 
+    std::lock_guard<std::mutex> lock(mutex_);
 	auto &currCommand = devices[id].command;
 	deallocate(&currCommand);
 	currCommand = command;
@@ -192,7 +194,6 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 
 	std::string id = getId(device);
 	auto &currStatus = devices[id].status;
-	auto &currCommand = devices[id].command;
 
 	if(status.size_in_bytes == 0 || module_->statusDataValid(status, device_type) == NOT_OK) {
 		log::logWarning("Invalid status data on device id: {}", id);
@@ -200,6 +201,8 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 	}
 
 	struct buffer generatedCommandBuffer {};
+    std::lock_guard<std::mutex> lock(mutex_);
+	auto &currCommand = devices[id].command;
 	module_->generateCommand(&generatedCommandBuffer, status, currStatus, currCommand, device_type);
 	deallocate(&currCommand);
 	currCommand = generatedCommandBuffer;

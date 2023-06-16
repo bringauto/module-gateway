@@ -144,6 +144,8 @@ private:
 	const std::shared_ptr<ModuleManagerLibraryHandler> module_{};
 
 	std::map <std::string, device_state> devices {};
+
+    std::mutex mutex_ {};
 };
 
 }
