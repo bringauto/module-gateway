@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <vector>
+#include <list>
 
 
 
@@ -43,7 +44,7 @@ private:
 
 	std::map<unsigned int, std::reference_wrapper<connection::ExternalConnection>> externalConnectionMap_;
 
-	std::vector <connection::ExternalConnection> externalConnectionsVec_;
+	std::list <connection::ExternalConnection> externalConnectionsList_;
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> toExternalQueue_;
 

@@ -63,7 +63,7 @@ int MqttCommunication::initializeConnection() {
 	try {
 		connect();
 	} catch(std::exception &e) {
-		logging::Logger::logError("Unable to connect to MQTT {}", e.what());
+		logging::Logger::logError("Unable to connect to MQTT: {}", e.what());
 		return NOT_OK;
 	}
 	return OK;
@@ -95,9 +95,9 @@ std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMess
 
 	std::shared_ptr<ExternalProtocol::ExternalServer> ptr { nullptr };
 
-	auto *incommingMessage = new ExternalProtocol::ExternalServer();
-	incommingMessage->ParseFromString(msg->get_payload());
-	ptr.reset(incommingMessage);
+	auto *incomingMessage = new ExternalProtocol::ExternalServer();
+	incomingMessage->ParseFromString(msg->get_payload());
+	ptr.reset(incomingMessage);
 	return ptr;
 }
 

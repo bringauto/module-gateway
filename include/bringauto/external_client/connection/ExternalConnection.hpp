@@ -18,11 +18,11 @@ namespace bringauto::external_client::connection {
  */
 class ExternalConnection {
 public:
-	explicit ExternalConnection(std::shared_ptr<structures::GlobalContext> &context,
-								const structures::ExternalConnectionSettings &settings,
-								std::string company,
-								std::string vehicleName,
-								const std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>>& commandQueue);
+	ExternalConnection( const std::shared_ptr<structures::GlobalContext>& context,
+						const structures::ExternalConnectionSettings& settings,
+						const std::string& company,
+						const std::string& vehicleName,
+						const std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>>& commandQueue);
 	/**
 	 * @brief Handles all etapes of connect sequence. If connect sequence is successful,
      * infinite receive loop is started in new thread.

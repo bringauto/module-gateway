@@ -5,11 +5,11 @@
 
 namespace bringauto::external_client::connection {
 
-ExternalConnection::ExternalConnection(std::shared_ptr <structures::GlobalContext> &context,
-									   const structures::ExternalConnectionSettings &settings,
-									   std::string company,
-									   std::string vehicleName,
-									   const std::shared_ptr<structures::AtomicQueue < InternalProtocol::DeviceCommand>>& commandQueue){ // TODO add company
+ExternalConnection::ExternalConnection( const std::shared_ptr <structures::GlobalContext>& context,
+									    const structures::ExternalConnectionSettings& settings,
+									    const std::string& company,
+									    const std::string& vehicleName,
+									    const std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>>& commandQueue){
 	commandQueue_ = commandQueue;
 	for (const auto& moduleNum : settings.modules) {
 		errorAggregators[moduleNum] = ErrorAggregator();
@@ -32,6 +32,7 @@ ExternalConnection::ExternalConnection(std::shared_ptr <structures::GlobalContex
 void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status, ExternalProtocol::Status::DeviceState deviceState){
 
 }
+
 
 
 }

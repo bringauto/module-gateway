@@ -64,19 +64,23 @@ TARGET_LINK_LIBRARIES(bringautolib PUBLIC
                         PahoMqttCpp::paho-mqttpp3
                         ${CMAKE_DL_LIBS})
 
-ADD_EXECUTABLE(${PROJECT_NAME} main.cpp)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC bringautolib)
+CMDEF_ADD_EXECUTABLE(
+        TARGET module_gateway_app
+        SOURCES main.cpp
+        VERSION ${BRINGAUTO_MODULE_GATEWAY_VERSION}
+)
+TARGET_LINK_LIBRARIES(module_gateway_app PUBLIC bringautolib)
 
 IF (BRINGAUTO_INSTALL)
-    CMDEF_INSTALL(TARGET ${PROJECT_NAME})
-    BA_PACKAGE_DEPS_IMPORTED(${PROJECT_NAME})
+    CMDEF_INSTALL(TARGET module_gateway_app)
+    BA_PACKAGE_DEPS_IMPORTED(module_gateway_app)
     INCLUDE(GNUInstallDirs)
 ENDIF ()
 
 
 IF (BRINGAUTO_PACKAGE)
     CMDEF_PACKAGE(
-            MAIN_TARGET ${PROJECT_NAME}
+            MAIN_TARGET module_gateway_app
             VERSION ${BRINGAUTO_MODULE_GATEWAY_VERSION}
     )
     SET(CPACK_GENERATOR ZIP)

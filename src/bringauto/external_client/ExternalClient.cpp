@@ -30,8 +30,8 @@ void ExternalClient::run() {
 
 void ExternalClient::initConnections() {
 	for(auto const &connection: context_->settings->externalConnectionSettingsList) {
-		externalConnectionsVec_.emplace_back(context_, connection, std::string(), std::string(), fromExternalQueue_);
-		auto &created_connection = externalConnectionsVec_.back();
+		externalConnectionsList_.emplace_back(context_, connection, context_->settings->company, context_->settings->vehicleName, fromExternalQueue_);
+		auto &created_connection = externalConnectionsList_.back();
 		for(auto const &moduleNumber: connection.modules) {
 			externalConnectionMap_.emplace(moduleNumber, created_connection);
 		}
