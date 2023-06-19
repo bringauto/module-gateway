@@ -36,7 +36,7 @@ private:
 	void fillErrorAggregator(InternalProtocol::DeviceStatus);
 
 	u_int32_t getNextStatusCounter();
-	// TODO u_int32 getCommandCounter(command) ??
+	u_int32_t getCommandCounter(ExternalProtocol::Command command);
 
 	void connectMessageHandle(std::vector<device_identification> devices);
 
@@ -52,9 +52,9 @@ private:
 	 */
 	void receivingHandlerLoop();
 
-	u_int32_t clientMessageCounter_ {};
+	u_int32_t clientMessageCounter_ { 0 };
 
-	u_int32_t serverMessageCounter_ {};
+	u_int32_t serverMessageCounter_ { 0 };
 
 	std::string sessionId_ {};
 
@@ -64,14 +64,14 @@ private:
 	std::shared_ptr <structures::GlobalContext> context;
 	structures::ExternalConnectionSettings settings;
 
+	// std::vector<int> modules_; // TODO change to map aggregators?
+	messages::SentMessagesHandler sentMessagesHandler_;
 	std::map<int, ErrorAggregator> errorAggregators;
+
 	std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_;
 
-	messages::SentMessagesHandler sentMessagesHandler_;
 
-	// std::vector<int> modules_; // TODO change to map aggregators?
-
-	std::string carId_ {}; // TODO not needed
+	std::string carId_ {}; // TODO not needed??
 
 	std::string vehicleName_ {};
 
