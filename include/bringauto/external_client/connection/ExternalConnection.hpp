@@ -28,7 +28,9 @@ public:
      * infinite receive loop is started in new thread.
 	 */
 	void initializeConnection();
+
 	void endConnection();
+
     void sendStatus(const InternalProtocol::DeviceStatus &status, ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING);
 
 	bool hasAnyDeviceConnected();
@@ -71,7 +73,9 @@ private:
 	std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_;
 
 
-	std::string carId_ {}; // TODO not needed??
+	std::vector<int> modules_; // TODO change to map aggregators?
+
+	std::string carId_ {}; // TODO not needed
 
 	std::string vehicleName_ {};
 
