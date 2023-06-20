@@ -1,6 +1,9 @@
 #pragma once
 
 #include <InternalProtocol.pb.h>
+#include <ExternalProtocol.pb.h>
+#include <device_management.h>
+#include <memory_management.h>
 
 
 
@@ -26,7 +29,9 @@ public:
 	static InternalProtocol::InternalClient CreateClientMessage(const InternalProtocol::Device &device,
 																const std::string &data);
 
-	static InternalProtocol::Device CreateDevice(int module, unsigned int type,
-												 const std::string &role, const std::string &name, unsigned int priority);
+	static InternalProtocol::Device CreateDevice(int module, unsigned int type, const std::string &role, const std::string &name, unsigned int priority);
+
+	static ExternalProtocol::ExternalClient CreateExternalClientStatus(const std::string& sessionId, ExternalProtocol::Status_DeviceState, u_int32_t messageCounter, buffer statusData, device_identification device, buffer errorMessage);
+
 };
 }

@@ -42,6 +42,25 @@ InternalProtocol::InternalClient ProtocolUtils::CreateClientMessage(const Intern
 	return message;
 }
 
+ExternalProtocol::ExternalClient
+ProtocolUtils::CreateExternalClientStatus(const std::string& sessionId, ExternalProtocol::Status_DeviceState,
+										  u_int32_t messageCounter, buffer statusData,
+										  device_identification device, buffer errorMessage) {
+	ExternalProtocol::ExternalClient externalMessage;
+	ExternalProtocol::Status* status = externalMessage.mutable_status();
+	auto deviceStatus = status->mutable_devicestatus();
+	auto deviceMsg = deviceStatus->mutable_device();
+	deviceMsg->CopyFrom(common_utils::ProtocolUtils::CreateDevice(device.module, device.device_type, device.device_role, device.device_name, device.priority));
+	status->set_sessionid(sessionId);
+	status->set_devicestate(ExternalProtocol::Status_DeviceState_CONNECTING);
+	status->set_messagecounter(messageCounter);
+	deviceStatus->set_statusdata(statusData.data, statusData.size_in_bytes);
+	if (errorMessage.size_in_bytes > 0 && errorMessage.data != nullptr) {
+		status->set_errormessage(errorMessage.data, errorMessage.size_in_bytes);
+	}
+	return externalMessage;
+}
+
 InternalProtocol::Device
 ProtocolUtils::CreateDevice(int module, unsigned int type, const std::string &role, const std::string &name, unsigned int priority) {
 	InternalProtocol::Device device;
