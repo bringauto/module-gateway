@@ -35,9 +35,13 @@ public:
 
 	bool hasAnyDeviceConnected();
 private:
+
+    void setSessionId();
+
 	void fillErrorAggregator(InternalProtocol::DeviceStatus);
 
 	u_int32_t getNextStatusCounter();
+
 	u_int32_t getCommandCounter(ExternalProtocol::Command command);
 
 	void connectMessageHandle(std::vector<device_identification> devices);
@@ -58,6 +62,8 @@ private:
 	 */
 	void receivingHandlerLoop();
 
+    const int KEY_LENGHT = 8;
+
 	u_int32_t clientMessageCounter_ { 0 };
 
 	u_int32_t serverMessageCounter_ { 0 };
@@ -67,15 +73,14 @@ private:
 	std::unique_ptr<communication::ICommunicationChannel> communicationChannel_ {};
 	bool isConnected { false };
 
-	std::shared_ptr <structures::GlobalContext> context;
-	structures::ExternalConnectionSettings settings;
+	std::shared_ptr <structures::GlobalContext> context_;
 
-	// std::vector<int> modules_; // TODO change to map aggregators?
+	structures::ExternalConnectionSettings &settings_;
+
 	messages::SentMessagesHandler sentMessagesHandler_;
 	std::map<int, ErrorAggregator> errorAggregators;
 
 	std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_;
-
 
 	std::vector<int> modules_; // TODO change to map aggregators?
 
