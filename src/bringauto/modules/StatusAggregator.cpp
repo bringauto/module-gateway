@@ -44,7 +44,7 @@ int StatusAggregator::clear_all_devices() {
 			aggregatedMessages.pop();
 		}
 		deallocate(&device.status);
-        std::lock_guard<std::mutex> lock(mutex_);
+		std::lock_guard <std::mutex> lock(mutex_);
 		deallocate(&device.command);
 	}
 	devices.clear();
@@ -91,7 +91,7 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 		struct buffer statusBuffer {};
 		allocate(&statusBuffer, status.size_in_bytes);
 		strncpy(static_cast<char *>(statusBuffer.data), static_cast<char *>(status.data), status.size_in_bytes - 1);
-		devices.insert({ id, { commandBuffer, statusBuffer}});
+		devices.insert({ id, { commandBuffer, statusBuffer }});
 		return 0;
 	}
 
@@ -135,8 +135,16 @@ int StatusAggregator::get_unique_devices(struct ::buffer *unique_devices_buffer)
 	for(auto const &[key, value]: devices) {
 		output << key << ",";
 	}
-	output.seekp(-1, std::ios_base::end);
-	unique_devices_buffer->data = static_cast<void *>(new std::string(output.str()));
+	std::string str = output.str();
+	if(!str.empty()) {
+		str.pop_back();
+	}
+	int ret = allocate(unique_devices_buffer, str.size() + 1);
+	if(ret == NOT_OK) {
+		log::logError("Could not allocate buffer in get_unique_devices");
+		return NOT_OK;
+	}
+	strncpy(static_cast<char *>(unique_devices_buffer->data), str.c_str(), str.size());
 	return devices.size();
 }
 
@@ -176,7 +184,7 @@ int StatusAggregator::update_command(const struct ::buffer command, const struct
 		return COMMAND_INVALID;
 	}
 
-    std::lock_guard<std::mutex> lock(mutex_);
+	std::lock_guard <std::mutex> lock(mutex_);
 	auto &currCommand = devices[id].command;
 	deallocate(&currCommand);
 	currCommand = command;
@@ -201,7 +209,7 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 	}
 
 	struct buffer generatedCommandBuffer {};
-    std::lock_guard<std::mutex> lock(mutex_);
+	std::lock_guard <std::mutex> lock(mutex_);
 	auto &currCommand = devices[id].command;
 	module_->generateCommand(&generatedCommandBuffer, status, currStatus, currCommand, device_type);
 	deallocate(&currCommand);

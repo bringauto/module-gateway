@@ -18,11 +18,12 @@ namespace bringauto::external_client::connection {
  */
 class ExternalConnection {
 public:
-	ExternalConnection( const std::shared_ptr<structures::GlobalContext>& context,
-						const structures::ExternalConnectionSettings& settings,
-						const std::string& company,
-						const std::string& vehicleName,
-						const std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>>& commandQueue);
+	ExternalConnection(const std::shared_ptr <structures::GlobalContext> &context,
+					   const structures::ExternalConnectionSettings &settings,
+					   const std::string &company,
+					   const std::string &vehicleName,
+					   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue);
+
 	/**
 	 * @brief Handles all etapes of connect sequence. If connect sequence is successful,
      * infinite receive loop is started in new thread.
@@ -31,12 +32,14 @@ public:
 
 	void endConnection();
 
-    void sendStatus(const InternalProtocol::DeviceStatus &status, ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING);
+	void sendStatus(const InternalProtocol::DeviceStatus &status,
+					ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING);
 
 	bool hasAnyDeviceConnected();
+
 private:
 
-    void setSessionId();
+	void setSessionId();
 
 	void fillErrorAggregator(InternalProtocol::DeviceStatus);
 
@@ -44,15 +47,15 @@ private:
 
 	u_int32_t getCommandCounter(ExternalProtocol::Command command);
 
-	void connectMessageHandle(std::vector<device_identification> devices);
+	void connectMessageHandle(const std::vector <device_identification> &devices);
 
 	/**
 	 * @brief Takes care of second etape of connect sequence - for all devices send their last status
 	 * @param devices
 	 */
-	void statusMessageHandle(std::vector<device_identification> devices);
+	void statusMessageHandle(const std::vector <device_identification> &devices);
 
-	void commandMessageHandle(std::vector<device_identification> devices);
+	void commandMessageHandle(std::vector <device_identification> devices);
 
 	void handleCommand(ExternalProtocol::Command commandMessage);
 
@@ -62,7 +65,7 @@ private:
 	 */
 	void receivingHandlerLoop();
 
-    const int KEY_LENGHT = 8;
+	const int KEY_LENGHT = 8;
 
 	u_int32_t clientMessageCounter_ { 0 };
 
@@ -70,17 +73,17 @@ private:
 
 	std::string sessionId_ {};
 
-	std::unique_ptr<communication::ICommunicationChannel> communicationChannel_ {};
+	std::unique_ptr <communication::ICommunicationChannel> communicationChannel_ {};
 	bool isConnected { false };
 
 	std::shared_ptr <structures::GlobalContext> context_;
 
-	structures::ExternalConnectionSettings &settings_;
+	const structures::ExternalConnectionSettings &settings_;
 
 	messages::SentMessagesHandler sentMessagesHandler_;
 	std::map<int, ErrorAggregator> errorAggregators;
 
-	std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_;
+	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_;
 
 	std::vector<int> modules_; // TODO change to map aggregators?
 

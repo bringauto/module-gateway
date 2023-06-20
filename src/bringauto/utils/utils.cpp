@@ -60,4 +60,25 @@ void initLogger(const std::string &logPath, bool verbose) {
 			.priority = device.priority() };
 }
 
+::device_identification mapToDeviceId(const std::string &device) {
+	std::vector <std::string> tokens = splitString(device, '/');
+	return ::device_identification { .module = std::stoi(tokens[0]),
+			.device_type = static_cast<unsigned int>(std::stoi(tokens[1])),
+			.device_role = tokens[2].c_str(),
+			.device_name = tokens[3].c_str(),
+			.priority = 0 };
+}
+
+std::vector <std::string> splitString(const std::string &input, char delimiter) {
+	std::vector <std::string> tokens;
+	std::istringstream iss(input);
+	std::string token;
+
+	while(std::getline(iss, token, delimiter)) {
+		tokens.push_back(token);
+	}
+
+	return tokens;
+}
+
 }
