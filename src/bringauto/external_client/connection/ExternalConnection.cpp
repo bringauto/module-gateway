@@ -1,6 +1,9 @@
 #include <bringauto/external_client/connection/ExternalConnection.hpp>
 #include <bringauto/external_client/connection/communication/MqttCommunication.hpp>
+#include <bringauto/common_utils/ProtocolUtils.hpp>
+
 #include <bringauto/logging/Logger.hpp>
+
 
 
 namespace bringauto::external_client::connection {
@@ -78,8 +81,33 @@ void ExternalConnection::connectMessageHandle(std::vector<device_identification>
 
 void ExternalConnection::statusMessageHandle(std::vector<device_identification> devices){
     for (const auto &device : devices){
-        struct buffer statusBuffer{};
-        const auto &lastStatus = errorAggregators[device.module].get_last_status(&statusBuffer, device);
+		ExternalProtocol::ExternalClient externalMessage;
+		ExternalProtocol::Status* status = externalMessage.mutable_status();
+        struct buffer errorBuffer{};
+        const auto &lastErrorStatusRc = errorAggregators[device.module].get_last_status(&errorBuffer, device);
+		if (lastErrorStatusRc == OK) {
+			status->set_errormessage(errorBuffer.data, errorBuffer.size_in_bytes);
+		} else if (lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
+			logging::Logger::logWarning("Device is not registered in error aggregator: {} {}", device.device_role, device.device_name);
+		}
+
+		struct buffer statusBuffer {};
+		const auto &lastStatusRc = context->statusAggregators[device.module]->get_aggregated_status(&statusBuffer, device);
+
+		auto deviceStatus = status->mutable_devicestatus();
+		auto deviceMsg = deviceStatus->mutable_device();
+		deviceMsg->CopyFrom(common_utils::ProtocolUtils::CreateDevice(device.module, device.device_type, device.device_role, device.device_name, device.priority));
+		if (lastStatusRc == OK) {
+
+			deviceStatus->set_statusdata(statusBuffer.data, statusBuffer.size_in_bytes);
+		}
+		status->set_devicestate(ExternalProtocol::Status_DeviceState_CONNECTING);
+		status->set_sessionid(sessionId_);
+		status->set_messagecounter(getNextStatusCounter());
+		communicationChannel_->sendMessage(&externalMessage);
+
+		deallocate(&errorBuffer);
+		deallocate(&statusBuffer);
     }
 }
 

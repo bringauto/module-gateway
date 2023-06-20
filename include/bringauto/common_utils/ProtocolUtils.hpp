@@ -26,7 +26,7 @@ public:
 	static InternalProtocol::InternalClient CreateClientMessage(const InternalProtocol::Device &device,
 																const std::string &data);
 
-	static InternalProtocol::Device CreateDevice(const InternalProtocol::Device_Module &module, size_t type,
-												 const std::string &role, const std::string &name, size_t priority);
+	static InternalProtocol::Device CreateDevice(int module, unsigned int type,
+												 const std::string &role, const std::string &name, unsigned int priority);
 };
 }

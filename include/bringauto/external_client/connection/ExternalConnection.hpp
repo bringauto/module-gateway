@@ -42,6 +42,10 @@ private:
 
 	void connectMessageHandle(std::vector<device_identification> devices);
 
+	/**
+	 * @brief Takes care of second etape of connect sequence - for all devices send their last status
+	 * @param devices
+	 */
 	void statusMessageHandle(std::vector<device_identification> devices);
 
 	void commandMessageHandle(std::vector<device_identification> devices);

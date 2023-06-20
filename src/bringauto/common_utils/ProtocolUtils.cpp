@@ -43,10 +43,9 @@ InternalProtocol::InternalClient ProtocolUtils::CreateClientMessage(const Intern
 }
 
 InternalProtocol::Device
-ProtocolUtils::CreateDevice(const InternalProtocol::Device_Module &deviceModule, size_t type, const std::string &role,
-							const std::string &name, size_t priority) {
+ProtocolUtils::CreateDevice(int module, unsigned int type, const std::string &role, const std::string &name, unsigned int priority) {
 	InternalProtocol::Device device;
-	device.set_module(deviceModule);
+	device.set_module(static_cast<InternalProtocol::Device::Module>(module));
 	device.set_devicetype(type);
 	device.set_devicerole(role);
 	device.set_devicename(name);
