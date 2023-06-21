@@ -39,4 +39,8 @@ void NotAckedStatus::timeoutHandler() {
 	// TODO event queue?
 }
 
+InternalProtocol::Device NotAckedStatus::getDevice() {
+	return status_.devicestatus().device();
+}
+
 }

@@ -14,16 +14,16 @@ void SentMessagesHandler::addNotAckedStatus(const ExternalProtocol::Status& stat
 	notAckedStatuses_.back()->startTimer(responseHandled_, responseHandledMutex_);
 }
 
-void SentMessagesHandler::acknowledgeStatus(const ExternalProtocol::StatusResponse& statusResponse) {
+int SentMessagesHandler::acknowledgeStatus(const ExternalProtocol::StatusResponse& statusResponse) {
 	auto responseCounter = getStatusResponseCounter(statusResponse);
 	for (auto i = 0; i < notAckedStatuses_.size(); ++i) {
 		if (getStatusCounter(notAckedStatuses_[i]->getStatus()) == responseCounter) {
 			notAckedStatuses_[i]->cancelTimer();
 			notAckedStatuses_.erase(notAckedStatuses_.begin() + i);
-			return;
+			return 0;
 		}
 	}
-	throw std::runtime_error("Server acknowledged status that was not sent!");
+	return -1;
 }
 
 void SentMessagesHandler::clearAll() {

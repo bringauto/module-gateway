@@ -7,6 +7,8 @@
 #include <bringauto/external_client/connection/messages/SentMessagesHandler.hpp>
 #include <bringauto/external_client/ErrorAggregator.hpp>
 
+#include <general_error_codes.h>
+
 #include <string>
 #include <vector>
 
@@ -28,42 +30,54 @@ public:
 	 * @brief Handles all etapes of connect sequence. If connect sequence is successful,
      * infinite receive loop is started in new thread.
 	 */
-	void initializeConnection();
+	int initializeConnection();
 
-	void endConnection();
+	void endConnection(bool completeDisconnect);
 
 	void sendStatus(const InternalProtocol::DeviceStatus &status,
-					ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING);
+					ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING,
+					const buffer& errorMessage = {});
 
 	bool hasAnyDeviceConnected();
 
+	void fillErrorAggregator();
+	void fillErrorAggregator(InternalProtocol::DeviceStatus deviceStatus);
+
+	bool getIsConnected() const { return isConnected; }
+
 private:
-
 	void setSessionId();
-
-	void fillErrorAggregator(InternalProtocol::DeviceStatus);
 
 	u_int32_t getNextStatusCounter();
 
-	u_int32_t getCommandCounter(ExternalProtocol::Command command);
+	static u_int32_t getCommandCounter(const ExternalProtocol::Command& command);
 
-	void connectMessageHandle(const std::vector <device_identification> &devices);
+	int connectMessageHandle(const std::vector <device_identification> &devices);
 
 	/**
 	 * @brief Takes care of second etape of connect sequence - for all devices send their last status
 	 * @param devices
 	 */
-	void statusMessageHandle(const std::vector <device_identification> &devices);
+	int statusMessageHandle(const std::vector <device_identification> &devices);
 
-	void commandMessageHandle(std::vector <device_identification> devices);
+	int commandMessageHandle(std::vector <device_identification> devices);
 
-	void handleCommand(ExternalProtocol::Command commandMessage);
+	/**
+	 * @brief Check if command is in order and send commandResponse
+	 * @param commandMessage
+	 * @return 0 if OK
+	 * @return -1 if command is out of order
+	 * @return -2 if command has incorrect session ID
+	 */
+	int handleCommand(ExternalProtocol::Command commandMessage);
 
 	/**
 	 * @brief This loop is started after successful connect sequence in own thread.
      * Loop is receiving messages from external server and processes them.
 	 */
 	void receivingHandlerLoop();
+
+	std::atomic<bool> stopReceiving { false };
 
 	const int KEY_LENGHT = 8;
 
@@ -74,6 +88,8 @@ private:
 	std::string sessionId_ {};
 
 	std::unique_ptr <communication::ICommunicationChannel> communicationChannel_ {};
+
+	std::thread listeningThread;
 	bool isConnected { false };
 
 	std::shared_ptr <structures::GlobalContext> context_;

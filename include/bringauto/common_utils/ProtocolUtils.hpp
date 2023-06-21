@@ -29,9 +29,19 @@ public:
 	static InternalProtocol::InternalClient CreateClientMessage(const InternalProtocol::Device &device,
 																const std::string &data);
 
+	static InternalProtocol::DeviceStatus CreateDeviceStatus(const InternalProtocol::Device& device, const buffer& statusData);
+
+	static InternalProtocol::DeviceStatus CreateDeviceStatus(const device_identification& device, const buffer& statusData);
+
 	static InternalProtocol::Device CreateDevice(int module, unsigned int type, const std::string &role, const std::string &name, unsigned int priority);
 
-	static ExternalProtocol::ExternalClient CreateExternalClientStatus(const std::string& sessionId, ExternalProtocol::Status_DeviceState, u_int32_t messageCounter, buffer statusData, device_identification device, buffer errorMessage);
+	static device_identification ParseDevice(const InternalProtocol::Device& device);
+
+	static ExternalProtocol::ExternalClient CreateExternalClientStatus(const std::string& sessionId, ExternalProtocol::Status_DeviceState deviceState, u_int32_t messageCounter, const InternalProtocol::DeviceStatus& deviceStatus, buffer errorMessage);
+
+	static ExternalProtocol::ExternalClient CreateExternalClientCommandResponse(std::string sessionId, ExternalProtocol::CommandResponse::Type type, u_int32_t messageCounter);
+
+	static buffer ProtobufToBuffer(const google::protobuf::Message &protobufMessage);
 
 };
 }

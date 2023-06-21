@@ -20,7 +20,7 @@ public:
 	 * @brief called when a status response arrives
 	 * @param statusResponse
 	 */
-	void acknowledgeStatus(const ExternalProtocol::StatusResponse& statusResponse);
+	int acknowledgeStatus(const ExternalProtocol::StatusResponse& statusResponse);
 
 	std::vector<std::shared_ptr<NotAckedStatus>> getNotAckedStatus() { return notAckedStatuses_; }
 
@@ -39,8 +39,9 @@ public:
 	bool isDeviceConnected(InternalProtocol::Device device);
 
 	bool isAnyDeviceConnected() { return connectedDevices_.empty(); };
-private:
+
 	void clearAllTimers();
+private:
 
 	/**
 	 * @brief returns message counter of status

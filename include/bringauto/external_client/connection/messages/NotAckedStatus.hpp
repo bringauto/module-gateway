@@ -14,6 +14,8 @@ public:
 	void cancelTimer();
 
 	ExternalProtocol::Status getStatus() { return status_; }
+
+	InternalProtocol::Device getDevice();
 private:
 	void timeoutHandler();
 
