@@ -72,20 +72,42 @@ buffer ProtocolUtils::ProtobufToBuffer(const google::protobuf::Message &protobuf
 	return message;
 }
 
+InternalProtocol::Device ProtocolUtils::CreateDevice(const device_identification& device) {
+	return CreateDevice(device.module, device.device_type, device.device_role, device.device_name, device.priority);
+}
+
 InternalProtocol::Device
 ProtocolUtils::CreateDevice(int module, unsigned int type, const std::string &role, const std::string &name, unsigned int priority) {
-InternalProtocol::Device device;
-device.set_module(static_cast<InternalProtocol::Device::Module>(module));
-device.set_devicetype(type);
-device.set_devicerole(role);
-device.set_devicename(name);
-device.set_priority(priority);
-return device;
+	InternalProtocol::Device device;
+	device.set_module(static_cast<InternalProtocol::Device::Module>(module));
+	device.set_devicetype(type);
+	device.set_devicerole(role);
+	device.set_devicename(name);
+	device.set_priority(priority);
+	return device;
+}
+
+ExternalProtocol::ExternalClient
+ProtocolUtils::CreateExternalClientConnect(const std::string& sessionId, const std::string& company, const std::string& vehicleName,
+										   const std::vector<device_identification> &devices) {
+	ExternalProtocol::ExternalClient externalMessage;
+	auto connectMessage = externalMessage.mutable_connect();
+
+	connectMessage->set_sessionid(sessionId);
+	connectMessage->set_company(company);
+	connectMessage->set_vehiclename(vehicleName);
+
+	for(const auto &tmpDevice: devices) {
+		auto devicePtr = connectMessage->add_devices();
+		devicePtr->CopyFrom(CreateDevice(tmpDevice));
+	}
+
+	return externalMessage;
 }
 
 ExternalProtocol::ExternalClient
 ProtocolUtils::CreateExternalClientStatus(const std::string& sessionId, ExternalProtocol::Status_DeviceState deviceState,
-										  u_int32_t messageCounter, const InternalProtocol::DeviceStatus& deviceStatus, buffer errorMessage) {
+										  u_int32_t messageCounter, const InternalProtocol::DeviceStatus& deviceStatus, const buffer& errorMessage) {
 	ExternalProtocol::ExternalClient externalMessage;
 	ExternalProtocol::Status* status = externalMessage.mutable_status();
 	status->mutable_devicestatus()->CopyFrom(deviceStatus);
@@ -99,7 +121,7 @@ ProtocolUtils::CreateExternalClientStatus(const std::string& sessionId, External
 }
 
 ExternalProtocol::ExternalClient
-ProtocolUtils::CreateExternalClientCommandResponse(std::string sessionId, ExternalProtocol::CommandResponse::Type type,
+ProtocolUtils::CreateExternalClientCommandResponse(const std::string& sessionId, ExternalProtocol::CommandResponse::Type type,
 												   u_int32_t messageCounter) {
 	ExternalProtocol::ExternalClient externalMessage;
 	ExternalProtocol::CommandResponse* commandResponse = externalMessage.mutable_commandresponse();

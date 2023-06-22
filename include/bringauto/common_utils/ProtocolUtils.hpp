@@ -35,11 +35,15 @@ public:
 
 	static InternalProtocol::Device CreateDevice(int module, unsigned int type, const std::string &role, const std::string &name, unsigned int priority);
 
+	static InternalProtocol::Device CreateDevice(const device_identification& device);
+
 	static device_identification ParseDevice(const InternalProtocol::Device& device);
 
-	static ExternalProtocol::ExternalClient CreateExternalClientStatus(const std::string& sessionId, ExternalProtocol::Status_DeviceState deviceState, u_int32_t messageCounter, const InternalProtocol::DeviceStatus& deviceStatus, buffer errorMessage);
+	static ExternalProtocol::ExternalClient CreateExternalClientConnect(const std::string& sessionId, const std::string& company, const std::string& vehicleName, const std::vector<device_identification> &devices);
 
-	static ExternalProtocol::ExternalClient CreateExternalClientCommandResponse(std::string sessionId, ExternalProtocol::CommandResponse::Type type, u_int32_t messageCounter);
+	static ExternalProtocol::ExternalClient CreateExternalClientStatus(const std::string& sessionId, ExternalProtocol::Status_DeviceState deviceState, u_int32_t messageCounter, const InternalProtocol::DeviceStatus& deviceStatus, const buffer& errorMessage);
+
+	static ExternalProtocol::ExternalClient CreateExternalClientCommandResponse(const std::string& sessionId, ExternalProtocol::CommandResponse::Type type, u_int32_t messageCounter);
 
 	static buffer ProtobufToBuffer(const google::protobuf::Message &protobufMessage);
 
