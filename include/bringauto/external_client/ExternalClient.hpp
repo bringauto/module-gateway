@@ -9,6 +9,7 @@
 #include <memory>
 #include <vector>
 #include <list>
+#include "InternalProtocol.pb.h"
 
 
 
@@ -40,7 +41,7 @@ private:
 
     void handleCommand(const InternalProtocol::DeviceCommand &deviceCommand);
 
-	void sendStatus(InternalProtocol::InternalClient &message);
+	void sendStatus(const InternalProtocol::DeviceStatus& deviceStatus);
 
 	std::map<unsigned int, std::reference_wrapper<connection::ExternalConnection>> externalConnectionMap_;
 

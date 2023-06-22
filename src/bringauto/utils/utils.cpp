@@ -48,7 +48,7 @@ void initLogger(const std::string &logPath, bool verbose) {
 
 	Logger::addSink<bringauto::logging::FileSink>(paramFileSink);
 	Logger::LoggerSettings params { "ModuleGateway",
-									Logger::Verbosity::Info };
+									Logger::Verbosity::Debug }; // TODO change to Info
 	Logger::init(params);
 }
 

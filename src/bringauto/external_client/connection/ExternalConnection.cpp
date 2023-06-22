@@ -40,7 +40,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 
 	if (std::find(modules_.begin(), modules_.end(), device.module()) == modules_.end()) {
 		log::logError(
-				"Status with module number ({}) was passed to external connection, that doesn't support this module");
+				"Status with module number ({}) was passed to external connection, that doesn't support this module", device.module());
 	}
 
 	switch (deviceState) {
@@ -67,12 +67,18 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 																				   status,
 																				   errorMessage);
 	sentMessagesHandler_.addNotAckedStatus(externalMessage.status());
-	communicationChannel_->sendMessage(&externalMessage);
+	if (communicationChannel_->sendMessage(&externalMessage) != 0) {
+		endConnection(false);
+	}
 	log::logDebug("Sending status with messageCounter '{}' with aggregated errorMessage: {}", clientMessageCounter_,
 				  errorMessage.size_in_bytes > 0 ? errorMessage.data : "");
 }
 
 int ExternalConnection::initializeConnection() {
+	if (firstConnecting) {
+		listeningThread = std::thread(&ExternalConnection::receivingHandlerLoop, this);
+	}
+	firstConnecting = false;
 	if (communicationChannel_->initializeConnection() != 0) {
 		log::logError("Unable to create connection to {}:{}", settings_.serverIp, settings_.port);
 		return -1;
@@ -95,24 +101,26 @@ int ExternalConnection::initializeConnection() {
 		}
 	}
 
+	state_.exchange(CONNECTING);
 	log::logInfo("Connect sequence: 1st step (sending list of devices)");
 	if (connectMessageHandle(devices) != 0) {
 		log::logError("Connect sequence to server {}:{}, failed in 1st step", settings_.serverIp, settings_.port);
+		state_.exchange(NOT_CONNECTED);
 		return -1;
 	}
 	log::logInfo("Connect sequence: 2nd step (sending statuses of all connected devices)");
 	if (statusMessageHandle(devices) != 0) {
 		log::logError("Connect sequence to server {}:{}, failed in 2nd step", settings_.serverIp, settings_.port);
+		state_.exchange(NOT_CONNECTED);
 		return -1;
 	}
 	log::logInfo("Connect sequence: 3rd step (receiving commands for devices in previous step)");
 	if (commandMessageHandle(devices) != 0) {
 		log::logError("Connect sequence to server {}:{}, failed in 3rd step", settings_.serverIp, settings_.port);
+		state_.exchange(NOT_CONNECTED);
 		return -1;
 	}
-
-	listeningThread = std::thread(&ExternalConnection::receivingHandlerLoop, this);
-
+	state_.exchange(CONNECTED);
 	isConnected = true;
 	for (auto [moduleNum, errorAggregator]: errorAggregators) {
 		errorAggregator.clear_error_aggregator();
@@ -124,19 +132,8 @@ int ExternalConnection::initializeConnection() {
 int ExternalConnection::connectMessageHandle(const std::vector<device_identification> &devices) {
 	setSessionId();
 
-	ExternalProtocol::Connect *connect = new ExternalProtocol::Connect();
-	for (const auto &deviceId: devices) {
-		auto connectDevice = connect->add_devices();
-		InternalProtocol::Device device = common_utils::ProtocolUtils::CreateDevice(
-				deviceId.module, deviceId.device_type, deviceId.device_role, deviceId.device_name, deviceId.priority);
-		connectDevice->CopyFrom(device);
-	}
-	connect->set_sessionid(sessionId_);
-	connect->set_vehiclename(vehicleName_);
-	connect->set_company(company_);
-	ExternalProtocol::ExternalClient *message = new ExternalProtocol::ExternalClient();
-	message->set_allocated_connect(connect);
-	communicationChannel_->sendMessage(message);
+	auto connectMessage = common_utils::ProtocolUtils::CreateExternalClientConnect(sessionId_, company_, vehicleName_, devices);
+	communicationChannel_->sendMessage(&connectMessage);
 
 	const auto connectResponseMsg = communicationChannel_->receiveMessage();
 	if (connectResponseMsg == nullptr) {
@@ -165,6 +162,9 @@ int ExternalConnection::statusMessageHandle(const std::vector<device_identificat
 		if (lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
 			logging::Logger::logWarning("Device is not registered in error aggregator: {} {}", device.device_role,
 										device.device_name);
+		} else if (lastErrorStatusRc == NOT_OK) {
+			log::logError("An error occurred in error aggregator - get_last_status. Return code NOT_OK");
+			return -1;
 		}
 
 		struct buffer statusBuffer {};
@@ -172,8 +172,9 @@ int ExternalConnection::statusMessageHandle(const std::vector<device_identificat
 																									 device);
 
 		if (lastStatusRc != OK) {
-			logging::Logger::logWarning("Cannot obtain status for device: {} {}", device.device_role,
+			logging::Logger::logError("Cannot obtain status for device: {} {}", device.device_role,
 										device.device_name);
+			return -1;
 		}
 		auto deviceStatus = common_utils::ProtocolUtils::CreateDeviceStatus(device, statusBuffer);
 
@@ -205,7 +206,7 @@ int ExternalConnection::statusMessageHandle(const std::vector<device_identificat
 	return 0;
 }
 
-int ExternalConnection::commandMessageHandle(std::vector<device_identification> devices) {
+int ExternalConnection::commandMessageHandle(const std::vector<device_identification>& devices) {
 	for (int i = 0; i < devices.size(); ++i) {
 		const auto commandMsg = communicationChannel_->receiveMessage();
 		if (commandMsg == nullptr) {
@@ -243,20 +244,22 @@ u_int32_t ExternalConnection::getNextStatusCounter() {
 	return ++clientMessageCounter_;
 }
 
-void ExternalConnection::endConnection(bool completeDisconnect) {
-	stopReceiving.exchange(true);
+void ExternalConnection::endConnection(bool completeDisconnect = false) {
+	state_.exchange(NOT_CONNECTED);
 	sentMessagesHandler_.clearAllTimers();
-	communicationChannel_->closeConnection();
 	isConnected = false;
 	if (not completeDisconnect) {
 		fillErrorAggregator();
+	} else {
+		stopReceiving.exchange(true);
+		communicationChannel_->closeConnection();
+		listeningThread.join();
 	}
 	clientMessageCounter_ = 0;
 	serverMessageCounter_ = 0;
-	listeningThread.join(); // TODO condition to wait
 }
 
-int ExternalConnection::handleCommand(ExternalProtocol::Command commandMessage) {
+int ExternalConnection::handleCommand(const ExternalProtocol::Command& commandMessage) {
 	auto messageCounter = getCommandCounter(commandMessage);
 	log::logDebug("Handling Command, messageCounter={}", messageCounter);
 
@@ -292,23 +295,30 @@ bool ExternalConnection::hasAnyDeviceConnected() {
 
 void ExternalConnection::receivingHandlerLoop() {
 	while (not stopReceiving) {
+		if (state_.load() == CONNECTING) {
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+			continue;
+		}
 		const auto serverMessage = communicationChannel_->receiveMessage();
-		if (serverMessage == nullptr) {
+		if (serverMessage == nullptr || state_.load() == NOT_CONNECTED) {
 			continue;
 		}
 		if (serverMessage->has_command()) {
+			log::logDebug("Handling COMMAND messageCounter={}",serverMessage->command().messagecounter());
 			if (handleCommand(serverMessage->command()) != 0) {
 				endConnection(false);
 				// TODO add event Reconnect
 				return;
 			}
 		} else if (serverMessage->has_statusresponse()) {
+			log::logDebug("Handling STATUS_RESPONSE messageCounter={}",serverMessage->statusresponse().messagecounter());
 			if (sentMessagesHandler_.acknowledgeStatus(serverMessage->statusresponse()) != 0) {
 				endConnection(false);
 				// TODO add event Reconnect
 				return;
 			}
 		} else {
+			log::logError("Received message with unexpected type, closing connection");
 			endConnection(false);
 			// TODO add event Reconnect
 			return;
@@ -322,7 +332,7 @@ u_int32_t ExternalConnection::getCommandCounter(const ExternalProtocol::Command 
 }
 
 void ExternalConnection::fillErrorAggregator() {
-	for (auto notAckedStatus: sentMessagesHandler_.getNotAckedStatus()) {
+	for (const auto& notAckedStatus: sentMessagesHandler_.getNotAckedStatus()) {
 		const auto &device = notAckedStatus->getDevice();
 
 		buffer statusBuffer = common_utils::ProtocolUtils::ProtobufToBuffer(notAckedStatus->getStatus().devicestatus());
@@ -334,7 +344,7 @@ void ExternalConnection::fillErrorAggregator() {
 	sentMessagesHandler_.clearAll();
 }
 
-void ExternalConnection::fillErrorAggregator(InternalProtocol::DeviceStatus deviceStatus) {
+void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatus& deviceStatus) {
 	fillErrorAggregator();
 	int moduleNum = deviceStatus.device().module();
 	if (errorAggregators.find(moduleNum) != errorAggregators.end()) {

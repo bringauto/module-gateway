@@ -271,7 +271,9 @@ void InternalServer::changeConnection(const std::shared_ptr<structures::Connecti
 
 bool InternalServer::sendResponse(const std::shared_ptr<structures::Connection> &connection,
 								  const InternalProtocol::InternalServer &message) {
-
+	if (not connection->socket.is_open()) {
+		return false;
+	}
 	auto data = message.SerializeAsString();
 	const uint32_t header = data.size();
 	const auto headerWSize = connection->socket.write_some(boost::asio::buffer(&header, sizeof(uint32_t)));

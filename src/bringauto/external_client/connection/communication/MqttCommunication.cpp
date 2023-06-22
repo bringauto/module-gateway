@@ -1,7 +1,6 @@
 #include <bringauto/external_client/connection/communication/MqttCommunication.hpp>
 #include <bringauto/settings/Constants.hpp>
 
-#include <general_error_codes.h>
 #include <bringauto/logging/Logger.hpp>
 
 
@@ -60,28 +59,37 @@ MqttCommunication::~MqttCommunication() {
 }
 
 int MqttCommunication::initializeConnection() {
+	if (client_ != nullptr && client_->is_connected()) {
+		return 0;
+	} else if (client_ != nullptr) {
+		closeConnection();
+	}
 	try {
 		connect();
 	} catch(std::exception &e) {
 		logging::Logger::logError("Unable to connect to MQTT: {}", e.what());
-		return NOT_OK;
+		return -1;
 	}
-	return OK;
+	return 0;
 }
 
 int MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
-	if(!client_->is_connected()) {
-		return NOT_OK;
+	if(!client_->is_connected() || client_ == nullptr) {
+		return -1;
 	}
 	unsigned int size = message->ByteSizeLong();
 	uint8_t buffer[size];
 	memset(buffer, '\0', size);
 	message->SerializeToArray(buffer, static_cast<int>(size));
 	client_->publish(publishTopic_, buffer, size, qos, false);
-	return OK;
+	return 0;
 }
 
 std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMessage() {
+	if (client_ == nullptr) {
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+		return nullptr;
+	}
 	mqtt::const_message_ptr msg { nullptr };
 	if(client_->is_connected()) {
 		msg = client_->try_consume_message_for(std::chrono::seconds(10));

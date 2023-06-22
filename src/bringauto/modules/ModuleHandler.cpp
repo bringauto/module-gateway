@@ -68,7 +68,7 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 	const auto &moduleNumber = device.module();
 	const auto &deviceName = device.devicename();
     auto &statusAggregators = context_->statusAggregators;
-	log::logInfo("Received Status message from device: {}", deviceName);
+	log::logDebug("Received Status message from device: {}", deviceName);
 
 	if(not statusAggregators.contains(moduleNumber)) {
 		log::logWarning("Module number: {} is not supported", moduleNumber);
@@ -117,7 +117,7 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 	ip::InternalServer msg {};
 	msg.set_allocated_devicecommand(deviceCommand);
 	toInternalQueue_->pushAndNotify(msg);
-	log::logInfo("Command succesfully retrieved and sent to device: {}", deviceName);
+	log::logDebug("Command succesfully retrieved and sent to device: {}", deviceName);
 
 	deallocate(&command_buffer);
 	deallocate(&status_buffer);

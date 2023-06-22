@@ -6,6 +6,7 @@
 #include <bringauto/structures/AtomicQueue.hpp>
 #include <bringauto/external_client/connection/messages/SentMessagesHandler.hpp>
 #include <bringauto/external_client/ErrorAggregator.hpp>
+#include <bringauto/external_client/connection/ConnectionState.hpp>
 
 #include <general_error_codes.h>
 
@@ -41,10 +42,11 @@ public:
 	bool hasAnyDeviceConnected();
 
 	void fillErrorAggregator();
-	void fillErrorAggregator(InternalProtocol::DeviceStatus deviceStatus);
+	void fillErrorAggregator(const InternalProtocol::DeviceStatus& deviceStatus);
 
 	bool getIsConnected() const { return isConnected; }
 
+	bool getFirstConnecting() const { return firstConnecting; }
 private:
 	void setSessionId();
 
@@ -60,7 +62,7 @@ private:
 	 */
 	int statusMessageHandle(const std::vector <device_identification> &devices);
 
-	int commandMessageHandle(std::vector <device_identification> devices);
+	int commandMessageHandle(const std::vector <device_identification>& devices);
 
 	/**
 	 * @brief Check if command is in order and send commandResponse
@@ -69,7 +71,7 @@ private:
 	 * @return -1 if command is out of order
 	 * @return -2 if command has incorrect session ID
 	 */
-	int handleCommand(ExternalProtocol::Command commandMessage);
+	int handleCommand(const ExternalProtocol::Command& commandMessage);
 
 	/**
 	 * @brief This loop is started after successful connect sequence in own thread.
@@ -92,6 +94,14 @@ private:
 	std::thread listeningThread;
 	bool isConnected { false };
 
+	bool firstConnecting { true };
+
+	/**
+	 * State of the car
+	 * - thread safe
+	 */
+	std::atomic_short state_ { ConnectionState::NOT_CONNECTED };
+
 	std::shared_ptr <structures::GlobalContext> context_;
 
 	const structures::ExternalConnectionSettings &settings_;
@@ -101,7 +111,7 @@ private:
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_;
 
-	std::vector<int> modules_; // TODO change to map aggregators?
+	std::vector<int> modules_;
 
 	std::string carId_ {}; // TODO not needed
 

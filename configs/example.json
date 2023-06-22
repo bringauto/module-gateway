@@ -24,7 +24,7 @@
           "client-key" : "key.pem"
         },
         "server-ip": "127.0.0.1",
-        "port": 9999,
+        "port": 1883,
         "modules": [ 1,2 ]
       },
       {

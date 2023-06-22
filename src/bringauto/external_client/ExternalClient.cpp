@@ -73,7 +73,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
         log::logError("Update command failed with error code: {}", ret);
         return;
     }
-    log::logInfo("Command on device {} was succesfully updated", device.devicename());
+    log::logInfo("Command on device {} was successfully updated", device.devicename());
 }
 
 void ExternalClient::handleAggregatedMessages() {
@@ -82,16 +82,28 @@ void ExternalClient::handleAggregatedMessages() {
 			continue;
 		}
 		log::logInfo("External client received aggregated status, number of aggregated statuses in queue {}", toExternalQueue_->size());
-		auto &message = toExternalQueue_->front();
-		sendStatus(message);
+		auto& message = toExternalQueue_->front();
+		sendStatus(message.devicestatus());
 		toExternalQueue_->pop();
 	}
 }
 
-void ExternalClient::sendStatus(ip::InternalClient &message) {
-	const auto &moduleNumber = message.devicestatus().device().module();
+void ExternalClient::sendStatus(const InternalProtocol::DeviceStatus& deviceStatus) {
+	const auto &moduleNumber = deviceStatus.device().module();
 	auto &connection = externalConnectionMap_.at(moduleNumber).get();
-	connection.sendStatus(message.devicestatus()); // TODO device state
+
+	if (!connection.getIsConnected()) {
+		if (connection.getFirstConnecting()) {
+			if (connection.initializeConnection() != 0) {
+				connection.fillErrorAggregator(deviceStatus);
+			}
+		}
+		else {	/// External client already takes care of reconnecting
+			connection.fillErrorAggregator(deviceStatus);
+		}
+	} else {
+		connection.sendStatus(deviceStatus);
+	}
 }
 
 }
