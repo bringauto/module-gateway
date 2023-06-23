@@ -66,7 +66,7 @@ void initLogger(const std::string &logPath, bool verbose) {
 			.device_type = static_cast<unsigned int>(std::stoi(tokens[1])),
 			.device_role = tokens[2].c_str(),
 			.device_name = tokens[3].c_str(),
-			.priority = 0 };
+			.priority = static_cast<unsigned int>(std::stoi(tokens[4])) };
 }
 
 std::vector <std::string> splitString(const std::string &input, char delimiter) {

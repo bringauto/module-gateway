@@ -14,7 +14,7 @@ using log = bringauto::logging::Logger;
 
 std::string ErrorAggregator::getId(const ::device_identification &device) {
 	std::stringstream ss;
-	ss << device.module << "/" << device.device_type << "/" << device.device_role << "/" << device.device_name;
+	ss << device.module << "/" << device.device_type << "/" << device.device_role << "/" << device.device_name << "/" << device.priority;
 	return ss.str();
 }
 
