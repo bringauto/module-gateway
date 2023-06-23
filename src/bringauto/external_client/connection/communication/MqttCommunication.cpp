@@ -3,8 +3,6 @@
 
 #include <bringauto/logging/Logger.hpp>
 
-
-
 namespace bringauto::external_client::connection::communication {
 
 MqttCommunication::MqttCommunication(const structures::ExternalConnectionSettings &settings, const std::string& company,
@@ -78,10 +76,11 @@ int MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
 		return -1;
 	}
 	unsigned int size = message->ByteSizeLong();
-	uint8_t buffer[size];
+	auto* buffer = new uint8_t[size];
 	memset(buffer, '\0', size);
 	message->SerializeToArray(buffer, static_cast<int>(size));
 	client_->publish(publishTopic_, buffer, size, qos, false);
+	delete[] buffer;
 	return 0;
 }
 

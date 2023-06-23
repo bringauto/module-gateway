@@ -58,7 +58,7 @@ public:
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/error_aggregator.h
 	 *
-	 * @param status user allocated message_buffer for the error status. Look at 'memory management' section
+	 * @param status user initialized message_buffer for the error status. Look at 'memory management' section
 	 * @param device identification of the device
 	 *
 	 * @return OK if successful
@@ -73,7 +73,7 @@ public:
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/error_aggregator.h
 	 *
-	 * @param error user allocated message_buffer for created protobuf error status. Look at 'memory management' section.
+	 * @param error user initialized message_buffer for created protobuf error status. Look at 'memory management' section.
 	 * @param device identification of the device
 	 *
 	 * @return OK if successful

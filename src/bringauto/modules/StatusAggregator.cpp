@@ -20,7 +20,7 @@ using log = bringauto::logging::Logger;
 
 std::string StatusAggregator::getId(const ::device_identification &device) {
 	std::stringstream ss;
-	ss << device.module << "/" << device.device_type << "/" << device.device_role << "/" << device.device_name << "/" << device.priority;
+	ss << device.module << "/" << device.device_type << "/" << device.device_role << "/" << device.device_name; // TODO we need to be able to get priority
 	return ss.str();
 }
 
@@ -90,7 +90,7 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 		module_->generateFirstCommand(&commandBuffer, device_type);
 		struct buffer statusBuffer {};
 		allocate(&statusBuffer, status.size_in_bytes);
-		strncpy(static_cast<char *>(statusBuffer.data), static_cast<char *>(status.data), status.size_in_bytes - 1);
+		strncpy(static_cast<char *>(statusBuffer.data), static_cast<char *>(status.data), status.size_in_bytes ); // TODO jiri mel -1
 		devices.insert({ id, { commandBuffer, statusBuffer }});
 		return 0;
 	}
@@ -105,7 +105,7 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	} else {
 		aggregatedMessages.push(currStatus);
 		allocate(&currStatus, status.size_in_bytes);
-		strncpy(static_cast<char *>(currStatus.data), static_cast<char *>(status.data), status.size_in_bytes - 1);
+		strncpy(static_cast<char *>(currStatus.data), static_cast<char *>(status.data), status.size_in_bytes ); // TODO -1
 	}
 
 	return aggregatedMessages.size();

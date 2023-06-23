@@ -14,7 +14,7 @@ using log = bringauto::logging::Logger;
 
 std::string ErrorAggregator::getId(const ::device_identification &device) {
 	std::stringstream ss;
-	ss << device.module << "/" << device.device_type << "/" << device.device_role << "/" << device.device_name << "/" << device.priority;
+	ss << device.module << "/" << device.device_type << "/" << device.device_role << "/" << device.device_name; // TODO we need to be able to get priority
 	return ss.str();
 }
 
@@ -82,9 +82,9 @@ int ErrorAggregator::get_last_status(struct buffer *status, const struct device_
 	if (lastStatus.data == nullptr || lastStatus.size_in_bytes == 0) {
 		return NO_MESSAGE_AVAILABLE;
 	}
-	if (allocate(status, lastStatus.size_in_bytes) == NOT_OK) {
-		return NOT_OK;
-	}
+//	if (allocate(status, lastStatus.size_in_bytes) == NOT_OK) {
+//		return NOT_OK;
+//	}
 	status->data = lastStatus.data;
 	status->size_in_bytes = lastStatus.size_in_bytes;
 	return OK;

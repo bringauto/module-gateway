@@ -19,6 +19,8 @@ public:
 	 */
 	explicit DeviceIdentification(const device_identification& device);
 
+	explicit DeviceIdentification(const std::string& deviceId);
+
 	/**
 	 * @brief get value of module_
 	 * @return value of module_
@@ -56,7 +58,7 @@ public:
 	 */
 	bool isSame(const std::shared_ptr<DeviceIdentification> &toCompare);
 
-
+	device_identification convertToCStruct() const;
 private:
 	uint32_t module_;
 	uint32_t deviceType_;

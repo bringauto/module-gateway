@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bringauto/structures/DeviceIdentification.hpp>
 #include <InternalProtocol.pb.h>
 #include <ExternalProtocol.pb.h>
 #include <device_management.h>
@@ -37,10 +38,13 @@ public:
 
 	static InternalProtocol::Device CreateDevice(const device_identification& device);
 
+	static InternalProtocol::Device CreateDevice(const structures::DeviceIdentification& device);
+
 	static device_identification ParseDevice(const InternalProtocol::Device& device);
 
 	static ExternalProtocol::ExternalClient CreateExternalClientConnect(const std::string& sessionId, const std::string& company, const std::string& vehicleName, const std::vector<device_identification> &devices);
-
+	static ExternalProtocol::ExternalClient	CreateExternalClientConnect(const std::string& sessionId, const std::string& company, const std::string& vehicleName,
+											   const std::vector<structures::DeviceIdentification> &devices);
 	static ExternalProtocol::ExternalClient CreateExternalClientStatus(const std::string& sessionId, ExternalProtocol::Status_DeviceState deviceState, u_int32_t messageCounter, const InternalProtocol::DeviceStatus& deviceStatus, const buffer& errorMessage);
 
 	static ExternalProtocol::ExternalClient CreateExternalClientCommandResponse(const std::string& sessionId, ExternalProtocol::CommandResponse::Type type, u_int32_t messageCounter);

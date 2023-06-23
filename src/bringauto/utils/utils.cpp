@@ -6,6 +6,7 @@
 #include <libbringauto_logger/bringauto/logging/Logger.hpp>
 #include <libbringauto_logger/bringauto/logging/FileSink.hpp>
 #include <libbringauto_logger/bringauto/logging/ConsoleSink.hpp>
+#include "bringauto/structures/DeviceIdentification.hpp"
 
 
 
@@ -60,13 +61,14 @@ void initLogger(const std::string &logPath, bool verbose) {
 			.priority = device.priority() };
 }
 
-::device_identification mapToDeviceId(const std::string &device) {
+device_identification mapToDeviceId(const std::string &device) {
 	std::vector <std::string> tokens = splitString(device, '/');
 	return ::device_identification { .module = std::stoi(tokens[0]),
 			.device_type = static_cast<unsigned int>(std::stoi(tokens[1])),
 			.device_role = tokens[2].c_str(),
 			.device_name = tokens[3].c_str(),
-			.priority = static_cast<unsigned int>(std::stoi(tokens[4])) };
+			// .priority = static_cast<unsigned int>(std::stoi(tokens[4]))
+			};
 }
 
 std::vector <std::string> splitString(const std::string &input, char delimiter) {

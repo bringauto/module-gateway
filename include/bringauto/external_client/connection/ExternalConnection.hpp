@@ -7,6 +7,7 @@
 #include <bringauto/external_client/connection/messages/SentMessagesHandler.hpp>
 #include <bringauto/external_client/ErrorAggregator.hpp>
 #include <bringauto/external_client/connection/ConnectionState.hpp>
+#include <bringauto/structures/DeviceIdentification.hpp>
 
 #include <general_error_codes.h>
 
@@ -54,15 +55,15 @@ private:
 
 	static u_int32_t getCommandCounter(const ExternalProtocol::Command& command);
 
-	int connectMessageHandle(const std::vector <device_identification> &devices);
+	int connectMessageHandle(const std::vector<structures::DeviceIdentification> &devices);
 
 	/**
 	 * @brief Takes care of second etape of connect sequence - for all devices send their last status
 	 * @param devices
 	 */
-	int statusMessageHandle(const std::vector <device_identification> &devices);
+	int statusMessageHandle(const std::vector<structures::DeviceIdentification> &devices);
 
-	int commandMessageHandle(const std::vector <device_identification>& devices);
+	int commandMessageHandle(const std::vector<structures::DeviceIdentification> &devices);
 
 	/**
 	 * @brief Check if command is in order and send commandResponse

@@ -76,6 +76,10 @@ InternalProtocol::Device ProtocolUtils::CreateDevice(const device_identification
 	return CreateDevice(device.module, device.device_type, device.device_role, device.device_name, device.priority);
 }
 
+InternalProtocol::Device ProtocolUtils::CreateDevice(const structures::DeviceIdentification &device) {
+	return CreateDevice(device.getModule(), device.getDeviceType(), device.getDeviceRole(), device.getDeviceName(), device.getPriority());
+}
+
 InternalProtocol::Device
 ProtocolUtils::CreateDevice(int module, unsigned int type, const std::string &role, const std::string &name, unsigned int priority) {
 	InternalProtocol::Device device;
@@ -90,6 +94,24 @@ ProtocolUtils::CreateDevice(int module, unsigned int type, const std::string &ro
 ExternalProtocol::ExternalClient
 ProtocolUtils::CreateExternalClientConnect(const std::string& sessionId, const std::string& company, const std::string& vehicleName,
 										   const std::vector<device_identification> &devices) {
+	ExternalProtocol::ExternalClient externalMessage;
+	auto connectMessage = externalMessage.mutable_connect();
+
+	connectMessage->set_sessionid(sessionId);
+	connectMessage->set_company(company);
+	connectMessage->set_vehiclename(vehicleName);
+
+	for(const auto &tmpDevice: devices) {
+		auto devicePtr = connectMessage->add_devices();
+		devicePtr->CopyFrom(CreateDevice(tmpDevice));
+	}
+
+	return externalMessage;
+}
+
+ExternalProtocol::ExternalClient
+ProtocolUtils::CreateExternalClientConnect(const std::string& sessionId, const std::string& company, const std::string& vehicleName,
+										   const std::vector<structures::DeviceIdentification> &devices) {
 	ExternalProtocol::ExternalClient externalMessage;
 	auto connectMessage = externalMessage.mutable_connect();
 

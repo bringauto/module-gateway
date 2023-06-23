@@ -6,6 +6,7 @@
 #include <bringauto/logging/Logger.hpp>
 
 #include <random>
+#include "bringauto/structures/DeviceIdentification.hpp"
 
 
 
@@ -85,7 +86,7 @@ int ExternalConnection::initializeConnection() {
 	}
 	log::logInfo("Initializing connection to endpoint {}:{}", settings_.serverIp, settings_.port);
 
-	std::vector<device_identification> devices {};
+	std::vector<structures::DeviceIdentification> devices {};
 	for (const auto &moduleNumber: settings_.modules) {
 		struct buffer unique_devices {};
 		int ret = context_->statusAggregators[moduleNumber]->get_unique_devices(&unique_devices);
@@ -97,7 +98,7 @@ int ExternalConnection::initializeConnection() {
 		deallocate(&unique_devices);
 		auto devicesVec = utils::splitString(devicesString, ',');
 		for (const auto &device: devicesVec) {
-			devices.push_back(utils::mapToDeviceId(device));
+			devices.emplace_back(device);
 		}
 	}
 
@@ -129,7 +130,7 @@ int ExternalConnection::initializeConnection() {
 	return 0;
 }
 
-int ExternalConnection::connectMessageHandle(const std::vector<device_identification> &devices) {
+int ExternalConnection::connectMessageHandle(const std::vector<structures::DeviceIdentification> &devices) {
 	setSessionId();
 
 	auto connectMessage = common_utils::ProtocolUtils::CreateExternalClientConnect(sessionId_, company_, vehicleName_, devices);
@@ -155,10 +156,11 @@ int ExternalConnection::connectMessageHandle(const std::vector<device_identifica
 	return 0;
 }
 
-int ExternalConnection::statusMessageHandle(const std::vector<device_identification> &devices) {
-	for (const auto &device: devices) {
+int ExternalConnection::statusMessageHandle(const std::vector<structures::DeviceIdentification> &devices) {
+	for (const auto &deviceIdentification: devices) {
+		auto device = deviceIdentification.convertToCStruct();	// TODO could override all functions to accept the class
 		struct buffer errorBuffer {};
-		const auto &lastErrorStatusRc = errorAggregators[device.module].get_last_status(&errorBuffer, device);
+		const auto &lastErrorStatusRc = errorAggregators[device.module].get_error(&errorBuffer, device);
 		if (lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
 			logging::Logger::logWarning("Device is not registered in error aggregator: {} {}", device.device_role,
 										device.device_name);
@@ -179,9 +181,6 @@ int ExternalConnection::statusMessageHandle(const std::vector<device_identificat
 		auto deviceStatus = common_utils::ProtocolUtils::CreateDeviceStatus(device, statusBuffer);
 
 		sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_CONNECTING, errorBuffer);
-
-		deallocate(&errorBuffer);
-		deallocate(&statusBuffer);
 	}
 	for (int i = 0; i < devices.size(); ++i) {
 		const auto statusResponseMsg = communicationChannel_->receiveMessage();
@@ -206,7 +205,7 @@ int ExternalConnection::statusMessageHandle(const std::vector<device_identificat
 	return 0;
 }
 
-int ExternalConnection::commandMessageHandle(const std::vector<device_identification>& devices) {
+int ExternalConnection::commandMessageHandle(const std::vector<structures::DeviceIdentification> &devices) {
 	for (int i = 0; i < devices.size(); ++i) {
 		const auto commandMsg = communicationChannel_->receiveMessage();
 		if (commandMsg == nullptr) {
