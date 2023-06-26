@@ -26,7 +26,8 @@ public:
 					   const structures::ExternalConnectionSettings &settings,
 					   const std::string &company,
 					   const std::string &vehicleName,
-					   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue);
+					   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
+					   const std::shared_ptr<structures::AtomicQueue<std::reference_wrapper<connection::ExternalConnection>>>& reconnectQueue);
 
 	/**
 	 * @brief Handles all etapes of connect sequence. If connect sequence is successful,
@@ -42,12 +43,19 @@ public:
 
 	bool hasAnyDeviceConnected();
 
+	/**
+	 * @brief Force aggregation on all devices in all modules that connection service
+	 * Is used before connect sequence to assure that every device has available status to be sent
+	 *
+	 * @return number of devices
+	 */
+	int forceAggregationOnAllDevices();
 	void fillErrorAggregator();
 	void fillErrorAggregator(const InternalProtocol::DeviceStatus& deviceStatus);
 
-	bool getIsConnected() const { return isConnected; }
+	[[nodiscard]] short getState() const { return state_.load(); }
 
-	bool getFirstConnecting() const { return firstConnecting; }
+	bool isModuleSupported(int moduleNum);
 private:
 	void setSessionId();
 
@@ -80,6 +88,8 @@ private:
 	 */
 	void receivingHandlerLoop();
 
+	std::vector<structures::DeviceIdentification> getAllConnectedDevices();
+
 	std::atomic<bool> stopReceiving { false };
 
 	const int KEY_LENGHT = 8;
@@ -93,15 +103,12 @@ private:
 	std::unique_ptr <communication::ICommunicationChannel> communicationChannel_ {};
 
 	std::thread listeningThread;
-	bool isConnected { false };
-
-	bool firstConnecting { true };
 
 	/**
 	 * State of the car
 	 * - thread safe
 	 */
-	std::atomic_short state_ { ConnectionState::NOT_CONNECTED };
+	std::atomic_short state_ { ConnectionState::NOT_INITIALIZED };
 
 	std::shared_ptr <structures::GlobalContext> context_;
 
@@ -112,7 +119,7 @@ private:
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_;
 
-	std::vector<int> modules_;
+	std::shared_ptr<structures::AtomicQueue<std::reference_wrapper<connection::ExternalConnection>>> reconnectQueue_;
 
 	std::string carId_ {}; // TODO not needed
 

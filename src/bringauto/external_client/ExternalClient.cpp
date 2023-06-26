@@ -2,6 +2,7 @@
 #include <bringauto/logging/Logger.hpp>
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/utils/utils.hpp>
+#include <bringauto/external_client/connection/ConnectionState.hpp>
 
 
 
@@ -14,7 +15,9 @@ ExternalClient::ExternalClient(std::shared_ptr <structures::GlobalContext> &cont
 							   std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &toExternalQueue)
 		: context_ { context }, toExternalQueue_ { toExternalQueue } {
 	fromExternalQueue_ = std::make_shared < structures::AtomicQueue < InternalProtocol::DeviceCommand >> ();
+	reconnectQueue_ = std::make_shared<structures::AtomicQueue<std::reference_wrapper<connection::ExternalConnection>>>();
     fromExternalClientThread_ = std::thread(&ExternalClient::handleCommands, this);
+	// TODO reconnecting thread
 };
 
 void ExternalClient::destroy() {
@@ -30,7 +33,7 @@ void ExternalClient::run() {
 
 void ExternalClient::initConnections() {
 	for(auto const &connection: context_->settings->externalConnectionSettingsList) {
-		externalConnectionsList_.emplace_back(context_, connection, context_->settings->company, context_->settings->vehicleName, fromExternalQueue_);
+		externalConnectionsList_.emplace_back(context_, connection, context_->settings->company, context_->settings->vehicleName, fromExternalQueue_, reconnectQueue_);
 		auto &created_connection = externalConnectionsList_.back();
 		for(auto const &moduleNumber: connection.modules) {
 			externalConnectionMap_.emplace(moduleNumber, created_connection);
@@ -78,6 +81,10 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 
 void ExternalClient::handleAggregatedMessages() {
 	while(not context_->ioContext.stopped()) {
+		if (not reconnectQueue_->empty()) {
+			startExternalConnectSequence(reconnectQueue_->front().get());
+			reconnectQueue_->pop();
+		}
 		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
@@ -92,18 +99,43 @@ void ExternalClient::sendStatus(const InternalProtocol::DeviceStatus& deviceStat
 	const auto &moduleNumber = deviceStatus.device().module();
 	auto &connection = externalConnectionMap_.at(moduleNumber).get();
 
-	if (!connection.getIsConnected()) {
-		if (connection.getFirstConnecting()) {
-			if (connection.initializeConnection() != 0) {
-				connection.fillErrorAggregator(deviceStatus);
+	if (connection.getState() != connection::CONNECTED) {
+		connection.fillErrorAggregator(deviceStatus);
+		if (connection.getState() == connection::NOT_INITIALIZED) {
+			if (insideConnectSequence_) {
+				log::logWarning("Status moved to error aggregator. Cannot initialize connect sequence, when different is running.");
+				return;
 			}
-		}
-		else {	/// External client already takes care of reconnecting
-			connection.fillErrorAggregator(deviceStatus);
+			startExternalConnectSequence(connection);
 		}
 	} else {
 		connection.sendStatus(deviceStatus);
 	}
+}
+
+void ExternalClient::startExternalConnectSequence(connection::ExternalConnection& connection) {
+	insideConnectSequence_ = true;
+	log::logDebug("Forcing aggregation on modules");
+	auto statusesLeft = connection.forceAggregationOnAllDevices();
+	while (statusesLeft != 0) {
+		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
+			continue;
+		}
+		auto& status = toExternalQueue_->front().devicestatus();
+		if (connection.isModuleSupported(status.device().module())) {
+			log::logDebug("Forcing aggregation on device: {} {}", status.device().devicerole(), status.device().devicename());
+			connection.fillErrorAggregator(status);
+			statusesLeft--;
+		} else {
+			log::logDebug("Sending status inside connect sequence init");
+			sendStatus(status); /// Send status from different connection, so it won't get lost. Shouldn't initialize bad recursion
+		}
+		toExternalQueue_->pop();
+	}
+	if (connection.initializeConnection() != 0) {
+		// TODO add reconnect after timeout
+	}
+	insideConnectSequence_ = false;
 }
 
 }

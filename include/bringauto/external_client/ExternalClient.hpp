@@ -35,6 +35,8 @@ private:
 
 	void initConnections();
 
+	void startExternalConnectSequence(connection::ExternalConnection& connection);
+
 	void handleAggregatedMessages();
 
     void handleCommands();
@@ -43,6 +45,8 @@ private:
 
 	void sendStatus(const InternalProtocol::DeviceStatus& deviceStatus);
 
+	bool insideConnectSequence_ = false;
+
 	std::map<unsigned int, std::reference_wrapper<connection::ExternalConnection>> externalConnectionMap_;
 
 	std::list <connection::ExternalConnection> externalConnectionsList_;
@@ -50,6 +54,8 @@ private:
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> toExternalQueue_;
 
     std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> fromExternalQueue_;
+
+	std::shared_ptr <structures::AtomicQueue<std::reference_wrapper<connection::ExternalConnection>>> reconnectQueue_;
 
     std::thread fromExternalClientThread_;
 

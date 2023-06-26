@@ -17,9 +17,11 @@ ExternalConnection::ExternalConnection(const std::shared_ptr<structures::GlobalC
 									   const structures::ExternalConnectionSettings &settings,
 									   const std::string &company,
 									   const std::string &vehicleName,
-									   const std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue)
+									   const std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>>& commandQueue,
+									   const std::shared_ptr<structures::AtomicQueue<std::reference_wrapper<connection::ExternalConnection>>>& reconnectQueue)
 		: context_ { context }, settings_ { settings } {
 	commandQueue_ = commandQueue;
+	reconnectQueue_ = reconnectQueue;
 	for (const auto &moduleNum: settings.modules) {
 		errorAggregators[moduleNum] = ErrorAggregator();
 		errorAggregators[moduleNum].init_error_aggregator(context->moduleLibraries[moduleNum]);
@@ -39,7 +41,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 									const buffer &errorMessage) {
 	const auto &device = status.device();
 
-	if (std::find(modules_.begin(), modules_.end(), device.module()) == modules_.end()) {
+	if (errorAggregators.find(device.module()) == errorAggregators.end()) {
 		log::logError(
 				"Status with module number ({}) was passed to external connection, that doesn't support this module", device.module());
 	}
@@ -70,37 +72,25 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 	sentMessagesHandler_.addNotAckedStatus(externalMessage.status());
 	if (communicationChannel_->sendMessage(&externalMessage) != 0) {
 		endConnection(false);
+		reconnectQueue_->push(*this);
 	}
 	log::logDebug("Sending status with messageCounter '{}' with aggregated errorMessage: {}", clientMessageCounter_,
 				  errorMessage.size_in_bytes > 0 ? errorMessage.data : "");
 }
 
 int ExternalConnection::initializeConnection() {
-	if (firstConnecting) {
+	if (state_.load() == NOT_INITIALIZED) {
 		listeningThread = std::thread(&ExternalConnection::receivingHandlerLoop, this);
+		state_.exchange(NOT_CONNECTED);
 	}
-	firstConnecting = false;
+
 	if (communicationChannel_->initializeConnection() != 0) {
 		log::logError("Unable to create connection to {}:{}", settings_.serverIp, settings_.port);
 		return -1;
 	}
 	log::logInfo("Initializing connection to endpoint {}:{}", settings_.serverIp, settings_.port);
 
-	std::vector<structures::DeviceIdentification> devices {};
-	for (const auto &moduleNumber: settings_.modules) {
-		struct buffer unique_devices {};
-		int ret = context_->statusAggregators[moduleNumber]->get_unique_devices(&unique_devices);
-		if (ret <= 0) {
-			log::logWarning("Module {} does not have any devices", moduleNumber); // TODO why is this Warning?
-			continue;
-		}
-		std::string devicesString { static_cast<char *>(unique_devices.data), unique_devices.size_in_bytes };
-		deallocate(&unique_devices);
-		auto devicesVec = utils::splitString(devicesString, ',');
-		for (const auto &device: devicesVec) {
-			devices.emplace_back(device);
-		}
-	}
+	std::vector<structures::DeviceIdentification> devices = getAllConnectedDevices();
 
 	state_.exchange(CONNECTING);
 	log::logInfo("Connect sequence: 1st step (sending list of devices)");
@@ -122,7 +112,6 @@ int ExternalConnection::initializeConnection() {
 		return -1;
 	}
 	state_.exchange(CONNECTED);
-	isConnected = true;
 	for (auto [moduleNum, errorAggregator]: errorAggregators) {
 		errorAggregator.clear_error_aggregator();
 	}
@@ -160,20 +149,31 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 	for (const auto &deviceIdentification: devices) {
 		auto device = deviceIdentification.convertToCStruct();	// TODO could override all functions to accept the class
 		struct buffer errorBuffer {};
+		struct buffer statusBuffer {};
+		int lastStatusRc {};
+
 		const auto &lastErrorStatusRc = errorAggregators[device.module].get_error(&errorBuffer, device);
 		if (lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
-			logging::Logger::logWarning("Device is not registered in error aggregator: {} {}", device.device_role,
+			logging::Logger::logWarning("Device is not registered in error aggregator, forcing aggregation: {} {}", device.device_role,
 										device.device_name);
+			context_->statusAggregators[device.module]->force_aggregation_on_device(device); 	// TODO redo
+			lastStatusRc = context_->statusAggregators[device.module]->get_aggregated_status(&statusBuffer, device);
 		} else if (lastErrorStatusRc == NOT_OK) {
 			log::logError("An error occurred in error aggregator - get_last_status. Return code NOT_OK");
 			return -1;
+		} else {
+			lastStatusRc = errorAggregators[device.module].get_last_status(&statusBuffer, device);
 		}
 
-		struct buffer statusBuffer {};
-		const auto &lastStatusRc = context_->statusAggregators[device.module]->get_aggregated_status(&statusBuffer,
-																									 device);
 
-		if (lastStatusRc != OK) {
+		if (lastStatusRc == NO_MESSAGE_AVAILABLE) {
+			while (lastStatusRc == NO_MESSAGE_AVAILABLE) { // TODO is this error??
+				log::logWarning("No message is available for device: {} {}. Trying again...", device.device_role, device.device_name);
+				lastStatusRc = errorAggregators[device.module].get_last_status(&statusBuffer, device);
+				std::this_thread::sleep_for(std::chrono::seconds(1));
+				// TODO break after a few tries
+			}
+		} else if (lastStatusRc != OK) {
 			logging::Logger::logError("Cannot obtain status for device: {} {}", device.device_role,
 										device.device_name);
 			return -1;
@@ -246,7 +246,6 @@ u_int32_t ExternalConnection::getNextStatusCounter() {
 void ExternalConnection::endConnection(bool completeDisconnect = false) {
 	state_.exchange(NOT_CONNECTED);
 	sentMessagesHandler_.clearAllTimers();
-	isConnected = false;
 	if (not completeDisconnect) {
 		fillErrorAggregator();
 	} else {
@@ -306,20 +305,20 @@ void ExternalConnection::receivingHandlerLoop() {
 			log::logDebug("Handling COMMAND messageCounter={}",serverMessage->command().messagecounter());
 			if (handleCommand(serverMessage->command()) != 0) {
 				endConnection(false);
-				// TODO add event Reconnect
+				reconnectQueue_->push(*this);
 				return;
 			}
 		} else if (serverMessage->has_statusresponse()) {
 			log::logDebug("Handling STATUS_RESPONSE messageCounter={}",serverMessage->statusresponse().messagecounter());
 			if (sentMessagesHandler_.acknowledgeStatus(serverMessage->statusresponse()) != 0) {
 				endConnection(false);
-				// TODO add event Reconnect
+				reconnectQueue_->push(*this);
 				return;
 			}
 		} else {
 			log::logError("Received message with unexpected type, closing connection");
 			endConnection(false);
-			// TODO add event Reconnect
+			reconnectQueue_->push(*this);
 			return;
 		}
 
@@ -355,6 +354,37 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 	} else {
 		log::logError("Device status with unsupported module was passed to fillErrorAggregator()");
 	}
+}
+
+int ExternalConnection::forceAggregationOnAllDevices() {
+	auto devices = getAllConnectedDevices();
+	for (const auto& device : devices) {
+		context_->statusAggregators[device.getModule()]->force_aggregation_on_device(device.convertToCStruct());
+	}
+	return devices.size();
+}
+
+std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnectedDevices() {
+	std::vector<structures::DeviceIdentification> devices {};
+	for (const auto &moduleNumber: settings_.modules) {
+		struct buffer unique_devices {};
+		int ret = context_->statusAggregators[moduleNumber]->get_unique_devices(&unique_devices);
+		if (ret <= 0) {
+			log::logWarning("Module {} does not have any devices", moduleNumber); // TODO why is this Warning?
+			continue;
+		}
+		std::string devicesString { static_cast<char *>(unique_devices.data), unique_devices.size_in_bytes };
+		deallocate(&unique_devices);
+		auto devicesVec = utils::splitString(devicesString, ',');
+		for (const auto &device: devicesVec) {
+			devices.emplace_back(device);
+		}
+	}
+	return devices;
+}
+
+bool ExternalConnection::isModuleSupported(int moduleNum) {
+	return errorAggregators.find(moduleNum) != errorAggregators.end();
 }
 
 
