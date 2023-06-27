@@ -2,6 +2,8 @@
 #include <bringauto/logging/Logger.hpp>
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/utils/utils.hpp>
+#include <bringauto/common_utils/ProtocolUtils.hpp>
+
 #include <memory_management.h>
 
 
@@ -54,12 +56,9 @@ void ModuleHandler::handle_connect(const ip::DeviceConnect &connect) {
 				ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_DEVICE_NOT_SUPPORTED;
 	}
 
-	auto response = new ip::DeviceConnectResponse();
-	response->set_responsetype(response_type);
-	response->set_allocated_device(new ip::Device(device));
-	ip::InternalServer msg {};
-	msg.set_allocated_deviceconnectresponse(response);
-	toInternalQueue_->pushAndNotify(msg);
+	auto response = common_utils::ProtocolUtils::CreateServerMessage(device, response_type);
+
+	toInternalQueue_->pushAndNotify(response);
 	log::logInfo("New device {} is trying to connect, sending response {}", device.devicename(), response_type);
 }
 
@@ -75,52 +74,43 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 		return;
 	}
 
-	struct ::buffer status_buffer {};
+	struct ::buffer statusBuffer {};
 	const auto &statusData = status.statusdata();
-	if(allocate(&status_buffer, statusData.size() + 1) == NOT_OK) {
+	if(allocate(&statusBuffer, statusData.size() + 1) == NOT_OK) {
 		log::logError("Could not allocate memory for status message");
 		return;
 	}
-	strcpy(static_cast<char *>(status_buffer.data), statusData.c_str());
+	strcpy(static_cast<char *>(statusBuffer.data), statusData.c_str());
 
 	const struct ::device_identification deviceId = utils::mapToDeviceId(device);
 
 	auto &statusAggregator = statusAggregators[moduleNumber];
-	int ret = statusAggregator->add_status_to_aggregator(status_buffer, deviceId);
+	int ret = statusAggregator->add_status_to_aggregator(statusBuffer, deviceId);
 	if(ret < 0) {
 		log::logWarning("Add status to aggregator failed with return code: {}", ret);
 		return;
 	} else if(ret > 0) {
 		struct ::buffer aggregatedStatusBuffer {};
 		statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
-		auto aggregatedStatus = new ip::DeviceStatus();
-		aggregatedStatus->set_allocated_statusdata(new std::string(static_cast<char *>(aggregatedStatusBuffer.data),
-																   aggregatedStatusBuffer.size_in_bytes - 1));
-		aggregatedStatus->set_allocated_device(new InternalProtocol::Device(device));
-		ip::InternalClient msg {};
-		msg.set_allocated_devicestatus(aggregatedStatus);
-		toExternalQueue_->pushAndNotify(msg);
-		deallocate(&aggregatedStatusBuffer);
+		auto statusMessage = common_utils::ProtocolUtils::CreateClientMessage(device, aggregatedStatusBuffer);
+
+		toExternalQueue_->pushAndNotify(statusMessage);
+		// deallocate(&aggregatedStatusBuffer); TODO should free??
 	}
 
-	struct ::buffer command_buffer {};
-	ret = statusAggregator->get_command(status_buffer, deviceId, &command_buffer);
+	struct ::buffer commandBuffer {};
+	ret = statusAggregator->get_command(statusBuffer, deviceId, &commandBuffer);
 	if(ret != OK) {
 		log::logWarning("Retrieving command failed with return code: {}", ret);
 		return;
 	}
 
-	auto deviceCommand = new ip::DeviceCommand();
-	deviceCommand->set_allocated_commanddata(
-			new std::string(static_cast<char *>(command_buffer.data), command_buffer.size_in_bytes - 1));
-	deviceCommand->set_allocated_device(new InternalProtocol::Device(device));
-	ip::InternalServer msg {};
-	msg.set_allocated_devicecommand(deviceCommand);
-	toInternalQueue_->pushAndNotify(msg);
+	auto deviceCommandMessage = common_utils::ProtocolUtils::CreateServerMessage(device, commandBuffer);
+	toInternalQueue_->pushAndNotify(deviceCommandMessage);
 	log::logDebug("Command succesfully retrieved and sent to device: {}", deviceName);
 
-	deallocate(&command_buffer);
-	deallocate(&status_buffer);
+	deallocate(&commandBuffer);
+	deallocate(&statusBuffer);
 }
 
 }

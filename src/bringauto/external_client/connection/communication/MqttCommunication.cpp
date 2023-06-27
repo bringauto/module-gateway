@@ -42,7 +42,7 @@ MqttCommunication::MqttCommunication(const structures::ExternalConnectionSetting
 
 
 void MqttCommunication::connect() {
-	client_ = std::make_unique<mqtt::async_client>(serverAddress_, clientId_, mqtt::create_options(MQTTVERSION_5)); // TODO do I have to create new client every time?
+	client_ = std::make_unique<mqtt::async_client>(serverAddress_, clientId_, mqtt::create_options(MQTTVERSION_5)); // TODO sometimes throw SIGSEGV
 
 	client_->start_consuming();
 	mqtt::token_ptr conntok = client_->connect(connopts_);

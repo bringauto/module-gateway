@@ -1,9 +1,10 @@
 #include <bringauto/external_client/ExternalClient.hpp>
-#include <bringauto/logging/Logger.hpp>
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/utils/utils.hpp>
 #include <bringauto/external_client/connection/ConnectionState.hpp>
 
+#include <bringauto/logging/Logger.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 
 namespace bringauto::external_client {
@@ -17,7 +18,6 @@ ExternalClient::ExternalClient(std::shared_ptr <structures::GlobalContext> &cont
 	fromExternalQueue_ = std::make_shared < structures::AtomicQueue < InternalProtocol::DeviceCommand >> ();
 	reconnectQueue_ = std::make_shared<structures::AtomicQueue<std::reference_wrapper<connection::ExternalConnection>>>();
     fromExternalClientThread_ = std::thread(&ExternalClient::handleCommands, this);
-	// TODO reconnecting thread
 };
 
 void ExternalClient::destroy() {
@@ -123,7 +123,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		}
 		auto& status = toExternalQueue_->front().devicestatus();
 		if (connection.isModuleSupported(status.device().module())) {
-			log::logDebug("Forcing aggregation on device: {} {}", status.device().devicerole(), status.device().devicename());
+			log::logDebug("Filling error aggregator of device: {} {}", status.device().devicerole(), status.device().devicename());
 			connection.fillErrorAggregator(status);
 			statusesLeft--;
 		} else {
@@ -133,7 +133,12 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		toExternalQueue_->pop();
 	}
 	if (connection.initializeConnection() != 0) {
-		// TODO add reconnect after timeout
+		boost::asio::deadline_timer timer(context_->ioContext);
+		timer.expires_from_now(boost::posix_time::seconds(reconnectDelay_));
+		timer.async_wait([this, &connection](const boost::system::error_code& error) {
+			reconnectQueue_->push(connection);
+
+		});
 	}
 	insideConnectSequence_ = false;
 }

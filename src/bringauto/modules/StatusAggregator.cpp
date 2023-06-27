@@ -90,7 +90,7 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 		module_->generateFirstCommand(&commandBuffer, device_type);
 		struct buffer statusBuffer {};
 		allocate(&statusBuffer, status.size_in_bytes);
-		strncpy(static_cast<char *>(statusBuffer.data), static_cast<char *>(status.data), status.size_in_bytes ); // TODO jiri had -1, don't know the reason
+		strncpy(static_cast<char *>(statusBuffer.data), static_cast<char *>(status.data), status.size_in_bytes -1); // TODO jiri had -1, don't know the reason
 		devices.insert({ id, { commandBuffer, statusBuffer }});
 		return 0;
 	}
@@ -104,8 +104,8 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 		currStatus = aggregatedStatusBuff;
 	} else {
 		aggregatedMessages.push(currStatus);
-		allocate(&currStatus, status.size_in_bytes);
-		strncpy(static_cast<char *>(currStatus.data), static_cast<char *>(status.data), status.size_in_bytes ); // TODO -1
+		allocate(&currStatus, status.size_in_bytes); // TODO memory leak
+		strncpy(static_cast<char *>(currStatus.data), static_cast<char *>(status.data), status.size_in_bytes -1); // TODO -1
 	}
 
 	return aggregatedMessages.size();
@@ -124,9 +124,9 @@ int StatusAggregator::get_aggregated_status(struct ::buffer *generated_status,
 	}
 
 	auto &status = aggregatedMessages.front();
-	aggregatedMessages.pop();
 	generated_status->data = status.data;
 	generated_status->size_in_bytes = status.size_in_bytes;
+	aggregatedMessages.pop();
 	return OK;
 }
 

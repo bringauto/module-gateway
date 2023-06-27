@@ -25,10 +25,10 @@ public:
 	static InternalProtocol::InternalServer CreateServerMessage(const InternalProtocol::Device &device,
 														  const InternalProtocol::DeviceConnectResponse_ResponseType &resType);
 	static InternalProtocol::InternalServer CreateServerMessage(const InternalProtocol::Device &device,
-														  const std::string &data);
-	static InternalProtocol::InternalClient CreateClientMessage(const InternalProtocol::Device &device);
+														  const buffer& command);
+//	static InternalProtocol::InternalClient CreateClientMessage(const InternalProtocol::Device &device);
 	static InternalProtocol::InternalClient CreateClientMessage(const InternalProtocol::Device &device,
-																const std::string &data);
+																const buffer& status);
 
 	static InternalProtocol::DeviceStatus CreateDeviceStatus(const InternalProtocol::Device& device, const buffer& statusData);
 

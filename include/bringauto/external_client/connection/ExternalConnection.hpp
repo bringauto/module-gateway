@@ -121,7 +121,7 @@ private:
 
 	std::shared_ptr<structures::AtomicQueue<std::reference_wrapper<connection::ExternalConnection>>> reconnectQueue_;
 
-	std::string carId_ {}; // TODO not needed
+	std::string carId_ {};
 
 	std::string vehicleName_ {};
 

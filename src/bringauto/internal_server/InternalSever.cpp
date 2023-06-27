@@ -299,8 +299,8 @@ void InternalServer::listenToQueue() {
 	while(!context_->ioContext.stopped()) {
 		if(!toInternalQueue_->waitForValueWithTimeout(bringauto::settings::queue_timeout_length)) {
 			auto message = toInternalQueue_->front();
-			toInternalQueue_->pop();
 			validateResponse(message);
+			toInternalQueue_->pop();
 		}
 	}
 }

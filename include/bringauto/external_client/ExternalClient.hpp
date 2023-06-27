@@ -60,6 +60,8 @@ private:
     std::thread fromExternalClientThread_;
 
 	std::shared_ptr <structures::GlobalContext> context_;
+
+	static constexpr int reconnectDelay_ { 30 };
 };
 
 }

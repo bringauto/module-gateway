@@ -72,7 +72,6 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 	sentMessagesHandler_.addNotAckedStatus(externalMessage.status());
 	if (communicationChannel_->sendMessage(&externalMessage) != 0) {
 		endConnection(false);
-		reconnectQueue_->push(*this);
 	}
 	log::logDebug("Sending status with messageCounter '{}' with aggregated errorMessage: {}", clientMessageCounter_,
 				  errorMessage.size_in_bytes > 0 ? errorMessage.data : "");
@@ -154,10 +153,8 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 
 		const auto &lastErrorStatusRc = errorAggregators[device.module].get_error(&errorBuffer, device);
 		if (lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
-			logging::Logger::logWarning("Device is not registered in error aggregator, forcing aggregation: {} {}", device.device_role,
+			logging::Logger::logError("Device is not registered in error aggregator: {} {}", device.device_role,
 										device.device_name);
-			context_->statusAggregators[device.module]->force_aggregation_on_device(device); 	// TODO redo
-			lastStatusRc = context_->statusAggregators[device.module]->get_aggregated_status(&statusBuffer, device);
 		} else if (lastErrorStatusRc == NOT_OK) {
 			log::logError("An error occurred in error aggregator - get_last_status. Return code NOT_OK");
 			return -1;
@@ -165,15 +162,7 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 			lastStatusRc = errorAggregators[device.module].get_last_status(&statusBuffer, device);
 		}
 
-
-		if (lastStatusRc == NO_MESSAGE_AVAILABLE) {
-			while (lastStatusRc == NO_MESSAGE_AVAILABLE) { // TODO is this error??
-				log::logWarning("No message is available for device: {} {}. Trying again...", device.device_role, device.device_name);
-				lastStatusRc = errorAggregators[device.module].get_last_status(&statusBuffer, device);
-				std::this_thread::sleep_for(std::chrono::seconds(1));
-				// TODO break after a few tries
-			}
-		} else if (lastStatusRc != OK) {
+		if (lastStatusRc != OK) {
 			logging::Logger::logError("Cannot obtain status for device: {} {}", device.device_role,
 										device.device_name);
 			return -1;
@@ -247,6 +236,7 @@ void ExternalConnection::endConnection(bool completeDisconnect = false) {
 	state_.exchange(NOT_CONNECTED);
 	sentMessagesHandler_.clearAllTimers();
 	if (not completeDisconnect) {
+		reconnectQueue_->push(*this);
 		fillErrorAggregator();
 	} else {
 		stopReceiving.exchange(true);
@@ -305,20 +295,17 @@ void ExternalConnection::receivingHandlerLoop() {
 			log::logDebug("Handling COMMAND messageCounter={}",serverMessage->command().messagecounter());
 			if (handleCommand(serverMessage->command()) != 0) {
 				endConnection(false);
-				reconnectQueue_->push(*this);
 				return;
 			}
 		} else if (serverMessage->has_statusresponse()) {
 			log::logDebug("Handling STATUS_RESPONSE messageCounter={}",serverMessage->statusresponse().messagecounter());
 			if (sentMessagesHandler_.acknowledgeStatus(serverMessage->statusresponse()) != 0) {
 				endConnection(false);
-				reconnectQueue_->push(*this);
 				return;
 			}
 		} else {
 			log::logError("Received message with unexpected type, closing connection");
 			endConnection(false);
-			reconnectQueue_->push(*this);
 			return;
 		}
 
@@ -379,7 +366,9 @@ std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnecte
 		for (const auto &device: devicesVec) {
 			devices.emplace_back(device);
 		}
+		deallocate(&unique_devices);
 	}
+
 	return devices;
 }
 

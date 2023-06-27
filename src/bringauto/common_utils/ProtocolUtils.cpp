@@ -15,29 +15,29 @@ InternalProtocol::InternalServer ProtocolUtils::CreateServerMessage(const Intern
 }
 
 InternalProtocol::InternalServer ProtocolUtils::CreateServerMessage(const InternalProtocol::Device &device,
-																	const std::string &data) {
+																	const buffer& command) {
 	InternalProtocol::InternalServer message;
-	auto command = message.mutable_devicecommand();
-	command->set_commanddata(data);
-	auto device_ = command->mutable_device();
+	auto deviceCommand = message.mutable_devicecommand();
+	deviceCommand->set_commanddata(command.data, command.size_in_bytes-1);
+	auto device_ = deviceCommand->mutable_device();
 	device_->CopyFrom(device);
 	return message;
 }
 
-InternalProtocol::InternalClient ProtocolUtils::CreateClientMessage(const InternalProtocol::Device &device) {
+/*InternalProtocol::InternalClient ProtocolUtils::CreateClientMessage(const InternalProtocol::Device &device) {
 	InternalProtocol::InternalClient message;
 	auto connect = message.mutable_deviceconnect();
 	auto device_ = connect->mutable_device();
 	device_->CopyFrom(device);
 	return message;
-}
+}*/
 
 InternalProtocol::InternalClient ProtocolUtils::CreateClientMessage(const InternalProtocol::Device &device,
-																	const std::string &data) {
+																	const buffer &status) {
 	InternalProtocol::InternalClient message;
-	auto status = message.mutable_devicestatus();
-	status->set_statusdata(data);
-	auto device_ = status->mutable_device();
+	auto deviceStatus = message.mutable_devicestatus();
+	deviceStatus->set_statusdata(status.data, status.size_in_bytes);
+	auto device_ = deviceStatus->mutable_device();
 	device_->CopyFrom(device);
 	return message;
 }
