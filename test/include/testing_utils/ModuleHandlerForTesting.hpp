@@ -1,7 +1,7 @@
 #pragma once
 
 #include <InternalProtocol.pb.h>
-#include <bringauto/common_utils/ProtocolUtils.hpp>
+#include <bringauto/common_utils/ProtobufUtils.hpp>
 #include <bringauto/structures/AtomicQueue.hpp>
 #include <bringauto/structures/GlobalContext.hpp>
 

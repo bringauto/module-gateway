@@ -1,6 +1,6 @@
 #include <bringauto/external_client/connection/ExternalConnection.hpp>
 #include <bringauto/external_client/connection/communication/MqttCommunication.hpp>
-#include <bringauto/common_utils/ProtocolUtils.hpp>
+#include <bringauto/common_utils/ProtobufUtils.hpp>
 #include <bringauto/utils/utils.hpp>
 
 #include <bringauto/logging/Logger.hpp>
@@ -64,7 +64,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 			break;
 	}
 
-	auto externalMessage = common_utils::ProtocolUtils::CreateExternalClientStatus(sessionId_,
+	auto externalMessage = common_utils::ProtobufUtils::CreateExternalClientStatus(sessionId_,
 																				   deviceState,
 																				   getNextStatusCounter(),
 																				   status,
@@ -121,7 +121,7 @@ int ExternalConnection::initializeConnection() {
 int ExternalConnection::connectMessageHandle(const std::vector<structures::DeviceIdentification> &devices) {
 	setSessionId();
 
-	auto connectMessage = common_utils::ProtocolUtils::CreateExternalClientConnect(sessionId_, company_, vehicleName_, devices);
+	auto connectMessage = common_utils::ProtobufUtils::CreateExternalClientConnect(sessionId_, company_, vehicleName_, devices);
 	communicationChannel_->sendMessage(&connectMessage);
 
 	const auto connectResponseMsg = communicationChannel_->receiveMessage();
@@ -167,7 +167,7 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 										device.device_name);
 			return -1;
 		}
-		auto deviceStatus = common_utils::ProtocolUtils::CreateDeviceStatus(device, statusBuffer);
+		auto deviceStatus = common_utils::ProtobufUtils::CreateDeviceStatus(device, statusBuffer);
 
 		sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_CONNECTING, errorBuffer);
 	}
@@ -270,7 +270,7 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command& commandMe
 		responseType = ExternalProtocol::CommandResponse_Type_DEVICE_NOT_CONNECTED; // TODO check if is supported
 	}
 
-	auto commandResponse = common_utils::ProtocolUtils::CreateExternalClientCommandResponse(sessionId_, responseType,
+	auto commandResponse = common_utils::ProtobufUtils::CreateExternalClientCommandResponse(sessionId_, responseType,
 																							messageCounter);
 	log::logDebug("Sending command response witch messageCounter={}", messageCounter);
 	communicationChannel_->sendMessage(&commandResponse);
@@ -320,9 +320,9 @@ void ExternalConnection::fillErrorAggregator() {
 	for (const auto& notAckedStatus: sentMessagesHandler_.getNotAckedStatus()) {
 		const auto &device = notAckedStatus->getDevice();
 
-		buffer statusBuffer = common_utils::ProtocolUtils::ProtobufToBuffer(notAckedStatus->getStatus().devicestatus());
+		buffer statusBuffer = common_utils::ProtobufUtils::ProtobufToBuffer(notAckedStatus->getStatus().devicestatus());
 		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer,
-																		 common_utils::ProtocolUtils::ParseDevice(
+																		 common_utils::ProtobufUtils::ParseDevice(
 																				 notAckedStatus->getDevice()));
 		deallocate(&statusBuffer);
 	}
@@ -333,9 +333,9 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 	fillErrorAggregator();
 	int moduleNum = deviceStatus.device().module();
 	if (errorAggregators.find(moduleNum) != errorAggregators.end()) {
-		buffer statusBuffer = common_utils::ProtocolUtils::ProtobufToBuffer(deviceStatus);
+		buffer statusBuffer = common_utils::ProtobufUtils::ProtobufToBuffer(deviceStatus);
 		errorAggregators[moduleNum].add_status_to_error_aggregator(statusBuffer,
-																   common_utils::ProtocolUtils::ParseDevice(
+																   common_utils::ProtobufUtils::ParseDevice(
 																		   deviceStatus.device()));
 		deallocate(&statusBuffer);
 	} else {

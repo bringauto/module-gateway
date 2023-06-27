@@ -5,7 +5,7 @@
 #include <bringauto/structures/Connection.hpp>
 #include <bringauto/structures/ConnectionContext.hpp>
 #include <bringauto/structures/GlobalContext.hpp>
-#include <bringauto/common_utils/ProtocolUtils.hpp>
+#include <bringauto/common_utils/ProtobufUtils.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
 
 #include <memory>

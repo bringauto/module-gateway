@@ -2,7 +2,7 @@
 #include <bringauto/logging/Logger.hpp>
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/utils/utils.hpp>
-#include <bringauto/common_utils/ProtocolUtils.hpp>
+#include <bringauto/common_utils/ProtobufUtils.hpp>
 
 #include <memory_management.h>
 
@@ -56,7 +56,7 @@ void ModuleHandler::handle_connect(const ip::DeviceConnect &connect) {
 				ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_DEVICE_NOT_SUPPORTED;
 	}
 
-	auto response = common_utils::ProtocolUtils::CreateServerMessage(device, response_type);
+	auto response = common_utils::ProtobufUtils::CreateInternalServerConnectResponseMessage(device, response_type);
 
 	toInternalQueue_->pushAndNotify(response);
 	log::logInfo("New device {} is trying to connect, sending response {}", device.devicename(), response_type);
@@ -92,7 +92,8 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 	} else if(ret > 0) {
 		struct ::buffer aggregatedStatusBuffer {};
 		statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
-		auto statusMessage = common_utils::ProtocolUtils::CreateClientMessage(device, aggregatedStatusBuffer);
+		auto statusMessage = common_utils::ProtobufUtils::CreateInternalClientStatusMessage(device,
+																							aggregatedStatusBuffer);
 
 		toExternalQueue_->pushAndNotify(statusMessage);
 		// deallocate(&aggregatedStatusBuffer); TODO should free??
@@ -105,7 +106,7 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 		return;
 	}
 
-	auto deviceCommandMessage = common_utils::ProtocolUtils::CreateServerMessage(device, commandBuffer);
+	auto deviceCommandMessage = common_utils::ProtobufUtils::CreateInternalServerCommandMessage(device, commandBuffer);
 	toInternalQueue_->pushAndNotify(deviceCommandMessage);
 	log::logDebug("Command succesfully retrieved and sent to device: {}", deviceName);
 

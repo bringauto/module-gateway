@@ -231,8 +231,9 @@ void InternalServer::connectNewDevice(const std::shared_ptr<structures::Connecti
 void InternalServer::respondWithHigherPriorityConnected(const std::shared_ptr<structures::Connection> &connection,
 														const InternalProtocol::InternalClient &connect,
 														const std::shared_ptr<structures::DeviceIdentification> &deviceId) {
-	auto message = bringauto::common_utils::ProtocolUtils::CreateServerMessage(connect.deviceconnect().device(),
-																		 InternalProtocol::DeviceConnectResponse_ResponseType_HIGHER_PRIORITY_ALREADY_CONNECTED);
+	auto message = bringauto::common_utils::ProtobufUtils::CreateInternalServerConnectResponseMessage(
+			connect.deviceconnect().device(),
+			InternalProtocol::DeviceConnectResponse_ResponseType_HIGHER_PRIORITY_ALREADY_CONNECTED);
 	bringauto::logging::Logger::logInfo("Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
 										"cannot be added same device is already connected with higher priority",
 										deviceId->getModule(),
@@ -244,8 +245,9 @@ void InternalServer::respondWithHigherPriorityConnected(const std::shared_ptr<st
 void InternalServer::respondWithAlreadyConnected(const std::shared_ptr<structures::Connection> &connection,
 												 const InternalProtocol::InternalClient &connect,
 												 const std::shared_ptr<structures::DeviceIdentification> &deviceId) {
-	auto message = bringauto::common_utils::ProtocolUtils::CreateServerMessage(connect.deviceconnect().device(),
-																		 InternalProtocol::DeviceConnectResponse_ResponseType_ALREADY_CONNECTED);
+	auto message = bringauto::common_utils::ProtobufUtils::CreateInternalServerConnectResponseMessage(
+			connect.deviceconnect().device(),
+			InternalProtocol::DeviceConnectResponse_ResponseType_ALREADY_CONNECTED);
 	bringauto::logging::Logger::logInfo("Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
 										"cannot be added same device with same priority is already connected",
 										deviceId->getModule(),
