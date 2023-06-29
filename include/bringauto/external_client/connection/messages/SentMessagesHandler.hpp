@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bringauto/external_client/connection/messages/NotAckedStatus.hpp>
+#include <utility>
 
 #include <ExternalProtocol.pb.h>
 
@@ -8,7 +9,7 @@ namespace bringauto::external_client::connection::messages {
 
 class SentMessagesHandler {
 public:
-	SentMessagesHandler() {};
+	explicit SentMessagesHandler(std::function<void(bool)> endConnectionFunc) { endConnectionFunc_ = std::move(endConnectionFunc); };
 
 	/**
 	 * @brief call this method for each sent status - will add status as not acknowledged
@@ -65,6 +66,7 @@ private:
 	std::atomic<bool> responseHandled_ = false;
 	std::mutex responseHandledMutex_;
 
+	std::function<void(bool)> endConnectionFunc_;
 };
 
 }

@@ -67,7 +67,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 
     struct ::buffer commandBuffer {};
     const auto &commandData = deviceCommand.commanddata();
-    if(allocate(&commandBuffer, commandData.size() + 1) == NOT_OK) {
+    if(allocate(&commandBuffer, commandData.size()) == NOT_OK) {
         log::logError("Could not allocate memory for command message");
         return;
     }

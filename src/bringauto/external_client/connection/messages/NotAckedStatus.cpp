@@ -11,14 +11,14 @@ namespace bringauto::external_client::connection::messages {
 NotAckedStatus::NotAckedStatus(ExternalProtocol::Status status, boost::asio::io_context& timerContext) : timer_(timerContext), status_(std::move(status)) {
 }
 
-void NotAckedStatus::startTimer(std::atomic<bool> &responseHandled, std::mutex &responseHandledMutex) {
+void NotAckedStatus::startTimer(std::atomic<bool> &responseHandled, std::mutex &responseHandledMutex, std::function<void(bool)> endConnectionFunc) {
 	responseHandled_ = &responseHandled;
 	responseHandledMutex_ = &responseHandledMutex;
 	timer_.expires_from_now(boost::posix_time::seconds(statusResponseTimeout_));
 
-	timer_.async_wait([this](const boost::system::error_code& error) {
+	timer_.async_wait([this, &endConnectionFunc](const boost::system::error_code& error) {
 		if (!error) {
-			timeoutHandler();
+			timeoutHandler(endConnectionFunc);
 		}
 	});
 }
@@ -27,7 +27,7 @@ void NotAckedStatus::cancelTimer() {
 	timer_.cancel();
 }
 
-void NotAckedStatus::timeoutHandler() {
+void NotAckedStatus::timeoutHandler(std::function<void(bool)> endConnectionFunc) {
 	std::string loggingStr("Status response Timeout (" +  std::to_string(status_.messagecounter()) + "):");
 	std::unique_lock<std::mutex> lock(*responseHandledMutex_);
 	if (responseHandled_) {
@@ -36,7 +36,8 @@ void NotAckedStatus::timeoutHandler() {
 	}
 	responseHandled_->exchange(true);
 	logging::Logger::logError("{} putting event onto queue.", loggingStr);
-	// TODO event queue?
+
+	endConnectionFunc(false);
 }
 
 InternalProtocol::Device NotAckedStatus::getDevice() {
