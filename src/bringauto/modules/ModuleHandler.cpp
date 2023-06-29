@@ -76,11 +76,11 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 
 	struct ::buffer statusBuffer {};
 	const auto &statusData = status.statusdata();
-	if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
+	if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {	// TODO +1
 		log::logError("Could not allocate memory for status message");
 		return;
 	}
-	strcpy(static_cast<char *>(statusBuffer.data), statusData.c_str());
+	std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
 	const struct ::device_identification deviceId = utils::mapToDeviceId(device);
 
@@ -96,7 +96,7 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 																							aggregatedStatusBuffer);
 
 		toExternalQueue_->pushAndNotify(statusMessage);
-		//deallocate(&aggregatedStatusBuffer); // TODO should free??
+		deallocate(&aggregatedStatusBuffer); // TODO should free??
 	}
 
 	struct ::buffer commandBuffer {};

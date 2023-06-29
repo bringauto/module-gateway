@@ -61,7 +61,7 @@ private:
 
 	std::shared_ptr <structures::GlobalContext> context_;
 
-	static constexpr int reconnectDelay_ { 30 };
+	static constexpr int reconnectDelay_ { 45 };
 };
 
 }

@@ -18,7 +18,7 @@ InternalProtocol::InternalServer ProtobufUtils::CreateInternalServerCommandMessa
 																				   const buffer& command) {
 	InternalProtocol::InternalServer message;
 	auto deviceCommand = message.mutable_devicecommand();
-	deviceCommand->set_commanddata(command.data, command.size_in_bytes-1);
+	deviceCommand->set_commanddata(command.data, command.size_in_bytes);
 	auto device_ = deviceCommand->mutable_device();
 	device_->CopyFrom(device);
 	return message;

@@ -50,7 +50,7 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 		deallocate(&lastStatus);
 		allocate(&lastStatus, status.size_in_bytes);
 	}
-	std::memcpy(lastStatus.data, status.data, status.size_in_bytes -1); // TODO -1
+	std::memcpy(lastStatus.data, status.data, status.size_in_bytes ); // TODO -1
 	lastStatus.size_in_bytes = status.size_in_bytes;
 
 	struct buffer errorMessageBuffer {};

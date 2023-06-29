@@ -72,6 +72,8 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	}
 
 	std::string id = getId(device);
+	std::string stat(static_cast<char*>(status.data), status.size_in_bytes);
+	log::logInfo("Status: {}", stat);
 	if(status.size_in_bytes == 0 || module_->statusDataValid(status, device_type) == NOT_OK) {
 		log::logWarning("Invalid status data on device: {}", id);
 		return NOT_OK;
@@ -82,7 +84,8 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 		module_->generateFirstCommand(&commandBuffer, device_type);
 		struct buffer statusBuffer {};
 		allocate(&statusBuffer, status.size_in_bytes);	// TODO memory leak
-		strncpy(static_cast<char *>(statusBuffer.data), static_cast<char *>(status.data), status.size_in_bytes ); // TODO jiri had -1, don't know the reason
+//		strncpy(static_cast<char *>(statusBuffer.data), static_cast<char *>(status.data), status.size_in_bytes ); // TODO jiri had -1, don't know the reason
+		std::memcpy(statusBuffer.data, status.data, status.size_in_bytes );
 		devices.insert({ id, { commandBuffer, statusBuffer }});
 		return 0;
 	}
@@ -92,12 +95,13 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	if(module_->sendStatusCondition(currStatus, status, device_type) == OK) {
 		struct buffer aggregatedStatusBuff {};
 		module_->aggregateStatus(&aggregatedStatusBuff, currStatus, status, device_type);
+
 		deallocate(&currStatus);
 		currStatus = aggregatedStatusBuff;
 	} else {
 		aggregatedMessages.push(currStatus);
 		allocate(&currStatus, status.size_in_bytes); // TODO memory leak
-		strncpy(static_cast<char *>(currStatus.data), static_cast<char *>(status.data), status.size_in_bytes ); // TODO -1
+		std::memcpy(currStatus.data, status.data, status.size_in_bytes);
 	}
 
 	return aggregatedMessages.size();
@@ -136,7 +140,8 @@ int StatusAggregator::get_unique_devices(struct ::buffer *unique_devices_buffer)
 		log::logError("Could not allocate buffer in get_unique_devices");
 		return NOT_OK;
 	}
-	strncpy(static_cast<char *>(unique_devices_buffer->data), str.c_str(), str.size());
+	std::memcpy(unique_devices_buffer->data, str.c_str(), str.size());
+	//strncpy(static_cast<char *>(unique_devices_buffer->data), str.c_str(), str.size());
 	return devices.size();
 }
 
@@ -150,7 +155,7 @@ int StatusAggregator::force_aggregation_on_device(const struct ::device_identifi
     const auto &statusBuffer = devices[id].status;
     struct buffer forcedStatusBuffer {};
     allocate(&forcedStatusBuffer, statusBuffer.size_in_bytes); // TODO memory leak
-	strncpy(static_cast<char *>(forcedStatusBuffer.data), static_cast<char *>(statusBuffer.data), statusBuffer.size_in_bytes -1); // TODO -1
+	std::memcpy(forcedStatusBuffer.data, statusBuffer.data, statusBuffer.size_in_bytes); // TODO -1
 	aggregatedMessages.push(forcedStatusBuffer);
 	return aggregatedMessages.size();
 }
@@ -176,7 +181,7 @@ int StatusAggregator::update_command(const struct ::buffer command, const struct
 	}
 
 	if(module_->commandDataValid(command, device_type) == NOT_OK) {
-		log::logWarning("Invalid status data on device: {}", id);
+		log::logWarning("Invalid command data on device: {}", id);
 		return COMMAND_INVALID;
 	}
 
@@ -216,9 +221,10 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 		log::logError("Could not allocate memory for command message");
 		return NOT_OK;
 	}
-	memcpy(command->data, currCommand.data, currCommandSize);
+	std::memcpy(command->data, currCommand.data, currCommandSize);
 	command->size_in_bytes = currCommandSize;
-
+	std::string stat(static_cast<char*>(command->data), command->size_in_bytes);
+	log::logInfo("Command: {}", stat);
 	return OK;
 }
 

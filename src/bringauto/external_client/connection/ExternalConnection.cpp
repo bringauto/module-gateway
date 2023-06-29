@@ -334,7 +334,7 @@ void ExternalConnection::fillErrorAggregator() {
 	    	log::logError("Could not allocate memory for status message");
 	    	return;
 	    }
-	    strcpy(static_cast<char *>(statusBuffer.data), statusData.c_str());
+	    std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
         std::cout << "no secon fillErrorAggregator: " << static_cast<char *>(statusBuffer.data) << "\n";
 
 		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer,
@@ -357,7 +357,7 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 	    	log::logError("Could not allocate memory for status message");
 	    	return;
 	    }
-	    strcpy(static_cast<char *>(statusBuffer.data), statusData.c_str());
+	    std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
         std::cout << "secon fillErrorAggregator: " << static_cast<char *>(statusBuffer.data) << "\n";
 		errorAggregators[moduleNum].add_status_to_error_aggregator(statusBuffer,
