@@ -76,7 +76,7 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 
 	struct ::buffer statusBuffer {};
 	const auto &statusData = status.statusdata();
-	if(allocate(&statusBuffer, statusData.size() + 1) == NOT_OK) {
+	if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
 		log::logError("Could not allocate memory for status message");
 		return;
 	}
@@ -96,7 +96,7 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 																							aggregatedStatusBuffer);
 
 		toExternalQueue_->pushAndNotify(statusMessage);
-		// deallocate(&aggregatedStatusBuffer); TODO should free??
+		//deallocate(&aggregatedStatusBuffer); // TODO should free??
 	}
 
 	struct ::buffer commandBuffer {};

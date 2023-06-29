@@ -22,6 +22,9 @@ ExternalClient::ExternalClient(std::shared_ptr <structures::GlobalContext> &cont
 
 void ExternalClient::destroy() {
 	log::logInfo("External client stopped");
+	for (auto& externalConnection : externalConnectionsList_) {
+		externalConnection.endConnection(true);
+	}
     fromExternalClientThread_.join();
 }
 

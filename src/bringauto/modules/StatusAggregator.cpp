@@ -89,8 +89,8 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 		struct buffer commandBuffer {};
 		module_->generateFirstCommand(&commandBuffer, device_type);
 		struct buffer statusBuffer {};
-		allocate(&statusBuffer, status.size_in_bytes);
-		strncpy(static_cast<char *>(statusBuffer.data), static_cast<char *>(status.data), status.size_in_bytes -1); // TODO jiri had -1, don't know the reason
+		allocate(&statusBuffer, status.size_in_bytes);	// TODO memory leak
+		strncpy(static_cast<char *>(statusBuffer.data), static_cast<char *>(status.data), status.size_in_bytes ); // TODO jiri had -1, don't know the reason
 		devices.insert({ id, { commandBuffer, statusBuffer }});
 		return 0;
 	}
@@ -105,7 +105,7 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	} else {
 		aggregatedMessages.push(currStatus);
 		allocate(&currStatus, status.size_in_bytes); // TODO memory leak
-		strncpy(static_cast<char *>(currStatus.data), static_cast<char *>(status.data), status.size_in_bytes -1); // TODO -1
+		strncpy(static_cast<char *>(currStatus.data), static_cast<char *>(status.data), status.size_in_bytes ); // TODO -1
 	}
 
 	return aggregatedMessages.size();
@@ -139,7 +139,7 @@ int StatusAggregator::get_unique_devices(struct ::buffer *unique_devices_buffer)
 	if(!str.empty()) {
 		str.pop_back();
 	}
-	int ret = allocate(unique_devices_buffer, str.size() + 1);
+	int ret = allocate(unique_devices_buffer, str.size());
 	if(ret == NOT_OK) {
 		log::logError("Could not allocate buffer in get_unique_devices");
 		return NOT_OK;

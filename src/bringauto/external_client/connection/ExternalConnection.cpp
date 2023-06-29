@@ -239,6 +239,9 @@ void ExternalConnection::endConnection(bool completeDisconnect = false) {
 		reconnectQueue_->push(*this);
 		fillErrorAggregator();
 	} else {
+		for (auto errorAggregator : errorAggregators ) {
+			errorAggregator.second.destroy_error_aggregator();
+		}
 		stopReceiving.exchange(true);
 		communicationChannel_->closeConnection();
 		listeningThread.join();
@@ -357,7 +360,8 @@ std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnecte
 		struct buffer unique_devices {};
 		int ret = context_->statusAggregators[moduleNumber]->get_unique_devices(&unique_devices);
 		if (ret <= 0) {
-			log::logWarning("Module {} does not have any devices", moduleNumber); // TODO why is this Warning?
+			log::logWarning("Module {} does not have any connected devices", moduleNumber);
+			deallocate(&unique_devices);
 			continue;
 		}
 		std::string devicesString { static_cast<char *>(unique_devices.data), unique_devices.size_in_bytes };
@@ -366,7 +370,6 @@ std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnecte
 		for (const auto &device: devicesVec) {
 			devices.emplace_back(device);
 		}
-		deallocate(&unique_devices);
 	}
 
 	return devices;
