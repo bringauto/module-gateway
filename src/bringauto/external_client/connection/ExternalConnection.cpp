@@ -41,6 +41,8 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 									const buffer &errorMessage) {
 	const auto &device = status.device();
 
+    std::cout << "statusMessageHandle: " << status.statusdata() << ": " << status.statusdata().size() << "\n";
+
 	if (errorAggregators.find(device.module()) == errorAggregators.end()) {
 		log::logError(
 				"Status with module number ({}) was passed to external connection, that doesn't support this module", device.module());
@@ -149,26 +151,24 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 		auto device = deviceIdentification.convertToCStruct();	// TODO could override all functions to accept the class
 		struct buffer errorBuffer {};
 		struct buffer statusBuffer {};
-		int lastStatusRc {};
 
 		const auto &lastErrorStatusRc = errorAggregators[device.module].get_error(&errorBuffer, device);
 		if (lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
 			logging::Logger::logError("Device is not registered in error aggregator: {} {}", device.device_role,
 										device.device_name);
+            return -1;
 		} else if (lastErrorStatusRc == NOT_OK) {
 			log::logError("An error occurred in error aggregator - get_last_status. Return code NOT_OK");
 			return -1;
-		} else {
-			lastStatusRc = errorAggregators[device.module].get_last_status(&statusBuffer, device);
 		}
 
+		int lastStatusRc = errorAggregators[device.module].get_last_status(&statusBuffer, device);
 		if (lastStatusRc != OK) {
 			logging::Logger::logError("Cannot obtain status for device: {} {}", device.device_role,
 										device.device_name);
 			return -1;
 		}
 		auto deviceStatus = common_utils::ProtobufUtils::CreateDeviceStatus(device, statusBuffer);
-        std::cout << "statusMessageHandle: " << deviceStatus.statusdata() << ": " << deviceStatus.statusdata().size() << "\n";
 
 		sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_CONNECTING, errorBuffer);
 	}

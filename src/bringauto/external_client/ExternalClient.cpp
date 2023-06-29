@@ -75,7 +75,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
     auto deviceId = utils::mapToDeviceId(device);
 
     int ret = context_->statusAggregators[moduleNumber]->update_command(commandBuffer, deviceId);
-    if (ret != NOT_OK){
+    if (ret != OK){
         log::logError("Update command failed with error code: {}", ret);
         return;
     }
