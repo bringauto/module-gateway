@@ -336,8 +336,7 @@ void ExternalConnection::fillErrorAggregator() {
 	    std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
 		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer,
-																		 common_utils::ProtobufUtils::ParseDevice(
-																				 notAckedStatus->getDevice()));
+																		 common_utils::ProtobufUtils::ParseDevice(device));
 		deallocate(&statusBuffer);
 	}
 	sentMessagesHandler_.clearAll();
@@ -350,7 +349,7 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 		// buffer statusBuffer = common_utils::ProtobufUtils::ProtobufToBuffer(deviceStatus);
         struct ::buffer statusBuffer {};
 	    const auto &statusData = deviceStatus.statusdata();
-        std::cout << "fillErrorAggregator: " << deviceStatus.statusdata() << ": " << deviceStatus.statusdata().size() << "\n";
+        // std::cout << "fillErrorAggregator: " << deviceStatus.statusdata() << ": " << deviceStatus.statusdata().size() << "\n";
 	    if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
 	    	log::logError("Could not allocate memory for status message");
 	    	return;
