@@ -9,8 +9,8 @@ MqttCommunication::MqttCommunication(const structures::ExternalConnectionSetting
 									 const std::string& vehicleName): ICommunicationChannel(
 		settings, company, vehicleName) {
 	settings_ = settings;
-	publishTopic_ = createPublishTopic(company, vehicleName);
-	subscribeTopic_ = createSubscribeTopic(company, vehicleName);
+	publishTopic_ = "to-server/CAR1";
+	subscribeTopic_ = "to-client/CAR1";
 	clientId_ = createClientId(company, vehicleName);
 
 	serverAddress_ = { settings_.serverIp

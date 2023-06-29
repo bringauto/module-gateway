@@ -14,11 +14,12 @@ using log = bringauto::logging::Logger;
 
 std::string ErrorAggregator::getId(const ::device_identification &device) {
 	std::stringstream ss;
-	ss << device.module << "/" << device.device_type << "/" << device.device_role << "/" << device.device_name; // TODO we need to be able to get priority
+	ss << device.module << "/" << device.device_type << "/" << device.device_role << "/"
+	   << device.device_name; // TODO we need to be able to get priority
 	return ss.str();
 }
 
-int ErrorAggregator::init_error_aggregator(const std::shared_ptr<modules::ModuleManagerLibraryHandler> &library) {
+int ErrorAggregator::init_error_aggregator(const std::shared_ptr <modules::ModuleManagerLibraryHandler> &library) {
 	module_ = library;
 	return OK;
 }
@@ -42,29 +43,29 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 	}
 
 	if(not devices_.contains(id)) {
-		devices_.insert({ id, { } });
+		devices_.insert({ id, {}});
 	}
 
 	auto &lastStatus = devices_[id].lastStatus;
-	if (status.size_in_bytes > lastStatus.size_in_bytes) {
+	if(status.size_in_bytes > lastStatus.size_in_bytes) {
 		deallocate(&lastStatus);
 		allocate(&lastStatus, status.size_in_bytes);
 	}
-	std::memcpy(lastStatus.data, status.data, status.size_in_bytes ); // TODO -1
+	std::memcpy(lastStatus.data, status.data, status.size_in_bytes);
 	lastStatus.size_in_bytes = status.size_in_bytes;
 
 	struct buffer errorMessageBuffer {};
 	auto &currentError = devices_[id].errorMessage;
 
 	auto retCode = module_->aggregateError(&errorMessageBuffer, currentError, status, device_type);
-	if (retCode == WRONG_FORMAT) {
+	if(retCode == WRONG_FORMAT) {
 		log::logWarning("Wrong status format in Error aggregator for device: {}", id);
 		return NOT_OK;
-	} else if (retCode != OK) {
+	} else if(retCode != OK) {
 		log::logWarning("Error occurred in Error aggregator for device: {}", id);
 		return NOT_OK;
 	}
-	if (currentError.data != nullptr) {
+	if(currentError.data != nullptr) {
 		deallocate(&currentError);
 	}
 	currentError = errorMessageBuffer;
@@ -73,32 +74,32 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 
 int ErrorAggregator::get_last_status(struct buffer *status, const struct device_identification device) {
 	std::string id = getId(device);
-	if (not devices_.contains(id)) {
+	if(not devices_.contains(id)) {
 		return DEVICE_NOT_REGISTERED;
 	}
 
 	auto &lastStatus = devices_[id].lastStatus;
 
-	if (lastStatus.data == nullptr || lastStatus.size_in_bytes == 0) {
+	if(lastStatus.data == nullptr || lastStatus.size_in_bytes == 0) {
 		return NO_MESSAGE_AVAILABLE;
 	}
 	status->data = lastStatus.data;
 	status->size_in_bytes = lastStatus.size_in_bytes;
 	return OK;
-	}
+}
 
 int ErrorAggregator::get_error(struct buffer *error, const struct device_identification device) {
 	std::string id = getId(device);
-	if (not devices_.contains(id)) {
+	if(not devices_.contains(id)) {
 		return DEVICE_NOT_REGISTERED;
 	}
 
 	auto &currentError = devices_[id].errorMessage;
 
-	if (currentError.data == nullptr || currentError.size_in_bytes == 0) {
+	if(currentError.data == nullptr || currentError.size_in_bytes == 0) {
 		return NO_MESSAGE_AVAILABLE;
 	}
-	if (allocate(error, currentError.size_in_bytes) == NOT_OK) {
+	if(allocate(error, currentError.size_in_bytes) == NOT_OK) {
 		return NOT_OK;
 	}
 	error->data = currentError.data;
@@ -107,7 +108,7 @@ int ErrorAggregator::get_error(struct buffer *error, const struct device_identif
 }
 
 int ErrorAggregator::clear_error_aggregator() {
-	for (auto& [key, device] : devices_) {
+	for(auto &[key, device]: devices_) {
 		deallocate(&device.lastStatus);
 		deallocate(&device.errorMessage);
 	}

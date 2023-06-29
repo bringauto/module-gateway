@@ -67,11 +67,11 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 
     struct ::buffer commandBuffer {};
     const auto &commandData = deviceCommand.commanddata();
-    if(allocate(&commandBuffer, commandData.size() + 1) == NOT_OK) {
+    if(allocate(&commandBuffer, commandData.size()) == NOT_OK) {
         log::logError("Could not allocate memory for command message");
         return;
     }
-    strcpy(static_cast<char *>(commandBuffer.data), commandData.c_str());
+    std::memcpy(commandBuffer.data, commandData.c_str(), commandBuffer.size_in_bytes);
     auto deviceId = utils::mapToDeviceId(device);
 
     int ret = context_->statusAggregators[moduleNumber]->update_command(commandBuffer, deviceId);

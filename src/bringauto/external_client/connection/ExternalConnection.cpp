@@ -347,6 +347,7 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 	fillErrorAggregator();
 	int moduleNum = deviceStatus.device().module();
 	if (errorAggregators.find(moduleNum) != errorAggregators.end()) {
+
 		// buffer statusBuffer = common_utils::ProtobufUtils::ProtobufToBuffer(deviceStatus);
         struct ::buffer statusBuffer {};
 	    const auto &statusData = deviceStatus.statusdata();

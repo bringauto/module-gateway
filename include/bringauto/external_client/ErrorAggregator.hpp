@@ -1,4 +1,5 @@
 #pragma once
+
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
 
 #include <memory_management.h>
@@ -27,7 +28,7 @@ public:
 	 * @return OK if initialization was successful
 	 * @return NOT_OK if an error occurred
 	 */
-	int init_error_aggregator(const std::shared_ptr<modules::ModuleManagerLibraryHandler> &library);
+	int init_error_aggregator(const std::shared_ptr <modules::ModuleManagerLibraryHandler> &library);
 
 	/**
 	 * @short Clean up.
@@ -121,9 +122,9 @@ private:
 
 	static std::string getId(const ::device_identification &device);
 
-	std::shared_ptr<modules::ModuleManagerLibraryHandler> module_ {};
+	std::shared_ptr <modules::ModuleManagerLibraryHandler> module_ {};
 
-	std::map<std::string, DeviceState> devices_ {};
+	std::map <std::string, DeviceState> devices_ {};
 };
 
 }
