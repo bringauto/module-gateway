@@ -8,14 +8,6 @@
 
 namespace bringauto::modules {
 
-template <typename T>	// TODO can this be removed??
-struct FunctionTypeDeducer;
-
-template <typename R, typename ...Args>
-struct FunctionTypeDeducer<std::function < R(Args...)>> {
-using fncptr = R (*)(Args...);
-};
-
 using log = bringauto::logging::Logger;
 
 std::string StatusAggregator::getId(const ::device_identification &device) {
@@ -155,7 +147,11 @@ int StatusAggregator::force_aggregation_on_device(const struct ::device_identifi
 	}
 
 	auto &aggregatedMessages = devices[id].aggregatedMessages;
-	aggregatedMessages.push(devices[id].status);
+    const auto &statusBuffer = devices[id].status;
+    struct buffer forcedStatusBuffer {};
+    allocate(&forcedStatusBuffer, statusBuffer.size_in_bytes); // TODO memory leak
+	strncpy(static_cast<char *>(forcedStatusBuffer.data), static_cast<char *>(statusBuffer.data), statusBuffer.size_in_bytes -1); // TODO -1
+	aggregatedMessages.push(forcedStatusBuffer);
 	return aggregatedMessages.size();
 }
 

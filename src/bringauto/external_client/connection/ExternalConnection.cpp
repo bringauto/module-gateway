@@ -167,7 +167,9 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 										device.device_name);
 			return -1;
 		}
+        std::cout << "First statusMessageHandle: " << static_cast<char *>(statusBuffer.data) << "\n";
 		auto deviceStatus = common_utils::ProtobufUtils::CreateDeviceStatus(device, statusBuffer);
+        std::cout << "statusMessageHandle: " << deviceStatus.statusdata() << ": " << deviceStatus.statusdata().size() << "\n";
 
 		sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_CONNECTING, errorBuffer);
 	}
@@ -323,7 +325,18 @@ void ExternalConnection::fillErrorAggregator() {
 	for (const auto& notAckedStatus: sentMessagesHandler_.getNotAckedStatus()) {
 		const auto &device = notAckedStatus->getDevice();
 
-		buffer statusBuffer = common_utils::ProtobufUtils::ProtobufToBuffer(notAckedStatus->getStatus().devicestatus());
+		// buffer statusBuffer = common_utils::ProtobufUtils::ProtobufToBuffer(notAckedStatus->getStatus().devicestatus());
+
+        struct ::buffer statusBuffer {};
+	    const auto &statusData = notAckedStatus->getStatus().devicestatus().statusdata();
+        std::cout << "no first fillErrorAggregator: " << statusData << ": " << statusData.size() << "\n";
+	    if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
+	    	log::logError("Could not allocate memory for status message");
+	    	return;
+	    }
+	    strcpy(static_cast<char *>(statusBuffer.data), statusData.c_str());
+        std::cout << "no secon fillErrorAggregator: " << static_cast<char *>(statusBuffer.data) << "\n";
+
 		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer,
 																		 common_utils::ProtobufUtils::ParseDevice(
 																				 notAckedStatus->getDevice()));
@@ -336,7 +349,17 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 	fillErrorAggregator();
 	int moduleNum = deviceStatus.device().module();
 	if (errorAggregators.find(moduleNum) != errorAggregators.end()) {
-		buffer statusBuffer = common_utils::ProtobufUtils::ProtobufToBuffer(deviceStatus);
+		// buffer statusBuffer = common_utils::ProtobufUtils::ProtobufToBuffer(deviceStatus);
+        struct ::buffer statusBuffer {};
+	    const auto &statusData = deviceStatus.statusdata();
+        std::cout << "fillErrorAggregator: " << deviceStatus.statusdata() << ": " << deviceStatus.statusdata().size() << "\n";
+	    if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
+	    	log::logError("Could not allocate memory for status message");
+	    	return;
+	    }
+	    strcpy(static_cast<char *>(statusBuffer.data), statusData.c_str());
+
+        std::cout << "secon fillErrorAggregator: " << static_cast<char *>(statusBuffer.data) << "\n";
 		errorAggregators[moduleNum].add_status_to_error_aggregator(statusBuffer,
 																   common_utils::ProtobufUtils::ParseDevice(
 																		   deviceStatus.device()));
