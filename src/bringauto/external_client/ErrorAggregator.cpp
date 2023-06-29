@@ -47,10 +47,10 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 	}
 
 	auto &lastStatus = devices_[id].lastStatus;
-	if(status.size_in_bytes > lastStatus.size_in_bytes) {
+	if (lastStatus.data != nullptr && lastStatus.size_in_bytes > 0) { // status.size_in_bytes > lastStatus.size_in_bytes
 		deallocate(&lastStatus);
-		allocate(&lastStatus, status.size_in_bytes);
 	}
+	allocate(&lastStatus, status.size_in_bytes);
 	std::memcpy(lastStatus.data, status.data, status.size_in_bytes);
 	lastStatus.size_in_bytes = status.size_in_bytes;
 
@@ -99,17 +99,16 @@ int ErrorAggregator::get_error(struct buffer *error, const struct device_identif
 	if(currentError.data == nullptr || currentError.size_in_bytes == 0) {
 		return NO_MESSAGE_AVAILABLE;
 	}
-	if(allocate(error, currentError.size_in_bytes) == NOT_OK) {
-		return NOT_OK;
-	}
 	error->data = currentError.data;
 	error->size_in_bytes = currentError.size_in_bytes;
 	return OK;
 }
 
 int ErrorAggregator::clear_error_aggregator() {
-	for(auto &[key, device]: devices_) {
-		deallocate(&device.lastStatus);
+	for (auto& [key, device] : devices_) {
+		if (device.lastStatus.data != nullptr && device.lastStatus.size_in_bytes > 0) {
+			deallocate(&device.lastStatus);
+		}
 		deallocate(&device.errorMessage);
 	}
 	devices_.clear();

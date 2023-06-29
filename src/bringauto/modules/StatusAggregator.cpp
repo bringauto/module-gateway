@@ -72,7 +72,6 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	}
 
 	std::string id = getId(device);
-
 	if(status.size_in_bytes == 0 || module_->statusDataValid(status, device_type) == NOT_OK) {
 		log::logWarning("Invalid status data on device: {}", id);
 		return NOT_OK;
@@ -221,7 +220,6 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 	}
 	std::memcpy(command->data, currCommand.data, currCommandSize);
 	command->size_in_bytes = currCommandSize;
-
 	return OK;
 }
 

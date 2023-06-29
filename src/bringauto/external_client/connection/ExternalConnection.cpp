@@ -261,7 +261,7 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command& commandMe
 	}
 	if (serverMessageCounter_ != 0) {
 		if (serverMessageCounter_ + 1 != messageCounter) {
-			log::logError("Command {} is out of order", messageCounter);
+			log::logError("Command {} is out of order", messageCounter);	// TODO order commands
 			return -1; /// Out of order
 		}
 	}
@@ -324,11 +324,8 @@ void ExternalConnection::fillErrorAggregator() {
 	for (const auto& notAckedStatus: sentMessagesHandler_.getNotAckedStatus()) {
 		const auto &device = notAckedStatus->getDevice();
 
-		// buffer statusBuffer = common_utils::ProtobufUtils::ProtobufToBuffer(notAckedStatus->getStatus().devicestatus());
-
         struct ::buffer statusBuffer {};
 	    const auto &statusData = notAckedStatus->getStatus().devicestatus().statusdata();
-        std::cout << "no first fillErrorAggregator: " << statusData << ": " << statusData.size() << "\n";
 	    if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
 	    	log::logError("Could not allocate memory for status message");
 	    	return;
@@ -336,8 +333,7 @@ void ExternalConnection::fillErrorAggregator() {
 	    std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
 		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer,
-																		 common_utils::ProtobufUtils::ParseDevice(
-																				 notAckedStatus->getDevice()));
+																		 common_utils::ProtobufUtils::ParseDevice(device));
 		deallocate(&statusBuffer);
 	}
 	sentMessagesHandler_.clearAll();
@@ -347,11 +343,8 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 	fillErrorAggregator();
 	int moduleNum = deviceStatus.device().module();
 	if (errorAggregators.find(moduleNum) != errorAggregators.end()) {
-
-		// buffer statusBuffer = common_utils::ProtobufUtils::ProtobufToBuffer(deviceStatus);
         struct ::buffer statusBuffer {};
 	    const auto &statusData = deviceStatus.statusdata();
-        std::cout << "fillErrorAggregator: " << deviceStatus.statusdata() << ": " << deviceStatus.statusdata().size() << "\n";
 	    if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
 	    	log::logError("Could not allocate memory for status message");
 	    	return;
