@@ -82,9 +82,6 @@ int ErrorAggregator::get_last_status(struct buffer *status, const struct device_
 	if (lastStatus.data == nullptr || lastStatus.size_in_bytes == 0) {
 		return NO_MESSAGE_AVAILABLE;
 	}
-//	if (allocate(status, lastStatus.size_in_bytes) == NOT_OK) {
-//		return NOT_OK;
-//	}
 	status->data = lastStatus.data;
 	status->size_in_bytes = lastStatus.size_in_bytes;
 	return OK;

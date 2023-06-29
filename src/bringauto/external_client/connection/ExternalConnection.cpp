@@ -167,7 +167,6 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 										device.device_name);
 			return -1;
 		}
-        std::cout << "First statusMessageHandle: " << static_cast<char *>(statusBuffer.data) << "\n";
 		auto deviceStatus = common_utils::ProtobufUtils::CreateDeviceStatus(device, statusBuffer);
         std::cout << "statusMessageHandle: " << deviceStatus.statusdata() << ": " << deviceStatus.statusdata().size() << "\n";
 
@@ -335,7 +334,6 @@ void ExternalConnection::fillErrorAggregator() {
 	    	return;
 	    }
 	    std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
-        std::cout << "no secon fillErrorAggregator: " << static_cast<char *>(statusBuffer.data) << "\n";
 
 		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer,
 																		 common_utils::ProtobufUtils::ParseDevice(
@@ -359,7 +357,6 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 	    }
 	    std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
-        std::cout << "secon fillErrorAggregator: " << static_cast<char *>(statusBuffer.data) << "\n";
 		errorAggregators[moduleNum].add_status_to_error_aggregator(statusBuffer,
 																   common_utils::ProtobufUtils::ParseDevice(
 																		   deviceStatus.device()));

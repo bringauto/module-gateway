@@ -73,7 +73,6 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 
 	std::string id = getId(device);
 	std::string stat(static_cast<char*>(status.data), status.size_in_bytes);
-	log::logInfo("Status: {}", stat);
 	if(status.size_in_bytes == 0 || module_->statusDataValid(status, device_type) == NOT_OK) {
 		log::logWarning("Invalid status data on device: {}", id);
 		return NOT_OK;
@@ -83,8 +82,7 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 		struct buffer commandBuffer {};
 		module_->generateFirstCommand(&commandBuffer, device_type);
 		struct buffer statusBuffer {};
-		allocate(&statusBuffer, status.size_in_bytes);	// TODO memory leak
-//		strncpy(static_cast<char *>(statusBuffer.data), static_cast<char *>(status.data), status.size_in_bytes ); // TODO jiri had -1, don't know the reason
+		allocate(&statusBuffer, status.size_in_bytes);
 		std::memcpy(statusBuffer.data, status.data, status.size_in_bytes );
 		devices.insert({ id, { commandBuffer, statusBuffer }});
 		return 0;
@@ -100,7 +98,7 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 		currStatus = aggregatedStatusBuff;
 	} else {
 		aggregatedMessages.push(currStatus);
-		allocate(&currStatus, status.size_in_bytes); // TODO memory leak
+		allocate(&currStatus, status.size_in_bytes);
 		std::memcpy(currStatus.data, status.data, status.size_in_bytes);
 	}
 
@@ -154,8 +152,8 @@ int StatusAggregator::force_aggregation_on_device(const struct ::device_identifi
 	auto &aggregatedMessages = devices[id].aggregatedMessages;
     const auto &statusBuffer = devices[id].status;
     struct buffer forcedStatusBuffer {};
-    allocate(&forcedStatusBuffer, statusBuffer.size_in_bytes); // TODO memory leak
-	std::memcpy(forcedStatusBuffer.data, statusBuffer.data, statusBuffer.size_in_bytes); // TODO -1
+    allocate(&forcedStatusBuffer, statusBuffer.size_in_bytes);
+	std::memcpy(forcedStatusBuffer.data, statusBuffer.data, statusBuffer.size_in_bytes);
 	aggregatedMessages.push(forcedStatusBuffer);
 	return aggregatedMessages.size();
 }
@@ -224,7 +222,6 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 	std::memcpy(command->data, currCommand.data, currCommandSize);
 	command->size_in_bytes = currCommandSize;
 	std::string stat(static_cast<char*>(command->data), command->size_in_bytes);
-	log::logInfo("Command: {}", stat);
 	return OK;
 }
 
