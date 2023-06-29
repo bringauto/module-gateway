@@ -236,6 +236,9 @@ u_int32_t ExternalConnection::getNextStatusCounter() {
 void ExternalConnection::endConnection(bool completeDisconnect = false) {
 	state_.exchange(NOT_CONNECTED);
 	sentMessagesHandler_.clearAllTimers();
+    clientMessageCounter_ = 0;
+	serverMessageCounter_ = 0;
+
 	if (not completeDisconnect) {
 		reconnectQueue_->push(*this);
 		fillErrorAggregator();
@@ -245,10 +248,10 @@ void ExternalConnection::endConnection(bool completeDisconnect = false) {
 		}
 		stopReceiving.exchange(true);
 		communicationChannel_->closeConnection();
-		listeningThread.join();
-	}
-	clientMessageCounter_ = 0;
-	serverMessageCounter_ = 0;
+        if (listeningThread.joinable()){
+            listeningThread.join();
+        }
+    }
 }
 
 int ExternalConnection::handleCommand(const ExternalProtocol::Command& commandMessage) {

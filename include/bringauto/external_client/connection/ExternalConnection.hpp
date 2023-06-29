@@ -115,7 +115,8 @@ private:
 	const structures::ExternalConnectionSettings &settings_;
 
 	messages::SentMessagesHandler sentMessagesHandler_ { [this](bool completeDisconnect) { endConnection(completeDisconnect); } };
-	std::map<int, ErrorAggregator> errorAggregators;
+
+    std::map<unsigned int, ErrorAggregator> errorAggregators;
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_;
 
