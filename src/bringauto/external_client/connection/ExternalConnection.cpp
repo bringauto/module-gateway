@@ -22,6 +22,7 @@ ExternalConnection::ExternalConnection(const std::shared_ptr<structures::GlobalC
 		: context_ { context }, settings_ { settings } {
 	commandQueue_ = commandQueue;
 	reconnectQueue_ = reconnectQueue;
+	sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context, [this](bool completeDisconnect) { endConnection(completeDisconnect); });
 	for (const auto &moduleNum: settings.modules) {
 		errorAggregators[moduleNum] = ErrorAggregator();
 		errorAggregators[moduleNum].init_error_aggregator(context->moduleLibraries[moduleNum]);
@@ -50,16 +51,16 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 
 	switch (deviceState) {
 		case ExternalProtocol::Status_DeviceState_CONNECTING:
-			sentMessagesHandler_.addDeviceAsConnected(device);
+			sentMessagesHandler_->addDeviceAsConnected(device);
 			break;
 		case ExternalProtocol::Status_DeviceState_RUNNING:
-			if (not sentMessagesHandler_.isDeviceConnected(device)) {
+			if (not sentMessagesHandler_->isDeviceConnected(device)) {
 				deviceState = ExternalProtocol::Status_DeviceState_CONNECTING;
-				sentMessagesHandler_.addDeviceAsConnected(device);
+				sentMessagesHandler_->addDeviceAsConnected(device);
 			}
 			break;
 		case ExternalProtocol::Status_DeviceState_DISCONNECT:
-			sentMessagesHandler_.deleteConnectedDevice(device);
+			sentMessagesHandler_->deleteConnectedDevice(device);
 			break;
 		case ExternalProtocol::Status_DeviceState_ERROR:
 			// TODO What does ERROR mean and what should happen?
@@ -71,7 +72,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 																				   getNextStatusCounter(),
 																				   status,
 																				   errorMessage);
-	sentMessagesHandler_.addNotAckedStatus(externalMessage.status());
+	sentMessagesHandler_->addNotAckedStatus(externalMessage.status());
 	if (communicationChannel_->sendMessage(&externalMessage) != 0) {
 		endConnection(false);
 	}
@@ -190,7 +191,7 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 			log::logError("Bad session id in status response");
 			return -1;
 		}
-		sentMessagesHandler_.acknowledgeStatus(statusResponseMsg->statusresponse());
+		sentMessagesHandler_->acknowledgeStatus(statusResponseMsg->statusresponse());
 	}
 	return 0;
 }
@@ -235,7 +236,7 @@ u_int32_t ExternalConnection::getNextStatusCounter() {
 
 void ExternalConnection::endConnection(bool completeDisconnect = false) {
 	state_.exchange(NOT_CONNECTED);
-	sentMessagesHandler_.clearAllTimers();
+	sentMessagesHandler_->clearAllTimers();
 	if (not completeDisconnect) {
 		reconnectQueue_->push(*this);
 		fillErrorAggregator();
@@ -267,7 +268,7 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command& commandMe
 	}
 	serverMessageCounter_ = messageCounter;
 	ExternalProtocol::CommandResponse::Type responseType;
-	if (sentMessagesHandler_.isDeviceConnected(commandMessage.devicecommand().device())) {
+	if (sentMessagesHandler_->isDeviceConnected(commandMessage.devicecommand().device())) {
 		responseType = ExternalProtocol::CommandResponse_Type_OK;
 		commandQueue_->pushAndNotify(commandMessage.devicecommand());
 	} else {
@@ -282,7 +283,7 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command& commandMe
 }
 
 bool ExternalConnection::hasAnyDeviceConnected() {
-	return sentMessagesHandler_.isAnyDeviceConnected();
+	return sentMessagesHandler_->isAnyDeviceConnected();
 }
 
 void ExternalConnection::receivingHandlerLoop() {
@@ -303,7 +304,7 @@ void ExternalConnection::receivingHandlerLoop() {
 			}
 		} else if (serverMessage->has_statusresponse()) {
 			log::logDebug("Handling STATUS_RESPONSE messageCounter={}",serverMessage->statusresponse().messagecounter());
-			if (sentMessagesHandler_.acknowledgeStatus(serverMessage->statusresponse()) != 0) {
+			if (sentMessagesHandler_->acknowledgeStatus(serverMessage->statusresponse()) != 0) {
 				endConnection(false);
 				return;
 			}
@@ -321,7 +322,7 @@ u_int32_t ExternalConnection::getCommandCounter(const ExternalProtocol::Command 
 }
 
 void ExternalConnection::fillErrorAggregator() {
-	for (const auto& notAckedStatus: sentMessagesHandler_.getNotAckedStatus()) {
+	for (const auto& notAckedStatus: sentMessagesHandler_->getNotAckedStatus()) {
 		const auto &device = notAckedStatus->getDevice();
 
         struct ::buffer statusBuffer {};
@@ -336,7 +337,7 @@ void ExternalConnection::fillErrorAggregator() {
 																		 common_utils::ProtobufUtils::ParseDevice(device));
 		deallocate(&statusBuffer);
 	}
-	sentMessagesHandler_.clearAll();
+	sentMessagesHandler_->clearAll();
 }
 
 void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatus& deviceStatus) {

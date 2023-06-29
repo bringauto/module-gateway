@@ -140,7 +140,6 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		timer.expires_from_now(boost::posix_time::seconds(reconnectDelay_));
 		timer.async_wait([this, &connection](const boost::system::error_code& error) {
 			reconnectQueue_->push(connection);
-
 		});
 	}
 	insideConnectSequence_ = false;

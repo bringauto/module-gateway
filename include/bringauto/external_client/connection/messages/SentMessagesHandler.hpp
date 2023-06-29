@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bringauto/external_client/connection/messages/NotAckedStatus.hpp>
+#include <bringauto/structures/GlobalContext.hpp>
 #include <utility>
 
 #include <ExternalProtocol.pb.h>
@@ -9,7 +10,7 @@ namespace bringauto::external_client::connection::messages {
 
 class SentMessagesHandler {
 public:
-	explicit SentMessagesHandler(std::function<void(bool)> endConnectionFunc) { endConnectionFunc_ = std::move(endConnectionFunc); };
+	explicit SentMessagesHandler(const std::shared_ptr<structures::GlobalContext> &context, std::function<void(bool)> endConnectionFunc);
 
 	/**
 	 * @brief call this method for each sent status - will add status as not acknowledged
@@ -61,7 +62,7 @@ private:
 	std::vector<std::shared_ptr<NotAckedStatus>> notAckedStatuses_;
 	std::vector<InternalProtocol::Device> connectedDevices_;
 
-	boost::asio::io_context timerContext {};
+	std::shared_ptr <structures::GlobalContext> context_;
 
 	std::atomic<bool> responseHandled_ = false;
 	std::mutex responseHandledMutex_;
