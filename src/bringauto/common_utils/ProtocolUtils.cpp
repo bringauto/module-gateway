@@ -51,8 +51,8 @@ InternalProtocol::DeviceStatus ProtobufUtils::CreateDeviceStatus(const device_id
 device_identification ProtobufUtils::ParseDevice(const InternalProtocol::Device &device) {
 	return ::device_identification { .module = device.module(),
 		.device_type = device.devicetype(),
-		.device_role = device.devicerole().c_str(),
-		.device_name = device.devicename().c_str(),
+		.device_role = const_cast<char *>(device.devicerole().c_str()),
+		.device_name = const_cast<char *>(device.devicename().c_str()),
 		.priority = device.priority() };
 }
 

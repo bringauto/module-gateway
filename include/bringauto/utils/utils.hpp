@@ -18,14 +18,6 @@ void loadLibraries(std::map<unsigned int, std::shared_ptr<bringauto::modules::Mo
 				   const std::map<int, std::string> &libPaths);
 
 /**
- * @brief Creates device_identification from protobuf device
- *
- * @param device internal protocol device
- * @return ::device_identification
- */
-::device_identification mapToDeviceId(const InternalProtocol::Device &device);
-
-/**
  * @brief Creates device_identification from string
  *
  * @param device string

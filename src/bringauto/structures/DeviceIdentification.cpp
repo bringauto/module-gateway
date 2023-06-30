@@ -61,8 +61,8 @@ device_identification DeviceIdentification::convertToCStruct() const {
 	return device_identification {
 		.module = static_cast<int>(module_),
 		.device_type = deviceType_,
-		.device_role = deviceRole_.c_str(),
-		.device_name = deviceName_.c_str(),
+		.device_role = const_cast<char *>(deviceRole_.c_str()),
+		.device_name = const_cast<char *>(deviceName_.c_str()),
 		.priority = priority_
 	};
 }
