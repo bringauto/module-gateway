@@ -117,6 +117,8 @@ private:
 
 		explicit DeviceState(const buffer errorMessage) {
 			this->errorMessage = errorMessage;
+            lastStatus.data = nullptr;
+            lastStatus.size_in_bytes = 0;
 		}
 	};
 

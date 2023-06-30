@@ -42,8 +42,6 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 									const buffer &errorMessage) {
 	const auto &device = status.device();
 
-    std::cout << "statusMessageHandle: " << status.statusdata() << ": " << status.statusdata().size() << "\n";
-
 	if (errorAggregators.find(device.module()) == errorAggregators.end()) {
 		log::logError(
 				"Status with module number ({}) was passed to external connection, that doesn't support this module", device.module());
@@ -150,20 +148,18 @@ int ExternalConnection::connectMessageHandle(const std::vector<structures::Devic
 int ExternalConnection::statusMessageHandle(const std::vector<structures::DeviceIdentification> &devices) {
 	for (const auto &deviceIdentification: devices) {
 		auto device = deviceIdentification.convertToCStruct();	// TODO could override all functions to accept the class
+		const int &deviceModule = device.module;
 		struct buffer errorBuffer {};
 		struct buffer statusBuffer {};
 
-		const auto &lastErrorStatusRc = errorAggregators[device.module].get_error(&errorBuffer, device);
+		const auto &lastErrorStatusRc = errorAggregators[deviceModule].get_error(&errorBuffer, device);
 		if (lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
 			logging::Logger::logError("Device is not registered in error aggregator: {} {}", device.device_role,
 										device.device_name);
-            return -1;
-		} else if (lastErrorStatusRc == NOT_OK) {
-			log::logError("An error occurred in error aggregator - get_last_status. Return code NOT_OK");
 			return -1;
 		}
 
-		int lastStatusRc = errorAggregators[device.module].get_last_status(&statusBuffer, device);
+		int lastStatusRc = errorAggregators[deviceModule].get_last_status(&statusBuffer, device);
 		if (lastStatusRc != OK) {
 			logging::Logger::logError("Cannot obtain status for device: {} {}", device.device_role,
 										device.device_name);
@@ -236,7 +232,7 @@ u_int32_t ExternalConnection::getNextStatusCounter() {
 
 void ExternalConnection::endConnection(bool completeDisconnect = false) {
 	state_.exchange(NOT_CONNECTED);
-    clientMessageCounter_ = 0;
+	clientMessageCounter_ = 0;
 	serverMessageCounter_ = 0;
 	sentMessagesHandler_->clearAllTimers();
 
@@ -244,15 +240,15 @@ void ExternalConnection::endConnection(bool completeDisconnect = false) {
 		reconnectQueue_->push(*this);
 		fillErrorAggregator();
 	} else {
-		for (auto errorAggregator : errorAggregators ) {
-			errorAggregator.second.destroy_error_aggregator();
+		for (auto &[moduleNumber, errorAggregator] : errorAggregators ) {
+			errorAggregator.destroy_error_aggregator();
 		}
 		stopReceiving.exchange(true);
 		communicationChannel_->closeConnection();
-        if (listeningThread.joinable()){
-            listeningThread.join();
-        }
-    }
+		if (listeningThread.joinable()){
+			listeningThread.join();
+		}
+	}
 }
 
 int ExternalConnection::handleCommand(const ExternalProtocol::Command& commandMessage) {
@@ -328,13 +324,13 @@ void ExternalConnection::fillErrorAggregator() {
 	for (const auto& notAckedStatus: sentMessagesHandler_->getNotAckedStatus()) {
 		const auto &device = notAckedStatus->getDevice();
 
-        struct ::buffer statusBuffer {};
-	    const auto &statusData = notAckedStatus->getStatus().devicestatus().statusdata();
-	    if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
-	    	log::logError("Could not allocate memory for status message");
-	    	return;
-	    }
-	    std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
+		struct ::buffer statusBuffer {};
+		const auto &statusData = notAckedStatus->getStatus().devicestatus().statusdata();
+		if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
+			log::logError("Could not allocate memory for status message");
+			return;
+		}
+		std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
 		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer,
 																		 common_utils::ProtobufUtils::ParseDevice(device));
@@ -347,13 +343,13 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 	fillErrorAggregator();
 	int moduleNum = deviceStatus.device().module();
 	if (errorAggregators.find(moduleNum) != errorAggregators.end()) {
-        struct ::buffer statusBuffer {};
-	    const auto &statusData = deviceStatus.statusdata();
-	    if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
-	    	log::logError("Could not allocate memory for status message");
-	    	return;
-	    }
-	    std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
+		struct ::buffer statusBuffer {};
+		const auto &statusData = deviceStatus.statusdata();
+		if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
+			log::logError("Could not allocate memory for status message");
+			return;
+		}
+		std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
 		errorAggregators[moduleNum].add_status_to_error_aggregator(statusBuffer,
 																   common_utils::ProtobufUtils::ParseDevice(

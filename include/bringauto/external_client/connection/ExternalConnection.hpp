@@ -50,7 +50,9 @@ public:
 	 * @return number of devices
 	 */
 	int forceAggregationOnAllDevices();
+
 	void fillErrorAggregator();
+
 	void fillErrorAggregator(const InternalProtocol::DeviceStatus& deviceStatus);
 
 	[[nodiscard]] short getState() const { return state_.load(); }
@@ -116,7 +118,7 @@ private:
 
 	std::unique_ptr<messages::SentMessagesHandler> sentMessagesHandler_;
 
-	std::map<int, ErrorAggregator> errorAggregators;
+	std::map<unsigned int, ErrorAggregator> errorAggregators;
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_;
 
