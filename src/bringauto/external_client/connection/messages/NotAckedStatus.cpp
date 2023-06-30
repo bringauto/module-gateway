@@ -36,11 +36,10 @@ void NotAckedStatus::timeoutHandler(const std::function<void(bool)>& endConnecti
 		logging::Logger::logError("{} already handled, skipping.", loggingStr);
 		return;
 	}
-	responseHandled_->exchange(true);
-	logging::Logger::logError("{} putting event onto queue.", loggingStr);
+	responseHandled_->store(true);	// Is changed back to false in endConnection -> cancelAllTimers
+	logging::Logger::logError("{} putting reconnect event onto queue.", loggingStr);
 
 	endConnectionFunc(false);
-	responseHandled_->exchange(false);
 }
 
 InternalProtocol::Device NotAckedStatus::getDevice() {

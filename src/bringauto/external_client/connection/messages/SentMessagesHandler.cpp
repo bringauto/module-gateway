@@ -10,7 +10,7 @@ namespace bringauto::external_client::connection::messages {
 
 
 void SentMessagesHandler::addNotAckedStatus(const ExternalProtocol::Status& status) {
-	notAckedStatuses_.emplace_back(std::make_shared<NotAckedStatus>(status, context_->ioContext)); // TODO pass responseHandler??
+	notAckedStatuses_.emplace_back(std::make_shared<NotAckedStatus>(status, context_->ioContext));
 	notAckedStatuses_.back()->startTimer(responseHandled_, responseHandledMutex_, endConnectionFunc_);
 }
 

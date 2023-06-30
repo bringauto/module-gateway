@@ -109,7 +109,9 @@ int ErrorAggregator::clear_error_aggregator() {
 		if (device.lastStatus.data != nullptr && device.lastStatus.size_in_bytes > 0) {
 			deallocate(&device.lastStatus);
 		}
-		deallocate(&device.errorMessage);
+		if (device.errorMessage.data != nullptr && device.errorMessage.size_in_bytes > 0) {
+			deallocate(&device.errorMessage);
+		}
 	}
 	devices_.clear();
 	return OK;
