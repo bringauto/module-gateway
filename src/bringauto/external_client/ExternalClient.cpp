@@ -1,6 +1,6 @@
 #include <bringauto/external_client/ExternalClient.hpp>
 #include <bringauto/settings/Constants.hpp>
-#include <bringauto/utils/utils.hpp>
+#include <bringauto/common_utils/ProtobufUtils.hpp>
 #include <bringauto/external_client/connection/ConnectionState.hpp>
 
 #include <bringauto/logging/Logger.hpp>
@@ -72,7 +72,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
         return;
     }
     std::memcpy(commandBuffer.data, commandData.c_str(), commandBuffer.size_in_bytes);
-    auto deviceId = utils::mapToDeviceId(device);
+    auto deviceId = common_utils::ProtobufUtils::ParseDevice(device);
 
     int ret = context_->statusAggregators[moduleNumber]->update_command(commandBuffer, deviceId);
     if (ret != OK){

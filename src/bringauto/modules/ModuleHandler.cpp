@@ -1,7 +1,6 @@
 #include <bringauto/modules/ModuleHandler.hpp>
 #include <bringauto/logging/Logger.hpp>
 #include <bringauto/settings/Constants.hpp>
-#include <bringauto/utils/utils.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 
 #include <memory_management.h>
@@ -82,7 +81,7 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 	}
 	std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
-	const struct ::device_identification deviceId = utils::mapToDeviceId(device);
+	const struct ::device_identification deviceId = common_utils::ProtobufUtils::ParseDevice(device);
 
 	auto &statusAggregator = statusAggregators[moduleNumber];
 	int ret = statusAggregator->add_status_to_aggregator(statusBuffer, deviceId);
