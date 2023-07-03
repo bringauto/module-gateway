@@ -17,7 +17,7 @@ ExternalClient::ExternalClient(std::shared_ptr <structures::GlobalContext> &cont
 		: context_ { context }, toExternalQueue_ { toExternalQueue } {
 	fromExternalQueue_ = std::make_shared < structures::AtomicQueue < InternalProtocol::DeviceCommand >> ();
 	reconnectQueue_ = std::make_shared<structures::AtomicQueue<std::reference_wrapper<connection::ExternalConnection>>>();
-    fromExternalClientThread_ = std::thread(&ExternalClient::handleCommands, this);
+	fromExternalClientThread_ = std::thread(&ExternalClient::handleCommands, this);
 };
 
 void ExternalClient::destroy() {
@@ -25,7 +25,7 @@ void ExternalClient::destroy() {
 	for (auto& externalConnection : externalConnectionsList_) {
 		externalConnection.endConnection(true);
 	}
-    fromExternalClientThread_.join();
+	fromExternalClientThread_.join();
 }
 
 void ExternalClient::run() {
@@ -45,41 +45,41 @@ void ExternalClient::initConnections() {
 }
 
 void ExternalClient::handleCommands(){
-    while(not context_->ioContext.stopped()) {
+	while(not context_->ioContext.stopped()) {
 		if(fromExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
-        log::logInfo("External client received command");
+		log::logInfo("External client received command");
 
-        auto &message = fromExternalQueue_->front();
-        handleCommand(message);
-        fromExternalQueue_->pop();
-    }
+		auto &message = fromExternalQueue_->front();
+		handleCommand(message);
+		fromExternalQueue_->pop();
+	}
 }
 
 void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &deviceCommand){
-    const auto &device = deviceCommand.device();
-    const auto &moduleNumber = device.module();
-    if (not context_->statusAggregators.contains(moduleNumber)){
-        log::logWarning("Module with module number {} does no exists", moduleNumber);
-        return;
-    }
+	const auto &device = deviceCommand.device();
+	const auto &moduleNumber = device.module();
+	if (not context_->statusAggregators.contains(moduleNumber)){
+		log::logWarning("Module with module number {} does no exists", moduleNumber);
+		return;
+	}
 
-    struct ::buffer commandBuffer {};
-    const auto &commandData = deviceCommand.commanddata();
-    if(allocate(&commandBuffer, commandData.size()) == NOT_OK) {
-        log::logError("Could not allocate memory for command message");
-        return;
-    }
-    std::memcpy(commandBuffer.data, commandData.c_str(), commandBuffer.size_in_bytes);
-    auto deviceId = common_utils::ProtobufUtils::ParseDevice(device);
+	struct ::buffer commandBuffer {};
+	const auto &commandData = deviceCommand.commanddata();
+	if(allocate(&commandBuffer, commandData.size()) == NOT_OK) {
+		log::logError("Could not allocate memory for command message");
+		return;
+	}
+	std::memcpy(commandBuffer.data, commandData.c_str(), commandBuffer.size_in_bytes);
+	auto deviceId = common_utils::ProtobufUtils::ParseDevice(device);
 
-    int ret = context_->statusAggregators[moduleNumber]->update_command(commandBuffer, deviceId);
-    if (ret != OK){
-        log::logError("Update command failed with error code: {}", ret);
-        return;
-    }
-    log::logInfo("Command on device {} was successfully updated", device.devicename());
+	int ret = context_->statusAggregators[moduleNumber]->update_command(commandBuffer, deviceId);
+	if (ret != OK){
+		log::logError("Update command failed with error code: {}", ret);
+		return;
+	}
+	log::logInfo("Command on device {} was successfully updated", device.devicename());
 }
 
 void ExternalClient::handleAggregatedMessages() {
@@ -120,14 +120,27 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	insideConnectSequence_ = true;
 	log::logDebug("Forcing aggregation on modules");
 	auto statusesLeft = connection.forceAggregationOnAllDevices();
+	// maybe do it better way
+	std::set<std::string> devices {};
+
 	while (statusesLeft != 0) {
 		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
-		auto& status = toExternalQueue_->front().devicestatus();
-		if (connection.isModuleSupported(status.device().module())) {
-			log::logDebug("Filling error aggregator of device: {} {}", status.device().devicerole(), status.device().devicename());
+		auto &status = toExternalQueue_->front().devicestatus();
+		auto &device = status.device();
+		if (connection.isModuleSupported(device.module())) {
+			std::string deviceString = device.SerializeAsString();
+			if(devices.find(deviceString) != devices.end()){
+				log::logDebug("Cannot fill error aggregator for same device: {} {}", device.devicerole(), device.devicename());
+				auto &message = toExternalQueue_->front();
+				toExternalQueue_->pushAndNotify(message);
+				toExternalQueue_->pop();
+				continue;
+			}
+			log::logDebug("Filling error aggregator of device: {} {}", device.devicerole(), device.devicename());
 			connection.fillErrorAggregator(status);
+			devices.emplace(deviceString);
 			statusesLeft--;
 		} else {
 			log::logDebug("Sending status inside connect sequence init");
@@ -135,9 +148,10 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		}
 		toExternalQueue_->pop();
 	}
+
 	if (connection.initializeConnection() != 0) {
 		boost::asio::deadline_timer timer(context_->ioContext);
-		timer.expires_from_now(boost::posix_time::seconds(reconnectDelay_));
+		timer.expires_from_now(boost::posix_time::seconds(settings::reconnect_delay));
 		timer.async_wait([this, &connection](const boost::system::error_code& error) {
 			reconnectQueue_->push(connection);
 		});

@@ -39,7 +39,9 @@ MqttCommunication::MqttCommunication(const structures::ExternalConnectionSetting
 	}
 }
 
-
+MqttCommunication::~MqttCommunication() {
+	closeConnection();
+}
 
 void MqttCommunication::connect() {
 	client_ = std::make_unique<mqtt::async_client>(serverAddress_, clientId_, mqtt::create_options(MQTTVERSION_5)); // TODO sometimes throw SIGSEGV
@@ -50,10 +52,6 @@ void MqttCommunication::connect() {
 	logging::Logger::logInfo("Connected to MQTT server {}", serverAddress_);
 
 	client_->subscribe(subscribeTopic_, qos)->get_subscribe_response();
-}
-
-MqttCommunication::~MqttCommunication() {
-	closeConnection();
 }
 
 int MqttCommunication::initializeConnection() {

@@ -9,7 +9,14 @@ namespace bringauto::settings {
  * @brief timeout that is defined in fleet protocol,
  * active connection between Internal Client and internal Server is disconnected and removed after this timeout
  */
-const std::chrono::seconds fleet_protocol_timeout_length { 30 };
+constexpr std::chrono::seconds fleet_protocol_timeout_length { 30 };
+
+/**
+ * @brief timeout that is defined in fleet protocol,
+ * reconnect time between External client and External server after disconnect
+ */
+constexpr int reconnect_delay { 30 };
+
 /**
  * @brief time between checks of atomic queue used for one-way communication from Module Handler to Internal Server
  */
