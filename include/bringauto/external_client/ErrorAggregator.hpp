@@ -113,13 +113,12 @@ private:
 		struct buffer errorMessage {};
 		struct buffer lastStatus {};
 
-		DeviceState() = default;
-
-		explicit DeviceState(const buffer errorMessage) {
-			this->errorMessage = errorMessage;
+		DeviceState(){
+            errorMessage.data = nullptr;
+            errorMessage.size_in_bytes = 0;
             lastStatus.data = nullptr;
             lastStatus.size_in_bytes = 0;
-		}
+        };
 	};
 
 	static std::string getId(const ::device_identification &device);

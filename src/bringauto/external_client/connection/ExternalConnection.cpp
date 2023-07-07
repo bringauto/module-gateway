@@ -112,7 +112,7 @@ int ExternalConnection::initializeConnection() {
 		return -1;
 	}
 	state_.exchange(CONNECTED);
-	for (auto [moduleNum, errorAggregator]: errorAggregators) {
+	for (auto &[moduleNum, errorAggregator]: errorAggregators) {
 		errorAggregator.clear_error_aggregator();
 	}
 	log::logInfo("Connect sequence successful. Server {}:{}", settings_.serverIp, settings_.port);
@@ -240,13 +240,13 @@ void ExternalConnection::endConnection(bool completeDisconnect = false) {
 		reconnectQueue_->push(*this);
 		fillErrorAggregator();
 	} else {
-		for (auto &[moduleNumber, errorAggregator] : errorAggregators ) {
-			errorAggregator.destroy_error_aggregator();
-		}
 		stopReceiving.exchange(true);
 		communicationChannel_->closeConnection();
 		if (listeningThread.joinable()){
 			listeningThread.join();
+		}
+		for (auto &[moduleNumber, errorAggregator] : errorAggregators ) {
+			errorAggregator.destroy_error_aggregator();
 		}
 	}
 }
@@ -308,7 +308,7 @@ void ExternalConnection::receivingHandlerLoop() {
 				return;
 			}
 		} else {
-			log::logError("Received message with unexpected type, closing connection");
+			log::logError("Received message with unexpected type(connect response), closing connection");
 			endConnection(false);
 			return;
 		}
