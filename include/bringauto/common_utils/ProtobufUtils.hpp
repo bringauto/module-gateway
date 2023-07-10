@@ -32,10 +32,10 @@ public:
 																			  const buffer &status);
 
 	static InternalProtocol::DeviceStatus CreateDeviceStatus(const InternalProtocol::Device &device,
-															 const buffer &statusData);
+															 const buffer &status);
 
 	static InternalProtocol::DeviceStatus CreateDeviceStatus(const device_identification &device,
-															 const buffer &statusData);
+															 const buffer &status);
 
 
 	static InternalProtocol::Device CreateDevice(int module,

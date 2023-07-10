@@ -50,7 +50,10 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 	if (lastStatus.data != nullptr && lastStatus.size_in_bytes > 0) { // status.size_in_bytes > lastStatus.size_in_bytes
 		deallocate(&lastStatus);
 	}
-	allocate(&lastStatus, status.size_in_bytes);
+	if(allocate(&lastStatus, status.size_in_bytes) == NOT_OK){
+        log::logError("Could not allocate memory for status buffer in function add_status_to_error_aggregator");
+        return NOT_OK;
+    }
 	std::memcpy(lastStatus.data, status.data, status.size_in_bytes);
 	lastStatus.size_in_bytes = status.size_in_bytes;
 

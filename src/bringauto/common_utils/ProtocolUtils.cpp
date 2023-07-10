@@ -35,17 +35,17 @@ InternalProtocol::InternalClient ProtobufUtils::CreateInternalClientStatusMessag
 }
 
 InternalProtocol::DeviceStatus ProtobufUtils::CreateDeviceStatus(const InternalProtocol::Device &device,
-																 const buffer &statusData) {
+																 const buffer &status) {
 	InternalProtocol::DeviceStatus deviceStatus;
 	deviceStatus.mutable_device()->CopyFrom(device);
-	deviceStatus.set_statusdata(statusData.data, statusData.size_in_bytes);
+	deviceStatus.set_statusdata(status.data, status.size_in_bytes);
 	return deviceStatus;
 }
 
 InternalProtocol::DeviceStatus ProtobufUtils::CreateDeviceStatus(const device_identification &device,
-																 const buffer &statusData) {
+																 const buffer &status) {
 	auto deviceMsg = common_utils::ProtobufUtils::CreateDevice(device.module, device.device_type, device.device_role, device.device_name, device.priority);
-	return CreateDeviceStatus(deviceMsg, statusData);
+	return CreateDeviceStatus(deviceMsg, status);
 }
 
 device_identification ProtobufUtils::ParseDevice(const InternalProtocol::Device &device) {

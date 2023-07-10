@@ -101,7 +101,7 @@ std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMess
 	std::shared_ptr<ExternalProtocol::ExternalServer> ptr { nullptr };
 
 	auto *incomingMessage = new ExternalProtocol::ExternalServer();
-	incomingMessage->ParseFromString(msg->get_payload());
+	incomingMessage->ParseFromString(msg->get_payload_str());
 	ptr.reset(incomingMessage);
 	return ptr;
 }

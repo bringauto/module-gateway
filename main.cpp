@@ -56,5 +56,7 @@ int main(int argc, char **argv) {
 
     std::for_each(context->statusAggregators.cbegin(), context->statusAggregators.cend(), [](auto& pair) { pair.second->destroy_status_aggregator(); });
 
+    google::protobuf::ShutdownProtobufLibrary();
+
 	return 0;
 }
