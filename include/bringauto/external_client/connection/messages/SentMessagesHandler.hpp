@@ -10,7 +10,7 @@ namespace bringauto::external_client::connection::messages {
 
 class SentMessagesHandler {
 public:
-	explicit SentMessagesHandler(const std::shared_ptr<structures::GlobalContext> &context, std::function<void(bool)> endConnectionFunc);
+	explicit SentMessagesHandler(const std::shared_ptr<structures::GlobalContext> &context, const std::function<void()> endConnectionFunc);
 
 	/**
 	 * @brief call this method for each sent status - will add status as not acknowledged
@@ -60,14 +60,16 @@ private:
 	u_int32_t getStatusResponseCounter(const ExternalProtocol::StatusResponse& statusResponse);
 
 	std::vector<std::shared_ptr<NotAckedStatus>> notAckedStatuses_;
+
 	std::vector<InternalProtocol::Device> connectedDevices_;
 
 	std::shared_ptr <structures::GlobalContext> context_;
 
 	std::atomic<bool> responseHandled_ = false;
+
 	std::mutex responseHandledMutex_;
 
-	std::function<void(bool)> endConnectionFunc_;
+	std::function<void()> endConnectionFunc_;
 };
 
 }

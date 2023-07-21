@@ -37,9 +37,9 @@ void ExternalClient::run() {
 void ExternalClient::initConnections() {
 	for(auto const &connection: context_->settings->externalConnectionSettingsList) {
 		externalConnectionsList_.emplace_back(context_, connection, context_->settings->company, context_->settings->vehicleName, fromExternalQueue_, reconnectQueue_);
-		auto &created_connection = externalConnectionsList_.back();
+		auto &newConnection = externalConnectionsList_.back();
 		for(auto const &moduleNumber: connection.modules) {
-			externalConnectionMap_.emplace(moduleNumber, created_connection);
+			externalConnectionMap_.emplace(moduleNumber, newConnection);
 		}
 	}
 }

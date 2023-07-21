@@ -9,6 +9,12 @@
 namespace bringauto::external_client::connection::messages {
 
 
+SentMessagesHandler::SentMessagesHandler(const std::shared_ptr <structures::GlobalContext> &context,
+										 const std::function<void()> endConnectionFunc) {
+	context_ = context;
+	endConnectionFunc_ = endConnectionFunc;
+}
+
 void SentMessagesHandler::addNotAckedStatus(const ExternalProtocol::Status &status) {
 	notAckedStatuses_.emplace_back(
 			std::make_shared<NotAckedStatus>(status, context_->ioContext, responseHandled_, responseHandledMutex_));
@@ -21,10 +27,10 @@ int SentMessagesHandler::acknowledgeStatus(const ExternalProtocol::StatusRespons
 		if(getStatusCounter(notAckedStatuses_[i]->getStatus()) == responseCounter) {
 			notAckedStatuses_[i]->cancelTimer();
 			notAckedStatuses_.erase(notAckedStatuses_.begin() + i);
-			return 0;
+			return OK;
 		}
 	}
-	return -1;
+	return NOT_OK;
 }
 
 void SentMessagesHandler::clearAll() {
@@ -66,12 +72,6 @@ u_int32_t SentMessagesHandler::getStatusCounter(const ExternalProtocol::Status &
 
 u_int32_t SentMessagesHandler::getStatusResponseCounter(const ExternalProtocol::StatusResponse &statusResponse) {
 	return statusResponse.messagecounter();
-}
-
-SentMessagesHandler::SentMessagesHandler(const std::shared_ptr <structures::GlobalContext> &context,
-										 std::function<void(bool)> endConnectionFunc) {
-	context_ = context;
-	endConnectionFunc_ = std::move(endConnectionFunc);
 }
 
 }

@@ -10,7 +10,7 @@
 
 namespace bringauto::external_client::connection::messages {
 
-void NotAckedStatus::startTimer(const std::function<void(bool)> &endConnectionFunc) {
+void NotAckedStatus::startTimer(const std::function<void()> &endConnectionFunc) {
 	timer_.expires_from_now(boost::posix_time::seconds(statusResponseTimeout_));
 
 	timer_.async_wait([this, endConnectionFunc](const boost::system::error_code &errorCode) {
@@ -24,7 +24,7 @@ void NotAckedStatus::cancelTimer() {
 	timer_.cancel();
 }
 
-void NotAckedStatus::timeoutHandler(const std::function<void(bool)> &endConnectionFunc) {
+void NotAckedStatus::timeoutHandler(const std::function<void()> &endConnectionFunc) {
 	std::string loggingStr("Status response Timeout (" + std::to_string(status_.messagecounter()) + "):");
 	std::unique_lock <std::mutex> lock(responseHandledMutex_);
 	if(responseHandled_.load()) {
@@ -34,10 +34,10 @@ void NotAckedStatus::timeoutHandler(const std::function<void(bool)> &endConnecti
 	responseHandled_.store(true);    // Is changed back to false in endConnection -> cancelAllTimers
 	logging::Logger::logError("{} putting reconnect event onto queue.", loggingStr);
 
-	endConnectionFunc(false);
+	endConnectionFunc();
 }
 
-InternalProtocol::Device NotAckedStatus::getDevice() {
+const InternalProtocol::Device &NotAckedStatus::getDevice() {
 	return status_.devicestatus().device();
 }
 

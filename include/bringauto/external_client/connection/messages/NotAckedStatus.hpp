@@ -12,25 +12,25 @@ namespace bringauto::external_client::connection::messages {
 class NotAckedStatus {
 public:
 	NotAckedStatus(const ExternalProtocol::Status &status, boost::asio::io_context &timerContext,
-				   std::atomic<bool> &responseHandled, std::mutex &responseHandledMutex): timer_(timerContext),
-																						  status_(status),
+				   std::atomic<bool> &responseHandled, std::mutex &responseHandledMutex): status_{status},
+																						  timer_{timerContext},
 																						  responseHandled_ {
 																								  responseHandled },
 																						  responseHandledMutex_ {
 																								  responseHandledMutex } {}
 
-	void startTimer(const std::function<void(bool)> &endConnectionFunc);
+	void startTimer(const std::function<void()> &endConnectionFunc);
 
 	void cancelTimer();
 
-	ExternalProtocol::Status getStatus() { return status_; }
+	const ExternalProtocol::Status &getStatus() { return status_; }
 
-	InternalProtocol::Device getDevice();
+	const InternalProtocol::Device &getDevice();
 
 private:
-	void timeoutHandler(const std::function<void(bool)> &endConnectionFunc);
+	void timeoutHandler(const std::function<void()> &endConnectionFunc);
 
-	ExternalProtocol::Status status_ {};
+	ExternalProtocol::Status status_;
 
 	boost::asio::deadline_timer timer_;
 

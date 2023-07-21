@@ -22,7 +22,7 @@ ExternalConnection::ExternalConnection(const std::shared_ptr<structures::GlobalC
 		: context_ { context }, settings_ { settings } {
 	commandQueue_ = commandQueue;
 	reconnectQueue_ = reconnectQueue;
-	sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context, [this](bool completeDisconnect) { endConnection(completeDisconnect); });
+	sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context, [this]() { endConnection(false); });
 	for (const auto &moduleNum: settings.modules) {
 		errorAggregators[moduleNum] = ErrorAggregator();
 		errorAggregators[moduleNum].init_error_aggregator(context->moduleLibraries[moduleNum]);
@@ -237,7 +237,7 @@ void ExternalConnection::endConnection(bool completeDisconnect = false) {
 	sentMessagesHandler_->clearAllTimers();
 
 	if (not completeDisconnect) {
-		reconnectQueue_->push(*this);
+		reconnectQueue_->push(std::ref(*this));
 		fillErrorAggregator();
 	} else {
 		stopReceiving.exchange(true);
@@ -303,7 +303,7 @@ void ExternalConnection::receivingHandlerLoop() {
 			}
 		} else if (serverMessage->has_statusresponse()) {
 			log::logDebug("Handling STATUS_RESPONSE messageCounter={}",serverMessage->statusresponse().messagecounter());
-			if (sentMessagesHandler_->acknowledgeStatus(serverMessage->statusresponse()) != 0) {
+			if (sentMessagesHandler_->acknowledgeStatus(serverMessage->statusresponse()) != OK) {
 				endConnection(false);
 				return;
 			}
