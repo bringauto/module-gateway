@@ -24,7 +24,7 @@ public:
 	 */
 	int acknowledgeStatus(const ExternalProtocol::StatusResponse& statusResponse);
 
-	std::vector<std::shared_ptr<NotAckedStatus>> getNotAckedStatus() { return notAckedStatuses_; }
+	const std::vector<std::shared_ptr<NotAckedStatus>> &getNotAckedStatus() const { return notAckedStatuses_; }
 
 	/**
 	 * @brief Return true if all statuses were acknowledged

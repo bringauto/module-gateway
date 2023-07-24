@@ -37,6 +37,8 @@ void NotAckedStatus::timeoutHandler(const std::function<void()> &endConnectionFu
 	endConnectionFunc();
 }
 
+const ExternalProtocol::Status &NotAckedStatus::getStatus() { return status_; }
+
 const InternalProtocol::Device &NotAckedStatus::getDevice() {
 	return status_.devicestatus().device();
 }

@@ -24,10 +24,17 @@ class ExternalConnection {
 public:
 	ExternalConnection(const std::shared_ptr <structures::GlobalContext> &context,
 					   const structures::ExternalConnectionSettings &settings,
-					   const std::string &company,
-					   const std::string &vehicleName,
 					   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
 					   const std::shared_ptr<structures::AtomicQueue<std::reference_wrapper<connection::ExternalConnection>>>& reconnectQueue);
+
+    /**
+     * @brief Initialize external connection
+     * it has to be called after constructor
+     *
+     * @param company name of the company
+     * @param vehicleName name of the vehicle
+     */
+    void init(const std::string &company, const std::string &vehicleName);
 
 	/**
 	 * @brief Handles all etapes of connect sequence. If connect sequence is successful,

@@ -20,30 +20,6 @@ ExternalClient::ExternalClient(std::shared_ptr <structures::GlobalContext> &cont
 	fromExternalClientThread_ = std::thread(&ExternalClient::handleCommands, this);
 };
 
-void ExternalClient::destroy() {
-	log::logInfo("External client stopped");
-	for (auto& externalConnection : externalConnectionsList_) {
-		externalConnection.endConnection(true);
-	}
-	fromExternalClientThread_.join();
-}
-
-void ExternalClient::run() {
-	log::logInfo("External client started");
-	initConnections();
-	handleAggregatedMessages();
-}
-
-void ExternalClient::initConnections() {
-	for(auto const &connection: context_->settings->externalConnectionSettingsList) {
-		externalConnectionsList_.emplace_back(context_, connection, context_->settings->company, context_->settings->vehicleName, fromExternalQueue_, reconnectQueue_);
-		auto &newConnection = externalConnectionsList_.back();
-		for(auto const &moduleNumber: connection.modules) {
-			externalConnectionMap_.emplace(moduleNumber, newConnection);
-		}
-	}
-}
-
 void ExternalClient::handleCommands(){
 	while(not context_->ioContext.stopped()) {
 		if(fromExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
@@ -80,6 +56,31 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 		return;
 	}
 	log::logInfo("Command on device {} was successfully updated", device.devicename());
+}
+
+void ExternalClient::destroy() {
+	log::logInfo("External client stopped");
+	for (auto& externalConnection : externalConnectionsList_) {
+		externalConnection.endConnection(true);
+	}
+	fromExternalClientThread_.join();
+}
+
+void ExternalClient::run() {
+	log::logInfo("External client started");
+	initConnections();
+	handleAggregatedMessages();
+}
+
+void ExternalClient::initConnections() {
+	for(auto const &connection: context_->settings->externalConnectionSettingsList) {
+		externalConnectionsList_.emplace_back(context_, connection, fromExternalQueue_, reconnectQueue_);
+		auto &newConnection = externalConnectionsList_.back();
+        newConnection.init(context_->settings->company, context_->settings->vehicleName);
+		for(auto const &moduleNumber: connection.modules) {
+			externalConnectionMap_.emplace(moduleNumber, newConnection);
+		}
+	}
 }
 
 void ExternalClient::handleAggregatedMessages() {

@@ -10,10 +10,7 @@ namespace bringauto::external_client::connection::messages {
 
 
 SentMessagesHandler::SentMessagesHandler(const std::shared_ptr <structures::GlobalContext> &context,
-										 const std::function<void()> endConnectionFunc) {
-	context_ = context;
-	endConnectionFunc_ = endConnectionFunc;
-}
+										 const std::function<void()> endConnectionFunc): context_{ context }, endConnectionFunc_ { endConnectionFunc } {}
 
 void SentMessagesHandler::addNotAckedStatus(const ExternalProtocol::Status &status) {
 	notAckedStatuses_.emplace_back(

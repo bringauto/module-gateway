@@ -23,7 +23,7 @@ public:
 
 	void cancelTimer();
 
-	const ExternalProtocol::Status &getStatus() { return status_; }
+	const ExternalProtocol::Status &getStatus();
 
 	const InternalProtocol::Device &getDevice();
 

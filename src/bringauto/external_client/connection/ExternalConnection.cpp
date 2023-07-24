@@ -15,26 +15,24 @@ using log = bringauto::logging::Logger;
 
 ExternalConnection::ExternalConnection(const std::shared_ptr<structures::GlobalContext> &context,
 									   const structures::ExternalConnectionSettings &settings,
-									   const std::string &company,
-									   const std::string &vehicleName,
 									   const std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>>& commandQueue,
 									   const std::shared_ptr<structures::AtomicQueue<std::reference_wrapper<connection::ExternalConnection>>>& reconnectQueue)
-		: context_ { context }, settings_ { settings } {
-	commandQueue_ = commandQueue;
-	reconnectQueue_ = reconnectQueue;
+		: context_ { context }, settings_ { settings }, commandQueue_ { commandQueue }, reconnectQueue_ { reconnectQueue } {
 	sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context, [this]() { endConnection(false); });
-	for (const auto &moduleNum: settings.modules) {
+}
+
+void ExternalConnection::init(const std::string &company, const std::string &vehicleName){
+    for (const auto &moduleNum: settings_.modules) {
 		errorAggregators[moduleNum] = ErrorAggregator();
-		errorAggregators[moduleNum].init_error_aggregator(context->moduleLibraries[moduleNum]);
+		errorAggregators[moduleNum].init_error_aggregator(context_->moduleLibraries[moduleNum]);
 	}
-	switch (settings.protocolType) {
+	switch (settings_.protocolType) {
 		case structures::ProtocolType::MQTT:
-			communicationChannel_ = std::make_unique<communication::MqttCommunication>(settings, company, vehicleName);
+			communicationChannel_ = std::make_unique<communication::MqttCommunication>(settings_, company, vehicleName);
 			break;
 		case structures::ProtocolType::INVALID:
 			break;
 	}
-
 }
 
 void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status,
