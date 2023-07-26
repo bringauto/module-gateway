@@ -5,7 +5,6 @@
 #include <testing_utils/InternalClientForTesting.hpp>
 #include <testing_utils/ModuleHandlerForTesting.hpp>
 
-
 #include <memory>
 #include <vector>
 

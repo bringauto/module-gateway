@@ -1,9 +1,12 @@
 #pragma once
 
-#include <gtest/gtest.h>
 #include <bringauto/modules/StatusAggregator.hpp>
 #include <bringauto/logging/Logger.hpp>
 #include <bringauto/logging/ConsoleSink.hpp>
+#include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
+
+#include <gtest/gtest.h>
+#include <memory>
 
 
 
@@ -18,6 +21,10 @@ protected:
 		bringauto::logging::Logger::LoggerSettings settings { "StatusAggregatorTests",
 															  bringauto::logging::Logger::Verbosity::Critical };
 		bringauto::logging::Logger::init(settings);
+
+		std::shared_ptr <bringauto::modules::ModuleManagerLibraryHandler> libHandler = std::make_shared<bringauto::modules::ModuleManagerLibraryHandler>();
+		libHandler->loadLibrary(PATH_TO_MODULE);
+		statusAggregator = std::make_unique<bringauto::modules::StatusAggregator>(libHandler);
 	}
 
 	void add_status_to_aggregator();
@@ -26,9 +33,9 @@ protected:
 
 	struct buffer init_command_buffer();
 
-	bringauto::modules::StatusAggregator statusAggregator;
+	inline static std::unique_ptr <bringauto::modules::StatusAggregator> statusAggregator;
 
-	const std::string PATH_TO_MODULE { "./libs/button_module/libbutton_module.so" };
+	inline static const std::string PATH_TO_MODULE { "./libs/button_module/libbutton_module.so" };
 	const std::string WRONG_PATH_TO_MODULE { "./bad_path.so" };
 	const unsigned int SUPPORTED_DEVICE_TYPE = 0;
 	const unsigned int UNSUPPORTED_DEVICE_TYPE = 1000;
@@ -38,25 +45,29 @@ protected:
 	const char *BUTTON_UNPRESSED = "{\"pressed\": false}";
 	const char *LIT_UP = "{\"lit_up\": true}";
 	const char *LIT_DOWN = "{\"lit_up\": false}";
-	struct ::device_identification DEVICE_ID {
+	const char *DEVICE_ROLE = "button";
+	const char *DEVICE_NAME = "name";
+	const struct ::device_identification DEVICE_ID {
 			.module=2,
 			.device_type=SUPPORTED_DEVICE_TYPE,
-			.device_role="button",
-			.device_name="name",
+			.device_role=(char *)DEVICE_ROLE,
+			.device_name=(char *)DEVICE_NAME,
 			.priority=10
 	};
-	struct ::device_identification DEVICE_ID_2 {
+	const char *DEVICE_ROLE_2 = "button2";
+	const char *DEVICE_NAME_2 = "green";
+	const struct ::device_identification DEVICE_ID_2 {
 			.module=2,
 			.device_type=SUPPORTED_DEVICE_TYPE,
-			.device_role="button2",
-			.device_name="green",
+			.device_role=(char *)DEVICE_ROLE_2,
+			.device_name=(char *)DEVICE_NAME_2,
 			.priority=10
 	};
-	struct ::device_identification DEVICE_ID_UNSUPPORTED_TYPE {
+	const struct ::device_identification DEVICE_ID_UNSUPPORTED_TYPE {
 			.module=2,
 			.device_type=UNSUPPORTED_DEVICE_TYPE,
-			.device_role="button",
-			.device_name="name",
+			.device_role=(char *)DEVICE_ROLE,
+			.device_name=(char *)DEVICE_NAME,
 			.priority=10
 	};
 };

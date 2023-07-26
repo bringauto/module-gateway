@@ -1,10 +1,12 @@
 #include <testing_utils/TestHandler.hpp>
+#include <testing_utils/ProtobufUtils.hpp>
 
 #include <thread>
 
 
 
 namespace testing_utils {
+
 namespace common_utils = bringauto::common_utils;
 namespace internal_server = bringauto::internal_server;
 namespace settings = bringauto::settings;
@@ -20,10 +22,10 @@ TestHandler::TestHandler(const std::vector<InternalProtocol::Device> &devices, c
 	fromInternalQueue = std::make_shared<structures::AtomicQueue<InternalProtocol::InternalClient>>();
 	for(size_t i = 0; i < devices.size(); ++i) {
 
-		connects.push_back(common_utils::ProtocolUtils::CreateClientMessage(devices[i]));
-		statuses.push_back(common_utils::ProtocolUtils::CreateClientMessage(devices[i], data[i]));
-		commands.push_back(common_utils::ProtocolUtils::CreateServerMessage(devices[i], data[i]));
-		responses.push_back(common_utils::ProtocolUtils::CreateServerMessage(devices[i], InternalProtocol::DeviceConnectResponse_ResponseType_OK));
+		connects.push_back(ProtobufUtils::CreateClientMessage(devices[i]));
+		statuses.push_back(ProtobufUtils::CreateClientMessage(devices[i], data[i]));
+		commands.push_back(ProtobufUtils::CreateServerMessage(devices[i], data[i]));
+		responses.push_back(ProtobufUtils::CreateServerMessage(devices[i], InternalProtocol::DeviceConnectResponse_ResponseType_OK));
 
 		contexts.push_back(std::make_shared<structures::GlobalContext>());
 		contexts[i]->settings = std::make_shared<settings::Settings>();
@@ -50,10 +52,10 @@ TestHandler::TestHandler(const std::vector<InternalProtocol::Device> &devices,
 	toInternalQueue = std::make_shared<structures::AtomicQueue<InternalProtocol::InternalServer>>();
 	fromInternalQueue = std::make_shared<structures::AtomicQueue<InternalProtocol::InternalClient>>();
 	for(size_t i = 0; i < devices.size(); ++i) {
-		connects.push_back(common_utils::ProtocolUtils::CreateClientMessage(devices[i]));
-		statuses.push_back(common_utils::ProtocolUtils::CreateClientMessage(devices[i], data[i]));
-		commands.push_back(common_utils::ProtocolUtils::CreateServerMessage(devices[i], data[i]));
-		responses.push_back(common_utils::ProtocolUtils::CreateServerMessage(devices[i], responseTypes[i]));
+		connects.push_back(ProtobufUtils::CreateClientMessage(devices[i]));
+		statuses.push_back(ProtobufUtils::CreateClientMessage(devices[i], data[i]));
+		commands.push_back(ProtobufUtils::CreateServerMessage(devices[i], data[i]));
+		responses.push_back(ProtobufUtils::CreateServerMessage(devices[i], responseTypes[i]));
 
 		contexts.push_back(std::make_shared<structures::GlobalContext>());
 		contexts[i]->settings = std::make_shared<settings::Settings>();

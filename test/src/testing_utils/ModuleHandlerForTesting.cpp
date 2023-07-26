@@ -1,9 +1,8 @@
 #include <testing_utils/ModuleHandlerForTesting.hpp>
-
+#include <testing_utils/ProtobufUtils.hpp>
 
 
 namespace testing_utils {
-namespace common_utils = bringauto::common_utils;
 
 void ModuleHandlerForTesting::start() {
 	size_t messageCounter { 0 };
@@ -12,12 +11,12 @@ void ModuleHandlerForTesting::start() {
 			auto message = fromInternalQueue_->front();
 			fromInternalQueue_->pop();
 			if(message.has_deviceconnect()) {
-				auto res = common_utils::ProtocolUtils::CreateServerMessage(message.deviceconnect().device(),
+				auto res = ProtobufUtils::CreateServerMessage(message.deviceconnect().device(),
 																				 InternalProtocol::DeviceConnectResponse_ResponseType_OK);
 				toInternalQueue_->pushAndNotify(res);
 			}
 			if(message.has_devicestatus()) {
-				auto com = common_utils::ProtocolUtils::CreateServerMessage(message.devicestatus().device(),
+				auto com = ProtobufUtils::CreateServerMessage(message.devicestatus().device(),
 																				 message.devicestatus().statusdata());
 				toInternalQueue_->pushAndNotify(com);
 			}
@@ -38,7 +37,7 @@ void ModuleHandlerForTesting::startWithTimeout(bool onConnect, size_t timeoutNum
 					--timeoutNumber;
 					continue;
 				}
-				auto res = common_utils::ProtocolUtils::CreateServerMessage(message.deviceconnect().device(),
+				auto res = ProtobufUtils::CreateServerMessage(message.deviceconnect().device(),
 																				 InternalProtocol::DeviceConnectResponse_ResponseType_OK);
 				toInternalQueue_->pushAndNotify(res);
 			}
@@ -47,7 +46,7 @@ void ModuleHandlerForTesting::startWithTimeout(bool onConnect, size_t timeoutNum
 					--timeoutNumber;
 					continue;
 				}
-				auto com = common_utils::ProtocolUtils::CreateServerMessage(message.devicestatus().device(),
+				auto com = ProtobufUtils::CreateServerMessage(message.devicestatus().device(),
 																				 message.devicestatus().statusdata());
 				toInternalQueue_->pushAndNotify(com);
 			}
