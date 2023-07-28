@@ -251,7 +251,6 @@ void ExternalConnection::endConnection(bool completeDisconnect = false) {
 
 int ExternalConnection::handleCommand(const ExternalProtocol::Command& commandMessage) {
 	auto messageCounter = getCommandCounter(commandMessage);
-	log::logDebug("Handling Command, messageCounter={}", messageCounter);
 
 	if (commandMessage.sessionid() != sessionId_) {
 		log::logError("Command {} has incorrect sessionId", messageCounter);
@@ -294,14 +293,16 @@ void ExternalConnection::receivingHandlerLoop() {
 			continue;
 		}
 		if (serverMessage->has_command()) {
-			log::logDebug("Handling COMMAND messageCounter={}",serverMessage->command().messagecounter());
-			if (handleCommand(serverMessage->command()) != 0) {
+            const auto& command = serverMessage->command();
+			log::logDebug("Handling COMMAND messageCounter={}", command.messagecounter());
+			if (handleCommand(command) != 0) {
 				endConnection(false);
 				return;
 			}
 		} else if (serverMessage->has_statusresponse()) {
-			log::logDebug("Handling STATUS_RESPONSE messageCounter={}",serverMessage->statusresponse().messagecounter());
-			if (sentMessagesHandler_->acknowledgeStatus(serverMessage->statusresponse()) != OK) {
+            const auto &statusResponse = serverMessage->statusresponse();
+			log::logDebug("Handling STATUS_RESPONSE messageCounter={}", statusResponse.messagecounter());
+			if (sentMessagesHandler_->acknowledgeStatus(statusResponse) != OK) {
 				endConnection(false);
 				return;
 			}

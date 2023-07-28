@@ -92,7 +92,6 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	if(module_->sendStatusCondition(currStatus, status, device_type) == OK) {
 		struct buffer aggregatedStatusBuff {};
 		module_->aggregateStatus(&aggregatedStatusBuff, currStatus, status, device_type);
-
 		deallocate(&currStatus);
 		currStatus = aggregatedStatusBuff;
 	} else {
@@ -132,13 +131,11 @@ int StatusAggregator::get_unique_devices(struct ::buffer *unique_devices_buffer)
 	if(!str.empty()) {
 		str.pop_back();
 	}
-	int ret = allocate(unique_devices_buffer, str.size());
-	if(ret == NOT_OK) {
+	if(allocate(unique_devices_buffer, str.size()) == NOT_OK) {
 		log::logError("Could not allocate buffer in get_unique_devices");
 		return NOT_OK;
 	}
 	std::memcpy(unique_devices_buffer->data, str.c_str(), str.size());
-	//strncpy(static_cast<char *>(unique_devices_buffer->data), str.c_str(), str.size());
 	return devices.size();
 }
 
@@ -148,12 +145,17 @@ int StatusAggregator::force_aggregation_on_device(const struct ::device_identifi
 		return DEVICE_NOT_REGISTERED;
 	}
 
-	auto &aggregatedMessages = devices[id].aggregatedMessages;
     const auto &statusBuffer = devices[id].status;
     struct buffer forcedStatusBuffer {};
-    allocate(&forcedStatusBuffer, statusBuffer.size_in_bytes);
+    if(allocate(&forcedStatusBuffer, statusBuffer.size_in_bytes) == NOT_OK){
+		log::logError("Could not allocate buffer in force_aggregation_on_device");
+        return NOT_OK;
+    }
+
 	std::memcpy(forcedStatusBuffer.data, statusBuffer.data, statusBuffer.size_in_bytes);
+	auto &aggregatedMessages = devices[id].aggregatedMessages;
 	aggregatedMessages.push(forcedStatusBuffer);
+
 	return aggregatedMessages.size();
 }
 

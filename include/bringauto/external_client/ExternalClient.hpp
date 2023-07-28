@@ -22,12 +22,12 @@ public:
 				   std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &toExternalQueue);
 
 	/**
-	 * @brief Initialize connections, error aggregators ?Queue?
+	 * @brief Initialize connections, error aggregators
 	 */
 	void run();
 
 	/**
-	 * @brief
+	 * @brief Stops connections and joins thread for command handling
 	 */
 	void destroy();
 
