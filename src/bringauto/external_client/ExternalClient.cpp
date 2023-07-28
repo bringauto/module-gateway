@@ -95,25 +95,30 @@ void ExternalClient::handleAggregatedMessages() {
 		log::logInfo("External client received aggregated status, number of aggregated statuses in queue {}", toExternalQueue_->size());
 		auto& message = toExternalQueue_->front();
 		sendStatus(message.devicestatus());
-		toExternalQueue_->pop();
 	}
 }
 
 void ExternalClient::sendStatus(const InternalProtocol::DeviceStatus& deviceStatus) {
 	const auto &moduleNumber = deviceStatus.device().module();
-	auto &connection = externalConnectionMap_.at(moduleNumber).get();
+    auto it = externalConnectionMap_.find(moduleNumber);
+    if (it == externalConnectionMap_.end()) {
+        log::logError("Module number {} not found in the map\n", moduleNumber);
+        return;
+    }
 
+    auto &connection = it->second.get();
 	if (connection.getState() != connection::CONNECTED) {
 		connection.fillErrorAggregator(deviceStatus);
 		if (connection.getState() == connection::NOT_INITIALIZED) {
 			if (insideConnectSequence_) {
-				log::logWarning("Status moved to error aggregator. Cannot initialize connect sequence, when different is running.");
+				log::logWarning("Status moved to error aggregator. Cannot initialize connect sequence, when different is running");
 				return;
 			}
 			startExternalConnectSequence(connection);
 		}
 	} else {
 		connection.sendStatus(deviceStatus);
+        toExternalQueue_->pop();
 	}
 }
 

@@ -65,8 +65,8 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 	const auto &device = status.device();
 	const auto &moduleNumber = device.module();
 	const auto &deviceName = device.devicename();
-    auto &statusAggregators = context_->statusAggregators;
-	log::logDebug("Received Status message from device: {}", deviceName);
+	auto &statusAggregators = context_->statusAggregators;
+	log::logDebug("Module handler received status from device: {}", deviceName);
 
 	if(not statusAggregators.contains(moduleNumber)) {
 		log::logWarning("Module number: {} is not supported", moduleNumber);
@@ -93,9 +93,9 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 		statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
 		auto statusMessage = common_utils::ProtobufUtils::CreateInternalClientStatusMessage(device,
 																							aggregatedStatusBuffer);
-
 		toExternalQueue_->pushAndNotify(statusMessage);
-		deallocate(&aggregatedStatusBuffer); // TODO should free??
+	    log::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}", toExternalQueue_->size());
+		deallocate(&aggregatedStatusBuffer);
 	}
 
 	struct ::buffer commandBuffer {};
@@ -107,7 +107,7 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 
 	auto deviceCommandMessage = common_utils::ProtobufUtils::CreateInternalServerCommandMessage(device, commandBuffer);
 	toInternalQueue_->pushAndNotify(deviceCommandMessage);
-	log::logDebug("Command succesfully retrieved and sent to device: {}", deviceName);
+	log::logDebug("Module handler succesfully retrieved command and sent it to device: {}", deviceName);
 
 	deallocate(&commandBuffer);
 	deallocate(&statusBuffer);
