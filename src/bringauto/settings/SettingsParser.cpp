@@ -100,7 +100,6 @@ bool SettingsParser::areSettingsCorrect() {
 		isCorrect = false;
 	}
 
-
 	return isCorrect;
 }
 
@@ -180,9 +179,11 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 				std::cerr << "Invalid protocol type: " << endpoint[PROTOCOL_TYPE] << std::endl;
 				continue;
 		}
-		for (auto& [key, val] : endpoint[settingsName].items()) {
-			externalConnectionSettings.protocolSettings[key] = to_string(val);
-		}
+        if (endpoint.find(settingsName) != endpoint.end()){
+            for (auto& [key, val] : endpoint[settingsName].items()) {
+			    externalConnectionSettings.protocolSettings[key] = to_string(val);
+		    }
+        }
 
 		settings_->externalConnectionSettingsList.push_back(externalConnectionSettings);
 	}
