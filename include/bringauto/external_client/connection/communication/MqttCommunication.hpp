@@ -12,10 +12,11 @@ namespace bringauto::external_client::connection::communication {
 
 class MqttCommunication : public ICommunicationChannel {
 public:
-	explicit MqttCommunication(const structures::ExternalConnectionSettings &settings, const std::string& company,
-							   const std::string& vehicleName);
+	explicit MqttCommunication(const structures::ExternalConnectionSettings &settings): ICommunicationChannel(settings) {};
 
 	~MqttCommunication() override;
+
+    void setProperties(const std::string& company, const std::string& vehicleName) override;
 
 	int initializeConnection() override;
 

@@ -141,6 +141,8 @@ private:
 
 	std::string getId(const ::device_identification &device);
 
+    void aggregateStatus(buffer &currStatus, const buffer &status, const unsigned int& device_type);
+
 	const std::shared_ptr<ModuleManagerLibraryHandler> module_{};
 
 	std::map <std::string, device_state> devices {};

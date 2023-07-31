@@ -60,13 +60,13 @@ private:
 	 */
 	void handle_status(const InternalProtocol::DeviceStatus &status);
 
+	std::shared_ptr <structures::GlobalContext> context_;
+
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> fromInternalQueue_;
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> toExternalQueue_;
-
-	std::shared_ptr <structures::GlobalContext> context_;
 };
 
 }

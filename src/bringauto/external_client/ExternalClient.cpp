@@ -125,7 +125,7 @@ void ExternalClient::sendStatus(const InternalProtocol::DeviceStatus& deviceStat
 void ExternalClient::startExternalConnectSequence(connection::ExternalConnection& connection) {
     log::logInfo("Initializing new connection");
 	insideConnectSequence_ = true;
-	log::logDebug("Forcing aggregation on modules");
+	log::logDebug("External client is forcing aggregation on all modules");
 	auto statusesLeft = connection.forceAggregationOnAllDevices();
 	// maybe do it better way
 	std::set<std::string> devices {};

@@ -16,6 +16,13 @@ std::string StatusAggregator::getId(const ::device_identification &device) {
 	return ss.str();
 }
 
+void StatusAggregator::aggregateStatus(buffer &currStatus, const buffer &status, const unsigned int& device_type){
+    struct buffer aggregatedStatusBuff {};
+	module_->aggregateStatus(&aggregatedStatusBuff, currStatus, status, device_type);
+	deallocate(&currStatus);
+	currStatus = aggregatedStatusBuff;
+}
+
 int StatusAggregator::init_status_aggregator() {
 	return OK;
 }
@@ -90,14 +97,13 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	auto &currStatus = devices[id].status;
 	auto &aggregatedMessages = devices[id].aggregatedMessages;
 	if(module_->sendStatusCondition(currStatus, status, device_type) == OK) {
-		struct buffer aggregatedStatusBuff {};
-		module_->aggregateStatus(&aggregatedStatusBuff, currStatus, status, device_type);
-		deallocate(&currStatus);
-		currStatus = aggregatedStatusBuff;
+        aggregateStatus(currStatus, status, device_type);
+        struct buffer statusToSendBuff {};
+        allocate(&statusToSendBuff, currStatus.size_in_bytes);
+		std::memcpy(statusToSendBuff.data, currStatus.data, currStatus.size_in_bytes);
+		aggregatedMessages.push(statusToSendBuff);
 	} else {
-		aggregatedMessages.push(currStatus);
-		allocate(&currStatus, status.size_in_bytes);
-		std::memcpy(currStatus.data, status.data, status.size_in_bytes);
+        aggregateStatus(currStatus, status, device_type);
 	}
 
 	return aggregatedMessages.size();

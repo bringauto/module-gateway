@@ -33,7 +33,7 @@ void ModuleHandler::handle_messages() {
 		} else if(message.has_devicestatus()) {
 			handle_status(message.devicestatus());
 		} else {
-			log::logInfo("Received message is not Connect or Status");
+			log::logWarning("Module handler received message which is not Connect or Status");
 		}
 
 		fromInternalQueue_->pop();
@@ -44,7 +44,7 @@ void ModuleHandler::handle_connect(const ip::DeviceConnect &connect) {
 	const auto &device = connect.device();
 	const auto &moduleNumber = device.module();
 	auto &statusAggregators = context_->statusAggregators;
-	log::logInfo("Received Connect message from device: {}", device.devicename());
+	log::logInfo("Module handler received Connect message from device: {}", device.devicename());
 
 	auto response_type = ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_OK;
 	if(not statusAggregators.contains(moduleNumber)) {

@@ -28,7 +28,8 @@ void ExternalConnection::init(const std::string &company, const std::string &veh
 	}
 	switch (settings_.protocolType) {
 		case structures::ProtocolType::MQTT:
-			communicationChannel_ = std::make_unique<communication::MqttCommunication>(settings_, company, vehicleName);
+			communicationChannel_ = std::make_unique<communication::MqttCommunication>(settings_);
+            communicationChannel_->setProperties(company, vehicleName);
 			break;
 		case structures::ProtocolType::INVALID:
 			break;

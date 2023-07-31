@@ -5,11 +5,12 @@
 
 namespace bringauto::external_client::connection::communication {
 
-MqttCommunication::MqttCommunication(const structures::ExternalConnectionSettings &settings, const std::string& company,
-									 const std::string& vehicleName): ICommunicationChannel(
-		settings, company, vehicleName) {
-	settings_ = settings;
-	publishTopic_ = createPublishTopic(company, vehicleName);
+MqttCommunication::~MqttCommunication() {
+	closeConnection();
+}
+
+void MqttCommunication::setProperties(const std::string& company, const std::string& vehicleName){
+    publishTopic_ = createPublishTopic(company, vehicleName);
 	subscribeTopic_ = createSubscribeTopic(company, vehicleName);
 	clientId_ = createClientId(company, vehicleName);
 
@@ -17,9 +18,9 @@ MqttCommunication::MqttCommunication(const structures::ExternalConnectionSetting
 							+ ":" + std::to_string(settings_.port) };
 
 	if (settings_.protocolSettings.contains(settings::SSL) && settings_.protocolSettings[settings::SSL] == "true") {
-		if (settings.protocolSettings.contains(settings::CA_FILE)
-			&& settings.protocolSettings.contains(settings::CLIENT_CERT)
-			&& settings.protocolSettings.contains(settings::CLIENT_KEY)
+		if (settings_.protocolSettings.contains(settings::CA_FILE)
+			&& settings_.protocolSettings.contains(settings::CLIENT_CERT)
+			&& settings_.protocolSettings.contains(settings::CLIENT_KEY)
 			) {
 			serverAddress_ = "ssl://" + serverAddress_;
 			auto sslopts = mqtt::ssl_options_builder()
@@ -37,10 +38,6 @@ MqttCommunication::MqttCommunication(const structures::ExternalConnectionSetting
 			// TODO throw error?? Or maybe move this to connect
 		}
 	}
-}
-
-MqttCommunication::~MqttCommunication() {
-	closeConnection();
 }
 
 void MqttCommunication::connect() {

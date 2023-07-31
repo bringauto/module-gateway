@@ -189,9 +189,9 @@ private:
 	std::shared_ptr<structures::Connection> findConnection(structures::DeviceIdentification *deviceId);
 
 	std::shared_ptr<structures::GlobalContext> context_;
-	std::shared_ptr<structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
-	std::shared_ptr<structures::AtomicQueue<InternalProtocol::InternalClient>> fromInternalQueue_;
 	boost::asio::ip::tcp::acceptor acceptor_;
+	std::shared_ptr<structures::AtomicQueue<InternalProtocol::InternalClient>> fromInternalQueue_;
+	std::shared_ptr<structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
 
 	std::mutex serverMutex_;
 	std::vector<std::shared_ptr<structures::Connection>> connectedDevices_;
