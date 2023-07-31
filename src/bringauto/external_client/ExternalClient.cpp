@@ -17,7 +17,7 @@ ExternalClient::ExternalClient(std::shared_ptr <structures::GlobalContext> &cont
 		: context_ { context }, toExternalQueue_ { toExternalQueue } {
 	fromExternalQueue_ = std::make_shared < structures::AtomicQueue < InternalProtocol::DeviceCommand >> ();
 	reconnectQueue_ = std::make_shared<structures::AtomicQueue<std::reference_wrapper<connection::ExternalConnection>>>();
-	fromExternalClientThread_ = std::thread(&ExternalClient::handleCommands, this);
+	fromExternalClientThread_ = std::jthread(&ExternalClient::handleCommands, this);
 };
 
 void ExternalClient::handleCommands(){

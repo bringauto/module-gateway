@@ -81,7 +81,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 
 int ExternalConnection::initializeConnection() {
 	if (state_.load() == ConnectionState::NOT_INITIALIZED) {
-		listeningThread = std::thread(&ExternalConnection::receivingHandlerLoop, this);
+		listeningThread = std::jthread(&ExternalConnection::receivingHandlerLoop, this);
 		state_.exchange(ConnectionState::NOT_CONNECTED);
 	}
 
@@ -243,9 +243,9 @@ void ExternalConnection::endConnection(bool completeDisconnect = false) {
 	} else {
 		stopReceiving.exchange(true);
 		communicationChannel_->closeConnection();
-		if (listeningThread.joinable()){
-			listeningThread.join();
-		}
+		// if (listeningThread.joinable()){
+		// 	listeningThread.join();
+		// }
 		for (auto &[moduleNumber, errorAggregator] : errorAggregators ) {
 			errorAggregator.destroy_error_aggregator();
 		}

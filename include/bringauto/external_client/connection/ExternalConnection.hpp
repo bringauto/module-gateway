@@ -13,6 +13,7 @@
 
 #include <string>
 #include <vector>
+#include <thread>
 
 
 
@@ -111,7 +112,7 @@ private:
 
 	std::unique_ptr <communication::ICommunicationChannel> communicationChannel_ {};
 
-	std::thread listeningThread;
+	std::jthread listeningThread;
 
 	/**
 	 * State of the car

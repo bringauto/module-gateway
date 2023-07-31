@@ -9,7 +9,6 @@
 #include <memory>
 #include <vector>
 #include <list>
-#include "InternalProtocol.pb.h"
 
 
 
@@ -57,7 +56,7 @@ private:
 
 	std::shared_ptr <structures::AtomicQueue<std::reference_wrapper<connection::ExternalConnection>>> reconnectQueue_;
 
-    std::thread fromExternalClientThread_;
+    std::jthread fromExternalClientThread_;
 
 	std::shared_ptr <structures::GlobalContext> context_;
 };
