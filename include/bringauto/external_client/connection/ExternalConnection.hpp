@@ -62,7 +62,7 @@ public:
 
 	void fillErrorAggregator(const InternalProtocol::DeviceStatus& deviceStatus);
 
-	[[nodiscard]] short getState() const { return state_.load(); }
+	[[nodiscard]] ConnectionState getState() const { return state_.load(); }
 
 	bool isModuleSupported(int moduleNum);
 private:
@@ -117,7 +117,7 @@ private:
 	 * State of the car
 	 * - thread safe
 	 */
-	std::atomic_short state_ { ConnectionState::NOT_INITIALIZED };
+	std::atomic<ConnectionState> state_ { ConnectionState::NOT_INITIALIZED };
 
 	std::shared_ptr <structures::GlobalContext> context_;
 

@@ -78,9 +78,9 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 }
 
 int ExternalConnection::initializeConnection() {
-	if (state_.load() == NOT_INITIALIZED) {
+	if (state_.load() == ConnectionState::NOT_INITIALIZED) {
 		listeningThread = std::thread(&ExternalConnection::receivingHandlerLoop, this);
-		state_.exchange(NOT_CONNECTED);
+		state_.exchange(ConnectionState::NOT_CONNECTED);
 	}
 
 	if (communicationChannel_->initializeConnection() != 0) {
@@ -91,26 +91,26 @@ int ExternalConnection::initializeConnection() {
 
 	std::vector<structures::DeviceIdentification> devices = getAllConnectedDevices();
 
-	state_.exchange(CONNECTING);
+	state_.exchange(ConnectionState::CONNECTING);
 	log::logInfo("Connect sequence: 1st step (sending list of devices)");
 	if (connectMessageHandle(devices) != 0) {
 		log::logError("Connect sequence to server {}:{}, failed in 1st step", settings_.serverIp, settings_.port);
-		state_.exchange(NOT_CONNECTED);
+		state_.exchange(ConnectionState::NOT_CONNECTED);
 		return -1;
 	}
 	log::logInfo("Connect sequence: 2nd step (sending statuses of all connected devices)");
 	if (statusMessageHandle(devices) != 0) {
 		log::logError("Connect sequence to server {}:{}, failed in 2nd step", settings_.serverIp, settings_.port);
-		state_.exchange(NOT_CONNECTED);
+		state_.exchange(ConnectionState::NOT_CONNECTED);
 		return -1;
 	}
 	log::logInfo("Connect sequence: 3rd step (receiving commands for devices in previous step)");
 	if (commandMessageHandle(devices) != 0) {
 		log::logError("Connect sequence to server {}:{}, failed in 3rd step", settings_.serverIp, settings_.port);
-		state_.exchange(NOT_CONNECTED);
+		state_.exchange(ConnectionState::NOT_CONNECTED);
 		return -1;
 	}
-	state_.exchange(CONNECTED);
+	state_.exchange(ConnectionState::CONNECTED);
 	for (auto &[moduleNum, errorAggregator]: errorAggregators) {
 		errorAggregator.clear_error_aggregator();
 	}
@@ -230,7 +230,7 @@ u_int32_t ExternalConnection::getNextStatusCounter() {
 }
 
 void ExternalConnection::endConnection(bool completeDisconnect = false) {
-	state_.exchange(NOT_CONNECTED);
+	state_.exchange(ConnectionState::NOT_CONNECTED);
 	clientMessageCounter_ = 0;
 	serverMessageCounter_ = 0;
 	sentMessagesHandler_->clearAllTimers();
@@ -285,12 +285,12 @@ bool ExternalConnection::hasAnyDeviceConnected() {
 
 void ExternalConnection::receivingHandlerLoop() {
 	while (not stopReceiving) {
-		if (state_.load() == CONNECTING) {
+		if (state_.load() == ConnectionState::CONNECTING) {
 			std::this_thread::sleep_for(std::chrono::seconds(1));
 			continue;
 		}
 		const auto serverMessage = communicationChannel_->receiveMessage();
-		if (serverMessage == nullptr || state_.load() == NOT_CONNECTED) {
+		if (serverMessage == nullptr || state_.load() == ConnectionState::NOT_CONNECTED) {
 			continue;
 		}
 		if (serverMessage->has_command()) {

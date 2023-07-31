@@ -107,9 +107,9 @@ void ExternalClient::sendStatus(const InternalProtocol::DeviceStatus& deviceStat
     }
 
     auto &connection = it->second.get();
-	if (connection.getState() != connection::CONNECTED) {
+	if (connection.getState() != connection::ConnectionState::CONNECTED) {
 		connection.fillErrorAggregator(deviceStatus);
-		if (connection.getState() == connection::NOT_INITIALIZED) {
+		if (connection.getState() == connection::ConnectionState::NOT_INITIALIZED) {
 			if (insideConnectSequence_) {
 				log::logWarning("Status moved to error aggregator. Cannot initialize connect sequence, when different is running");
 				return;

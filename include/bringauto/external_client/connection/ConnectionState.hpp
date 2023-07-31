@@ -2,7 +2,7 @@
 
 namespace bringauto::external_client::connection {
 
-enum ConnectionState {
+enum class ConnectionState {
 	/**
 	 * NOT_INITIALIZED - Client is not Initialized yet
 	 */
