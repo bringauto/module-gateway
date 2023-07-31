@@ -12,7 +12,7 @@ namespace bringauto::settings {
 
 bool SettingsParser::parseSettings(int argc, char **argv) {
 	parseCmdArguments(argc, argv);
-	if(cmdArguments_.count("help") || argc == 1) {
+	if(cmdArguments_.count("help") != 0 || argc == 1) {
 		return false;
 	}
 
@@ -42,7 +42,7 @@ void SettingsParser::parseCmdArguments(int argc, char **argv) {
 
 	cmdArguments_ = options.parse(argc, argv);
 
-	if(cmdArguments_.count("help") || argc == 1) {
+	if(cmdArguments_.count("help") != 0 || argc == 1) {
 		std::cout << options.help() << std::endl;
 	}
 }
@@ -176,6 +176,7 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 				settingsName = MQTT_SETTINGS;
 				break;
 			case structures::ProtocolType::INVALID:
+            default:
 				std::cerr << "Invalid protocol type: " << endpoint[PROTOCOL_TYPE] << std::endl;
 				continue;
 		}

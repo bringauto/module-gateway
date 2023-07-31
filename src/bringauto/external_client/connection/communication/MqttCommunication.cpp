@@ -10,7 +10,7 @@ MqttCommunication::~MqttCommunication() {
 }
 
 void MqttCommunication::setProperties(const std::string& company, const std::string& vehicleName){
-    publishTopic_ = createPublishTopic(company, vehicleName);
+	publishTopic_ = createPublishTopic(company, vehicleName);
 	subscribeTopic_ = createSubscribeTopic(company, vehicleName);
 	clientId_ = createClientId(company, vehicleName);
 
@@ -95,11 +95,8 @@ std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMess
 		return nullptr;
 	}
 
-	std::shared_ptr<ExternalProtocol::ExternalServer> ptr { nullptr };
-
-	auto *incomingMessage = new ExternalProtocol::ExternalServer();
-	incomingMessage->ParseFromString(msg->get_payload_str());
-	ptr.reset(incomingMessage);
+	std::shared_ptr<ExternalProtocol::ExternalServer> ptr = std::make_shared<ExternalProtocol::ExternalServer>();
+	ptr->ParseFromString(msg->get_payload_str());
 	return ptr;
 }
 

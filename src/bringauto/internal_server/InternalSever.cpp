@@ -24,8 +24,7 @@ void InternalServer::addAsyncAccept() {
 	if(context_->ioContext.stopped()) {
 		return;
 	}
-	auto connection = std::make_shared<structures::Connection>(
-			context_->ioContext);
+	auto connection = std::make_shared<structures::Connection>(context_->ioContext);
 	acceptor_.async_accept(connection->socket, [this, connection](const boost::system::error_code &error) {
 		if(error) {
 			bringauto::logging::Logger::logError("Error in addAsyncAccept(): {}", error.message());
@@ -70,7 +69,7 @@ void InternalServer::asyncReceiveHandler(
 	}
 
 	int result = processBufferData(connection, bytesTransferred);
-	if(!result) {
+	if(not result) {
 		std::lock_guard<std::mutex> lock(serverMutex_);
 		removeConnFromMap(connection);
 	} else {
@@ -86,7 +85,7 @@ bool InternalServer::processBufferData(
 	auto &buffer = connection->connContext.buffer;
 	const uint8_t headerSize = 4;
 
-	if(bytesTransferred < headerSize && !completeMessageSize) {
+	if(bytesTransferred < headerSize && not completeMessageSize) {
 		bringauto::logging::Logger::logError(
 				"Error in processBufferData(...): Incomplete header received from Internal Client, "
 				"connection's ip address is {}", connection->socket.remote_endpoint().address().to_string());
@@ -96,7 +95,7 @@ bool InternalServer::processBufferData(
 	std::size_t bytesLeft = bytesTransferred;
 	auto dataBegin = buffer.begin();
 
-	if(!completeMessageSize) {
+	if(not completeMessageSize) {
 
 		uint32_t size { 0 };
 
