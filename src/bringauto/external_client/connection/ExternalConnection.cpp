@@ -22,16 +22,17 @@ ExternalConnection::ExternalConnection(const std::shared_ptr<structures::GlobalC
 }
 
 void ExternalConnection::init(const std::string &company, const std::string &vehicleName){
-    for (const auto &moduleNum: settings_.modules) {
+	for (const auto &moduleNum: settings_.modules) {
 		errorAggregators[moduleNum] = ErrorAggregator();
 		errorAggregators[moduleNum].init_error_aggregator(context_->moduleLibraries[moduleNum]);
 	}
 	switch (settings_.protocolType) {
 		case structures::ProtocolType::MQTT:
 			communicationChannel_ = std::make_unique<communication::MqttCommunication>(settings_);
-            communicationChannel_->setProperties(company, vehicleName);
+			communicationChannel_->setProperties(company, vehicleName);
 			break;
 		case structures::ProtocolType::INVALID:
+		default:
 			break;
 	}
 }
@@ -60,6 +61,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 			sentMessagesHandler_->deleteConnectedDevice(device);
 			break;
 		case ExternalProtocol::Status_DeviceState_ERROR:
+		default:
 			// TODO What does ERROR mean and what should happen?
 			break;
 	}
@@ -294,14 +296,14 @@ void ExternalConnection::receivingHandlerLoop() {
 			continue;
 		}
 		if (serverMessage->has_command()) {
-            const auto& command = serverMessage->command();
+			const auto& command = serverMessage->command();
 			log::logDebug("Handling COMMAND messageCounter={}", command.messagecounter());
 			if (handleCommand(command) != 0) {
 				endConnection(false);
 				return;
 			}
 		} else if (serverMessage->has_statusresponse()) {
-            const auto &statusResponse = serverMessage->statusresponse();
+			const auto &statusResponse = serverMessage->statusresponse();
 			log::logDebug("Handling STATUS_RESPONSE messageCounter={}", statusResponse.messagecounter());
 			if (sentMessagesHandler_->acknowledgeStatus(statusResponse) != OK) {
 				endConnection(false);

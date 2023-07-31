@@ -22,9 +22,9 @@ namespace bringauto::modules {
 class StatusAggregator {
 public:
 
-    StatusAggregator() = default;
+    explicit StatusAggregator(const std::shared_ptr<ModuleManagerLibraryHandler> &module): module_{module} {};
 
-    StatusAggregator(const std::shared_ptr<ModuleManagerLibraryHandler> &module): module_{module} {};
+    StatusAggregator() = default;
 	/**
 	 * @short Status aggregator init.
 	 *

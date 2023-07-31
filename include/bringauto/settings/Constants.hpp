@@ -20,46 +20,43 @@ constexpr int reconnect_delay { 30 };
 /**
  * @brief time between checks of atomic queue used for one-way communication from Module Handler to Internal Server
  */
-const std::chrono::seconds queue_timeout_length { 3 };
+constexpr std::chrono::seconds queue_timeout_length { 3 };
 /**
  * &brief Fleet Protocol defines messages as always starting with 4 bytes header
  */
-const uint8_t header { 4 };
+constexpr uint8_t header { 4 };
 /**
  * @brief maximal amount of bytes received, that can be processed in one cycle
  */
-const size_t buffer_length = 1024;
+constexpr size_t buffer_length = 1024;
 
 
 /// constant strings for parsing command line arguments
 
-const std::string CONFIG_PATH { "config-path" };
-const std::string VERBOSE { "verbose" };
-const std::string LOG_PATH { "log-path" };
-const std::string HELP { "help" };
-const std::string PORT { "port" };
+static const std::string CONFIG_PATH { "config-path" };
+static const std::string VERBOSE { "verbose" };
+static const std::string LOG_PATH { "log-path" };
+static const std::string HELP { "help" };
+static const std::string PORT { "port" };
 
-const std::string MODULE_PATHS { "module-paths" };
+static const std::string MODULE_PATHS { "module-paths" };
 
-const std::string GENERAL_SETTINGS { "general-settings" };
-const std::string INTERNAL_SERVER_SETTINGS { "internal-server-settings" };
+static const std::string GENERAL_SETTINGS { "general-settings" };
+static const std::string INTERNAL_SERVER_SETTINGS { "internal-server-settings" };
 
-const std::string EXTERNAL_CONNECTION { "external-connection" };
-const std::string VEHICLE_NAME { "vehicle-name" };
-const std::string COMPANY { "company" };
-const std::string EXTERNAL_ENDPOINTS { "endpoints" };
-const std::string SERVER_IP { "server-ip" };
-const std::string PROTOCOL_TYPE { "protocol-type" };
+static const std::string EXTERNAL_CONNECTION { "external-connection" };
+static const std::string VEHICLE_NAME { "vehicle-name" };
+static const std::string COMPANY { "company" };
+static const std::string EXTERNAL_ENDPOINTS { "endpoints" };
+static const std::string SERVER_IP { "server-ip" };
+static const std::string PROTOCOL_TYPE { "protocol-type" };
 
-const std::string MQTT_SETTINGS { "mqtt-settings" };
-const std::string SSL = "ssl";
-const std::string CA_FILE = "ca-file";
-const std::string CLIENT_CERT = "client-cert";
-const std::string CLIENT_KEY = "client-key";
-
-
-const std::string MODULES { "modules" };
+static const std::string MQTT_SETTINGS { "mqtt-settings" };
+static const std::string SSL = "ssl";
+static const std::string CA_FILE = "ca-file";
+static const std::string CLIENT_CERT = "client-cert";
+static const std::string CLIENT_KEY = "client-key";
 
 
-
+static const std::string MODULES { "modules" };
 }

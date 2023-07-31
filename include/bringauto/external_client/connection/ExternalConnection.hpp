@@ -68,7 +68,7 @@ public:
 private:
 	void setSessionId();
 
-	u_int32_t getNextStatusCounter();
+	[[nodiscard]] u_int32_t getNextStatusCounter();
 
 	static u_int32_t getCommandCounter(const ExternalProtocol::Command& command);
 

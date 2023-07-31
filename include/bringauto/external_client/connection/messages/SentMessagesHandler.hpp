@@ -24,13 +24,13 @@ public:
 	 */
 	int acknowledgeStatus(const ExternalProtocol::StatusResponse& statusResponse);
 
-	const std::vector<std::shared_ptr<NotAckedStatus>> &getNotAckedStatus() const { return notAckedStatuses_; }
+	[[nodiscard]] const std::vector<std::shared_ptr<NotAckedStatus>> &getNotAckedStatus() const { return notAckedStatuses_; }
 
 	/**
 	 * @brief Return true if all statuses were acknowledged
 	 * @return
 	 */
-	bool allStatusesAcked() const { return notAckedStatuses_.empty(); };
+	[[nodiscard]] bool allStatusesAcked() const { return notAckedStatuses_.empty(); };
 
 	void clearAll();
 
@@ -40,7 +40,7 @@ public:
 
 	bool isDeviceConnected(InternalProtocol::Device device);
 
-	bool isAnyDeviceConnected() { return connectedDevices_.empty(); };
+	[[nodiscard]] bool isAnyDeviceConnected() { return connectedDevices_.empty(); };
 
 	void clearAllTimers();
 private:
@@ -50,14 +50,14 @@ private:
 	 * @param status
 	 * @return counter
 	 */
-	u_int32_t getStatusCounter(const ExternalProtocol::Status& status);
+	[[nodiscard]] u_int32_t getStatusCounter(const ExternalProtocol::Status& status);
 
 	/**
 	 * @brief returns message counter of status_response
 	 * @param status
 	 * @return counter
 	 */
-	u_int32_t getStatusResponseCounter(const ExternalProtocol::StatusResponse& statusResponse);
+	[[nodiscard]] u_int32_t getStatusResponseCounter(const ExternalProtocol::StatusResponse& statusResponse);
 
 	std::vector<std::shared_ptr<NotAckedStatus>> notAckedStatuses_;
 
