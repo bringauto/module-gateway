@@ -76,4 +76,11 @@ std::vector <std::string> splitString(const std::string &input, char delimiter) 
 	return tokens;
 }
 
+std::string getId(const ::device_identification &device) {
+	std::stringstream ss;
+	ss << device.module << "/" << device.device_type << "/" << device.device_role << "/"
+	   << device.device_name; // TODO we need to be able to get priority
+	return ss.str();
+}
+
 }

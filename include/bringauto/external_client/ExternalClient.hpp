@@ -42,7 +42,7 @@ private:
 
     void handleCommand(const InternalProtocol::DeviceCommand &deviceCommand);
 
-	void sendStatus(const InternalProtocol::DeviceStatus& deviceStatus);
+	void sendStatus(const InternalProtocol::DeviceStatus &deviceStatus);
 
 	bool insideConnectSequence_ = false;
 

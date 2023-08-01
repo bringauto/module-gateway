@@ -27,4 +27,6 @@ device_identification mapToDeviceId(const std::string &device);
 
 std::vector <std::string> splitString(const std::string &input, char delimiter);
 
+std::string getId(const ::device_identification &device);
+
 }

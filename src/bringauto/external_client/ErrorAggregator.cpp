@@ -2,22 +2,13 @@
 
 #include <module_manager.h>
 #include <bringauto/logging/Logger.hpp>
+#include <bringauto/utils/utils.hpp>
 #include <mg_error_codes.h>
-
-#include <sstream>
-
 
 
 namespace bringauto::external_client {
 
 using log = bringauto::logging::Logger;
-
-std::string ErrorAggregator::getId(const ::device_identification &device) {
-	std::stringstream ss;
-	ss << device.module << "/" << device.device_type << "/" << device.device_role << "/"
-	   << device.device_name; // TODO we need to be able to get priority
-	return ss.str();
-}
 
 int ErrorAggregator::init_error_aggregator(const std::shared_ptr <modules::ModuleManagerLibraryHandler> &library) {
 	module_ = library;
@@ -35,7 +26,7 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 	if(is_device_type_supported(device_type) == NOT_OK) {
 		return DEVICE_NOT_SUPPORTED;
 	}
-	std::string id = getId(device);
+	std::string id = utils::getId(device);
 
 	if(status.size_in_bytes == 0) {
 		log::logWarning("Invalid status data for device: {}", id);
@@ -76,7 +67,7 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 }
 
 int ErrorAggregator::get_last_status(struct buffer *status, const struct device_identification device) {
-	std::string id = getId(device);
+	std::string id = utils::getId(device);
 	if(not devices_.contains(id)) {
 		return DEVICE_NOT_REGISTERED;
 	}
@@ -92,7 +83,7 @@ int ErrorAggregator::get_last_status(struct buffer *status, const struct device_
 }
 
 int ErrorAggregator::get_error(struct buffer *error, const struct device_identification device) {
-	std::string id = getId(device);
+	std::string id = utils::getId(device);
 	if(not devices_.contains(id)) {
 		return DEVICE_NOT_REGISTERED;
 	}

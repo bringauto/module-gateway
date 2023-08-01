@@ -121,8 +121,6 @@ private:
         };
 	};
 
-	static std::string getId(const ::device_identification &device);
-
 	std::shared_ptr <modules::ModuleManagerLibraryHandler> module_ {};
 
 	std::map <std::string, DeviceState> devices_ {};
