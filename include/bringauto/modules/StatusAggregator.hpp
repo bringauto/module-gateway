@@ -12,6 +12,8 @@
 #include <filesystem>
 #include <mutex>
 
+
+
 namespace bringauto::modules {
 
 /**
@@ -22,9 +24,10 @@ namespace bringauto::modules {
 class StatusAggregator {
 public:
 
-    explicit StatusAggregator(const std::shared_ptr<ModuleManagerLibraryHandler> &module): module_{module} {};
+	explicit StatusAggregator(const std::shared_ptr <ModuleManagerLibraryHandler> &module): module_ { module } {};
 
-    StatusAggregator() = default;
+	StatusAggregator() = default;
+
 	/**
 	 * @short Status aggregator init.
 	 *
@@ -139,13 +142,13 @@ private:
 		}
 	};
 
-    void aggregateStatus(buffer &currStatus, const buffer &status, const unsigned int& device_type);
+	void aggregateStatus(buffer &currStatus, const buffer &status, const unsigned int &device_type);
 
-	const std::shared_ptr<ModuleManagerLibraryHandler> module_{};
+	const std::shared_ptr <ModuleManagerLibraryHandler> module_ {};
 
 	std::map <std::string, device_state> devices {};
 
-    std::mutex mutex_ {};
+	std::mutex mutex_ {};
 };
 
 }

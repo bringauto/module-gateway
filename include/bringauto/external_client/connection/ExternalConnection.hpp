@@ -26,16 +26,19 @@ public:
 	ExternalConnection(const std::shared_ptr <structures::GlobalContext> &context,
 					   const structures::ExternalConnectionSettings &settings,
 					   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
-					   const std::shared_ptr<structures::AtomicQueue<std::reference_wrapper<connection::ExternalConnection>>>& reconnectQueue);
+					   const std::shared_ptr <structures::AtomicQueue<
+							   std::reference_wrapper < connection::ExternalConnection>>
 
-    /**
-     * @brief Initialize external connection
-     * it has to be called after constructor
-     *
-     * @param company name of the company
-     * @param vehicleName name of the vehicle
-     */
-    void init(const std::string &company, const std::string &vehicleName);
+	>& reconnectQueue);
+
+	/**
+	 * @brief Initialize external connection
+	 * it has to be called after constructor
+	 *
+	 * @param company name of the company
+	 * @param vehicleName name of the vehicle
+	 */
+	void init(const std::string &company, const std::string &vehicleName);
 
 	/**
 	 * @brief Handles all etapes of connect sequence. If connect sequence is successful,
@@ -47,7 +50,7 @@ public:
 
 	void sendStatus(const InternalProtocol::DeviceStatus &status,
 					ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING,
-					const buffer& errorMessage = {});
+					const buffer &errorMessage = {});
 
 	bool hasAnyDeviceConnected();
 
@@ -61,27 +64,28 @@ public:
 
 	void fillErrorAggregator();
 
-	void fillErrorAggregator(const InternalProtocol::DeviceStatus& deviceStatus);
+	void fillErrorAggregator(const InternalProtocol::DeviceStatus &deviceStatus);
 
 	[[nodiscard]] ConnectionState getState() const { return state_.load(); }
 
 	bool isModuleSupported(int moduleNum);
+
 private:
 	void setSessionId();
 
 	[[nodiscard]] u_int32_t getNextStatusCounter();
 
-	static u_int32_t getCommandCounter(const ExternalProtocol::Command& command);
+	static u_int32_t getCommandCounter(const ExternalProtocol::Command &command);
 
-	int connectMessageHandle(const std::vector<structures::DeviceIdentification> &devices);
+	int connectMessageHandle(const std::vector <structures::DeviceIdentification> &devices);
 
 	/**
 	 * @brief Takes care of second etape of connect sequence - for all devices send their last status
 	 * @param devices
 	 */
-	int statusMessageHandle(const std::vector<structures::DeviceIdentification> &devices);
+	int statusMessageHandle(const std::vector <structures::DeviceIdentification> &devices);
 
-	int commandMessageHandle(const std::vector<structures::DeviceIdentification> &devices);
+	int commandMessageHandle(const std::vector <structures::DeviceIdentification> &devices);
 
 	/**
 	 * @brief Check if command is in order and send commandResponse
@@ -90,7 +94,7 @@ private:
 	 * @return -1 if command is out of order
 	 * @return -2 if command has incorrect session ID
 	 */
-	int handleCommand(const ExternalProtocol::Command& commandMessage);
+	int handleCommand(const ExternalProtocol::Command &commandMessage);
 
 	/**
 	 * @brief This loop is started after successful connect sequence in own thread.
@@ -98,7 +102,7 @@ private:
 	 */
 	void receivingHandlerLoop();
 
-	std::vector<structures::DeviceIdentification> getAllConnectedDevices();
+	std::vector <structures::DeviceIdentification> getAllConnectedDevices();
 
 	std::atomic<bool> stopReceiving { false };
 
@@ -118,19 +122,20 @@ private:
 	 * State of the car
 	 * - thread safe
 	 */
-	std::atomic<ConnectionState> state_ { ConnectionState::NOT_INITIALIZED };
+	std::atomic <ConnectionState> state_ { ConnectionState::NOT_INITIALIZED };
 
 	std::shared_ptr <structures::GlobalContext> context_;
 
 	const structures::ExternalConnectionSettings &settings_;
 
-	std::unique_ptr<messages::SentMessagesHandler> sentMessagesHandler_;
+	std::unique_ptr <messages::SentMessagesHandler> sentMessagesHandler_;
 
 	std::map<unsigned int, ErrorAggregator> errorAggregators;
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_;
 
-	std::shared_ptr<structures::AtomicQueue<std::reference_wrapper<connection::ExternalConnection>>> reconnectQueue_;
+	std::shared_ptr <structures::AtomicQueue<std::reference_wrapper < connection::ExternalConnection>>>
+	reconnectQueue_;
 
 	std::string carId_ {};
 

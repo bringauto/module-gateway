@@ -94,7 +94,8 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 		auto statusMessage = common_utils::ProtobufUtils::CreateInternalClientStatusMessage(device,
 																							aggregatedStatusBuffer);
 		toExternalQueue_->pushAndNotify(statusMessage);
-	    log::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}", toExternalQueue_->size());
+		log::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}",
+					  toExternalQueue_->size());
 		deallocate(&aggregatedStatusBuffer);
 	}
 

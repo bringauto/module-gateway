@@ -22,8 +22,9 @@ public:
 	 * @param resType Response type
 	 * @return Protobuf message InternalServer
 	 */
-	static InternalProtocol::InternalServer CreateInternalServerConnectResponseMessage(const InternalProtocol::Device &device,
-																					   const InternalProtocol::DeviceConnectResponse_ResponseType &resType);
+	static InternalProtocol::InternalServer
+	CreateInternalServerConnectResponseMessage(const InternalProtocol::Device &device,
+											   const InternalProtocol::DeviceConnectResponse_ResponseType &resType);
 
 	static InternalProtocol::InternalServer CreateInternalServerCommandMessage(const InternalProtocol::Device &device,
 																			   const buffer &command);
@@ -36,7 +37,6 @@ public:
 
 	static InternalProtocol::DeviceStatus CreateDeviceStatus(const device_identification &device,
 															 const buffer &status);
-
 
 	static InternalProtocol::Device CreateDevice(int module,
 												 unsigned int type,
@@ -53,21 +53,21 @@ public:
 	static ExternalProtocol::ExternalClient CreateExternalClientConnect(const std::string &sessionId,
 																		const std::string &company,
 																		const std::string &vehicleName,
-																		const std::vector<device_identification> &devices);
+																		const std::vector <device_identification> &devices);
 
-	static ExternalProtocol::ExternalClient	CreateExternalClientConnect(const std::string &sessionId,
-																	    const std::string &company,
-																	    const std::string &vehicleName,
-																		const std::vector<structures::DeviceIdentification> &devices);
+	static ExternalProtocol::ExternalClient CreateExternalClientConnect(const std::string &sessionId,
+																		const std::string &company,
+																		const std::string &vehicleName,
+																		const std::vector <structures::DeviceIdentification> &devices);
 
-	static ExternalProtocol::ExternalClient	CreateExternalClientStatus(const std::string &sessionId,
+	static ExternalProtocol::ExternalClient CreateExternalClientStatus(const std::string &sessionId,
 																	   ExternalProtocol::Status_DeviceState deviceState,
 																	   u_int32_t messageCounter,
 																	   const InternalProtocol::DeviceStatus &deviceStatus,
 																	   const buffer &errorMessage);
 
-	static ExternalProtocol::ExternalClient	CreateExternalClientCommandResponse(const std::string &sessionId,
-																			    ExternalProtocol::CommandResponse::Type type,
+	static ExternalProtocol::ExternalClient CreateExternalClientCommandResponse(const std::string &sessionId,
+																				ExternalProtocol::CommandResponse::Type type,
 																				u_int32_t messageCounter);
 
 	static buffer ProtobufToBuffer(const google::protobuf::Message &protobufMessage);

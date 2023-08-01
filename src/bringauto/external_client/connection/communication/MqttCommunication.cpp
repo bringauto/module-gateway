@@ -3,25 +3,27 @@
 
 #include <bringauto/logging/Logger.hpp>
 
+
+
 namespace bringauto::external_client::connection::communication {
 
 MqttCommunication::~MqttCommunication() {
 	closeConnection();
 }
 
-void MqttCommunication::setProperties(const std::string& company, const std::string& vehicleName){
+void MqttCommunication::setProperties(const std::string &company, const std::string &vehicleName) {
 	publishTopic_ = createPublishTopic(company, vehicleName);
 	subscribeTopic_ = createSubscribeTopic(company, vehicleName);
 	clientId_ = createClientId(company, vehicleName);
 
 	serverAddress_ = { settings_.serverIp
-							+ ":" + std::to_string(settings_.port) };
+					   + ":" + std::to_string(settings_.port) };
 
-	if (settings_.protocolSettings.contains(settings::SSL) && settings_.protocolSettings[settings::SSL] == "true") {
-		if (settings_.protocolSettings.contains(settings::CA_FILE)
-			&& settings_.protocolSettings.contains(settings::CLIENT_CERT)
-			&& settings_.protocolSettings.contains(settings::CLIENT_KEY)
-			) {
+	if(settings_.protocolSettings.contains(settings::SSL) && settings_.protocolSettings[settings::SSL] == "true") {
+		if(settings_.protocolSettings.contains(settings::CA_FILE)
+		   && settings_.protocolSettings.contains(settings::CLIENT_CERT)
+		   && settings_.protocolSettings.contains(settings::CLIENT_KEY)
+				) {
 			serverAddress_ = "ssl://" + serverAddress_;
 			auto sslopts = mqtt::ssl_options_builder()
 					.trust_store(settings_.protocolSettings[settings::CA_FILE])
@@ -41,7 +43,8 @@ void MqttCommunication::setProperties(const std::string& company, const std::str
 }
 
 void MqttCommunication::connect() {
-	client_ = std::make_unique<mqtt::async_client>(serverAddress_, clientId_, mqtt::create_options(MQTTVERSION_5)); // TODO sometimes throw SIGSEGV
+	client_ = std::make_unique<mqtt::async_client>(serverAddress_, clientId_,
+												   mqtt::create_options(MQTTVERSION_5)); // TODO sometimes throw SIGSEGV
 
 	client_->start_consuming();
 	mqtt::token_ptr conntok = client_->connect(connopts_);
@@ -52,9 +55,9 @@ void MqttCommunication::connect() {
 }
 
 int MqttCommunication::initializeConnection() {
-	if (client_ != nullptr && client_->is_connected()) {
+	if(client_ != nullptr && client_->is_connected()) {
 		return 0;
-	} else if (client_ != nullptr) {
+	} else if(client_ != nullptr) {
 		closeConnection();
 	}
 	try {
@@ -71,7 +74,7 @@ int MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
 		return -1;
 	}
 	unsigned int size = message->ByteSizeLong();
-	auto* buffer = new uint8_t[size];
+	auto *buffer = new uint8_t[size];
 	memset(buffer, '\0', size);
 	message->SerializeToArray(buffer, static_cast<int>(size));
 	client_->publish(publishTopic_, buffer, size, qos, false);
@@ -79,8 +82,8 @@ int MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
 	return 0;
 }
 
-std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMessage() {
-	if (client_ == nullptr) {
+std::shared_ptr <ExternalProtocol::ExternalServer> MqttCommunication::receiveMessage() {
+	if(client_ == nullptr) {
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 		return nullptr;
 	}
@@ -111,7 +114,7 @@ void MqttCommunication::closeConnection() {
 	client_.reset();
 }
 
-std::string MqttCommunication::createClientId(const std::string& company, const std::string& vehicleName) {
+std::string MqttCommunication::createClientId(const std::string &company, const std::string &vehicleName) {
 	return company + std::string("/") + vehicleName; // TODO should have session ID or that is only inside protocol?
 }
 

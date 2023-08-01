@@ -6,6 +6,7 @@
 #include <mg_error_codes.h>
 
 
+
 namespace bringauto::external_client {
 
 using log = bringauto::logging::Logger;
@@ -38,13 +39,13 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 	}
 
 	auto &lastStatus = devices_[id].lastStatus;
-	if (lastStatus.data != nullptr && lastStatus.size_in_bytes > 0) { // status.size_in_bytes > lastStatus.size_in_bytes
+	if(lastStatus.data != nullptr && lastStatus.size_in_bytes > 0) { // status.size_in_bytes > lastStatus.size_in_bytes
 		deallocate(&lastStatus);
 	}
-	if(allocate(&lastStatus, status.size_in_bytes) == NOT_OK){
-        log::logError("Could not allocate memory for status buffer in function add_status_to_error_aggregator");
-        return NOT_OK;
-    }
+	if(allocate(&lastStatus, status.size_in_bytes) == NOT_OK) {
+		log::logError("Could not allocate memory for status buffer in function add_status_to_error_aggregator");
+		return NOT_OK;
+	}
 	std::memcpy(lastStatus.data, status.data, status.size_in_bytes);
 	lastStatus.size_in_bytes = status.size_in_bytes;
 
@@ -99,11 +100,11 @@ int ErrorAggregator::get_error(struct buffer *error, const struct device_identif
 }
 
 int ErrorAggregator::clear_error_aggregator() {
-	for (auto& [key, device] : devices_) {
-		if (device.lastStatus.data != nullptr && device.lastStatus.size_in_bytes > 0) {
+	for(auto &[key, device]: devices_) {
+		if(device.lastStatus.data != nullptr && device.lastStatus.size_in_bytes > 0) {
 			deallocate(&device.lastStatus);
 		}
-		if (device.errorMessage.data != nullptr && device.errorMessage.size_in_bytes > 0) {
+		if(device.errorMessage.data != nullptr && device.errorMessage.size_in_bytes > 0) {
 			deallocate(&device.errorMessage);
 		}
 	}

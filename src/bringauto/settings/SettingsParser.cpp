@@ -38,7 +38,7 @@ void SettingsParser::parseCmdArguments(int argc, char **argv) {
 				   ("v, " + VERBOSE, "Print log messages into terminal");
 	options.add_options("Internal Server")(PORT, "Port on which Server listens", cxxopts::value<unsigned short>());
 	options.add_options("Module Handler")(MODULE_PATHS, "Paths to shared module libraries",
-										  cxxopts::value<std::vector<std::string>>());
+										  cxxopts::value < std::vector < std::string >> ());
 
 	cmdArguments_ = options.parse(argc, argv);
 
@@ -49,10 +49,10 @@ void SettingsParser::parseCmdArguments(int argc, char **argv) {
 
 bool SettingsParser::areCmdArgumentsCorrect() {
 	bool isCorrect = true;
-	std::vector<std::string> requiredParams {
+	std::vector <std::string> requiredParams {
 			CONFIG_PATH
 	};
-	std::vector<std::string> allParameters = {
+	std::vector <std::string> allParameters = {
 			CONFIG_PATH,
 			VERBOSE,
 			LOG_PATH,
@@ -103,7 +103,7 @@ bool SettingsParser::areSettingsCorrect() {
 	return isCorrect;
 }
 
-std::shared_ptr<bringauto::settings::Settings> SettingsParser::getSettings() {
+std::shared_ptr <bringauto::settings::Settings> SettingsParser::getSettings() {
 	return settings_;
 }
 
@@ -143,9 +143,9 @@ void SettingsParser::fillInternalServerSettings(const nlohmann::json &file) {
 
 void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) {
 	if(cmdArguments_.count(MODULE_PATHS)) {
-		settings_->modulePaths = cmdArguments_[MODULE_PATHS].as<std::map<int, std::string>>();
+		settings_->modulePaths = cmdArguments_[MODULE_PATHS].as < std::map < int, std::string >> ();
 	} else {
-		for (auto& [key, val] : file[MODULE_PATHS].items()) {
+		for(auto &[key, val]: file[MODULE_PATHS].items()) {
 			settings_->modulePaths[stoi(key)] = val;
 		}
 	}
@@ -163,28 +163,29 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 		settings_->company = file[EXTERNAL_CONNECTION][COMPANY];
 	}
 
-	for (const auto& endpoint : file[EXTERNAL_CONNECTION][EXTERNAL_ENDPOINTS]) {
+	for(const auto &endpoint: file[EXTERNAL_CONNECTION][EXTERNAL_ENDPOINTS]) {
 		structures::ExternalConnectionSettings externalConnectionSettings;
 		externalConnectionSettings.serverIp = endpoint[SERVER_IP];
 		externalConnectionSettings.port = endpoint[PORT];
-		externalConnectionSettings.modules = endpoint[MODULES].get<std::vector<int>>();
+		externalConnectionSettings.modules = endpoint[MODULES].get < std::vector < int >> ();
 
-		externalConnectionSettings.protocolType = common_utils::EnumUtils::stringToProtocolType(endpoint[PROTOCOL_TYPE]);
+		externalConnectionSettings.protocolType = common_utils::EnumUtils::stringToProtocolType(
+				endpoint[PROTOCOL_TYPE]);
 		std::string settingsName {};
-		switch (externalConnectionSettings.protocolType) {
+		switch(externalConnectionSettings.protocolType) {
 			case structures::ProtocolType::MQTT:
 				settingsName = MQTT_SETTINGS;
 				break;
 			case structures::ProtocolType::INVALID:
-            default:
+			default:
 				std::cerr << "Invalid protocol type: " << endpoint[PROTOCOL_TYPE] << std::endl;
 				continue;
 		}
-        if (endpoint.find(settingsName) != endpoint.end()){
-            for (auto& [key, val] : endpoint[settingsName].items()) {
-			    externalConnectionSettings.protocolSettings[key] = to_string(val);
-		    }
-        }
+		if(endpoint.find(settingsName) != endpoint.end()) {
+			for(auto &[key, val]: endpoint[settingsName].items()) {
+				externalConnectionSettings.protocolSettings[key] = to_string(val);
+			}
+		}
 
 		settings_->externalConnectionSettingsList.push_back(externalConnectionSettings);
 	}

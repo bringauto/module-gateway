@@ -12,8 +12,8 @@ namespace bringauto::external_client::connection::messages {
 class NotAckedStatus {
 public:
 	NotAckedStatus(const ExternalProtocol::Status &status, boost::asio::io_context &timerContext,
-				   std::atomic<bool> &responseHandled, std::mutex &responseHandledMutex): status_{status},
-																						  timer_{timerContext},
+				   std::atomic<bool> &responseHandled, std::mutex &responseHandledMutex): status_ { status },
+																						  timer_ { timerContext },
 																						  responseHandled_ {
 																								  responseHandled },
 																						  responseHandledMutex_ {

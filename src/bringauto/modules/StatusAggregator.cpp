@@ -10,8 +10,8 @@ namespace bringauto::modules {
 
 using log = bringauto::logging::Logger;
 
-void StatusAggregator::aggregateStatus(buffer &currStatus, const buffer &status, const unsigned int& device_type){
-    struct buffer aggregatedStatusBuff {};
+void StatusAggregator::aggregateStatus(buffer &currStatus, const buffer &status, const unsigned int &device_type) {
+	struct buffer aggregatedStatusBuff {};
 	module_->aggregateStatus(&aggregatedStatusBuff, currStatus, status, device_type);
 	deallocate(&currStatus);
 	currStatus = aggregatedStatusBuff;
@@ -83,7 +83,7 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 		module_->generateFirstCommand(&commandBuffer, device_type);
 		struct buffer statusBuffer {};
 		allocate(&statusBuffer, status.size_in_bytes);
-		std::memcpy(statusBuffer.data, status.data, status.size_in_bytes );
+		std::memcpy(statusBuffer.data, status.data, status.size_in_bytes);
 		devices.insert({ id, { commandBuffer, statusBuffer }});
 		return 0;
 	}
@@ -91,13 +91,13 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	auto &currStatus = devices[id].status;
 	auto &aggregatedMessages = devices[id].aggregatedMessages;
 	if(module_->sendStatusCondition(currStatus, status, device_type) == OK) {
-        aggregateStatus(currStatus, status, device_type);
-        struct buffer statusToSendBuff {};
-        allocate(&statusToSendBuff, currStatus.size_in_bytes);
+		aggregateStatus(currStatus, status, device_type);
+		struct buffer statusToSendBuff {};
+		allocate(&statusToSendBuff, currStatus.size_in_bytes);
 		std::memcpy(statusToSendBuff.data, currStatus.data, currStatus.size_in_bytes);
 		aggregatedMessages.push(statusToSendBuff);
 	} else {
-        aggregateStatus(currStatus, status, device_type);
+		aggregateStatus(currStatus, status, device_type);
 	}
 
 	return aggregatedMessages.size();
@@ -145,12 +145,12 @@ int StatusAggregator::force_aggregation_on_device(const struct ::device_identifi
 		return DEVICE_NOT_REGISTERED;
 	}
 
-    const auto &statusBuffer = devices[id].status;
-    struct buffer forcedStatusBuffer {};
-    if(allocate(&forcedStatusBuffer, statusBuffer.size_in_bytes) == NOT_OK){
+	const auto &statusBuffer = devices[id].status;
+	struct buffer forcedStatusBuffer {};
+	if(allocate(&forcedStatusBuffer, statusBuffer.size_in_bytes) == NOT_OK) {
 		log::logError("Could not allocate buffer in force_aggregation_on_device");
-        return NOT_OK;
-    }
+		return NOT_OK;
+	}
 
 	std::memcpy(forcedStatusBuffer.data, statusBuffer.data, statusBuffer.size_in_bytes);
 	auto &aggregatedMessages = devices[id].aggregatedMessages;

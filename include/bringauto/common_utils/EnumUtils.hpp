@@ -2,6 +2,8 @@
 
 #include <bringauto/structures/ExternalConnectionSettings.hpp>
 
+
+
 namespace bringauto::common_utils {
 /**
  * @brief Helper class for work with enums

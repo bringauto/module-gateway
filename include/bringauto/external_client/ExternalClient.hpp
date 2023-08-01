@@ -34,13 +34,13 @@ private:
 
 	void initConnections();
 
-	void startExternalConnectSequence(connection::ExternalConnection& connection);
+	void startExternalConnectSequence(connection::ExternalConnection &connection);
 
 	void handleAggregatedMessages();
 
-    void handleCommands();
+	void handleCommands();
 
-    void handleCommand(const InternalProtocol::DeviceCommand &deviceCommand);
+	void handleCommand(const InternalProtocol::DeviceCommand &deviceCommand);
 
 	void sendStatus(const InternalProtocol::DeviceStatus &deviceStatus);
 
@@ -52,11 +52,12 @@ private:
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> toExternalQueue_;
 
-    std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> fromExternalQueue_;
+	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> fromExternalQueue_;
 
-	std::shared_ptr <structures::AtomicQueue<std::reference_wrapper<connection::ExternalConnection>>> reconnectQueue_;
+	std::shared_ptr <structures::AtomicQueue<std::reference_wrapper < connection::ExternalConnection>>>
+	reconnectQueue_;
 
-    std::jthread fromExternalClientThread_;
+	std::jthread fromExternalClientThread_;
 
 	std::shared_ptr <structures::GlobalContext> context_;
 };

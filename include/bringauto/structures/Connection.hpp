@@ -28,7 +28,7 @@ struct Connection {
 	/**
 	 * @brief identification of connected device
 	 */
-	std::shared_ptr<DeviceIdentification> deviceId;
+	std::shared_ptr <DeviceIdentification> deviceId;
 	/**
 	 * @brief Context for connection
 	 */

@@ -4,6 +4,8 @@
 #include <map>
 #include <vector>
 
+
+
 namespace bringauto::structures {
 
 enum class ProtocolType {
@@ -15,17 +17,17 @@ struct ExternalConnectionSettings {
 	/**
 	 * Communication protocol
 	 */
-    ProtocolType protocolType;
+	ProtocolType protocolType;
 
-	std::map<std::string, std::string> protocolSettings;
+	std::map <std::string, std::string> protocolSettings;
 
-    std::string serverIp;
+	std::string serverIp;
 
-    u_int16_t port;
+	u_int16_t port;
 
-    /**
-     * Supported modules
-     */
+	/**
+	 * Supported modules
+	 */
 	std::vector<int> modules;
 };
 

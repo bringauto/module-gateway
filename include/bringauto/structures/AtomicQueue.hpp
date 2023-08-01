@@ -24,7 +24,7 @@ public:
 	 * @param value class T object
 	 */
 	void pushAndNotify(const T &value) {
-		std::lock_guard<std::mutex> lock(mtx_);
+		std::lock_guard <std::mutex> lock(mtx_);
 		queue_.push(value);
 		cv_.notify_one();
 	}
@@ -35,7 +35,7 @@ public:
 	 * @return true if the queue is empty
 	 */
 	bool waitForValueWithTimeout(const std::chrono::seconds &timeout) {
-		std::unique_lock<std::mutex> lock(mtx_);
+		std::unique_lock <std::mutex> lock(mtx_);
 		cv_.wait_for(lock, timeout, [this]() { return !queue_.empty(); });
 		return queue_.empty();
 	}
@@ -45,7 +45,7 @@ public:
 	 * @param value class T object
 	 */
 	void push(const T &value) {
-		std::lock_guard<std::mutex> lock(mtx_);
+		std::lock_guard <std::mutex> lock(mtx_);
 		queue_.push(value);
 	}
 
@@ -53,7 +53,7 @@ public:
 	 * @brief Removes first element in queue.
 	 */
 	void pop() {
-		std::lock_guard<std::mutex> lock(mtx_);
+		std::lock_guard <std::mutex> lock(mtx_);
 		queue_.pop();
 	}
 
@@ -62,7 +62,7 @@ public:
 	 * @return true if the queue is empty
 	 */
 	bool empty() {
-		std::lock_guard<std::mutex> lock(mtx_);
+		std::lock_guard <std::mutex> lock(mtx_);
 		return queue_.empty();
 	}
 
@@ -71,7 +71,7 @@ public:
 	 * @return reference to the data
 	 */
 	T &front() {
-		std::lock_guard<std::mutex> lock(mtx_);
+		std::lock_guard <std::mutex> lock(mtx_);
 		return queue_.front();
 	}
 
@@ -80,12 +80,12 @@ public:
 	 * @return the number of elements in the queue
 	 */
 	size_t size() {
-		std::lock_guard<std::mutex> lock(mtx_);
+		std::lock_guard <std::mutex> lock(mtx_);
 		return queue_.size();
 	}
 
 private:
-	std::queue<T> queue_;
+	std::queue <T> queue_;
 	std::mutex mtx_;
 	std::condition_variable cv_;
 };

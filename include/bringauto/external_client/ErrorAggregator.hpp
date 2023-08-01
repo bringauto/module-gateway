@@ -113,12 +113,12 @@ private:
 		struct buffer errorMessage {};
 		struct buffer lastStatus {};
 
-		DeviceState(){
-            errorMessage.data = nullptr;
-            errorMessage.size_in_bytes = 0;
-            lastStatus.data = nullptr;
-            lastStatus.size_in_bytes = 0;
-        };
+		DeviceState() {
+			errorMessage.data = nullptr;
+			errorMessage.size_in_bytes = 0;
+			lastStatus.data = nullptr;
+			lastStatus.size_in_bytes = 0;
+		};
 	};
 
 	std::shared_ptr <modules::ModuleManagerLibraryHandler> module_ {};

@@ -8,6 +8,7 @@
 #include <map>
 
 
+
 namespace bringauto::settings {
 /**
  * Global settings structure
@@ -44,7 +45,7 @@ struct Settings {
 	/**
 	 * @brief Setting of external connection endpoints and protocols
 	 */
-	std::vector<structures::ExternalConnectionSettings> externalConnectionSettingsList;
+	std::vector <structures::ExternalConnectionSettings> externalConnectionSettingsList;
 
 };
 }

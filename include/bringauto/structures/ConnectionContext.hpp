@@ -16,7 +16,7 @@ struct ConnectionContext {
 	/**
 	 * @brief buffer for receive handler
 	 */
-	std::array<uint8_t, bringauto::settings::buffer_length> buffer;
+	std::array <uint8_t, bringauto::settings::buffer_length> buffer;
 	/**
 	 * @brief complete size of one message
 	 */
@@ -24,7 +24,7 @@ struct ConnectionContext {
 	/**
 	 * @brief message data
 	 */
-	std::vector<uint8_t> completeMessage {};
+	std::vector <uint8_t> completeMessage {};
 };
 
 }

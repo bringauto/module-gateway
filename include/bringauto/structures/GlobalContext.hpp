@@ -16,7 +16,8 @@ struct GlobalContext {
 
 	GlobalContext() {}
 
-    GlobalContext(const std::shared_ptr<bringauto::settings::Settings> &settings_) : settings(settings_) {}
+	GlobalContext(const std::shared_ptr <bringauto::settings::Settings> &settings_): settings(settings_) {}
+
 	/**
 	 * @brief io_context shared across Module Gateway
 	 */
@@ -24,11 +25,11 @@ struct GlobalContext {
 
 	std::map<unsigned int, std::shared_ptr<modules::ModuleManagerLibraryHandler>> moduleLibraries {};
 
-    std::map<unsigned int, std::shared_ptr<modules::StatusAggregator>> statusAggregators {};
+	std::map<unsigned int, std::shared_ptr<modules::StatusAggregator>> statusAggregators {};
 
 	/**
 	 * @brief settings used in the project
 	 */
-	std::shared_ptr<bringauto::settings::Settings> settings {};
+	std::shared_ptr <bringauto::settings::Settings> settings {};
 };
 }

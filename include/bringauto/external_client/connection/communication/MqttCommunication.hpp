@@ -8,36 +8,39 @@
 #include <string_view>
 
 
+
 namespace bringauto::external_client::connection::communication {
 
-class MqttCommunication : public ICommunicationChannel {
+class MqttCommunication: public ICommunicationChannel {
 public:
-	explicit MqttCommunication(const structures::ExternalConnectionSettings &settings): ICommunicationChannel(settings) {};
+	explicit MqttCommunication(const structures::ExternalConnectionSettings &settings): ICommunicationChannel(
+			settings) {};
 
 	~MqttCommunication() override;
 
-    void setProperties(const std::string& company, const std::string& vehicleName) override;
+	void setProperties(const std::string &company, const std::string &vehicleName) override;
 
 	int initializeConnection() override;
 
 	int sendMessage(ExternalProtocol::ExternalClient *message) override;
 
-	std::shared_ptr<ExternalProtocol::ExternalServer> receiveMessage() override;
+	std::shared_ptr <ExternalProtocol::ExternalServer> receiveMessage() override;
 
 	void closeConnection() override;
 
-	static std::string createClientId(const std::string& company, const std::string& vehicleName);
+	static std::string createClientId(const std::string &company, const std::string &vehicleName);
 
 private:
 	void connect();
 
-	static std::string createPublishTopic(const std::string& company, const std::string& vehicleName);
-	static std::string createSubscribeTopic(const std::string& company, const std::string& vehicleName);
+	static std::string createPublishTopic(const std::string &company, const std::string &vehicleName);
+
+	static std::string createSubscribeTopic(const std::string &company, const std::string &vehicleName);
 
 	/**
 	 * MQTT client
 	 */
-	std::unique_ptr<mqtt::async_client> client_ { nullptr };
+	std::unique_ptr <mqtt::async_client> client_ { nullptr };
 
 	std::string clientId_ {};
 
@@ -51,7 +54,8 @@ private:
 	/**
 	 * MQTT QOS level. Level 0 has no assurance of delivery and does not buffer messages.
 	 */
-	constexpr static int8_t qos { 0 };
+	constexpr static int8_t
+	qos { 0 };
 };
 
 }

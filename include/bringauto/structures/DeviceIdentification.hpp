@@ -13,13 +13,14 @@ public:
 	 * @param device object holding values to be assigned to corresponding params
 	 */
 	explicit DeviceIdentification(const InternalProtocol::Device &device);
+
 	/**
 	 * @brief construct object and fill params with values given in device
 	 * @param device object holding values to be assigned to corresponding params
 	 */
-	explicit DeviceIdentification(const device_identification& device);
+	explicit DeviceIdentification(const device_identification &device);
 
-	explicit DeviceIdentification(const std::string& deviceId);
+	explicit DeviceIdentification(const std::string &deviceId);
 
 	/**
 	 * @brief get value of module_
@@ -56,9 +57,10 @@ public:
 	 * @param toCompare device used for comparison
 	 * @return true if all parameters outside of priority are equal
 	 */
-	bool isSame(const std::shared_ptr<DeviceIdentification> &toCompare);
+	bool isSame(const std::shared_ptr <DeviceIdentification> &toCompare);
 
 	device_identification convertToCStruct() const;
+
 private:
 	uint32_t module_;
 	uint32_t deviceType_;

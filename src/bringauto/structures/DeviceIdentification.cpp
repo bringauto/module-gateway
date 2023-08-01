@@ -27,7 +27,7 @@ DeviceIdentification::DeviceIdentification(const std::string &deviceId) {
 	deviceRole_ = tokens[2];
 	deviceName_ = tokens[3];
 	priority_ = 0;
-			// .priority = static_cast<unsigned int>(std::stoi(tokens[4]))
+	// .priority = static_cast<unsigned int>(std::stoi(tokens[4]))
 }
 
 uint32_t DeviceIdentification::getPriority() const {
@@ -50,7 +50,7 @@ const std::string &DeviceIdentification::getDeviceName() const {
 	return deviceName_;
 }
 
-bool DeviceIdentification::isSame(const std::shared_ptr<DeviceIdentification> &toCompare) {
+bool DeviceIdentification::isSame(const std::shared_ptr <DeviceIdentification> &toCompare) {
 	return module_ == toCompare->getModule() &&
 		   deviceType_ == toCompare->getDeviceType() &&
 		   deviceRole_ == toCompare->getDeviceRole() &&
@@ -59,11 +59,11 @@ bool DeviceIdentification::isSame(const std::shared_ptr<DeviceIdentification> &t
 
 device_identification DeviceIdentification::convertToCStruct() const {
 	return device_identification {
-		.module = static_cast<int>(module_),
-		.device_type = deviceType_,
-		.device_role = const_cast<char *>(deviceRole_.c_str()),
-		.device_name = const_cast<char *>(deviceName_.c_str()),
-		.priority = priority_
+			.module = static_cast<int>(module_),
+			.device_type = deviceType_,
+			.device_role = const_cast<char *>(deviceRole_.c_str()),
+			.device_name = const_cast<char *>(deviceName_.c_str()),
+			.priority = priority_
 	};
 }
 

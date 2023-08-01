@@ -12,17 +12,17 @@ namespace bringauto::modules {
 template <typename T>
 struct FunctionTypeDeducer;
 
-template<typename R, typename ...Args>
-struct FunctionTypeDeducer<std::function<R(Args...)>>{
-	using fncptr = R (*)(Args...);
+template <typename R, typename ...Args>
+struct FunctionTypeDeducer<std::function < R(Args...)>> {
+using fncptr = R (*)(Args...);
 };
 
 using log = bringauto::logging::Logger;
 
-int ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path& path) {
+int ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path &path) {
 	try {
 		module_ = dlopen(path.c_str(), RTLD_LAZY | RTLD_DEEPBIND);
-		if (module_ == nullptr) {
+		if(module_ == nullptr) {
 			return NOT_OK;
 		}
 		isDeviceTypeSupported = reinterpret_cast<FunctionTypeDeducer<decltype(isDeviceTypeSupported)>::fncptr>(dlsym(
@@ -44,16 +44,17 @@ int ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path& path) 
 		aggregateError = reinterpret_cast<FunctionTypeDeducer<decltype(aggregateError)>::fncptr>(dlsym(module_,
 																									   "aggregate_error"));
 		return OK;
-	} catch (const std::exception& e) {
+	} catch(const std::exception &e) {
 		log::logError("Error occurred during loading library: \"{}\": {}", path.string(), e.what());
 		return NOT_OK;
 	}
 }
 
 ModuleManagerLibraryHandler::~ModuleManagerLibraryHandler() {
-    if(module_ != nullptr){
-    	dlclose(module_);
-        module_ == nullptr;
-    }
+	if(module_ != nullptr) {
+		dlclose(module_);
+		module_ == nullptr;
+	}
 }
+
 }
