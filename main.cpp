@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 
 	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.run(); });
 	std::jthread externalClientThread([&externalClient]() { externalClient.run(); });
-	std::thread contextThread([&context]() { context->ioContext.run(); });
+	std::jthread contextThread([&context]() { context->ioContext.run(); });
 	internalServer.start();
 
 	contextThread.join();
