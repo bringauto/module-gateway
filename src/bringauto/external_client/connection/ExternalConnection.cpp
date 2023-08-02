@@ -86,7 +86,6 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 
 int ExternalConnection::initializeConnection() {
 	if(state_.load() == ConnectionState::NOT_INITIALIZED) {
-		listeningThread = std::jthread(&ExternalConnection::receivingHandlerLoop, this);
 		state_.exchange(ConnectionState::NOT_CONNECTED);
 	}
 
@@ -117,6 +116,7 @@ int ExternalConnection::initializeConnection() {
 		state_.exchange(ConnectionState::NOT_CONNECTED);
 		return -1;
 	}
+	listeningThread = std::jthread(&ExternalConnection::receivingHandlerLoop, this);
 	state_.exchange(ConnectionState::CONNECTED);
 	for(auto &[moduleNum, errorAggregator]: errorAggregators) {
 		errorAggregator.clear_error_aggregator();
