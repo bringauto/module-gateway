@@ -70,12 +70,12 @@ void InternalServer::asyncReceiveHandler(
 		return;
 	}
 
-	int result = processBufferData(connection, bytesTransferred);
-	if(not result) {
+	bool result = processBufferData(connection, bytesTransferred);
+	if(result) {
+		addAsyncReceive(connection);
+	} else {
 		std::lock_guard <std::mutex> lock(serverMutex_);
 		removeConnFromMap(connection);
-	} else {
-		addAsyncReceive(connection);
 	}
 }
 
@@ -87,7 +87,7 @@ bool InternalServer::processBufferData(
 	auto &buffer = connection->connContext.buffer;
 	const uint8_t headerSize = 4;
 
-	if(bytesTransferred < headerSize && not completeMessageSize) {
+	if(bytesTransferred < headerSize && completeMessageSize == 0) {
 		bringauto::logging::Logger::logError(
 				"Error in processBufferData(...): Incomplete header received from Internal Client, "
 				"connection's ip address is {}", connection->socket.remote_endpoint().address().to_string());
@@ -97,7 +97,7 @@ bool InternalServer::processBufferData(
 	std::size_t bytesLeft = bytesTransferred;
 	auto dataBegin = buffer.begin();
 
-	if(not completeMessageSize) {
+	if(completeMessageSize == 0) {
 
 		uint32_t size { 0 };
 
