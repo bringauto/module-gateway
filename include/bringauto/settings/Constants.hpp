@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <chrono>
 
 
 
@@ -9,10 +10,7 @@ namespace bringauto::settings {
  * @brief timeout that is defined in fleet protocol,
  * active connection between Internal Client and internal Server is disconnected and removed after this timeout
  */
-constexpr std::chrono::seconds
-fleet_protocol_timeout_length {
-30
-};
+constexpr std::chrono::seconds fleet_protocol_timeout_length { 30 };
 
 /**
  * @brief timeout that is defined in fleet protocol,
@@ -23,29 +21,24 @@ constexpr int reconnect_delay { 30 };
 /**
  * @brief time between checks of atomic queue used for one-way communication from Module Handler to Internal Server
  */
-constexpr std::chrono::seconds
-queue_timeout_length {
-3 };
+constexpr std::chrono::seconds queue_timeout_length { 3 };
 /**
  * &brief Fleet Protocol defines messages as always starting with 4 bytes header
  */
-constexpr uint8_t
-header {
-4 };
+constexpr uint8_t header { 4 };
 /**
  * @brief maximal amount of bytes received, that can be processed in one cycle
  */
-constexpr size_t
-buffer_length = 1024;
+constexpr size_t buffer_length = 1024;
 
 
 /// constant strings for parsing command line arguments
 
-const std::string CONFIG_PATH = "config-path";
-const std::string VERBOSE = "verbose";
-const std::string LOG_PATH ( "log-path" );
-const std::string HELP ( "help" );
-const std::string PORT ( "port" );
+const std::string CONFIG_PATH = { "config-path" };
+const std::string VERBOSE = { "verbose" };
+const std::string LOG_PATH { "log-path" };
+const std::string HELP { "help" };
+const std::string PORT { "port" };
 
 const std::string MODULE_PATHS { "module-paths" };
 
