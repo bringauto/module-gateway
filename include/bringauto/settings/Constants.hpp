@@ -6,6 +6,11 @@
 
 
 namespace bringauto::settings {
+
+struct Constants {
+	const static std::string CONFIG_PATH;
+};
+
 /**
  * @brief timeout that is defined in fleet protocol,
  * active connection between Internal Client and internal Server is disconnected and removed after this timeout
@@ -34,7 +39,6 @@ constexpr size_t buffer_length = 1024;
 
 /// constant strings for parsing command line arguments
 
-const std::string CONFIG_PATH = { "config-path" };
 const std::string VERBOSE = { "verbose" };
 const std::string LOG_PATH { "log-path" };
 const std::string HELP { "help" };

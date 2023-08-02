@@ -33,7 +33,7 @@ void SettingsParser::parseCmdArguments(int argc, char **argv) {
 	cxxopts::Options options { "ModuleGateway", "BringAuto Fleet Protocol Module Gateway" };
 	options.add_options("General")
 				   ("h, " + HELP, "Print usage")
-				   ("c, " + CONFIG_PATH, "Path to configuration file", cxxopts::value<std::string>())
+				   ("c, " + Constants::CONFIG_PATH, "Path to configuration file", cxxopts::value<std::string>())
 				   ("l, " + LOG_PATH, "Path to logs", cxxopts::value<std::string>())
 				   ("v, " + VERBOSE, "Print log messages into terminal");
 	options.add_options("Internal Server")(PORT, "Port on which Server listens", cxxopts::value<unsigned short>());
@@ -50,10 +50,10 @@ void SettingsParser::parseCmdArguments(int argc, char **argv) {
 bool SettingsParser::areCmdArgumentsCorrect() {
 	bool isCorrect = true;
 	std::vector <std::string> requiredParams {
-			CONFIG_PATH
+			Constants::CONFIG_PATH
 	};
 	std::vector <std::string> allParameters = {
-			CONFIG_PATH,
+			Constants::CONFIG_PATH,
 			VERBOSE,
 			LOG_PATH,
 			PORT,
@@ -110,7 +110,7 @@ std::shared_ptr <bringauto::settings::Settings> SettingsParser::getSettings() {
 void SettingsParser::fillSettings() {
 	settings_ = std::make_shared<bringauto::settings::Settings>();
 
-	const auto configPath = cmdArguments_[CONFIG_PATH].as<std::string>();
+	const auto configPath = cmdArguments_[Constants::CONFIG_PATH].as<std::string>();
 	std::ifstream inputFile(configPath);
 	const auto file = nlohmann::json::parse(inputFile);
 
