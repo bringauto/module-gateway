@@ -41,11 +41,11 @@ buffer_length = 1024;
 
 /// constant strings for parsing command line arguments
 
-const std::string CONFIG_PATH { "config-path" };
-const std::string VERBOSE { "verbose" };
-const std::string LOG_PATH { "log-path" };
-const std::string HELP { "help" };
-const std::string PORT { "port" };
+const std::string CONFIG_PATH = "config-path";
+const std::string VERBOSE = "verbose";
+const std::string LOG_PATH ( "log-path" );
+const std::string HELP ( "help" );
+const std::string PORT ( "port" );
 
 const std::string MODULE_PATHS { "module-paths" };
 
