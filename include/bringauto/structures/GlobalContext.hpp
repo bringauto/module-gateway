@@ -14,9 +14,9 @@ namespace bringauto::structures {
  */
 struct GlobalContext {
 
-	GlobalContext() {}
+	GlobalContext() = default;
 
-	GlobalContext(const std::shared_ptr <bringauto::settings::Settings> &settings_): settings(settings_) {}
+	explicit GlobalContext(const std::shared_ptr <bringauto::settings::Settings> &settings_): settings(settings_) {}
 
 	/**
 	 * @brief io_context shared across Module Gateway

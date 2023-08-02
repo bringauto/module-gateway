@@ -9,6 +9,7 @@
 #include <bringauto/structures/DeviceIdentification.hpp>
 
 #include <memory>
+#include <thread>
 
 
 
@@ -196,7 +197,7 @@ private:
 	std::mutex serverMutex_;
 	std::vector <std::shared_ptr<structures::Connection>> connectedDevices_;
 
-	std::unique_ptr <std::thread> listeningThread;
+	std::jthread listeningThread;
 
 };
 

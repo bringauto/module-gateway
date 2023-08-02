@@ -42,16 +42,14 @@ int main(int argc, char **argv) {
 	bringauto::modules::ModuleHandler moduleHandler { context, fromInternalQueue, toInternalQueue, toExternalQueue };
 	bringauto::external_client::ExternalClient externalClient { context, toExternalQueue };
 
-	std::thread moduleHandlerThread([&moduleHandler]() { moduleHandler.run(); });
-	std::thread externalClientThread([&externalClient]() { externalClient.run(); });
+	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.run(); });
+	std::jthread externalClientThread([&externalClient]() { externalClient.run(); });
 	std::thread contextThread([&context]() { context->ioContext.run(); });
 	internalServer.start();
 
 	contextThread.join();
 	internalServer.stop();
-	moduleHandlerThread.join();
 	moduleHandler.destroy();
-	externalClientThread.join();
 	externalClient.destroy();
 
     std::for_each(context->statusAggregators.cbegin(), context->statusAggregators.cend(), [](auto& pair) { pair.second->destroy_status_aggregator(); });

@@ -11,12 +11,13 @@
 namespace bringauto::internal_server {
 
 void InternalServer::start() {
+	logging::Logger::logInfo("Internal server started");
 	boost::asio::ip::tcp::endpoint endpoint { boost::asio::ip::tcp::v4(), context_->settings->port };
 	acceptor_.open(endpoint.protocol());
 	acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
 	acceptor_.bind(endpoint);
 	acceptor_.listen();
-	listeningThread = std::make_unique<std::thread>([this]() { listenToQueue(); });
+	listeningThread = std::jthread([this]() { listenToQueue(); });
 	addAsyncAccept();
 }
 
@@ -27,10 +28,10 @@ void InternalServer::addAsyncAccept() {
 	auto connection = std::make_shared<structures::Connection>(context_->ioContext);
 	acceptor_.async_accept(connection->socket, [this, connection](const boost::system::error_code &error) {
 		if(error) {
-			bringauto::logging::Logger::logError("Error in addAsyncAccept(): {}", error.message());
+			logging::Logger::logError("Error in addAsyncAccept(): {}", error.message());
 			return;
 		}
-		bringauto::logging::Logger::logInfo("accepted connection with Internal Client, "
+		logging::Logger::logInfo("accepted connection with Internal Client, "
 											"connection's ip address is {}",
 											connection->socket.remote_endpoint().address().to_string());
 		addAsyncReceive(connection);
@@ -54,14 +55,14 @@ void InternalServer::asyncReceiveHandler(
 		std::size_t bytesTransferred) {
 	if(error) {
 		if(connection->deviceId) {
-			bringauto::logging::Logger::logWarning(
+			logging::Logger::logWarning(
 					"Internal Client with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})"
 					" has been disconnected. Reason: {}", connection->deviceId->getModule(),
 					connection->deviceId->getDeviceType(), connection->deviceId->getDeviceRole(),
 					connection->deviceId->getDeviceName(), connection->deviceId->getPriority(),
 					error.message());
 		} else {
-			bringauto::logging::Logger::logWarning(
+			logging::Logger::logWarning(
 					"Internal Client with ip address {} has been disconnected. Reason: {}",
 					connection->socket.remote_endpoint().address().to_string(), error.message());
 		}
@@ -88,7 +89,7 @@ bool InternalServer::processBufferData(
 	const uint8_t headerSize = 4;
 
 	if(bytesTransferred < headerSize && completeMessageSize == 0) {
-		bringauto::logging::Logger::logError(
+		logging::Logger::logError(
 				"Error in processBufferData(...): Incomplete header received from Internal Client, "
 				"connection's ip address is {}", connection->socket.remote_endpoint().address().to_string());
 		return false;
@@ -115,7 +116,7 @@ bool InternalServer::processBufferData(
 
 	bytesLeft -= messageBytesLeft;
 	if(bytesLeft) {
-		bringauto::logging::Logger::logError("Error in processBufferData(...): "
+		logging::Logger::logError("Error in processBufferData(...): "
 											 "Received extra bytes of data: {} from Internal Client, "
 											 "connection's ip address is {}", bytesLeft,
 											 connection->socket.remote_endpoint().address().to_string());
@@ -137,7 +138,7 @@ bool InternalServer::handleMessage(const std::shared_ptr <structures::Connection
 	InternalProtocol::InternalClient client {};
 	if(!client.ParseFromArray(connection->connContext.completeMessage.data(),
 							  connection->connContext.completeMessage.size())) {
-		bringauto::logging::Logger::logError(
+		logging::Logger::logError(
 				"Error in handleMessage(...): message received from Internal Client cannot be parsed, "
 				"connection's ip address is {}", connection->socket.remote_endpoint().address().to_string());
 		return false;
@@ -151,18 +152,18 @@ bool InternalServer::handleMessage(const std::shared_ptr <structures::Connection
 			return false;
 		}
 	} else {
-		bringauto::logging::Logger::logError(
+		logging::Logger::logError(
 				"Error in handleMessage(...): message received from Internal Client cannot be parsed, "
 				"connection's ip address is {}", connection->socket.remote_endpoint().address().to_string());
 		return false;
 	}
 	std::unique_lock <std::mutex> lk(connection->connectionMutex);
-	connection->conditionVariable.wait_for(lk, bringauto::settings::fleet_protocol_timeout_length,
+	connection->conditionVariable.wait_for(lk, settings::fleet_protocol_timeout_length,
 										   [this, connection]() {
 											   return connection->ready || context_->ioContext.stopped();
 										   });
 	if(!connection->ready) {
-		bringauto::logging::Logger::logError("Error in handleMessage(...): "
+		logging::Logger::logError("Error in handleMessage(...): "
 											 "Module Handler did not response to a message in time, "
 											 "connection's ip address is {}",
 											 connection->socket.remote_endpoint().address().to_string());
@@ -174,7 +175,7 @@ bool InternalServer::handleMessage(const std::shared_ptr <structures::Connection
 bool InternalServer::handleStatus(const std::shared_ptr <structures::Connection> &connection,
 								  const InternalProtocol::InternalClient &client) {
 	if(!connection->ready) {
-		bringauto::logging::Logger::logError("Error in handleStatus(...): "
+		logging::Logger::logError("Error in handleStatus(...): "
 											 "received status from Internal Client without being connected, "
 											 "connection's ip address is {}",
 											 connection->socket.remote_endpoint().address().to_string());
@@ -189,7 +190,7 @@ bool InternalServer::handleConnection(const std::shared_ptr <structures::Connect
 									  const InternalProtocol::InternalClient &client) {
 	std::lock_guard <std::mutex> lock(serverMutex_);
 	if(connection->ready) {
-		bringauto::logging::Logger::logError("Error in handleConnection(...): "
+		logging::Logger::logError("Error in handleConnection(...): "
 											 "Internal Client is sending connect while already connected, "
 											 "connection's ip address is {}",
 											 connection->socket.remote_endpoint().address().to_string());
@@ -198,7 +199,6 @@ bool InternalServer::handleConnection(const std::shared_ptr <structures::Connect
 
 	auto deviceId = std::make_shared<structures::DeviceIdentification>(client.deviceconnect().device());
 	auto existingConnection = findConnection(deviceId.get());
-
 
 	if(!existingConnection) {
 		connectNewDevice(connection, client, deviceId);
@@ -224,7 +224,7 @@ void InternalServer::connectNewDevice(const std::shared_ptr <structures::Connect
 	connection->deviceId = deviceId;
 	connectedDevices_.push_back(connection);
 	fromInternalQueue_->pushAndNotify(connect);
-	bringauto::logging::Logger::logInfo(
+	logging::Logger::logInfo(
 			"Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
 			"has been added into the vector of active connections",
 			connection->deviceId->getModule(),
@@ -235,10 +235,10 @@ void InternalServer::connectNewDevice(const std::shared_ptr <structures::Connect
 void InternalServer::respondWithHigherPriorityConnected(const std::shared_ptr <structures::Connection> &connection,
 														const InternalProtocol::InternalClient &connect,
 														const std::shared_ptr <structures::DeviceIdentification> &deviceId) {
-	auto message = bringauto::common_utils::ProtobufUtils::CreateInternalServerConnectResponseMessage(
+	auto message = common_utils::ProtobufUtils::CreateInternalServerConnectResponseMessage(
 			connect.deviceconnect().device(),
 			InternalProtocol::DeviceConnectResponse_ResponseType_HIGHER_PRIORITY_ALREADY_CONNECTED);
-	bringauto::logging::Logger::logInfo(
+	logging::Logger::logInfo(
 			"Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
 			"cannot be added same device is already connected with higher priority",
 			deviceId->getModule(),
@@ -250,10 +250,10 @@ void InternalServer::respondWithHigherPriorityConnected(const std::shared_ptr <s
 void InternalServer::respondWithAlreadyConnected(const std::shared_ptr <structures::Connection> &connection,
 												 const InternalProtocol::InternalClient &connect,
 												 const std::shared_ptr <structures::DeviceIdentification> &deviceId) {
-	auto message = bringauto::common_utils::ProtobufUtils::CreateInternalServerConnectResponseMessage(
+	auto message = common_utils::ProtobufUtils::CreateInternalServerConnectResponseMessage(
 			connect.deviceconnect().device(),
 			InternalProtocol::DeviceConnectResponse_ResponseType_ALREADY_CONNECTED);
-	bringauto::logging::Logger::logInfo(
+	logging::Logger::logInfo(
 			"Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
 			"cannot be added same device with same priority is already connected",
 			deviceId->getModule(),
@@ -270,7 +270,7 @@ void InternalServer::changeConnection(const std::shared_ptr <structures::Connect
 		removeConnFromMap(oldConnection);
 	}
 	connectNewDevice(newConnection, connect, deviceId);
-	bringauto::logging::Logger::logInfo("Old connection has been removed and replaced with new connection"
+	logging::Logger::logInfo("Old connection has been removed and replaced with new connection"
 										" with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})",
 										newConnection->deviceId->getModule(),
 										newConnection->deviceId->getDeviceType(),
@@ -288,7 +288,7 @@ bool InternalServer::sendResponse(const std::shared_ptr <structures::Connection>
 	const uint32_t header = data.size();
 	const auto headerWSize = connection->socket.write_some(boost::asio::buffer(&header, sizeof(uint32_t)));
 	if(headerWSize != sizeof(uint32_t)) {
-		bringauto::logging::Logger::logError("Error in sendResponse(...): "
+		logging::Logger::logError("Error in sendResponse(...): "
 											 "Cannot write message header to Internal Client, "
 											 "connection's ip address is {}",
 											 connection->socket.remote_endpoint().address().to_string());
@@ -296,7 +296,7 @@ bool InternalServer::sendResponse(const std::shared_ptr <structures::Connection>
 	}
 	const auto dataWSize = connection->socket.write_some(boost::asio::buffer(data));
 	if(dataWSize != header) {
-		bringauto::logging::Logger::logError("Error in sendResponse(...): "
+		logging::Logger::logError("Error in sendResponse(...): "
 											 "Cannot write data to Internal Client, "
 											 "connection's ip address is {}",
 											 connection->socket.remote_endpoint().address().to_string());
@@ -307,7 +307,7 @@ bool InternalServer::sendResponse(const std::shared_ptr <structures::Connection>
 
 void InternalServer::listenToQueue() {
 	while(!context_->ioContext.stopped()) {
-		if(!toInternalQueue_->waitForValueWithTimeout(bringauto::settings::queue_timeout_length)) {
+		if(!toInternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			auto message = toInternalQueue_->front();
 			validateResponse(message);
 			toInternalQueue_->pop();
@@ -350,7 +350,7 @@ void InternalServer::removeConnFromMap(const std::shared_ptr <structures::Connec
 
 	if(it != connectedDevices_.end() && (*it)->deviceId->getPriority() == connection->deviceId->getPriority()) {
 		connectedDevices_.erase(it);
-		bringauto::logging::Logger::logInfo(
+		logging::Logger::logInfo(
 				"connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})"
 				" has been closed and erased", connection->deviceId->getModule(),
 				connection->deviceId->getDeviceType(), connection->deviceId->getDeviceRole(),
@@ -373,12 +373,11 @@ InternalServer::findConnection(structures::DeviceIdentification *deviceId) {
 }
 
 void InternalServer::stop() {
-	bringauto::logging::Logger::logInfo("Internal server stopped");
+	logging::Logger::logInfo("Internal server stopped");
 	boost::system::error_code error {};
 	acceptor_.cancel(error);
 	acceptor_.close(error);
-	listeningThread->join();
-
+	// listeningThread->join();
 }
 
 

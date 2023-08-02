@@ -104,9 +104,9 @@ int command_data_valid(const struct buffer command, unsigned int device_type) {
 	return NOT_OK;
 }
 
-int get_module_number() { return 2; }
+[[nodiscard]] int get_module_number() { return 2; }
 
-int is_device_type_supported(unsigned int device_type) {
+[[nodiscard]] int is_device_type_supported(unsigned int device_type) {
 	switch(device_type) {
 		case DeviceType::BUTTON:
 			return OK;
