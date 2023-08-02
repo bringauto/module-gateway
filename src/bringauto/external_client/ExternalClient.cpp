@@ -57,6 +57,8 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 		log::logError("Update command failed with error code: {}", ret);
 		return;
 	}
+    deallocate(&deviceId.device_role);
+    deallocate(&deviceId.device_name);
 	log::logInfo("Command on device {} was successfully updated", device.devicename());
 }
 

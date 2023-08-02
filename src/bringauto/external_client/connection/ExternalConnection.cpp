@@ -2,11 +2,11 @@
 #include <bringauto/external_client/connection/communication/MqttCommunication.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 #include <bringauto/utils/utils.hpp>
+#include <bringauto/structures/DeviceIdentification.hpp>
 
 #include <bringauto/logging/Logger.hpp>
 
 #include <random>
-#include "bringauto/structures/DeviceIdentification.hpp"
 
 
 
@@ -17,17 +17,12 @@ ExternalConnection::ExternalConnection(const std::shared_ptr <structures::Global
 									   const structures::ExternalConnectionSettings &settings,
 									   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
 									   const std::shared_ptr <structures::AtomicQueue<
-											   std::reference_wrapper < connection::ExternalConnection>>
-
->& reconnectQueue)
-: context_ {
-context
-}
-, settings_ {
-settings }, commandQueue_ {
-commandQueue }, reconnectQueue_ {
-reconnectQueue } {
-sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context, [this]() { endConnection(false); });
+											   std::reference_wrapper < connection::ExternalConnection>>>& reconnectQueue):
+												context_ {context},
+												settings_ {settings },
+												commandQueue_ {commandQueue },
+												reconnectQueue_ {reconnectQueue } {
+	sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context, [this]() { endConnection(false); });
 }
 
 void ExternalConnection::init(const std::string &company, const std::string &vehicleName) {
@@ -166,20 +161,22 @@ int ExternalConnection::statusMessageHandle(const std::vector <structures::Devic
 
 		const auto &lastErrorStatusRc = errorAggregators[deviceModule].get_error(&errorBuffer, device);
 		if(lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
-			logging::Logger::logError("Device is not registered in error aggregator: {} {}", device.device_role,
-									  device.device_name);
+			logging::Logger::logError("Device is not registered in error aggregator: {} {}", std::string{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes},
+									  std::string{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes});
 			return -1;
 		}
 
 		int lastStatusRc = errorAggregators[deviceModule].get_last_status(&statusBuffer, device);
 		if(lastStatusRc != OK) {
-			logging::Logger::logError("Cannot obtain status for device: {} {}", device.device_role,
-									  device.device_name);
+			logging::Logger::logError("Cannot obtain status for device: {} {}", std::string{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes},
+									  std::string{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes});
 			return -1;
 		}
 		auto deviceStatus = common_utils::ProtobufUtils::CreateDeviceStatus(device, statusBuffer);
-
 		sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_CONNECTING, errorBuffer);
+
+		deallocate(&device.device_role);
+		deallocate(&device.device_name);
 	}
 	for(int i = 0; i < devices.size(); ++i) {
 		const auto statusResponseMsg = communicationChannel_->receiveMessage();
@@ -345,9 +342,10 @@ void ExternalConnection::fillErrorAggregator() {
 		}
 		std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
-		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer,
-																		 common_utils::ProtobufUtils::ParseDevice(
-																				 device));
+		auto deviceId = common_utils::ProtobufUtils::ParseDevice(device);
+		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer, deviceId);
+		deallocate(&deviceId.device_role);
+		deallocate(&deviceId.device_name);
 		deallocate(&statusBuffer);
 	}
 	sentMessagesHandler_->clearAll();
@@ -365,9 +363,10 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 		}
 		std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
-		errorAggregators[moduleNum].add_status_to_error_aggregator(statusBuffer,
-																   common_utils::ProtobufUtils::ParseDevice(
-																		   deviceStatus.device()));
+		auto deviceId = common_utils::ProtobufUtils::ParseDevice(deviceStatus.device());
+		errorAggregators[moduleNum].add_status_to_error_aggregator(statusBuffer, deviceId);
+		deallocate(&deviceId.device_role);
+		deallocate(&deviceId.device_name);
 		deallocate(&statusBuffer);
 	} else {
 		log::logError("Device status with unsupported module was passed to fillErrorAggregator()");
@@ -377,7 +376,10 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 int ExternalConnection::forceAggregationOnAllDevices() {
 	auto devices = getAllConnectedDevices();
 	for(const auto &device: devices) {
-		context_->statusAggregators[device.getModule()]->force_aggregation_on_device(device.convertToCStruct());
+		auto deviceId = device.convertToCStruct();
+		context_->statusAggregators[device.getModule()]->force_aggregation_on_device(deviceId);
+		deallocate(&deviceId.device_role);
+		deallocate(&deviceId.device_name);
 	}
 	return devices.size();
 }

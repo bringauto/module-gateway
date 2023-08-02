@@ -17,14 +17,6 @@ void initStatusAggregators(std::shared_ptr <bringauto::structures::GlobalContext
 void loadLibraries(std::map<unsigned int, std::shared_ptr<bringauto::modules::ModuleManagerLibraryHandler>> &modules,
 				   const std::map<int, std::string> &libPaths);
 
-/**
- * @brief Creates device_identification from string
- *
- * @param device string
- * @return ::device_identification
- */
-device_identification mapToDeviceId(const std::string &device);
-
 std::vector <std::string> splitString(const std::string &input, char delimiter);
 
 std::string getId(const ::device_identification &device);

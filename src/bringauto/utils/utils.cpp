@@ -53,16 +53,6 @@ void initLogger(const std::string &logPath, bool verbose) {
 	Logger::init(params);
 }
 
-device_identification mapToDeviceId(const std::string &device) {
-	std::vector <std::string> tokens = splitString(device, '/');
-	return ::device_identification { .module = std::stoi(tokens[0]),
-			.device_type = static_cast<unsigned int>(std::stoi(tokens[1])),
-			.device_role = const_cast<char *>(tokens[2].c_str()),
-			.device_name = const_cast<char *>(tokens[3].c_str()),
-			// .priority = static_cast<unsigned int>(std::stoi(tokens[4]))
-	};
-}
-
 std::vector <std::string> splitString(const std::string &input, char delimiter) {
 	std::vector <std::string> tokens;
 	std::istringstream iss(input);
@@ -77,8 +67,8 @@ std::vector <std::string> splitString(const std::string &input, char delimiter) 
 
 std::string getId(const ::device_identification &device) {
 	std::stringstream ss;
-	ss << device.module << "/" << device.device_type << "/" << device.device_role << "/"
-	   << device.device_name; // TODO we need to be able to get priority
+	ss << device.module << "/" << device.device_type << "/" << std::string{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes} << "/"
+	   << std::string{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes}; // TODO we need to be able to get priority
 	return ss.str();
 }
 

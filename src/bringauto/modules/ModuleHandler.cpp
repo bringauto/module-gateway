@@ -81,7 +81,7 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 	}
 	std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
-	const struct ::device_identification deviceId = common_utils::ProtobufUtils::ParseDevice(device);
+	struct ::device_identification deviceId = common_utils::ProtobufUtils::ParseDevice(device);
 
 	auto &statusAggregator = statusAggregators[moduleNumber];
 	int ret = statusAggregator->add_status_to_aggregator(statusBuffer, deviceId);
@@ -110,6 +110,8 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 	toInternalQueue_->pushAndNotify(deviceCommandMessage);
 	log::logDebug("Module handler succesfully retrieved command and sent it to device: {}", deviceName);
 
+    deallocate(&deviceId.device_role);
+    deallocate(&deviceId.device_name);
 	deallocate(&commandBuffer);
 	deallocate(&statusBuffer);
 }

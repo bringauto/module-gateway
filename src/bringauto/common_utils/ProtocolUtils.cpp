@@ -49,16 +49,25 @@ InternalProtocol::DeviceStatus ProtobufUtils::CreateDeviceStatus(const InternalP
 
 InternalProtocol::DeviceStatus ProtobufUtils::CreateDeviceStatus(const device_identification &device,
 																 const buffer &status) {
-	auto deviceMsg = common_utils::ProtobufUtils::CreateDevice(device.module, device.device_type, device.device_role,
-															   device.device_name, device.priority);
+	auto deviceMsg = common_utils::ProtobufUtils::CreateDevice(device);
 	return CreateDeviceStatus(deviceMsg, status);
 }
 
 device_identification ProtobufUtils::ParseDevice(const InternalProtocol::Device &device) {
+    //duplicate code
+    struct buffer deviceRoleBuff{};
+	const auto& deviceRole = device.devicerole();
+	allocate(&deviceRoleBuff, deviceRole.size());
+	std::memcpy(deviceRoleBuff.data, deviceRole.c_str(), deviceRole.size());
+
+	struct buffer deviceNameBuff{};
+	const auto& deviceName = device.devicename();
+	allocate(&deviceNameBuff, deviceName.size());
+	std::memcpy(deviceNameBuff.data, deviceName.c_str(), deviceName.size());
 	return ::device_identification { .module = device.module(),
 			.device_type = device.devicetype(),
-			.device_role = const_cast<char *>(device.devicerole().c_str()),
-			.device_name = const_cast<char *>(device.devicename().c_str()),
+			.device_role = deviceRoleBuff,
+			.device_name = deviceNameBuff,
 			.priority = device.priority() };
 }
 
@@ -71,7 +80,9 @@ buffer ProtobufUtils::ProtobufToBuffer(const google::protobuf::Message &protobuf
 }
 
 InternalProtocol::Device ProtobufUtils::CreateDevice(const device_identification &device) {
-	return CreateDevice(device.module, device.device_type, device.device_role, device.device_name, device.priority);
+    std::string device_role{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes};
+    std::string device_name{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes};
+	return CreateDevice(device.module, device.device_type, device_role, device_name, device.priority);
 }
 
 InternalProtocol::Device ProtobufUtils::CreateDevice(const structures::DeviceIdentification &device) {

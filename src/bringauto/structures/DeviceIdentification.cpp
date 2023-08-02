@@ -15,8 +15,8 @@ DeviceIdentification::DeviceIdentification(const InternalProtocol::Device &devic
 DeviceIdentification::DeviceIdentification(const device_identification &device) {
 	module_ = device.module;
 	deviceType_ = device.device_type;
-	deviceRole_ = std::string(device.device_role);
-	deviceName_ = std::string(device.device_name);
+	deviceRole_ = std::string{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes};
+	deviceName_ = std::string{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes};
 	priority_ = device.priority;
 }
 
@@ -58,11 +58,20 @@ bool DeviceIdentification::isSame(const std::shared_ptr <DeviceIdentification> &
 }
 
 device_identification DeviceIdentification::convertToCStruct() const {
+	//duplicate code
+	struct buffer deviceRoleBuff{};
+	allocate(&deviceRoleBuff, deviceRole_.size());
+	std::memcpy(deviceRoleBuff.data, deviceRole_.c_str(), deviceRole_.size());
+
+	struct buffer deviceNameBuff{};
+	allocate(&deviceNameBuff, deviceName_.size());
+	std::memcpy(deviceNameBuff.data, deviceName_.c_str(), deviceName_.size());
+
 	return device_identification {
 			.module = static_cast<int>(module_),
 			.device_type = deviceType_,
-			.device_role = const_cast<char *>(deviceRole_.c_str()),
-			.device_name = const_cast<char *>(deviceName_.c_str()),
+			.device_role = deviceRoleBuff,
+			.device_name = deviceNameBuff,
 			.priority = priority_
 	};
 }
