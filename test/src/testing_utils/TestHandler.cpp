@@ -119,8 +119,8 @@ void TestHandler::runTestsParallelConnections() {
 	testing_utils::ModuleHandlerForTesting moduleHandler(context, fromInternalQueue, toInternalQueue,
 														 expectedMessageNumber);
 
-	std::thread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
-	std::thread contextThread([&context]() { context->ioContext.run(); });
+	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
+	std::jthread contextThread([&context]() { context->ioContext.run(); });
 	internalServer.start();
 
 	std::vector<std::thread> clientThreads;
@@ -134,8 +134,6 @@ void TestHandler::runTestsParallelConnections() {
 	if(!context->ioContext.stopped()) {
 		context->ioContext.stop();
 	}
-	moduleHandlerThread.join();
-	contextThread.join();
 	internalServer.stop();
 }
 
@@ -195,8 +193,8 @@ void TestHandler::runTestsSerialConnections() {
 	testing_utils::ModuleHandlerForTesting moduleHandler(context, fromInternalQueue, toInternalQueue,
 														 expectedMessageNumber);
 
-	std::thread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
-	std::thread contextThread([&context]() { context->ioContext.run(); });
+	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
+	std::jthread contextThread([&context]() { context->ioContext.run(); });
 	internalServer.start();
 
 	serialRun();
@@ -204,8 +202,6 @@ void TestHandler::runTestsSerialConnections() {
 	if(!context->ioContext.stopped()) {
 		context->ioContext.stop();
 	}
-	moduleHandlerThread.join();
-	contextThread.join();
 	internalServer.stop();
 }
 void TestHandler::runConnects(size_t index, size_t header, std::string data,  bool recastHeader) {
@@ -282,8 +278,8 @@ void TestHandler::runTestsWithWrongMessage(size_t index, uint32_t header, std::s
 	testing_utils::ModuleHandlerForTesting moduleHandler(context, fromInternalQueue, toInternalQueue,
 														 expectedMessageNumber);
 
-	std::thread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
-	std::thread contextThread([&context]() { context->ioContext.run(); });
+	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
+	std::jthread contextThread([&context]() { context->ioContext.run(); });
 	internalServer.start();
 
 	serialRunWithExpectedError(index, header, data, onConnect, recastHeader);
@@ -291,8 +287,6 @@ void TestHandler::runTestsWithWrongMessage(size_t index, uint32_t header, std::s
 	if(!context->ioContext.stopped()) {
 		context->ioContext.stop();
 	}
-	moduleHandlerThread.join();
-	contextThread.join();
 	internalServer.stop();
 }
 
