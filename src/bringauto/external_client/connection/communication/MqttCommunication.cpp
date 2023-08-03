@@ -19,16 +19,16 @@ void MqttCommunication::setProperties(const std::string &company, const std::str
 	serverAddress_ = { settings_.serverIp
 					   + ":" + std::to_string(settings_.port) };
 
-	if(settings_.protocolSettings.contains(settings::Constants::SSL) && settings_.protocolSettings[settings::Constants::SSL] == "true") {
-		if(settings_.protocolSettings.contains(settings::Constants::CA_FILE)
-		   && settings_.protocolSettings.contains(settings::Constants::CLIENT_CERT)
-		   && settings_.protocolSettings.contains(settings::Constants::CLIENT_KEY)
+	if(settings_.protocolSettings.contains(std::string(settings::Constants::SSL)) && settings_.protocolSettings[std::string(settings::Constants::SSL)] == "true") {
+		if(settings_.protocolSettings.contains(std::string(settings::Constants::CA_FILE))
+		   && settings_.protocolSettings.contains(std::string(settings::Constants::CLIENT_CERT))
+		   && settings_.protocolSettings.contains(std::string(settings::Constants::CLIENT_KEY))
 				) {
 			serverAddress_ = "ssl://" + serverAddress_;
 			auto sslopts = mqtt::ssl_options_builder()
-					.trust_store(settings_.protocolSettings[settings::Constants::CA_FILE])
-					.private_key(settings_.protocolSettings[settings::Constants::CLIENT_KEY])
-					.key_store(settings_.protocolSettings[settings::Constants::CLIENT_CERT])
+					.trust_store(settings_.protocolSettings[std::string(settings::Constants::CA_FILE)])
+					.private_key(settings_.protocolSettings[std::string(settings::Constants::CLIENT_KEY)])
+					.key_store(settings_.protocolSettings[std::string(settings::Constants::CLIENT_CERT)])
 					.error_handler([](const std::string &msg) {
 						logging::Logger::logError("MQTT: SSL Error: {}", msg);
 					})

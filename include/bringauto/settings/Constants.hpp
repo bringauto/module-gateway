@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include <string_view>
 #include <chrono>
 
 
@@ -32,34 +32,34 @@ constexpr uint8_t header { 4 };
  */
 constexpr size_t buffer_length = 1024;
 
-struct Constants {
+class Constants {
 	/// constant strings for parsing command line arguments
+public:
+	inline static constexpr std::string_view CONFIG_PATH { "config-path" };
+	inline static constexpr std::string_view VERBOSE { "verbose" };
+	inline static constexpr std::string_view LOG_PATH { "log-path" };
+    inline static constexpr std::string_view HELP { "help" };
+	inline static constexpr std::string_view PORT { "port" };
 
-	const static std::string CONFIG_PATH;
-	const static std::string VERBOSE;
-	const static std::string LOG_PATH;
-	const static std::string HELP;
-	const static std::string PORT;
+	inline static constexpr std::string_view MODULE_PATHS { "module-paths" };
 
-	const static std::string MODULE_PATHS;
+	inline static constexpr std::string_view GENERAL_SETTINGS { "general-settings" };
+	inline static constexpr std::string_view INTERNAL_SERVER_SETTINGS { "internal-server-settings" };
 
-	const static std::string GENERAL_SETTINGS;
-	const static std::string INTERNAL_SERVER_SETTINGS;
+	inline static constexpr std::string_view EXTERNAL_CONNECTION { "external-connection" };
+	inline static constexpr std::string_view VEHICLE_NAME { "vehicle-name" };
+	inline static constexpr std::string_view COMPANY { "company" };
+	inline static constexpr std::string_view EXTERNAL_ENDPOINTS { "endpoints" };
+	inline static constexpr std::string_view SERVER_IP { "server-ip" };
+	inline static constexpr std::string_view PROTOCOL_TYPE { "protocol-type" };
 
-	const static std::string EXTERNAL_CONNECTION;
-	const static std::string VEHICLE_NAME;
-	const static std::string COMPANY;
-	const static std::string EXTERNAL_ENDPOINTS;
-	const static std::string SERVER_IP;
-	const static std::string PROTOCOL_TYPE;
+	inline static constexpr std::string_view MQTT_SETTINGS { "mqtt-settings" };
+	inline static constexpr std::string_view SSL { "ssl" };
+	inline static constexpr std::string_view CA_FILE { "ca-file" };
+	inline static constexpr std::string_view CLIENT_CERT { "client-cert" };
+	inline static constexpr std::string_view CLIENT_KEY { "client-key" };
 
-	const static std::string MQTT_SETTINGS;
-	const static std::string SSL;
-	const static std::string CA_FILE;
-	const static std::string CLIENT_CERT;
-	const static std::string CLIENT_KEY;
-
-	const static std::string MODULES;
+	inline static constexpr std::string_view MODULES { "modules" };
 };
 
 }

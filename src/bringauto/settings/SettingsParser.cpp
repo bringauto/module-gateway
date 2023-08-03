@@ -32,12 +32,12 @@ bool SettingsParser::parseSettings(int argc, char **argv) {
 void SettingsParser::parseCmdArguments(int argc, char **argv) {
 	cxxopts::Options options { "ModuleGateway", "BringAuto Fleet Protocol Module Gateway" };
 	options.add_options("General")
-				   ("h, " + Constants::HELP, "Print usage")
-				   ("c, " + Constants::CONFIG_PATH, "Path to configuration file", cxxopts::value<std::string>())
-				   ("l, " + Constants::LOG_PATH, "Path to logs", cxxopts::value<std::string>())
-				   ("v, " + Constants::VERBOSE, "Print log messages into terminal");
-	options.add_options("Internal Server")(Constants::PORT, "Port on which Server listens", cxxopts::value<unsigned short>());
-	options.add_options("Module Handler")(Constants::MODULE_PATHS, "Paths to shared module libraries",
+				   ("h, " + std::string(Constants::HELP), "Print usage")
+				   ("c, " + std::string(Constants::CONFIG_PATH), "Path to configuration file", cxxopts::value<std::string>())
+				   ("l, " + std::string(Constants::LOG_PATH), "Path to logs", cxxopts::value<std::string>())
+				   ("v, " + std::string(Constants::VERBOSE), "Print log messages into terminal");
+	options.add_options("Internal Server")(std::string(Constants::PORT), "Port on which Server listens", cxxopts::value<unsigned short>());
+	options.add_options("Module Handler")(std::string(Constants::MODULE_PATHS), "Paths to shared module libraries",
 										  cxxopts::value < std::vector < std::string >> ());
 
 	cmdArguments_ = options.parse(argc, argv);
@@ -50,14 +50,14 @@ void SettingsParser::parseCmdArguments(int argc, char **argv) {
 bool SettingsParser::areCmdArgumentsCorrect() {
 	bool isCorrect = true;
 	std::vector <std::string> requiredParams {
-			Constants::CONFIG_PATH
+			std::string(Constants::CONFIG_PATH)
 	};
 	std::vector <std::string> allParameters = {
-			Constants::CONFIG_PATH,
-			Constants::VERBOSE,
-			Constants::LOG_PATH,
-			Constants::PORT,
-			Constants::MODULE_PATHS
+			std::string(Constants::CONFIG_PATH),
+			std::string(Constants::VERBOSE),
+			std::string(Constants::LOG_PATH),
+			std::string(Constants::PORT),
+			std::string(Constants::MODULE_PATHS)
 	};
 	allParameters.insert(allParameters.end(), requiredParams.begin(), requiredParams.end());
 
@@ -110,7 +110,7 @@ std::shared_ptr <bringauto::settings::Settings> SettingsParser::getSettings() {
 void SettingsParser::fillSettings() {
 	settings_ = std::make_shared<bringauto::settings::Settings>();
 
-	const auto configPath = cmdArguments_[Constants::CONFIG_PATH].as<std::string>();
+	const auto configPath = cmdArguments_[std::string(Constants::CONFIG_PATH)].as<std::string>();
 	std::ifstream inputFile(configPath);
 	const auto file = nlohmann::json::parse(inputFile);
 
@@ -121,64 +121,64 @@ void SettingsParser::fillSettings() {
 }
 
 void SettingsParser::fillGeneralSettings(const nlohmann::json &file) {
-	if(cmdArguments_.count(Constants::LOG_PATH)) {
-		settings_->logPath = cmdArguments_[Constants::LOG_PATH].as<std::string>();
+	if(cmdArguments_.count(std::string(Constants::LOG_PATH))) {
+		settings_->logPath = cmdArguments_[std::string(Constants::LOG_PATH)].as<std::string>();
 	} else {
-		settings_->logPath = std::filesystem::path(file[Constants::GENERAL_SETTINGS][Constants::LOG_PATH]);
+		settings_->logPath = std::filesystem::path(file[std::string(Constants::GENERAL_SETTINGS)][std::string(Constants::LOG_PATH)]);
 	}
-	if(cmdArguments_.count(Constants::VERBOSE)) {
-		settings_->verbose = cmdArguments_.count(Constants::VERBOSE) == 1;
+	if(cmdArguments_.count(std::string(Constants::VERBOSE))) {
+		settings_->verbose = cmdArguments_.count(std::string(Constants::VERBOSE)) == 1;
 	} else {
-		settings_->verbose = file[Constants::GENERAL_SETTINGS][Constants::VERBOSE];
+		settings_->verbose = file[std::string(Constants::GENERAL_SETTINGS)][std::string(Constants::VERBOSE)];
 	}
 }
 
 void SettingsParser::fillInternalServerSettings(const nlohmann::json &file) {
-	if(cmdArguments_.count(Constants::PORT)) {
-		settings_->port = cmdArguments_[Constants::PORT].as<uint32_t>();
+	if(cmdArguments_.count(std::string(Constants::PORT))) {
+		settings_->port = cmdArguments_[std::string(Constants::PORT)].as<uint32_t>();
 	} else {
-		settings_->port = file[Constants::INTERNAL_SERVER_SETTINGS][Constants::PORT];
+		settings_->port = file[std::string(Constants::INTERNAL_SERVER_SETTINGS)][std::string(Constants::PORT)];
 	}
 }
 
 void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) {
-	if(cmdArguments_.count(Constants::MODULE_PATHS)) {
-		settings_->modulePaths = cmdArguments_[Constants::MODULE_PATHS].as < std::map < int, std::string >> ();
+	if(cmdArguments_.count(std::string(Constants::MODULE_PATHS))) {
+		settings_->modulePaths = cmdArguments_[std::string(Constants::MODULE_PATHS)].as < std::map < int, std::string >> ();
 	} else {
-		for(auto &[key, val]: file[Constants::MODULE_PATHS].items()) {
+		for(auto &[key, val]: file[std::string(Constants::MODULE_PATHS)].items()) {
 			settings_->modulePaths[stoi(key)] = val;
 		}
 	}
 }
 
 void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) {
-	if(cmdArguments_.count(Constants::VEHICLE_NAME)) {
-		settings_->vehicleName = cmdArguments_[Constants::VEHICLE_NAME].as<std::string>();
+	if(cmdArguments_.count(std::string(Constants::VEHICLE_NAME))) {
+		settings_->vehicleName = cmdArguments_[std::string(Constants::VEHICLE_NAME)].as<std::string>();
 	} else {
-		settings_->vehicleName = file[Constants::EXTERNAL_CONNECTION][Constants::VEHICLE_NAME];
+		settings_->vehicleName = file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(Constants::VEHICLE_NAME)];
 	}
-	if(cmdArguments_.count(Constants::COMPANY)) {
-		settings_->company = cmdArguments_[Constants::COMPANY].as<std::string>();
+	if(cmdArguments_.count(std::string(Constants::COMPANY))) {
+		settings_->company = cmdArguments_[std::string(Constants::COMPANY)].as<std::string>();
 	} else {
-		settings_->company = file[Constants::EXTERNAL_CONNECTION][Constants::COMPANY];
+		settings_->company = file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(Constants::COMPANY)];
 	}
 
-	for(const auto &endpoint: file[Constants::EXTERNAL_CONNECTION][Constants::EXTERNAL_ENDPOINTS]) {
+	for(const auto &endpoint: file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(Constants::EXTERNAL_ENDPOINTS)]) {
 		structures::ExternalConnectionSettings externalConnectionSettings;
-		externalConnectionSettings.serverIp = endpoint[Constants::SERVER_IP];
-		externalConnectionSettings.port = endpoint[Constants::PORT];
-		externalConnectionSettings.modules = endpoint[Constants::MODULES].get < std::vector < int >> ();
+		externalConnectionSettings.serverIp = endpoint[std::string(Constants::SERVER_IP)];
+		externalConnectionSettings.port = endpoint[std::string(Constants::PORT)];
+		externalConnectionSettings.modules = endpoint[std::string(Constants::MODULES)].get < std::vector < int >> ();
 
 		externalConnectionSettings.protocolType = common_utils::EnumUtils::stringToProtocolType(
-				endpoint[Constants::PROTOCOL_TYPE]);
+				endpoint[std::string(Constants::PROTOCOL_TYPE)]);
 		std::string settingsName {};
 		switch(externalConnectionSettings.protocolType) {
 			case structures::ProtocolType::MQTT:
-				settingsName = Constants::MQTT_SETTINGS;
+				settingsName = std::string(Constants::MQTT_SETTINGS);
 				break;
 			case structures::ProtocolType::INVALID:
 			default:
-				std::cerr << "Invalid protocol type: " << endpoint[Constants::PROTOCOL_TYPE] << std::endl;
+				std::cerr << "Invalid protocol type: " << endpoint[std::string(Constants::PROTOCOL_TYPE)] << std::endl;
 				continue;
 		}
 		if(endpoint.find(settingsName) != endpoint.end()) {
