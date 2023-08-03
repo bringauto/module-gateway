@@ -47,7 +47,6 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 		return NOT_OK;
 	}
 	std::memcpy(lastStatus.data, status.data, status.size_in_bytes);
-	lastStatus.size_in_bytes = status.size_in_bytes;
 
 	struct buffer errorMessageBuffer {};
 	auto &currentError = devices_[id].errorMessage;

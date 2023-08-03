@@ -175,8 +175,7 @@ int ExternalConnection::statusMessageHandle(const std::vector <structures::Devic
 		auto deviceStatus = common_utils::ProtobufUtils::CreateDeviceStatus(device, statusBuffer);
 		sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_CONNECTING, errorBuffer);
 
-		deallocate(&device.device_role);
-		deallocate(&device.device_name);
+		utils::deallocateDeviceId(device);
 	}
 	for(int i = 0; i < devices.size(); ++i) {
 		const auto statusResponseMsg = communicationChannel_->receiveMessage();
@@ -251,9 +250,9 @@ void ExternalConnection::endConnection(bool completeDisconnect = false) {
 	} else {
 		stopReceiving.exchange(true);
 		communicationChannel_->closeConnection();
-		// if (listeningThread.joinable()){
-		// 	listeningThread.join();
-		// }
+		if (listeningThread.joinable()){
+			listeningThread.join();
+		}
 		for(auto &[moduleNumber, errorAggregator]: errorAggregators) {
 			errorAggregator.destroy_error_aggregator();
 		}
@@ -344,8 +343,7 @@ void ExternalConnection::fillErrorAggregator() {
 
 		auto deviceId = common_utils::ProtobufUtils::ParseDevice(device);
 		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer, deviceId);
-		deallocate(&deviceId.device_role);
-		deallocate(&deviceId.device_name);
+		utils::deallocateDeviceId(deviceId);
 		deallocate(&statusBuffer);
 	}
 	sentMessagesHandler_->clearAll();
@@ -365,8 +363,7 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 
 		auto deviceId = common_utils::ProtobufUtils::ParseDevice(deviceStatus.device());
 		errorAggregators[moduleNum].add_status_to_error_aggregator(statusBuffer, deviceId);
-		deallocate(&deviceId.device_role);
-		deallocate(&deviceId.device_name);
+		utils::deallocateDeviceId(deviceId);
 		deallocate(&statusBuffer);
 	} else {
 		log::logError("Device status with unsupported module was passed to fillErrorAggregator()");
@@ -378,8 +375,7 @@ int ExternalConnection::forceAggregationOnAllDevices() {
 	for(const auto &device: devices) {
 		auto deviceId = device.convertToCStruct();
 		context_->statusAggregators[device.getModule()]->force_aggregation_on_device(deviceId);
-		deallocate(&deviceId.device_role);
-		deallocate(&deviceId.device_name);
+		utils::deallocateDeviceId(deviceId);
 	}
 	return devices.size();
 }
