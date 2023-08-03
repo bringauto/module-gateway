@@ -40,7 +40,7 @@ void ClientForTesting::receiveMessage(InternalProtocol::InternalServer &message)
 	boost::system::error_code er;
 	bool readFinished = false;
 	auto timeStart = std::chrono::steady_clock::now();
-	std::thread timeoutCountThread([this, timeStart, &readFinished]() {
+	std::jthread timeoutCountThread([this, timeStart, &readFinished]() {
 		while(std::chrono::duration<double>(std::chrono::steady_clock::now() - timeStart) <
 			  timeoutLengthGreaterThenDefinedInFleetProtocol) {
 			if(readFinished) {
@@ -74,7 +74,6 @@ void ClientForTesting::receiveMessage(InternalProtocol::InternalServer &message)
 		}
 	}
 	readFinished = true;
-	timeoutCountThread.join();
 
 	std::vector<uint8_t> vector;
 	vector.reserve(size);
@@ -101,7 +100,7 @@ void ClientForTesting::insteadOfMessageExpectError() {
 	boost::system::error_code er;
 	bool readFinished = false;
 	auto timeStart = std::chrono::steady_clock::now();
-	std::thread timeoutCountThread([this, timeStart, &readFinished]() {
+	std::jthread timeoutCountThread([this, timeStart, &readFinished]() {
 		while(std::chrono::duration<double>(std::chrono::steady_clock::now() - timeStart) <
 			  timeoutLengthGreaterThenDefinedInFleetProtocol) {
 			if(readFinished) {
@@ -114,7 +113,6 @@ void ClientForTesting::insteadOfMessageExpectError() {
 	std::array<uint8_t, bufferLength> buffer;
 	socket->read_some(boost::asio::buffer(buffer), er);
 	readFinished = true;
-	timeoutCountThread.join();
 	ASSERT_TRUE(er);
 }
 
@@ -122,7 +120,7 @@ void ClientForTesting::insteadOfMessageExpectTimeoutThenError() {
 	boost::system::error_code er;
 	bool readFinished = false;
 	auto timeStart = std::chrono::steady_clock::now();
-	std::thread timeoutCountThread([this, timeStart, &readFinished]() {
+	std::jthread timeoutCountThread([this, timeStart, &readFinished]() {
 		while(std::chrono::duration<double>(std::chrono::steady_clock::now() - timeStart) <
 			  timeoutLengthDefinedInFleetProtocol) {
 			if(readFinished) {
@@ -134,7 +132,6 @@ void ClientForTesting::insteadOfMessageExpectTimeoutThenError() {
 	std::array<uint8_t, bufferLength> buffer;
 	socket->read_some(boost::asio::buffer(buffer), er);
 	readFinished = true;
-	timeoutCountThread.join();
 	ASSERT_TRUE(er);
 
 }

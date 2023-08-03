@@ -30,7 +30,7 @@ TestHandler::TestHandler(const std::vector<InternalProtocol::Device> &devices, c
 		contexts.push_back(std::make_shared<structures::GlobalContext>());
 		contexts[i]->settings = std::make_shared<settings::Settings>();
 		contexts[i]->settings->port = (port);
-		clients.push_back(contexts[i]);
+		clients.emplace_back(contexts[i]);
 		expectedMessageNumber += numberOfMessages;
 		for(size_t y = 0; y < i; ++y) {
 			auto a = std::make_shared<structures::DeviceIdentification>(devices[y]);
@@ -60,7 +60,7 @@ TestHandler::TestHandler(const std::vector<InternalProtocol::Device> &devices,
 		contexts.push_back(std::make_shared<structures::GlobalContext>());
 		contexts[i]->settings = std::make_shared<settings::Settings>();
 		contexts[i]->settings->port = (port);
-		clients.push_back(contexts[i]);
+		clients.emplace_back(contexts[i]);
 		if(responseTypes[i] == InternalProtocol::DeviceConnectResponse_ResponseType_OK) {
 			expectedMessageNumber += numberOfMessages;
 			for(size_t y = 0; y < i; ++y) {
@@ -123,7 +123,7 @@ void TestHandler::runTestsParallelConnections() {
 	std::jthread contextThread([&context]() { context->ioContext.run(); });
 	internalServer.start();
 
-	std::vector<std::thread> clientThreads;
+	std::vector<std::jthread> clientThreads;
 	for(size_t i = 0; i < responses.size(); ++i) {
 		clientThreads.emplace_back([this, i]() { (ParallelRun(i)); });
 	}
@@ -362,10 +362,10 @@ void TestHandler::runTestsWithModuleHandlerTimeout(bool onConnect, size_t timeou
 	testing_utils::ModuleHandlerForTesting moduleHandler(context, fromInternalQueue, toInternalQueue,
 														 expectedMessageNumber);
 
-	std::thread moduleHandlerThread([&moduleHandler, onConnect, timeoutNumber]() {
+	std::jthread moduleHandlerThread([&moduleHandler, onConnect, timeoutNumber]() {
 		moduleHandler.startWithTimeout(onConnect, timeoutNumber);
 	});
-	std::thread contextThread([&context]() { context->ioContext.run(); });
+	std::jthread contextThread([&context]() { context->ioContext.run(); });
 	internalServer.start();
 
 	serialRunWithExpectedError(onConnect, timeoutNumber);
@@ -374,8 +374,8 @@ void TestHandler::runTestsWithModuleHandlerTimeout(bool onConnect, size_t timeou
 	if(!context->ioContext.stopped()) {
 		context->ioContext.stop();
 	}
-	moduleHandlerThread.join();
-	contextThread.join();
+	// moduleHandlerThread.join();
+	// contextThread.join();
 	internalServer.stop();
 }
 
