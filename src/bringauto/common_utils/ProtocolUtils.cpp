@@ -1,4 +1,5 @@
 #include <bringauto/common_utils/ProtobufUtils.hpp>
+#include <bringauto/utils/utils.hpp>
 
 #include <general_error_codes.h>
 
@@ -54,16 +55,12 @@ InternalProtocol::DeviceStatus ProtobufUtils::CreateDeviceStatus(const device_id
 }
 
 device_identification ProtobufUtils::ParseDevice(const InternalProtocol::Device &device) {
-    //duplicate code
     struct buffer deviceRoleBuff{};
-	const auto& deviceRole = device.devicerole();
-	allocate(&deviceRoleBuff, deviceRole.size());
-	std::memcpy(deviceRoleBuff.data, deviceRole.c_str(), deviceRole.size());
+    utils::initBuffer(deviceRoleBuff, device.devicerole());
 
 	struct buffer deviceNameBuff{};
-	const auto& deviceName = device.devicename();
-	allocate(&deviceNameBuff, deviceName.size());
-	std::memcpy(deviceNameBuff.data, deviceName.c_str(), deviceName.size());
+    utils::initBuffer(deviceNameBuff, device.devicename());
+
 	return ::device_identification { .module = device.module(),
 			.device_type = device.devicetype(),
 			.device_role = deviceRoleBuff,

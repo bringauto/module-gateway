@@ -30,9 +30,9 @@ send_status_condition(const struct buffer current_status, const struct buffer ne
 	auto curr_data = static_cast<char *>(current_status.data);
 	auto new_data = static_cast<char *>(new_status.data);
 	if(strncmp(curr_data, new_data, std::max(current_status.size_in_bytes, new_status.size_in_bytes)) == 0) {
-		return OK;
+		return NOT_OK;
 	}
-	return NOT_OK;
+	return OK;
 }
 
 int generate_command(struct buffer *generated_command, const struct buffer new_status,

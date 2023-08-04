@@ -6,7 +6,6 @@
 #include <libbringauto_logger/bringauto/logging/Logger.hpp>
 #include <libbringauto_logger/bringauto/logging/FileSink.hpp>
 #include <libbringauto_logger/bringauto/logging/ConsoleSink.hpp>
-#include "bringauto/structures/DeviceIdentification.hpp"
 
 
 
@@ -70,6 +69,16 @@ std::string getId(const ::device_identification &device) {
 	ss << device.module << "/" << device.device_type << "/" << std::string{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes} << "/"
 	   << std::string{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes}; // TODO we need to be able to get priority
 	return ss.str();
+}
+
+void initBuffer(struct buffer &buffer, const std::string &data){
+    allocate(&buffer, data.size());
+	std::memcpy(buffer.data, data.c_str(), data.size());
+}
+
+void deallocateDeviceId(struct device_identification &device){
+    deallocate(&device.device_role);
+    deallocate(&device.device_name);
 }
 
 }
