@@ -1,6 +1,5 @@
 #include <bringauto/external_client/connection/communication/MqttCommunication.hpp>
 #include <bringauto/settings/Constants.hpp>
-
 #include <bringauto/logging/Logger.hpp>
 
 

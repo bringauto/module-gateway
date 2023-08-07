@@ -37,8 +37,6 @@ private:
 	std::atomic<bool> &responseHandled_;
 
 	std::mutex &responseHandledMutex_;
-
-	static constexpr int statusResponseTimeout_ = 30;
 };
 
 }
