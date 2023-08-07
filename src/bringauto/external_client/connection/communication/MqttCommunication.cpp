@@ -73,11 +73,9 @@ int MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
 		return -1;
 	}
 	unsigned int size = message->ByteSizeLong();
-	auto *buffer = new uint8_t[size];
-	memset(buffer, '\0', size);
+    uint8_t buffer[size] = { '\0' };
 	message->SerializeToArray(buffer, static_cast<int>(size));
 	client_->publish(publishTopic_, buffer, size, qos, false);
-	delete[] buffer;
 	return 0;
 }
 
