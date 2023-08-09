@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
+#include <bringauto/structures/StatusAggregatorDeviceState.hpp>
 
 #include <command_manager.h>
 #include <module_manager.h>
@@ -24,7 +25,9 @@ namespace bringauto::modules {
 class StatusAggregator {
 public:
 
-	explicit StatusAggregator(const std::shared_ptr <ModuleManagerLibraryHandler> &module): module_ { module } {};
+	explicit StatusAggregator(const std::shared_ptr <structures::GlobalContext> &context,
+							  const std::shared_ptr <ModuleManagerLibraryHandler> &libraryHandler): context_ { context },
+																							module_ { libraryHandler } {};
 
 	StatusAggregator() = default;
 
@@ -129,24 +132,14 @@ public:
 	int is_device_type_supported(unsigned int device_type);
 
 private:
-	struct device_state {
-		std::queue<struct buffer> aggregatedMessages;
-		struct buffer status;
-		struct buffer command;
 
-		device_state() = default;
+	void aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status, const unsigned int &device_type);
 
-		device_state(const buffer command, const buffer status) {
-			this->status = status;
-			this->command = command;
-		}
-	};
-
-	void aggregateStatus(buffer &currStatus, const buffer &status, const unsigned int &device_type);
+	std::shared_ptr <structures::GlobalContext> context_;
 
 	const std::shared_ptr <ModuleManagerLibraryHandler> module_ {};
 
-	std::map <std::string, device_state> devices {};
+	std::map <std::string, structures::StatusAggregatorDeviceState> devices {};
 
 	std::mutex mutex_ {};
 };

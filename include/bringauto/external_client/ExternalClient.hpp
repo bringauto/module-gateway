@@ -3,6 +3,7 @@
 
 #include <bringauto/external_client/connection/ExternalConnection.hpp>
 #include <bringauto/structures/GlobalContext.hpp>
+#include <bringauto/structures/ModuleLibrary.hpp>
 #include <bringauto/structures/AtomicQueue.hpp>
 #include <InternalProtocol.pb.h>
 
@@ -18,6 +19,7 @@ class ExternalClient {
 public:
 
 	ExternalClient(std::shared_ptr <structures::GlobalContext> &context,
+				   structures::ModuleLibrary &moduleLibrary,
 				   std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &toExternalQueue);
 
 	/**
@@ -43,6 +45,8 @@ private:
 	void handleCommand(const InternalProtocol::DeviceCommand &deviceCommand);
 
 	void sendStatus(const InternalProtocol::DeviceStatus &deviceStatus);
+
+	structures::ModuleLibrary &moduleLibrary_;
 
 	bool insideConnectSequence_ = false;
 

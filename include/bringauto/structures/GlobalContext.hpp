@@ -1,8 +1,6 @@
 #pragma once
 
 #include <bringauto/settings/Settings.hpp>
-#include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
-#include <bringauto/modules/StatusAggregator.hpp>
 
 #include <boost/asio.hpp>
 
@@ -22,10 +20,6 @@ struct GlobalContext {
 	 * @brief io_context shared across Module Gateway
 	 */
 	boost::asio::io_context ioContext;
-
-	std::map<unsigned int, std::shared_ptr<modules::ModuleManagerLibraryHandler>> moduleLibraries {};
-
-	std::map<unsigned int, std::shared_ptr<modules::StatusAggregator>> statusAggregators {};
 
 	/**
 	 * @brief settings used in the project

@@ -2,6 +2,7 @@
 #include <bringauto/logging/Logger.hpp>
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
+#include <bringauto/utils/utils.hpp>
 
 #include <memory_management.h>
 
@@ -43,7 +44,7 @@ void ModuleHandler::handle_messages() {
 void ModuleHandler::handle_connect(const ip::DeviceConnect &connect) {
 	const auto &device = connect.device();
 	const auto &moduleNumber = device.module();
-	auto &statusAggregators = context_->statusAggregators;
+	auto &statusAggregators = moduleLibrary_.statusAggregators;
 	log::logInfo("Module handler received Connect message from device: {}", device.devicename());
 
 	auto response_type = ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_OK;
@@ -65,7 +66,7 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 	const auto &device = status.device();
 	const auto &moduleNumber = device.module();
 	const auto &deviceName = device.devicename();
-	auto &statusAggregators = context_->statusAggregators;
+	auto &statusAggregators = moduleLibrary_.statusAggregators;
 	log::logDebug("Module handler received status from device: {}", deviceName);
 
 	if(not statusAggregators.contains(moduleNumber)) {
@@ -110,8 +111,7 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 	toInternalQueue_->pushAndNotify(deviceCommandMessage);
 	log::logDebug("Module handler succesfully retrieved command and sent it to device: {}", deviceName);
 
-    deallocate(&deviceId.device_role);
-    deallocate(&deviceId.device_name);
+    utils::deallocateDeviceId(deviceId);
 	deallocate(&commandBuffer);
 	deallocate(&statusBuffer);
 }

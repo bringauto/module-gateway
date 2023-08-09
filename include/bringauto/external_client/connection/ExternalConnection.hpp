@@ -2,6 +2,7 @@
 
 #include <bringauto/external_client/connection/communication/ICommunicationChannel.hpp>
 #include <bringauto/structures/GlobalContext.hpp>
+#include <bringauto/structures/ModuleLibrary.hpp>
 #include <bringauto/structures/ExternalConnectionSettings.hpp>
 #include <bringauto/structures/AtomicQueue.hpp>
 #include <bringauto/external_client/connection/messages/SentMessagesHandler.hpp>
@@ -24,6 +25,7 @@ namespace bringauto::external_client::connection {
 class ExternalConnection {
 public:
 	ExternalConnection(const std::shared_ptr <structures::GlobalContext> &context,
+					   structures::ModuleLibrary &moduleLibrary,
 					   const structures::ExternalConnectionSettings &settings,
 					   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
 					   const std::shared_ptr <structures::AtomicQueue<
@@ -125,6 +127,8 @@ private:
 	std::atomic <ConnectionState> state_ { ConnectionState::NOT_INITIALIZED };
 
 	std::shared_ptr <structures::GlobalContext> context_;
+
+	structures::ModuleLibrary &moduleLibrary_;
 
 	const structures::ExternalConnectionSettings &settings_;
 

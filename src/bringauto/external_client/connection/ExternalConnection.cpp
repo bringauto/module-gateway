@@ -14,11 +14,13 @@ namespace bringauto::external_client::connection {
 using log = bringauto::logging::Logger;
 
 ExternalConnection::ExternalConnection(const std::shared_ptr <structures::GlobalContext> &context,
+									   structures::ModuleLibrary &moduleLibrary,
 									   const structures::ExternalConnectionSettings &settings,
 									   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
 									   const std::shared_ptr <structures::AtomicQueue<
 											   std::reference_wrapper < connection::ExternalConnection>>>& reconnectQueue):
 												context_ {context},
+                                                moduleLibrary_ {moduleLibrary},
 												settings_ {settings },
 												commandQueue_ {commandQueue },
 												reconnectQueue_ {reconnectQueue } {
@@ -28,7 +30,7 @@ ExternalConnection::ExternalConnection(const std::shared_ptr <structures::Global
 void ExternalConnection::init(const std::string &company, const std::string &vehicleName) {
 	for(const auto &moduleNum: settings_.modules) {
 		errorAggregators[moduleNum] = ErrorAggregator();
-		errorAggregators[moduleNum].init_error_aggregator(context_->moduleLibraries[moduleNum]);
+		errorAggregators[moduleNum].init_error_aggregator(moduleLibrary_.moduleLibraryHandlers[moduleNum]);
 	}
 	switch(settings_.protocolType) {
 		case structures::ProtocolType::MQTT:
@@ -374,7 +376,7 @@ int ExternalConnection::forceAggregationOnAllDevices() {
 	auto devices = getAllConnectedDevices();
 	for(const auto &device: devices) {
 		auto deviceId = device.convertToCStruct();
-		context_->statusAggregators[device.getModule()]->force_aggregation_on_device(deviceId);
+		moduleLibrary_.statusAggregators.at(device.getModule())->force_aggregation_on_device(deviceId);
 		utils::deallocateDeviceId(deviceId);
 	}
 	return devices.size();
@@ -384,7 +386,7 @@ std::vector <structures::DeviceIdentification> ExternalConnection::getAllConnect
 	std::vector <structures::DeviceIdentification> devices {};
 	for(const auto &moduleNumber: settings_.modules) {
 		struct buffer unique_devices {};
-		int ret = context_->statusAggregators[moduleNumber]->get_unique_devices(&unique_devices);
+		int ret = moduleLibrary_.statusAggregators.at(moduleNumber)->get_unique_devices(&unique_devices);
 		if(ret <= 0) {
 			log::logWarning("Module {} does not have any connected devices", moduleNumber);
 			deallocate(&unique_devices);

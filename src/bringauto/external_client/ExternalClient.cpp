@@ -2,8 +2,9 @@
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 #include <bringauto/external_client/connection/ConnectionState.hpp>
-
+#include <bringauto/utils/utils.hpp>
 #include <bringauto/logging/Logger.hpp>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 
@@ -14,8 +15,9 @@ namespace ip = InternalProtocol;
 using log = bringauto::logging::Logger;
 
 ExternalClient::ExternalClient(std::shared_ptr <structures::GlobalContext> &context,
+							   structures::ModuleLibrary &moduleLibrary,
 							   std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &toExternalQueue)
-		: context_ { context }, toExternalQueue_ { toExternalQueue } {
+		: context_ { context }, moduleLibrary_ { moduleLibrary }, toExternalQueue_ { toExternalQueue } {
 	fromExternalQueue_ = std::make_shared < structures::AtomicQueue < InternalProtocol::DeviceCommand >> ();
 	reconnectQueue_ =
 			std::make_shared < structures::AtomicQueue < std::reference_wrapper < connection::ExternalConnection>>>();
@@ -38,7 +40,8 @@ void ExternalClient::handleCommands() {
 void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &deviceCommand) {
 	const auto &device = deviceCommand.device();
 	const auto &moduleNumber = device.module();
-	if(not context_->statusAggregators.contains(moduleNumber)) {
+    auto &statusAggregators = moduleLibrary_.statusAggregators;
+	if(not statusAggregators.contains(moduleNumber)) {
 		log::logWarning("Module with module number {} does no exists", moduleNumber);
 		return;
 	}
@@ -52,13 +55,12 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 	std::memcpy(commandBuffer.data, commandData.c_str(), commandBuffer.size_in_bytes);
 	auto deviceId = common_utils::ProtobufUtils::ParseDevice(device);
 
-	int ret = context_->statusAggregators[moduleNumber]->update_command(commandBuffer, deviceId);
+	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);
 	if(ret != OK) {
 		log::logError("Update command failed with error code: {}", ret);
 		return;
 	}
-    deallocate(&deviceId.device_role);
-    deallocate(&deviceId.device_name);
+    utils::deallocateDeviceId(deviceId);
 	log::logInfo("Command on device {} was successfully updated", device.devicename());
 }
 
@@ -78,7 +80,8 @@ void ExternalClient::run() {
 
 void ExternalClient::initConnections() {
 	for(auto const &connection: context_->settings->externalConnectionSettingsList) {
-		externalConnectionsList_.emplace_back(context_, connection, fromExternalQueue_, reconnectQueue_);
+		externalConnectionsList_.emplace_back(context_, moduleLibrary_, connection, fromExternalQueue_,
+											  reconnectQueue_);
 		auto &newConnection = externalConnectionsList_.back();
 		newConnection.init(context_->settings->company, context_->settings->vehicleName);
 		for(auto const &moduleNumber: connection.modules) {

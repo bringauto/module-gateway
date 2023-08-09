@@ -5,6 +5,7 @@
 
 #include <InternalProtocol.pb.h>
 #include <bringauto/structures/GlobalContext.hpp>
+#include <bringauto/structures/ModuleLibrary.hpp>
 #include <bringauto/modules/StatusAggregator.hpp>
 #include <bringauto/structures/AtomicQueue.hpp>
 #include <device_management.h>
@@ -18,10 +19,11 @@ class ModuleHandler {
 public:
 	ModuleHandler(
 			std::shared_ptr <structures::GlobalContext> &context,
+            structures::ModuleLibrary &moduleLibrary,
 			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &fromInternalQueue,
 			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> &toInternalQueue,
 			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &toExternalQueue)
-			: context_ { context }, fromInternalQueue_ { fromInternalQueue }, toInternalQueue_ { toInternalQueue },
+			: context_ { context }, moduleLibrary_ { moduleLibrary }, fromInternalQueue_ { fromInternalQueue }, toInternalQueue_ { toInternalQueue },
 			  toExternalQueue_ { toExternalQueue } {}
 
 	/**
@@ -61,6 +63,8 @@ private:
 	void handle_status(const InternalProtocol::DeviceStatus &status);
 
 	std::shared_ptr <structures::GlobalContext> context_;
+
+    structures::ModuleLibrary& moduleLibrary_;
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> fromInternalQueue_;
 

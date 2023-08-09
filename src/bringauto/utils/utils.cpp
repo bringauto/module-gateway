@@ -11,31 +11,6 @@
 
 namespace bringauto::utils {
 
-void initModule(std::shared_ptr <bringauto::structures::GlobalContext> &context,
-				const std::shared_ptr <bringauto::modules::ModuleManagerLibraryHandler> &libraryHandler) {
-	auto status_agg = std::make_shared<bringauto::modules::StatusAggregator>(libraryHandler);
-	status_agg->init_status_aggregator();
-	auto moduleNumber = status_agg->get_module_number();
-	bringauto::logging::Logger::logInfo("Module with number: {} started", moduleNumber);
-	context->statusAggregators.emplace(moduleNumber, status_agg);
-}
-
-void initStatusAggregators(std::shared_ptr <bringauto::structures::GlobalContext> &context) {
-	for(auto const &[key, path]: context->moduleLibraries) {
-		initModule(context, path);
-	}
-}
-
-void loadLibraries(std::map<unsigned int, std::shared_ptr<bringauto::modules::ModuleManagerLibraryHandler>> &modules,
-				   const std::map<int, std::string> &libPaths) {
-	for(auto const &[key, path]: libPaths) {
-		modules.emplace(key, std::make_shared<bringauto::modules::ModuleManagerLibraryHandler>());
-		if(modules[key]->loadLibrary(path) != OK) {
-			throw std::runtime_error("Unable to load library " + path);
-		}
-	}
-}
-
 void initLogger(const std::string &logPath, bool verbose) {
 	using namespace bringauto::logging;
 	if(verbose) {
@@ -76,7 +51,7 @@ void initBuffer(struct buffer &buffer, const std::string &data){
 	std::memcpy(buffer.data, data.c_str(), data.size());
 }
 
-void deallocateDeviceId(struct device_identification &device){
+void deallocateDeviceId(struct ::device_identification &device){
     deallocate(&device.device_role);
     deallocate(&device.device_name);
 }

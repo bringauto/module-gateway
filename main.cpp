@@ -1,6 +1,7 @@
 
 #include <bringauto/internal_server/InternalServer.hpp>
 #include <bringauto/structures/GlobalContext.hpp>
+#include <bringauto/structures/ModuleLibrary.hpp>
 #include <bringauto/external_client/ExternalClient.hpp>
 #include <bringauto/modules/ModuleHandler.hpp>
 #include <bringauto/structures/AtomicQueue.hpp>
@@ -17,6 +18,7 @@ int main(int argc, char **argv) {
 	namespace bas = bringauto::structures;
 	namespace baset = bringauto::settings;
 	auto context = std::make_shared<bas::GlobalContext>();
+    bas::ModuleLibrary moduleLibrary{};
 	try {
 		baset::SettingsParser settingsParser;
 		if(!settingsParser.parseSettings(argc, argv)) {
@@ -24,8 +26,8 @@ int main(int argc, char **argv) {
 		}
 		context->settings = settingsParser.getSettings();
 		bringauto::utils::initLogger(context->settings->logPath, context->settings->verbose);
-		bringauto::utils::loadLibraries(context->moduleLibraries, context->settings->modulePaths);
-		bringauto::utils::initStatusAggregators(context);
+        moduleLibrary.loadLibraries(context->settings->modulePaths);
+        moduleLibrary.initStatusAggregators(context);
 	} catch(std::exception &e) {
 		std::cerr << "[ERROR] Error occurred during initialization: " << e.what() << std::endl;
 		return 1;
@@ -39,8 +41,8 @@ int main(int argc, char **argv) {
 	auto toExternalQueue = std::make_shared < bas::AtomicQueue < InternalProtocol::InternalClient >> ();
 
 	bais::InternalServer internalServer { context, fromInternalQueue, toInternalQueue };
-	bringauto::modules::ModuleHandler moduleHandler { context, fromInternalQueue, toInternalQueue, toExternalQueue };
-	bringauto::external_client::ExternalClient externalClient { context, toExternalQueue };
+	bringauto::modules::ModuleHandler moduleHandler { context, moduleLibrary, fromInternalQueue, toInternalQueue, toExternalQueue };
+	bringauto::external_client::ExternalClient externalClient { context, moduleLibrary, toExternalQueue };
 
 	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.run(); });
 	std::jthread externalClientThread([&externalClient]() { externalClient.run(); });
@@ -51,8 +53,6 @@ int main(int argc, char **argv) {
 	internalServer.stop();
 	moduleHandler.destroy();
 	externalClient.destroy();
-
-    std::for_each(context->statusAggregators.cbegin(), context->statusAggregators.cend(), [](auto& pair) { pair.second->destroy_status_aggregator(); });
 
     google::protobuf::ShutdownProtobufLibrary();
 

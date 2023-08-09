@@ -1,9 +1,10 @@
 #include <bringauto/external_client/connection/messages/SentMessagesHandler.hpp>
+#include <bringauto/logging/Logger.hpp>
+#include <general_error_codes.h>
 
 #include <google/protobuf/util/message_differencer.h>
-#include <bringauto/logging/Logger.hpp>
-#include <utility>
 
+#include <utility>
 
 
 namespace bringauto::external_client::connection::messages {
