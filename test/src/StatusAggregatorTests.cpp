@@ -66,7 +66,7 @@ TEST_F(StatusAggregatorTests, init_status_aggregator_bad_path) {
 	auto libHandler = std::make_shared<bringauto::modules::ModuleManagerLibraryHandler>();
 	int ret = libHandler->loadLibrary(WRONG_PATH_TO_MODULE);
 	EXPECT_TRUE(ret == NOT_OK);
-	bringauto::modules::StatusAggregator statusAggregatorTest{libHandler};
+	bringauto::modules::StatusAggregator statusAggregatorTest{context, libHandler};
 	ret = statusAggregatorTest.init_status_aggregator();
 	EXPECT_TRUE(ret == OK);
 }
