@@ -168,6 +168,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	}
 
 	if(connection.initializeConnection() != 0) {
+		// this probably does not work, because destructor of deadline_timer is called right after this if
 		boost::asio::deadline_timer timer(context_->ioContext);
 		timer.expires_from_now(boost::posix_time::seconds(settings::reconnect_delay));
 		timer.async_wait([this, &connection](const boost::system::error_code &error) {

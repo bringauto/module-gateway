@@ -12,10 +12,10 @@ using log = bringauto::logging::Logger;
 
 void
 StatusAggregator::aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status, const unsigned int &device_type) {
-	auto &currStatus = deviceState.status;
+	auto &currStatus = deviceState.getStatus();
 	struct buffer aggregatedStatusBuff {};
 	module_->aggregateStatus(&aggregatedStatusBuff, currStatus, status, device_type);
-	deviceState.changeStatus(aggregatedStatusBuff);
+	deviceState.setStatusAndResetTimer(aggregatedStatusBuff);
 }
 
 int StatusAggregator::init_status_aggregator() {
@@ -29,7 +29,7 @@ int StatusAggregator::destroy_status_aggregator() {
 
 int StatusAggregator::clear_all_devices() {
 	for(auto &[key, device]: devices) {
-		auto &aggregatedMessages = device.aggregatedMessages;
+		auto &aggregatedMessages = device.getAggregatedMessages();
 		while(not aggregatedMessages.empty()) {
 			auto message = aggregatedMessages.front();
 			if(message.data != nullptr) {
@@ -37,7 +37,7 @@ int StatusAggregator::clear_all_devices() {
 			}
 			aggregatedMessages.pop();
 		}
-		deallocate(&device.status);
+		device.deallocateStatus();
 		std::lock_guard <std::mutex> lock(mutex_);
 		deallocate(&device.command);
 	}
@@ -50,7 +50,7 @@ int StatusAggregator::clear_device(const struct ::device_identification device) 
 	if(is_device_valid(device) == NOT_OK) {
 		return DEVICE_NOT_REGISTERED;
 	}
-	auto &aggregatedMessages = devices.at(id).aggregatedMessages;
+	auto &aggregatedMessages = devices.at(id).getAggregatedMessages();
 	while(not aggregatedMessages.empty()) {
 		aggregatedMessages.pop();
 	}
@@ -103,8 +103,8 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	}
 
 	auto &deviceState = devices.at(id);
-	auto &currStatus = deviceState.status;
-	auto &aggregatedMessages = deviceState.aggregatedMessages;
+	auto &currStatus = deviceState.getStatus();
+	auto &aggregatedMessages = deviceState.getAggregatedMessages();
 	if(module_->sendStatusCondition(currStatus, status, device_type) == OK) {
 		aggregateStatus(deviceState, status, device_type);
 		struct buffer statusToSendBuff {};
@@ -112,11 +112,9 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 		std::memcpy(statusToSendBuff.data, currStatus.data, currStatus.size_in_bytes);
 		aggregatedMessages.push(statusToSendBuff);
 	} else {
-		auto &currStatus = deviceState.status;
 		struct buffer aggregatedStatusBuff {};
 		module_->aggregateStatus(&aggregatedStatusBuff, currStatus, status, device_type);
-		deallocate(&currStatus);
-		currStatus = aggregatedStatusBuff;
+        deviceState.setStatus(aggregatedStatusBuff);
 	}
 
 	return aggregatedMessages.size();
@@ -129,7 +127,7 @@ int StatusAggregator::get_aggregated_status(struct ::buffer *generated_status,
 	}
 
 	std::string id = utils::getId(device);
-	auto &aggregatedMessages = devices.at(id).aggregatedMessages;
+	auto &aggregatedMessages = devices.at(id).getAggregatedMessages();
 	if(aggregatedMessages.size() == 0) {
 		return NO_MESSAGE_AVAILABLE;
 	}
@@ -164,7 +162,7 @@ int StatusAggregator::force_aggregation_on_device(const struct ::device_identifi
 		return DEVICE_NOT_REGISTERED;
 	}
 
-	const auto &statusBuffer = devices.at(id).status;
+	const auto &statusBuffer = devices.at(id).getStatus();
 	struct buffer forcedStatusBuffer {};
 	if(allocate(&forcedStatusBuffer, statusBuffer.size_in_bytes) == NOT_OK) {
 		log::logError("Could not allocate buffer in force_aggregation_on_device");
@@ -172,7 +170,7 @@ int StatusAggregator::force_aggregation_on_device(const struct ::device_identifi
 	}
 
 	std::memcpy(forcedStatusBuffer.data, statusBuffer.data, statusBuffer.size_in_bytes);
-	auto &aggregatedMessages = devices.at(id).aggregatedMessages;
+	auto &aggregatedMessages = devices.at(id).getAggregatedMessages();
 	aggregatedMessages.push(forcedStatusBuffer);
 
 	return aggregatedMessages.size();
@@ -220,7 +218,7 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 	}
 
 	std::string id = utils::getId(device);
-	auto &currStatus = devices.at(id).status;
+	auto &currStatus = devices[id].getStatus();
 
 	if(status.size_in_bytes == 0 || module_->statusDataValid(status, device_type) == NOT_OK) {
 		log::logWarning("Invalid status data on device id: {}", id);

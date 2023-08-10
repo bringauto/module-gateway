@@ -2,7 +2,6 @@
 
 #include <bringauto/structures/GlobalContext.hpp>
 #include <bringauto/structures/ThreadTimer.hpp>
-#include <memory_management.h>
 #include <device_management.h>
 
 #include <queue>
@@ -12,7 +11,8 @@
 
 namespace bringauto::structures {
 
-struct StatusAggregatorDeviceState {
+class StatusAggregatorDeviceState {
+public:
 
 	StatusAggregatorDeviceState() = default;
 
@@ -20,16 +20,24 @@ struct StatusAggregatorDeviceState {
 								std::function<int(const struct ::device_identification)> fun,
 								const device_identification &deviceId, const buffer command, const buffer status);
 
-	void changeStatus(const buffer &buff);
+	void setStatus(const buffer &statusBuffer);
 
-	std::queue<struct buffer> aggregatedMessages;
+	const struct buffer &getStatus();
 
-	struct buffer status;
+	void deallocateStatus();
+
+	void setStatusAndResetTimer(const buffer &statusBuffer);
+
+	std::queue<struct buffer> &getAggregatedMessages();
 
 	struct buffer command;
 
 private:
-	std::unique_ptr <bringauto::structures::ThreadTimer> timer {};
+	std::unique_ptr <bringauto::structures::ThreadTimer> timer_ {};
+
+	std::queue<struct buffer> aggregatedMessages;
+
+	struct buffer status_;
 };
 
 }

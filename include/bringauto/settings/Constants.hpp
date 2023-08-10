@@ -29,6 +29,12 @@ constexpr int status_response_timeout { 30 };
  * @brief time between checks of atomic queue used for one-way communication from Module Handler to Internal Server
  */
 constexpr std::chrono::seconds queue_timeout_length { 3 };
+
+/**
+ * @brief timeout that defines force aggregation on device
+ */
+constexpr long status_aggregation_timeout { 5 };
+
 /**
  * &brief Fleet Protocol defines messages as always starting with 4 bytes header
  */

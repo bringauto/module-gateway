@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bringauto/structures/GlobalContext.hpp>
+#include <bringauto/settings/Constants.hpp>
 #include <device_management.h>
 #include <memory_management.h>
 
@@ -22,20 +23,20 @@ namespace bringauto::structures {
 class ThreadTimer {
 
 public:
-    /**
-     * @brief Constructor
-     *
-     * @param context   Global context
-     * @param func		Function which should be executed
-     * @param interval	Interval of time in which function will be executed
-     *					(in seconds)
-     */
+	/**
+	 * @brief Constructor
+	 *
+	 * @param context   Global context
+	 * @param func		Function which should be executed
+	 * @param interval	Interval of time in which function will be executed
+	 *					(in seconds)
+	 */
 	explicit ThreadTimer(std::shared_ptr <bringauto::structures::GlobalContext> &context,
 						 std::function<int(const struct ::device_identification)> fun,
-						 const device_identification &deviceId, const long &interval): timer_ { context->ioContext },
-																					  fun_ { fun },
-																					  deviceId_ { deviceId },
-																					  interval_ { interval } {}
+						 const device_identification &deviceId): timer_ { context->ioContext },
+																 fun_ { fun },
+																 deviceId_ { deviceId },
+																 interval_ { settings::status_aggregation_timeout } {}
 
 	~ThreadTimer();
 
