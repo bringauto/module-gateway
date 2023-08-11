@@ -72,10 +72,11 @@ int MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
 	if(!client_->is_connected() || client_ == nullptr) {
 		return -1;
 	}
-	unsigned int size = message->ByteSizeLong();
-    uint8_t buffer[size] = { '\0' };
-	message->SerializeToArray(buffer, static_cast<int>(size));
-	client_->publish(publishTopic_, buffer, size, qos, false);
+	const auto size = message->ByteSizeLong();
+	auto buffer = std::make_unique<uint8_t>(size);
+
+	message->SerializeToArray(buffer.get(), static_cast<int>(size));
+	client_->publish(publishTopic_, buffer.get(), size, qos, false);
 	return 0;
 }
 
