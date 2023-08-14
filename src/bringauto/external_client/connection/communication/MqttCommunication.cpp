@@ -69,7 +69,7 @@ int MqttCommunication::initializeConnection() {
 }
 
 int MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
-	if(!client_->is_connected() || client_ == nullptr) {
+	if(client_ == nullptr || not client_->is_connected()) {
 		return -1;
 	}
 	const auto size = message->ByteSizeLong();

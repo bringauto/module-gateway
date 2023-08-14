@@ -20,7 +20,7 @@ ExternalConnection::ExternalConnection(const std::shared_ptr <structures::Global
 									   const std::shared_ptr <structures::AtomicQueue<
 											   std::reference_wrapper < connection::ExternalConnection>>>& reconnectQueue):
 												context_ {context},
-                                                moduleLibrary_ {moduleLibrary},
+												moduleLibrary_ {moduleLibrary},
 												settings_ {settings },
 												commandQueue_ {commandQueue },
 												reconnectQueue_ {reconnectQueue } {
@@ -246,15 +246,16 @@ void ExternalConnection::endConnection(bool completeDisconnect = false) {
 	serverMessageCounter_ = 0;
 	sentMessagesHandler_->clearAllTimers();
 
+	stopReceiving.exchange(true);
+	communicationChannel_->closeConnection();
+	if (listeningThread.joinable()){
+		listeningThread.join();
+	}
+
 	if(not completeDisconnect) {
 		reconnectQueue_->push(std::ref(*this));
 		fillErrorAggregator();
 	} else {
-		stopReceiving.exchange(true);
-		communicationChannel_->closeConnection();
-		if (listeningThread.joinable()){
-			listeningThread.join();
-		}
 		for(auto &[moduleNumber, errorAggregator]: errorAggregators) {
 			errorAggregator.destroy_error_aggregator();
 		}
@@ -295,6 +296,7 @@ bool ExternalConnection::hasAnyDeviceConnected() {
 }
 
 void ExternalConnection::receivingHandlerLoop() {
+	stopReceiving.exchange(false);
 	while(not stopReceiving) {
 		if(state_.load() == ConnectionState::CONNECTING) {
 			std::this_thread::sleep_for(std::chrono::seconds(1));

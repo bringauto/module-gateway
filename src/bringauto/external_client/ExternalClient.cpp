@@ -65,11 +65,11 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 }
 
 void ExternalClient::destroy() {
-	log::logInfo("External client stopped");
 	for(auto &externalConnection: externalConnectionsList_) {
 		externalConnection.endConnection(true);
 	}
 	fromExternalClientThread_.join();
+	log::logInfo("External client stopped");
 }
 
 void ExternalClient::run() {
@@ -161,19 +161,18 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 			statusesLeft--;
 		} else {
 			log::logDebug("Sending status inside connect sequence init");
-			sendStatus(
-					status); /// Send status from different connection, so it won't get lost. Shouldn't initialize bad recursion
+			 // Send status from different connection, so it won't get lost. Shouldn't initialize bad recursion
+            sendStatus(status);
 		}
 		toExternalQueue_->pop();
 	}
 
 	if(connection.initializeConnection() != 0) {
-		// this probably does not work, because destructor of deadline_timer is called right after this if
+        log::logDebug("Waiting for reconnect timer to expire");
 		boost::asio::deadline_timer timer(context_->ioContext);
 		timer.expires_from_now(boost::posix_time::seconds(settings::reconnect_delay));
-		timer.async_wait([this, &connection](const boost::system::error_code &error) {
-			reconnectQueue_->push(connection);
-		});
+        timer.wait();
+		reconnectQueue_->push(connection);
 	}
 	insideConnectSequence_ = false;
 }
