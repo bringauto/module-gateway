@@ -21,7 +21,7 @@ using log = bringauto::logging::Logger;
 
 int ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path &path) {
 	try {
-		module_ = dlopen(path.c_str(), RTLD_LAZY | RTLD_DEEPBIND);
+		module_ = dlopen(path.c_str(), RTLD_LAZY);
 		if(module_ == nullptr) {
 			return NOT_OK;
 		}
