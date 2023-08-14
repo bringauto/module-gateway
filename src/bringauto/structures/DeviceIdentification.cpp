@@ -1,5 +1,5 @@
 #include <bringauto/structures/DeviceIdentification.hpp>
-#include "bringauto/utils/utils.hpp"
+#include <bringauto/utils/utils.hpp>
 
 
 
@@ -58,14 +58,11 @@ bool DeviceIdentification::isSame(const std::shared_ptr <DeviceIdentification> &
 }
 
 device_identification DeviceIdentification::convertToCStruct() const {
-	//duplicate code
 	struct buffer deviceRoleBuff{};
-	allocate(&deviceRoleBuff, deviceRole_.size());
-	std::memcpy(deviceRoleBuff.data, deviceRole_.c_str(), deviceRole_.size());
+    utils::initBuffer(deviceRoleBuff, deviceRole_);
 
 	struct buffer deviceNameBuff{};
-	allocate(&deviceNameBuff, deviceName_.size());
-	std::memcpy(deviceNameBuff.data, deviceName_.c_str(), deviceName_.size());
+    utils::initBuffer(deviceNameBuff, deviceName_);
 
 	return device_identification {
 			.module = static_cast<int>(module_),
