@@ -73,7 +73,7 @@ int MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
 		return -1;
 	}
 	const auto size = message->ByteSizeLong();
-	auto buffer = std::make_unique<uint8_t>(size);
+	auto buffer = std::make_unique<uint8_t []>(size);
 
 	message->SerializeToArray(buffer.get(), static_cast<int>(size));
 	client_->publish(publishTopic_, buffer.get(), size, qos, false);
