@@ -24,7 +24,7 @@ ExternalConnection::ExternalConnection(const std::shared_ptr <structures::Global
 												settings_ {settings },
 												commandQueue_ {commandQueue },
 												reconnectQueue_ {reconnectQueue } {
-	sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context, [this]() { endConnection(false); });
+	sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context, [this]() { reconnectQueue_->push(std::ref(*this)); });
 }
 
 void ExternalConnection::init(const std::string &company, const std::string &vehicleName) {
@@ -253,7 +253,6 @@ void ExternalConnection::endConnection(bool completeDisconnect = false) {
 	}
 
 	if(not completeDisconnect) {
-		reconnectQueue_->push(std::ref(*this));
 		fillErrorAggregator();
 	} else {
 		for(auto &[moduleNumber, errorAggregator]: errorAggregators) {
@@ -277,16 +276,17 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command &commandMe
 	}
 	serverMessageCounter_ = messageCounter;
 	ExternalProtocol::CommandResponse::Type responseType;
-	if(sentMessagesHandler_->isDeviceConnected(commandMessage.devicecommand().device())) {
+	// fix method isDeviceConnected it is completely bad implemented
+	// if(sentMessagesHandler_->isDeviceConnected(commandMessage.devicecommand().device())) {
 		responseType = ExternalProtocol::CommandResponse_Type_OK;
 		commandQueue_->pushAndNotify(commandMessage.devicecommand());
-	} else {
-		responseType = ExternalProtocol::CommandResponse_Type_DEVICE_NOT_CONNECTED; // TODO check if is supported
-	}
+	// } else {
+	// 	responseType = ExternalProtocol::CommandResponse_Type_DEVICE_NOT_CONNECTED; // TODO check if is supported
+	// }
 
 	auto commandResponse = common_utils::ProtobufUtils::CreateExternalClientCommandResponse(sessionId_, responseType,
 																							messageCounter);
-	log::logDebug("Sending command response witch messageCounter={}", messageCounter);
+	log::logDebug("Sending command response with type={} and messageCounter={}", responseType, messageCounter);
 	communicationChannel_->sendMessage(&commandResponse);
 	return 0;
 }

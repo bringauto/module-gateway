@@ -40,7 +40,7 @@ void ExternalClient::handleCommands() {
 void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &deviceCommand) {
 	const auto &device = deviceCommand.device();
 	const auto &moduleNumber = device.module();
-    auto &statusAggregators = moduleLibrary_.statusAggregators;
+	auto &statusAggregators = moduleLibrary_.statusAggregators;
 	if(not statusAggregators.contains(moduleNumber)) {
 		log::logWarning("Module with module number {} does no exists", moduleNumber);
 		return;
@@ -60,7 +60,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 		log::logError("Update command failed with error code: {}", ret);
 		return;
 	}
-    utils::deallocateDeviceId(deviceId);
+	utils::deallocateDeviceId(deviceId);
 	log::logInfo("Command on device {} was successfully updated", device.devicename());
 }
 
@@ -93,7 +93,9 @@ void ExternalClient::initConnections() {
 void ExternalClient::handleAggregatedMessages() {
 	while(not context_->ioContext.stopped()) {
 		if(not reconnectQueue_->empty()) {
-			startExternalConnectSequence(reconnectQueue_->front().get());
+			auto &connection = reconnectQueue_->front().get();
+			connection.endConnection(false);
+			startExternalConnectSequence(connection);
 			reconnectQueue_->pop();
 		}
 		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
@@ -116,7 +118,17 @@ void ExternalClient::sendStatus(const InternalProtocol::DeviceStatus &deviceStat
 
 	auto &connection = it->second.get();
 	if(connection.getState() != connection::ConnectionState::CONNECTED) {
+
+		// do everything in that while
 		connection.fillErrorAggregator(deviceStatus);
+		toExternalQueue_->pop();
+		while(not toExternalQueue_->empty()){
+			auto &message = toExternalQueue_->front().devicestatus();
+			connection.fillErrorAggregator(message);
+			toExternalQueue_->pop();
+		}
+
+		// this if is tottaly useless i think, because this is just one thread that knows about insideConnectSequence_
 		if(connection.getState() == connection::ConnectionState::NOT_INITIALIZED) {
 			if(insideConnectSequence_) {
 				log::logWarning(
@@ -162,17 +174,18 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		} else {
 			log::logDebug("Sending status inside connect sequence init");
 			 // Send status from different connection, so it won't get lost. Shouldn't initialize bad recursion
-            sendStatus(status);
+			sendStatus(status);
 		}
 		toExternalQueue_->pop();
 	}
 
 	if(connection.initializeConnection() != 0) {
-        log::logDebug("Waiting for reconnect timer to expire");
+		log::logDebug("Waiting for reconnect timer to expire");
 		boost::asio::deadline_timer timer(context_->ioContext);
 		timer.expires_from_now(boost::posix_time::seconds(settings::reconnect_delay));
-        timer.wait();
-		reconnectQueue_->push(connection);
+		timer.wait();
+		log::logDebug("Reconnect timer expired");
+		reconnectQueue_->push(std::ref(connection));
 	}
 	insideConnectSequence_ = false;
 }
