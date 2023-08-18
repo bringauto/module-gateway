@@ -5,7 +5,7 @@
 
 #include <mqtt/async_client.h>
 
-#include <string_view>
+#include <string>
 
 
 
@@ -49,13 +49,13 @@ private:
 	std::string subscribeTopic_ {};
 
 	mqtt::connect_options connopts_ {};
+
 	std::string serverAddress_ {};
 
 	/**
 	 * MQTT QOS level. Level 0 has no assurance of delivery and does not buffer messages.
 	 */
-	constexpr static int8_t
-	qos { 0 };
+	constexpr static int8_t qos { 0 };
 };
 
 }

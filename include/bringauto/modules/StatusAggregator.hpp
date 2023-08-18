@@ -133,7 +133,8 @@ public:
 
 private:
 
-	void aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status, const unsigned int &device_type);
+	void aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
+						 const unsigned int &device_type);
 
 	std::shared_ptr <structures::GlobalContext> context_;
 

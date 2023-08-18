@@ -19,11 +19,12 @@ class ModuleHandler {
 public:
 	ModuleHandler(
 			std::shared_ptr <structures::GlobalContext> &context,
-            structures::ModuleLibrary &moduleLibrary,
+			structures::ModuleLibrary &moduleLibrary,
 			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &fromInternalQueue,
 			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> &toInternalQueue,
 			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &toExternalQueue)
-			: context_ { context }, moduleLibrary_ { moduleLibrary }, fromInternalQueue_ { fromInternalQueue }, toInternalQueue_ { toInternalQueue },
+			: context_ { context }, moduleLibrary_ { moduleLibrary }, fromInternalQueue_ { fromInternalQueue },
+			  toInternalQueue_ { toInternalQueue },
 			  toExternalQueue_ { toExternalQueue } {}
 
 	/**
@@ -64,7 +65,7 @@ private:
 
 	std::shared_ptr <structures::GlobalContext> context_;
 
-    structures::ModuleLibrary& moduleLibrary_;
+	structures::ModuleLibrary &moduleLibrary_;
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> fromInternalQueue_;
 

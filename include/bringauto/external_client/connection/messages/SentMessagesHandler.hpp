@@ -42,7 +42,7 @@ public:
 
 	void deleteConnectedDevice(const InternalProtocol::Device &device);
 
-	bool isDeviceConnected(InternalProtocol::Device device);
+	bool isDeviceConnected(const InternalProtocol::Device &device);
 
 	[[nodiscard]] bool isAnyDeviceConnected() { return connectedDevices_.empty(); };
 

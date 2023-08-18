@@ -53,7 +53,7 @@ void SentMessagesHandler::deleteConnectedDevice(const InternalProtocol::Device &
 							  device.devicename());
 }
 
-bool SentMessagesHandler::isDeviceConnected(InternalProtocol::Device device) {
+bool SentMessagesHandler::isDeviceConnected(const InternalProtocol::Device &device) {
 	return std::any_of(connectedDevices_.begin(), connectedDevices_.end(), [&](const auto &connectedDevice) {
 		return google::protobuf::util::MessageDifferencer::Equals(device, connectedDevice);
 	});
