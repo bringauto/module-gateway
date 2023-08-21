@@ -50,7 +50,7 @@ public:
 	inline static constexpr std::string_view CONFIG_PATH { "config-path" };
 	inline static constexpr std::string_view VERBOSE { "verbose" };
 	inline static constexpr std::string_view LOG_PATH { "log-path" };
-    inline static constexpr std::string_view HELP { "help" };
+	inline static constexpr std::string_view HELP { "help" };
 	inline static constexpr std::string_view PORT { "port" };
 
 	inline static constexpr std::string_view MODULE_PATHS { "module-paths" };
@@ -65,6 +65,7 @@ public:
 	inline static constexpr std::string_view SERVER_IP { "server-ip" };
 	inline static constexpr std::string_view PROTOCOL_TYPE { "protocol-type" };
 
+	inline static constexpr std::string_view MQTT { "MQTT" };
 	inline static constexpr std::string_view MQTT_SETTINGS { "mqtt-settings" };
 	inline static constexpr std::string_view SSL { "ssl" };
 	inline static constexpr std::string_view CA_FILE { "ca-file" };

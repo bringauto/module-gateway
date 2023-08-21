@@ -108,7 +108,7 @@ private:
 
 	std::atomic<bool> stopReceiving { false };
 
-	const int KEY_LENGHT = 8;
+	const int KEY_LENGHT { 8 };
 
 	u_int32_t clientMessageCounter_ { 0 };
 

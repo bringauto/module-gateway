@@ -1,12 +1,14 @@
 
+#include <bringauto/external_client/ExternalClient.hpp>
 #include <bringauto/internal_server/InternalServer.hpp>
+#include <bringauto/modules/ModuleHandler.hpp>
+#include <bringauto/settings/SettingsParser.hpp>
+#include <bringauto/structures/AtomicQueue.hpp>
 #include <bringauto/structures/GlobalContext.hpp>
 #include <bringauto/structures/ModuleLibrary.hpp>
-#include <bringauto/external_client/ExternalClient.hpp>
-#include <bringauto/modules/ModuleHandler.hpp>
-#include <bringauto/structures/AtomicQueue.hpp>
-#include <bringauto/settings/SettingsParser.hpp>
+#include <bringauto/structures/InternalClientMessage.hpp>
 #include <bringauto/utils/utils.hpp>
+
 #include <InternalProtocol.pb.h>
 
 #include <thread>
@@ -37,7 +39,7 @@ int main(int argc, char **argv) {
 	signals.async_wait([context](auto, auto) { context->ioContext.stop(); });
 
 	auto toInternalQueue = std::make_shared < bas::AtomicQueue < InternalProtocol::InternalServer >> ();
-	auto fromInternalQueue = std::make_shared < bas::AtomicQueue < InternalProtocol::InternalClient >> ();
+	auto fromInternalQueue = std::make_shared < bas::AtomicQueue < bas::InternalClientMessage >> ();
 	auto toExternalQueue = std::make_shared < bas::AtomicQueue < InternalProtocol::InternalClient >> ();
 
 	bais::InternalServer internalServer { context, fromInternalQueue, toInternalQueue };

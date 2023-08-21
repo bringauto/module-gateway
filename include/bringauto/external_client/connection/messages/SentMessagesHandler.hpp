@@ -27,14 +27,13 @@ public:
 	 */
 	int acknowledgeStatus(const ExternalProtocol::StatusResponse &statusResponse);
 
-	[[nodiscard]] const std::vector <std::shared_ptr<NotAckedStatus>> &
-	getNotAckedStatus() const { return notAckedStatuses_; }
+	[[nodiscard]] const std::vector <std::shared_ptr<NotAckedStatus>> &getNotAckedStatus() const;
 
 	/**
 	 * @brief Return true if all statuses were acknowledged
 	 * @return
 	 */
-	[[nodiscard]] bool allStatusesAcked() const { return notAckedStatuses_.empty(); };
+	[[nodiscard]] bool allStatusesAcked() const;
 
 	void clearAll();
 
@@ -44,7 +43,7 @@ public:
 
 	bool isDeviceConnected(const InternalProtocol::Device &device);
 
-	[[nodiscard]] bool isAnyDeviceConnected() { return connectedDevices_.empty(); };
+	[[nodiscard]] bool isAnyDeviceConnected() const;
 
 	void clearAllTimers();
 
@@ -70,7 +69,7 @@ private:
 
 	std::shared_ptr <structures::GlobalContext> context_;
 
-	std::atomic<bool> responseHandled_ = false;
+	std::atomic<bool> responseHandled_ { false };
 
 	std::mutex responseHandledMutex_;
 

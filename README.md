@@ -51,7 +51,8 @@ make
 * `-l | --log-path <string>` logs will be saved to provided path
 * `-h | --help` print help
 
-* `--port ` unsigned short, port on which Internal Server communicates
+* `--port <unsigned short>` port on which Internal Server communicates
+* `--module-paths <string>` path to shared module libraries
 
 ### CMAKE arguments
 
@@ -77,9 +78,9 @@ make
 
 * CURRENTLY UNUSED
   * BRINGAUTO_SAMPLES=ON/OFF
-      - DEFAULT: OFF
-      - if on enable build/configure of sample aplications
-      - if off disable build/configure of sample application
+	  - DEFAULT: OFF
+	  - if on enable build/configure of sample aplications
+	  - if off disable build/configure of sample application
 
 
 

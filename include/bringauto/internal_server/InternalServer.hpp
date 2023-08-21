@@ -5,6 +5,7 @@
 #include <bringauto/structures/Connection.hpp>
 #include <bringauto/structures/ConnectionContext.hpp>
 #include <bringauto/structures/GlobalContext.hpp>
+#include <bringauto/structures/InternalClientMessage.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
 
@@ -32,7 +33,7 @@ public:
 	 * @param toInternalQueue queue for sending data from Module Handler to Server
 	 */
 	InternalServer(const std::shared_ptr <structures::GlobalContext> &context,
-				   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &fromInternalQueue,
+				   const std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &fromInternalQueue,
 				   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> &toInternalQueue)
 			: context_ { context }, acceptor_(context->ioContext), fromInternalQueue_ { fromInternalQueue },
 			  toInternalQueue_ { toInternalQueue } {}
@@ -191,7 +192,7 @@ private:
 
 	std::shared_ptr <structures::GlobalContext> context_;
 	boost::asio::ip::tcp::acceptor acceptor_;
-	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> fromInternalQueue_;
+	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> fromInternalQueue_;
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
 
 	std::mutex serverMutex_;

@@ -41,18 +41,6 @@ void MqttCommunication::setProperties(const std::string &company, const std::str
 	}
 }
 
-void MqttCommunication::connect() {
-	client_ = std::make_unique<mqtt::async_client>(serverAddress_, clientId_,
-												   mqtt::create_options(MQTTVERSION_5)); // TODO sometimes throw SIGSEGV
-
-	client_->start_consuming();
-	mqtt::token_ptr conntok = client_->connect(connopts_);
-	conntok->wait();
-	logging::Logger::logInfo("Connected to MQTT server {}", serverAddress_);
-
-	client_->subscribe(subscribeTopic_, qos)->get_subscribe_response();
-}
-
 int MqttCommunication::initializeConnection() {
 	if(client_ != nullptr && client_->is_connected()) {
 		return 0;
@@ -66,6 +54,18 @@ int MqttCommunication::initializeConnection() {
 		return -1;
 	}
 	return 0;
+}
+
+void MqttCommunication::connect() {
+	client_ = std::make_unique<mqtt::async_client>(serverAddress_, clientId_,
+												   mqtt::create_options(MQTTVERSION_5));
+
+	client_->start_consuming();
+	mqtt::token_ptr conntok = client_->connect(connopts_);
+	conntok->wait();
+	logging::Logger::logInfo("Connected to MQTT server {}", serverAddress_);
+
+	client_->subscribe(subscribeTopic_, qos)->get_subscribe_response();
 }
 
 int MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
@@ -102,7 +102,7 @@ std::shared_ptr <ExternalProtocol::ExternalServer> MqttCommunication::receiveMes
 }
 
 void MqttCommunication::closeConnection() {
-	if(client_ == nullptr) {
+	if(not client_) {
 		return;
 	}
 	if(client_->is_connected()) {
@@ -113,15 +113,15 @@ void MqttCommunication::closeConnection() {
 }
 
 std::string MqttCommunication::createClientId(const std::string &company, const std::string &vehicleName) {
-	return company + std::string("/") + vehicleName; // TODO should have session ID or that is only inside protocol?
+	return company + std::string("/") + vehicleName;
 }
 
 std::string MqttCommunication::createPublishTopic(const std::string &company, const std::string &vehicleName) {
-	return company + std::string("/") + vehicleName + std::string("/module_gateway");
+	return createClientId(company, vehicleName) + std::string("/module_gateway");
 }
 
 std::string MqttCommunication::createSubscribeTopic(const std::string &company, const std::string &vehicleName) {
-	return company + std::string("/") + vehicleName + std::string("/external_server");
+	return createClientId(company, vehicleName) + std::string("/external_server");
 }
 
 

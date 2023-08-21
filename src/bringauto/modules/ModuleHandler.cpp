@@ -29,19 +29,23 @@ void ModuleHandler::handle_messages() {
 		}
 
 		auto &message = fromInternalQueue_->front();
-		if(message.has_deviceconnect()) {
-			handle_connect(message.deviceconnect());
-		} else if(message.has_devicestatus()) {
-			handle_status(message.devicestatus());
-		} else {
-			log::logWarning("Module handler received message which is not Connect or Status");
+		if (message.disconnected()){
+			handleDisconnect(message.getDeviceId());
+		} else if(message.getMessage().has_deviceconnect()) {
+			handleConnect(message.getMessage().deviceconnect());
+		} else if(message.getMessage().has_devicestatus()) {
+			handleStatus(message.getMessage().devicestatus());
 		}
 
 		fromInternalQueue_->pop();
 	}
 }
 
-void ModuleHandler::handle_connect(const ip::DeviceConnect &connect) {
+void ModuleHandler::handleDisconnect(device_identification device){
+	log::logCritical("Disconnected");
+}
+
+void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
 	const auto &device = connect.device();
 	const auto &moduleNumber = device.module();
 	auto &statusAggregators = moduleLibrary_.statusAggregators;
@@ -62,7 +66,7 @@ void ModuleHandler::handle_connect(const ip::DeviceConnect &connect) {
 	log::logInfo("New device {} is trying to connect, sending response {}", device.devicename(), response_type);
 }
 
-void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
+void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	const auto &device = status.device();
 	const auto &moduleNumber = device.module();
 	const auto &deviceName = device.devicename();
@@ -111,7 +115,7 @@ void ModuleHandler::handle_status(const ip::DeviceStatus &status) {
 	toInternalQueue_->pushAndNotify(deviceCommandMessage);
 	log::logDebug("Module handler succesfully retrieved command and sent it to device: {}", deviceName);
 
-    utils::deallocateDeviceId(deviceId);
+	utils::deallocateDeviceId(deviceId);
 	deallocate(&commandBuffer);
 	deallocate(&statusBuffer);
 }

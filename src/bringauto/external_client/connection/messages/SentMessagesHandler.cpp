@@ -33,6 +33,14 @@ int SentMessagesHandler::acknowledgeStatus(const ExternalProtocol::StatusRespons
 	return NOT_OK;
 }
 
+const std::vector <std::shared_ptr<NotAckedStatus>> &SentMessagesHandler::getNotAckedStatus() const {
+	return notAckedStatuses_;
+}
+
+bool SentMessagesHandler::allStatusesAcked() const {
+	return notAckedStatuses_.empty();
+}
+
 void SentMessagesHandler::clearAll() {
 	clearAllTimers();
 	notAckedStatuses_.clear();
@@ -58,6 +66,10 @@ bool SentMessagesHandler::isDeviceConnected(const InternalProtocol::Device &devi
 		return google::protobuf::util::MessageDifferencer::Equals(device, connectedDevice);
 	});
 }
+
+bool SentMessagesHandler::isAnyDeviceConnected() const {
+	return connectedDevices_.empty();
+};
 
 void SentMessagesHandler::clearAllTimers() {
 	for(auto &notAckedStatus: notAckedStatuses_) {

@@ -1,14 +1,14 @@
 #pragma once
 
-#include <memory>
-#include <unordered_map>
-
 #include <InternalProtocol.pb.h>
 #include <bringauto/structures/GlobalContext.hpp>
 #include <bringauto/structures/ModuleLibrary.hpp>
 #include <bringauto/modules/StatusAggregator.hpp>
 #include <bringauto/structures/AtomicQueue.hpp>
+#include <bringauto/structures/InternalClientMessage.hpp>
 #include <device_management.h>
+
+#include <memory>
 
 
 
@@ -20,7 +20,7 @@ public:
 	ModuleHandler(
 			std::shared_ptr <structures::GlobalContext> &context,
 			structures::ModuleLibrary &moduleLibrary,
-			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &fromInternalQueue,
+			std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &fromInternalQueue,
 			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> &toInternalQueue,
 			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &toExternalQueue)
 			: context_ { context }, moduleLibrary_ { moduleLibrary }, fromInternalQueue_ { fromInternalQueue },
@@ -49,25 +49,32 @@ private:
 	 */
 	void handle_messages();
 
+    /**
+     * @brief Process disconnect device
+     *
+     * @param device device identification
+     */
+    void handleDisconnect(device_identification device);
+
 	/**
 	 * @brief Process connect message
 	 *
 	 * @param connect Connect message
 	 */
-	void handle_connect(const InternalProtocol::DeviceConnect &connect);
+	void handleConnect(const InternalProtocol::DeviceConnect &connect);
 
 	/**
 	 * @brief Process status message
 	 *
 	 * @param status Status message
 	 */
-	void handle_status(const InternalProtocol::DeviceStatus &status);
+	void handleStatus(const InternalProtocol::DeviceStatus &status);
 
 	std::shared_ptr <structures::GlobalContext> context_;
 
 	structures::ModuleLibrary &moduleLibrary_;
 
-	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> fromInternalQueue_;
+	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> fromInternalQueue_;
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
 

@@ -27,7 +27,7 @@ public:
 
 	explicit StatusAggregator(const std::shared_ptr <structures::GlobalContext> &context,
 							  const std::shared_ptr <ModuleManagerLibraryHandler> &libraryHandler): context_ { context },
-																							module_ { libraryHandler } {};
+																									module_ { libraryHandler } {};
 
 	StatusAggregator() = default;
 

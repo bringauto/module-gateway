@@ -1,12 +1,14 @@
 #include <bringauto/common_utils/EnumUtils.hpp>
 
+#include <bringauto/settings/Constants.hpp>
+
 
 
 namespace bringauto::common_utils {
 
 structures::ProtocolType EnumUtils::stringToProtocolType(std::string toEnum) {
 	std::transform(toEnum.begin(), toEnum.end(), toEnum.begin(), ::toupper);
-	if(toEnum == "MQTT") {
+	if(toEnum == settings::Constants::MQTT) {
 		return structures::ProtocolType::MQTT;
 	}
 	return structures::ProtocolType::INVALID;

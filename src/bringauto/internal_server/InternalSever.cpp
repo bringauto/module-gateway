@@ -61,6 +61,7 @@ void InternalServer::asyncReceiveHandler(
 					connection->deviceId->getDeviceType(), connection->deviceId->getDeviceRole(),
 					connection->deviceId->getDeviceName(), connection->deviceId->getPriority(),
 					error.message());
+			fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(connection->deviceId->convertToCStruct()));
 		} else {
 			logging::Logger::logWarning(
 					"Internal Client with ip address {} has been disconnected. Reason: {}",
@@ -181,7 +182,7 @@ bool InternalServer::handleStatus(const std::shared_ptr <structures::Connection>
 											 connection->socket.remote_endpoint().address().to_string());
 		return false;
 	}
-	fromInternalQueue_->pushAndNotify(client);
+	fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(client));
 	connection->ready = false;
 	return true;
 }
@@ -223,7 +224,7 @@ void InternalServer::connectNewDevice(const std::shared_ptr <structures::Connect
 									  const std::shared_ptr <structures::DeviceIdentification> &deviceId) {
 	connection->deviceId = deviceId;
 	connectedDevices_.push_back(connection);
-	fromInternalQueue_->pushAndNotify(connect);
+	fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(connect));
 	logging::Logger::logInfo(
 			"Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
 			"has been added into the vector of active connections",
@@ -377,7 +378,6 @@ void InternalServer::stop() {
 	boost::system::error_code error {};
 	acceptor_.cancel(error);
 	acceptor_.close(error);
-	// listeningThread->join();
 }
 
 
