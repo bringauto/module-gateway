@@ -54,7 +54,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 	}
 	std::memcpy(commandBuffer.data, commandData.c_str(), commandBuffer.size_in_bytes);
 
-	auto deviceId = common_utils::ProtobufUtils::ParseDevice(device);
+	auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
 	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);
 	utils::deallocateDeviceId(deviceId);
 	if(ret != OK) {
@@ -150,9 +150,8 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	}
 
 	auto statusesLeft = connection.forceAggregationOnAllDevices();
-	// maybe do it better way
-	std::set <std::string> devices {};
 
+	std::set <std::string> devices {};
 	while(statusesLeft != 0) {
 		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;

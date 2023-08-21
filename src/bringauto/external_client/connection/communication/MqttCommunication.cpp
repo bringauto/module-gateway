@@ -18,7 +18,8 @@ void MqttCommunication::setProperties(const std::string &company, const std::str
 	serverAddress_ = { settings_.serverIp
 					   + ":" + std::to_string(settings_.port) };
 
-	if(settings_.protocolSettings.contains(std::string(settings::Constants::SSL)) && settings_.protocolSettings[std::string(settings::Constants::SSL)] == "true") {
+	if(settings_.protocolSettings.contains(std::string(settings::Constants::SSL)) &&
+	   settings_.protocolSettings[std::string(settings::Constants::SSL)] == "true") {
 		if(settings_.protocolSettings.contains(std::string(settings::Constants::CA_FILE))
 		   && settings_.protocolSettings.contains(std::string(settings::Constants::CLIENT_CERT))
 		   && settings_.protocolSettings.contains(std::string(settings::Constants::CLIENT_KEY))
@@ -35,8 +36,8 @@ void MqttCommunication::setProperties(const std::string &company, const std::str
 			connopts_.set_ssl(sslopts);
 
 		} else {
-			logging::Logger::logError("MQTT: Settings doesn't contain all required files for SSL");
-			// TODO throw error?? Or maybe move this to connect
+			logging::Logger::logError(
+					"MQTT: Settings doesn't contain all required files for SSL. SSL will not be used in this connection.");
 		}
 	}
 }
@@ -68,19 +69,18 @@ void MqttCommunication::connect() {
 	client_->subscribe(subscribeTopic_, qos)->get_subscribe_response();
 }
 
-int MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
+void MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
 	if(client_ == nullptr || not client_->is_connected()) {
-		return -1;
+		throw std::runtime_error("Mqtt client is not initialized or connected to the server");
 	}
 	const auto size = message->ByteSizeLong();
-	auto buffer = std::make_unique<uint8_t []>(size);
+	auto buffer = std::make_unique<uint8_t[]>(size);
 
 	message->SerializeToArray(buffer.get(), static_cast<int>(size));
 	client_->publish(publishTopic_, buffer.get(), size, qos, false);
-	return 0;
 }
 
-std::shared_ptr <ExternalProtocol::ExternalServer> MqttCommunication::receiveMessage() {
+std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMessage() {
 	if(client_ == nullptr) {
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 		return nullptr;

@@ -236,7 +236,7 @@ void InternalServer::connectNewDevice(const std::shared_ptr <structures::Connect
 void InternalServer::respondWithHigherPriorityConnected(const std::shared_ptr <structures::Connection> &connection,
 														const InternalProtocol::InternalClient &connect,
 														const std::shared_ptr <structures::DeviceIdentification> &deviceId) {
-	auto message = common_utils::ProtobufUtils::CreateInternalServerConnectResponseMessage(
+	auto message = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(
 			connect.deviceconnect().device(),
 			InternalProtocol::DeviceConnectResponse_ResponseType_HIGHER_PRIORITY_ALREADY_CONNECTED);
 	logging::Logger::logInfo(
@@ -251,7 +251,7 @@ void InternalServer::respondWithHigherPriorityConnected(const std::shared_ptr <s
 void InternalServer::respondWithAlreadyConnected(const std::shared_ptr <structures::Connection> &connection,
 												 const InternalProtocol::InternalClient &connect,
 												 const std::shared_ptr <structures::DeviceIdentification> &deviceId) {
-	auto message = common_utils::ProtobufUtils::CreateInternalServerConnectResponseMessage(
+	auto message = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(
 			connect.deviceconnect().device(),
 			InternalProtocol::DeviceConnectResponse_ResponseType_ALREADY_CONNECTED);
 	logging::Logger::logInfo(

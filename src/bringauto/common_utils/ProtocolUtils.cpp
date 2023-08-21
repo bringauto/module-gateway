@@ -8,7 +8,7 @@
 namespace bringauto::common_utils {
 
 InternalProtocol::InternalServer
-ProtobufUtils::CreateInternalServerConnectResponseMessage(const InternalProtocol::Device &device,
+ProtobufUtils::createInternalServerConnectResponseMessage(const InternalProtocol::Device &device,
 														  const InternalProtocol::DeviceConnectResponse_ResponseType &resType) {
 	InternalProtocol::InternalServer message;
 	auto response = message.mutable_deviceconnectresponse();
@@ -19,7 +19,7 @@ ProtobufUtils::CreateInternalServerConnectResponseMessage(const InternalProtocol
 }
 
 InternalProtocol::InternalServer
-ProtobufUtils::CreateInternalServerCommandMessage(const InternalProtocol::Device &device,
+ProtobufUtils::createInternalServerCommandMessage(const InternalProtocol::Device &device,
 												  const buffer &command) {
 	InternalProtocol::InternalServer message;
 	auto deviceCommand = message.mutable_devicecommand();
@@ -30,7 +30,7 @@ ProtobufUtils::CreateInternalServerCommandMessage(const InternalProtocol::Device
 }
 
 InternalProtocol::InternalClient
-ProtobufUtils::CreateInternalClientStatusMessage(const InternalProtocol::Device &device,
+ProtobufUtils::createInternalClientStatusMessage(const InternalProtocol::Device &device,
 												 const buffer &status) {
 	InternalProtocol::InternalClient message;
 	auto deviceStatus = message.mutable_devicestatus();
@@ -40,21 +40,15 @@ ProtobufUtils::CreateInternalClientStatusMessage(const InternalProtocol::Device 
 	return message;
 }
 
-InternalProtocol::DeviceStatus ProtobufUtils::CreateDeviceStatus(const InternalProtocol::Device &device,
+InternalProtocol::DeviceStatus ProtobufUtils::createDeviceStatus(const device_identification &deviceId,
 																 const buffer &status) {
-	InternalProtocol::DeviceStatus deviceStatus;
-	deviceStatus.mutable_device()->CopyFrom(device);
+    InternalProtocol::DeviceStatus deviceStatus;
+	deviceStatus.mutable_device()->CopyFrom(createDevice(deviceId));
 	deviceStatus.set_statusdata(status.data, status.size_in_bytes);
 	return deviceStatus;
 }
 
-InternalProtocol::DeviceStatus ProtobufUtils::CreateDeviceStatus(const device_identification &device,
-																 const buffer &status) {
-	auto deviceMsg = common_utils::ProtobufUtils::CreateDevice(device);
-	return CreateDeviceStatus(deviceMsg, status);
-}
-
-device_identification ProtobufUtils::ParseDevice(const InternalProtocol::Device &device) {
+device_identification ProtobufUtils::parseDevice(const InternalProtocol::Device &device) {
     struct buffer deviceRoleBuff{};
     utils::initBuffer(deviceRoleBuff, device.devicerole());
 
@@ -68,27 +62,19 @@ device_identification ProtobufUtils::ParseDevice(const InternalProtocol::Device 
 			.priority = device.priority() };
 }
 
-buffer ProtobufUtils::ProtobufToBuffer(const google::protobuf::Message &protobufMessage) {
-	struct buffer message {};
-	if((allocate(&message, protobufMessage.ByteSizeLong())) == OK) {
-		protobufMessage.SerializeToArray(message.data, (int)message.size_in_bytes);
-	}
-	return message;
-}
-
-InternalProtocol::Device ProtobufUtils::CreateDevice(const device_identification &device) {
+InternalProtocol::Device ProtobufUtils::createDevice(const device_identification &device) {
     std::string device_role{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes};
     std::string device_name{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes};
-	return CreateDevice(device.module, device.device_type, device_role, device_name, device.priority);
+	return createDevice(device.module, device.device_type, device_role, device_name, device.priority);
 }
 
-InternalProtocol::Device ProtobufUtils::CreateDevice(const structures::DeviceIdentification &device) {
-	return CreateDevice(device.getModule(), device.getDeviceType(), device.getDeviceRole(), device.getDeviceName(),
+InternalProtocol::Device ProtobufUtils::createDevice(const structures::DeviceIdentification &device) {
+	return createDevice(device.getModule(), device.getDeviceType(), device.getDeviceRole(), device.getDeviceName(),
 						device.getPriority());
 }
 
 InternalProtocol::Device
-ProtobufUtils::CreateDevice(int module, unsigned int type, const std::string &role, const std::string &name,
+ProtobufUtils::createDevice(int module, unsigned int type, const std::string &role, const std::string &name,
 							unsigned int priority) {
 	InternalProtocol::Device device;
 	device.set_module(static_cast<InternalProtocol::Device::Module>(module));
@@ -99,7 +85,7 @@ ProtobufUtils::CreateDevice(int module, unsigned int type, const std::string &ro
 	return device;
 }
 
-ExternalProtocol::ExternalClient ProtobufUtils::CreateExternalClientConnect(const std::string &sessionId,
+ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientConnect(const std::string &sessionId,
 																			const std::string &company,
 																			const std::string &vehicleName,
 																			const std::vector <device_identification> &devices) {
@@ -112,13 +98,13 @@ ExternalProtocol::ExternalClient ProtobufUtils::CreateExternalClientConnect(cons
 
 	for(const auto &tmpDevice: devices) {
 		auto devicePtr = connectMessage->add_devices();
-		devicePtr->CopyFrom(CreateDevice(tmpDevice));
+		devicePtr->CopyFrom(createDevice(tmpDevice));
 	}
 
 	return externalMessage;
 }
 
-ExternalProtocol::ExternalClient ProtobufUtils::CreateExternalClientConnect(const std::string &sessionId,
+ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientConnect(const std::string &sessionId,
 																			const std::string &company,
 																			const std::string &vehicleName,
 																			const std::vector <structures::DeviceIdentification> &devices) {
@@ -131,13 +117,13 @@ ExternalProtocol::ExternalClient ProtobufUtils::CreateExternalClientConnect(cons
 
 	for(const auto &tmpDevice: devices) {
 		auto devicePtr = connectMessage->add_devices();
-		devicePtr->CopyFrom(CreateDevice(tmpDevice));
+		devicePtr->CopyFrom(createDevice(tmpDevice));
 	}
 
 	return externalMessage;
 }
 
-ExternalProtocol::ExternalClient ProtobufUtils::CreateExternalClientStatus(const std::string &sessionId,
+ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientStatus(const std::string &sessionId,
 																		   ExternalProtocol::Status_DeviceState deviceState,
 																		   u_int32_t messageCounter,
 																		   const InternalProtocol::DeviceStatus &deviceStatus,
@@ -154,7 +140,7 @@ ExternalProtocol::ExternalClient ProtobufUtils::CreateExternalClientStatus(const
 	return externalMessage;
 }
 
-ExternalProtocol::ExternalClient ProtobufUtils::CreateExternalClientCommandResponse(const std::string &sessionId,
+ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientCommandResponse(const std::string &sessionId,
 																					ExternalProtocol::CommandResponse::Type type,
 																					u_int32_t messageCounter) {
 	ExternalProtocol::ExternalClient externalMessage;

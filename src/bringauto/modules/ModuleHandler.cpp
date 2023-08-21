@@ -60,7 +60,7 @@ void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
 				ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_DEVICE_NOT_SUPPORTED;
 	}
 
-	auto response = common_utils::ProtobufUtils::CreateInternalServerConnectResponseMessage(device, response_type);
+	auto response = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(device, response_type);
 
 	toInternalQueue_->pushAndNotify(response);
 	log::logInfo("New device {} is trying to connect, sending response {}", device.devicename(), response_type);
@@ -86,7 +86,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	}
 	std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
-	struct ::device_identification deviceId = common_utils::ProtobufUtils::ParseDevice(device);
+	struct ::device_identification deviceId = common_utils::ProtobufUtils::parseDevice(device);
 
 	auto &statusAggregator = statusAggregators[moduleNumber];
 	int ret = statusAggregator->add_status_to_aggregator(statusBuffer, deviceId);
@@ -96,7 +96,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	} else if(ret > 0) {
 		struct ::buffer aggregatedStatusBuffer {};
 		statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
-		auto statusMessage = common_utils::ProtobufUtils::CreateInternalClientStatusMessage(device,
+		auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device,
 																							aggregatedStatusBuffer);
 		toExternalQueue_->pushAndNotify(statusMessage);
 		log::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}",
@@ -111,7 +111,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 		return;
 	}
 
-	auto deviceCommandMessage = common_utils::ProtobufUtils::CreateInternalServerCommandMessage(device, commandBuffer);
+	auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device, commandBuffer);
 	toInternalQueue_->pushAndNotify(deviceCommandMessage);
 	log::logDebug("Module handler succesfully retrieved command and sent it to device: {}", deviceName);
 

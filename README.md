@@ -20,6 +20,10 @@ The external client updates the command for each connected device and subsequent
 
 ### External Client
 
+The external client is responsible for initializing connection with external server, reconnecting, delivering protobuf messages from module
+handler to external server and updating devices commands. It uses error aggregator to process messages which could not be delivered, when
+connection is broken and as soon as the connection is up, then error aggregated message is sent.
+
 ## Requirements
 
 - [protobuf](https://github.com/protocolbuffers/protobuf/tree/main/src) >= v3.21.12

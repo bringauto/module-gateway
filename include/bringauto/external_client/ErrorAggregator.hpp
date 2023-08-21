@@ -102,10 +102,10 @@ public:
 	int get_module_number() const;
 
 	/**
-     * @short Check if device is supported
-     *
-     * @see fleet-protocol/lib/common_headers/include/device_management.h
-     */
+	 * @short Check if device is supported
+	 *
+	 * @see fleet-protocol/lib/common_headers/include/device_management.h
+	 */
 	int is_device_type_supported(unsigned int device_type);
 
 private:

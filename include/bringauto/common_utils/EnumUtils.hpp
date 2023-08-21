@@ -12,6 +12,12 @@ class EnumUtils {
 public:
 	EnumUtils() = delete;
 
+	/**
+	 * @brief Converts string to protocol type
+	 *
+	 * @param toEnum string
+	 * @return structures::ProtocolType
+	 */
 	static structures::ProtocolType stringToProtocolType(std::string toEnum);
 
 };

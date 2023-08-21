@@ -73,13 +73,16 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 			break;
 	}
 
-	auto externalMessage = common_utils::ProtobufUtils::CreateExternalClientStatus(sessionId_,
+	auto externalMessage = common_utils::ProtobufUtils::createExternalClientStatus(sessionId_,
 																				   deviceState,
 																				   getNextStatusCounter(),
 																				   status,
 																				   errorMessage);
 	sentMessagesHandler_->addNotAckedStatus(externalMessage.status());
-	if(communicationChannel_->sendMessage(&externalMessage) != 0) {
+	try {
+		communicationChannel_->sendMessage(&externalMessage);
+	} catch (std::runtime_error &e){
+		log::logError(e.what());
 		endConnection(false);
 	}
 	log::logDebug("Sending status with messageCounter '{}' with aggregated errorMessage: {}", clientMessageCounter_,
@@ -130,7 +133,7 @@ int ExternalConnection::initializeConnection() {
 int ExternalConnection::connectMessageHandle(const std::vector <structures::DeviceIdentification> &devices) {
 	setSessionId();
 
-	auto connectMessage = common_utils::ProtobufUtils::CreateExternalClientConnect(sessionId_, company_, vehicleName_,
+	auto connectMessage = common_utils::ProtobufUtils::createExternalClientConnect(sessionId_, company_, vehicleName_,
 																				   devices);
 	communicationChannel_->sendMessage(&connectMessage);
 
@@ -174,7 +177,7 @@ int ExternalConnection::statusMessageHandle(const std::vector <structures::Devic
 									  std::string{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes});
 			return -1;
 		}
-		auto deviceStatus = common_utils::ProtobufUtils::CreateDeviceStatus(device, statusBuffer);
+		auto deviceStatus = common_utils::ProtobufUtils::createDeviceStatus(device, statusBuffer);
 		sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_CONNECTING, errorBuffer);
 
 		utils::deallocateDeviceId(device);
@@ -284,7 +287,7 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command &commandMe
 	// 	responseType = ExternalProtocol::CommandResponse_Type_DEVICE_NOT_CONNECTED; // TODO check if is supported
 	// }
 
-	auto commandResponse = common_utils::ProtobufUtils::CreateExternalClientCommandResponse(sessionId_, responseType,
+	auto commandResponse = common_utils::ProtobufUtils::createExternalClientCommandResponse(sessionId_, responseType,
 																							messageCounter);
 	log::logDebug("Sending command response with type={} and messageCounter={}", responseType, messageCounter);
 	communicationChannel_->sendMessage(&commandResponse);
@@ -345,7 +348,7 @@ void ExternalConnection::fillErrorAggregator() {
 		}
 		std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
-		auto deviceId = common_utils::ProtobufUtils::ParseDevice(device);
+		auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
 		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer, deviceId);
 		utils::deallocateDeviceId(deviceId);
 		deallocate(&statusBuffer);
@@ -365,7 +368,7 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 		}
 		std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
-		auto deviceId = common_utils::ProtobufUtils::ParseDevice(deviceStatus.device());
+		auto deviceId = common_utils::ProtobufUtils::parseDevice(deviceStatus.device());
 		errorAggregators[moduleNum].add_status_to_error_aggregator(statusBuffer, deviceId);
 		utils::deallocateDeviceId(deviceId);
 		deallocate(&statusBuffer);
