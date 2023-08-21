@@ -58,7 +58,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);
 	utils::deallocateDeviceId(deviceId);
 	if(ret != OK) {
-        deallocate(&commandBuffer);
+		deallocate(&commandBuffer);
 		log::logError("Update command failed with error code: {}", ret);
 		return;
 	}
@@ -120,14 +120,8 @@ void ExternalClient::sendStatus(const InternalProtocol::DeviceStatus &deviceStat
 	auto &connection = it->second.get();
 	if(connection.getState() != connection::ConnectionState::CONNECTED) {
 
-		// do everything in that while
 		connection.fillErrorAggregator(deviceStatus);
 		toExternalQueue_->pop();
-		while(not toExternalQueue_->empty()){
-			auto &message = toExternalQueue_->front().devicestatus();
-			connection.fillErrorAggregator(message);
-			toExternalQueue_->pop();
-		}
 
 		// this if is tottaly useless i think, because this is just one thread that knows about insideConnectSequence_
 		if(connection.getState() == connection::ConnectionState::NOT_INITIALIZED) {
@@ -148,6 +142,13 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	log::logInfo("Initializing new connection");
 	insideConnectSequence_ = true;
 	log::logDebug("External client is forcing aggregation on all modules");
+
+	while(not toExternalQueue_->empty()){
+		auto &message = toExternalQueue_->front().devicestatus();
+		connection.fillErrorAggregator(message);
+		toExternalQueue_->pop();
+	}
+
 	auto statusesLeft = connection.forceAggregationOnAllDevices();
 	// maybe do it better way
 	std::set <std::string> devices {};

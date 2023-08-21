@@ -10,7 +10,7 @@
 
 namespace bringauto::internal_server {
 
-void InternalServer::start() {
+void InternalServer::run() {
 	logging::Logger::logInfo("Internal server started");
 	boost::asio::ip::tcp::endpoint endpoint { boost::asio::ip::tcp::v4(), context_->settings->port };
 	acceptor_.open(endpoint.protocol());
@@ -373,7 +373,7 @@ InternalServer::findConnection(structures::DeviceIdentification *deviceId) {
 	return connectionFound;
 }
 
-void InternalServer::stop() {
+void InternalServer::destroy() {
 	logging::Logger::logInfo("Internal server stopped");
 	boost::system::error_code error {};
 	acceptor_.cancel(error);

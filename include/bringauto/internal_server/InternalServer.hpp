@@ -45,7 +45,7 @@ public:
 	 * - Async acceptor task i added to the io_context,
 	 * - Starts Thread that listens to data coming from ModuleHandler
 	 */
-	void start();
+	void run();
 
 	/**
 	 * Stop the server.
@@ -54,7 +54,7 @@ public:
 	 * Must be called at the end of the Server instance lifetime.
 	 * After the stop() the start() can be called to reinitialized the Server instance.
 	 */
-	void stop();
+	void destroy();
 
 private:
 	/**

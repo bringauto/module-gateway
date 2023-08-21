@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
 	namespace bas = bringauto::structures;
 	namespace baset = bringauto::settings;
 	auto context = std::make_shared<bas::GlobalContext>();
-    bas::ModuleLibrary moduleLibrary{};
+	bas::ModuleLibrary moduleLibrary{};
 	try {
 		baset::SettingsParser settingsParser;
 		if(!settingsParser.parseSettings(argc, argv)) {
@@ -28,8 +28,8 @@ int main(int argc, char **argv) {
 		}
 		context->settings = settingsParser.getSettings();
 		bringauto::utils::initLogger(context->settings->logPath, context->settings->verbose);
-        moduleLibrary.loadLibraries(context->settings->modulePaths);
-        moduleLibrary.initStatusAggregators(context);
+		moduleLibrary.loadLibraries(context->settings->modulePaths);
+		moduleLibrary.initStatusAggregators(context);
 	} catch(std::exception &e) {
 		std::cerr << "[ERROR] Error occurred during initialization: " << e.what() << std::endl;
 		return 1;
@@ -49,14 +49,14 @@ int main(int argc, char **argv) {
 	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.run(); });
 	std::jthread externalClientThread([&externalClient]() { externalClient.run(); });
 	std::jthread contextThread([&context]() { context->ioContext.run(); });
-	internalServer.start();
+	internalServer.run();
 
 	contextThread.join();
-	internalServer.stop();
+	internalServer.destroy();
 	moduleHandler.destroy();
 	externalClient.destroy();
 
-    google::protobuf::ShutdownProtobufLibrary();
+	google::protobuf::ShutdownProtobufLibrary();
 
 	return 0;
 }
