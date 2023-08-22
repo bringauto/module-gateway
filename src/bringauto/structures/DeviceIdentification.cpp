@@ -27,8 +27,7 @@ DeviceIdentification::DeviceIdentification(const std::string &deviceId) {
 	deviceType_ = static_cast<unsigned int>(std::stoi(tokens[1]));
 	deviceRole_ = tokens[2];
 	deviceName_ = tokens[3];
-	priority_ = 0;
-	// .priority = static_cast<unsigned int>(std::stoi(tokens[4]))
+	priority_ = static_cast<unsigned int>(std::stoi(tokens[4]));
 }
 
 uint32_t DeviceIdentification::getPriority() const {

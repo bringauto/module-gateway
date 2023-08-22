@@ -14,6 +14,14 @@ namespace ip = InternalProtocol;
 using log = bringauto::logging::Logger;
 
 void ModuleHandler::destroy() {
+	while(not fromInternalQueue_->empty()) {
+		auto &message = fromInternalQueue_->front();
+		if(message.disconnected()) {
+			auto deviceId = message.getDeviceId();
+			common_utils::MemoryUtils::deallocateDeviceId(deviceId);
+		}
+		fromInternalQueue_->pop();
+	}
 	log::logInfo("Module handler stopped");
 }
 
@@ -29,7 +37,7 @@ void ModuleHandler::handle_messages() {
 		}
 
 		auto &message = fromInternalQueue_->front();
-		if (message.disconnected()){
+		if(message.disconnected()) {
 			handleDisconnect(message.getDeviceId());
 		} else if(message.getMessage().has_deviceconnect()) {
 			handleConnect(message.getMessage().deviceconnect());
@@ -41,7 +49,7 @@ void ModuleHandler::handle_messages() {
 	}
 }
 
-void ModuleHandler::handleDisconnect(device_identification deviceId){
+void ModuleHandler::handleDisconnect(device_identification deviceId) {
 	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	log::logCritical("Disconnected");
 }
@@ -81,7 +89,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 
 	struct ::buffer statusBuffer {};
 	const auto &statusData = status.statusdata();
-	if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {    // TODO +1
+	if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
 		log::logError("Could not allocate memory for status message");
 		return;
 	}

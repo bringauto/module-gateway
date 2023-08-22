@@ -34,7 +34,7 @@ public:
 	/**
 	 * @short Status aggregator init.
 	 *
-     * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
+	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
 	int init_status_aggregator();
 
@@ -96,10 +96,10 @@ public:
 	int force_aggregation_on_device(const struct ::device_identification device);
 
 	/**
-     * @short Check if device is valid and registered
-     *
-     * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
-     */
+	 * @short Check if device is valid and registered
+	 *
+	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
+	 */
 	int is_device_valid(const struct ::device_identification device);
 
 	/**
@@ -125,13 +125,15 @@ public:
 	int get_module_number();
 
 	/**
-     * @short Check if device is supported
-     *
-     * @see fleet-protocol/lib/common_headers/include/device_management.h
-     */
+	 * @short Check if device is supported
+	 *
+	 * @see fleet-protocol/lib/common_headers/include/device_management.h
+	 */
 	int is_device_type_supported(unsigned int device_type);
 
 private:
+
+	void clear_device(const std::string &key);
 
 	void aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
 						 const unsigned int &device_type);

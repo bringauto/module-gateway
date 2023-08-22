@@ -137,7 +137,7 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientCommandRespo
 std::string ProtobufUtils::getId(const ::device_identification &device) {
 	std::stringstream ss;
 	ss << device.module << "/" << device.device_type << "/" << std::string{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes} << "/"
-	   << std::string{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes}; // TODO we need to be able to get priority
+	   << std::string{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes}<< "/" << device.priority;
 	return ss.str();
 }
 
