@@ -103,14 +103,17 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 		log::logWarning("Add status to aggregator failed with return code: {}", ret);
 		return;
 	} else if(ret > 0) {
-		struct ::buffer aggregatedStatusBuffer {};
-		statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
-		auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device,
-																							aggregatedStatusBuffer);
-		toExternalQueue_->pushAndNotify(statusMessage);
-		log::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}",
-					  toExternalQueue_->size());
-		deallocate(&aggregatedStatusBuffer);
+		while(ret != 0) {
+			struct ::buffer aggregatedStatusBuffer {};
+			statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
+			auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device,
+																								aggregatedStatusBuffer);
+			toExternalQueue_->pushAndNotify(statusMessage);
+			log::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}",
+						  toExternalQueue_->size());
+			deallocate(&aggregatedStatusBuffer);
+			ret--;
+		}
 	}
 
 	struct ::buffer commandBuffer {};

@@ -18,21 +18,45 @@ public:
 
 	int loadLibrary(const std::filesystem::path &path);
 
-	std::function<int()> getModuleNumber {};
-	std::function<int(unsigned int)> isDeviceTypeSupported {};
-	std::function<int(struct buffer *, unsigned int)> generateFirstCommand {};
-	std::function<int(struct buffer, unsigned int)> statusDataValid {};
-	std::function<int(struct buffer, unsigned int)> commandDataValid {};
-	std::function<int(struct buffer, struct buffer, unsigned int)> sendStatusCondition {};
-	std::function<int(struct buffer *, struct buffer, struct buffer, unsigned int)> aggregateStatus {};
-	std::function<int(struct buffer *error_message,
-					  const struct buffer current_error_message,
-					  const struct buffer status,
-					  unsigned int device_type)> aggregateError;
-	std::function<int(struct buffer *, struct buffer, struct buffer, struct buffer, unsigned int)> generateCommand {};
+	int getModuleNumber();
+
+	int isDeviceTypeSupported(unsigned int device_type);
+
+	int
+	sendStatusCondition(const struct buffer current_status, const struct buffer new_status, unsigned int device_type);
+
+	int generateCommand(struct buffer *generated_command, const struct buffer new_status,
+						const struct buffer current_status, const struct buffer current_command,
+						unsigned int device_type);
+
+	int aggregateStatus(struct buffer *aggregated_status, const struct buffer current_status,
+						const struct buffer new_status, unsigned int device_type);
+
+	int
+	aggregateError(struct buffer *error_message, const struct buffer current_error_message, const struct buffer status,
+				   unsigned int device_type);
+
+	int generateFirstCommand(struct buffer *default_command, unsigned int device_type);
+
+	int statusDataValid(const struct buffer status, unsigned int device_type);
+
+	int commandDataValid(const struct buffer command, unsigned int device_type);
 
 private:
 	void *module_ {};
+
+	std::function<int()> getModuleNumber_ {};
+	std::function<int(unsigned int)> isDeviceTypeSupported_ {};
+	std::function<int(struct buffer *, unsigned int)> generateFirstCommand_ {};
+	std::function<int(const struct buffer, unsigned int)> statusDataValid_ {};
+	std::function<int(const struct buffer, unsigned int)> commandDataValid_ {};
+	std::function<int(struct buffer, struct buffer, unsigned int)> sendStatusCondition_ {};
+	std::function<int(struct buffer *, struct buffer, struct buffer, unsigned int)> aggregateStatus_ {};
+	std::function<int(struct buffer *error_message,
+					  const struct buffer current_error_message,
+					  const struct buffer status,
+					  unsigned int device_type)> aggregateError_ {};
+	std::function<int(struct buffer *, struct buffer, struct buffer, struct buffer, unsigned int)> generateCommand_ {};
 };
 
 }
