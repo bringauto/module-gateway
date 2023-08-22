@@ -19,7 +19,7 @@ TestHandler::TestHandler(const std::vector <InternalProtocol::Device> &devices, 
 	settings->port = port;
 
 	toInternalQueue = std::make_shared < structures::AtomicQueue < InternalProtocol::InternalServer >> ();
-	fromInternalQueue = std::make_shared < structures::AtomicQueue < InternalProtocol::InternalClient >> ();
+	fromInternalQueue = std::make_shared < structures::AtomicQueue < bringauto::structures::InternalClientMessage >> ();
 	for(size_t i = 0; i < devices.size(); ++i) {
 		connects.push_back(ProtobufUtils::CreateClientMessage(devices[i]));
 		statuses.push_back(ProtobufUtils::CreateClientMessage(devices[i], data[i]));
@@ -50,7 +50,7 @@ TestHandler::TestHandler(const std::vector <InternalProtocol::Device> &devices,
 	settings->port = port;
 
 	toInternalQueue = std::make_shared < structures::AtomicQueue < InternalProtocol::InternalServer >> ();
-	fromInternalQueue = std::make_shared < structures::AtomicQueue < InternalProtocol::InternalClient >> ();
+	fromInternalQueue = std::make_shared < structures::AtomicQueue < bringauto::structures::InternalClientMessage >> ();
 	for(size_t i = 0; i < devices.size(); ++i) {
 		connects.push_back(ProtobufUtils::CreateClientMessage(devices[i]));
 		statuses.push_back(ProtobufUtils::CreateClientMessage(devices[i], data[i]));
@@ -121,7 +121,7 @@ void TestHandler::runTestsParallelConnections() {
 
 	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
 	std::jthread contextThread([&context]() { context->ioContext.run(); });
-	internalServer.start();
+	internalServer.run();
 
 	std::vector <std::jthread> clientThreads;
 	for(size_t i = 0; i < responses.size(); ++i) {
@@ -134,7 +134,7 @@ void TestHandler::runTestsParallelConnections() {
 	if(!context->ioContext.stopped()) {
 		context->ioContext.stop();
 	}
-	internalServer.stop();
+	internalServer.destroy();
 }
 
 void TestHandler::runConnects() {
@@ -198,14 +198,14 @@ void TestHandler::runTestsSerialConnections() {
 
 	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
 	std::jthread contextThread([&context]() { context->ioContext.run(); });
-	internalServer.start();
+	internalServer.run();
 
 	serialRun();
 
 	if(!context->ioContext.stopped()) {
 		context->ioContext.stop();
 	}
-	internalServer.stop();
+	internalServer.destroy();
 }
 
 void TestHandler::runConnects(size_t index, size_t header, std::string data, bool recastHeader) {
@@ -286,14 +286,14 @@ void TestHandler::runTestsWithWrongMessage(size_t index, uint32_t header, std::s
 
 	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
 	std::jthread contextThread([&context]() { context->ioContext.run(); });
-	internalServer.start();
+	internalServer.run();
 
 	serialRunWithExpectedError(index, header, data, onConnect, recastHeader);
 
 	if(!context->ioContext.stopped()) {
 		context->ioContext.stop();
 	}
-	internalServer.stop();
+	internalServer.destroy();
 }
 
 void TestHandler::runConnects(size_t numberOfErrors) {
@@ -374,7 +374,7 @@ void TestHandler::runTestsWithModuleHandlerTimeout(bool onConnect, size_t timeou
 		moduleHandler.startWithTimeout(onConnect, timeoutNumber);
 	});
 	std::jthread contextThread([&context]() { context->ioContext.run(); });
-	internalServer.start();
+	internalServer.run();
 
 	serialRunWithExpectedError(onConnect, timeoutNumber);
 
@@ -382,9 +382,7 @@ void TestHandler::runTestsWithModuleHandlerTimeout(bool onConnect, size_t timeou
 	if(!context->ioContext.stopped()) {
 		context->ioContext.stop();
 	}
-	// moduleHandlerThread.join();
-	// contextThread.join();
-	internalServer.stop();
+	internalServer.destroy();
 }
 
 

@@ -145,8 +145,13 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 
 	while(not toExternalQueue_->empty()){
 		auto &message = toExternalQueue_->front().devicestatus();
-		connection.fillErrorAggregator(message);
-		toExternalQueue_->pop();
+		if (connection.isModuleSupported(message.device().module())){
+			connection.fillErrorAggregator(message);
+			toExternalQueue_->pop();
+		} else {
+			// check if this works
+			sendStatus(message);
+		}
 	}
 
 	auto statusesLeft = connection.forceAggregationOnAllDevices();

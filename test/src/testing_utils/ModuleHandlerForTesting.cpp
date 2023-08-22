@@ -8,7 +8,11 @@ void ModuleHandlerForTesting::start() {
 	size_t messageCounter { 0 };
 	while(!context->ioContext.stopped()) {
 		if(!fromInternalQueue_->waitForValueWithTimeout(queue_timeout_length)) {
-			auto message = fromInternalQueue_->front();
+			if(fromInternalQueue_->front().disconnected()){
+				fromInternalQueue_->pop();
+				continue;
+			}
+			auto message = fromInternalQueue_->front().getMessage();
 			fromInternalQueue_->pop();
 			if(message.has_deviceconnect()) {
 				auto res = ProtobufUtils::CreateServerMessage(message.deviceconnect().device(),
@@ -30,7 +34,11 @@ void ModuleHandlerForTesting::startWithTimeout(bool onConnect, size_t timeoutNum
 	size_t messageCounter { 0 };
 	while(!context->ioContext.stopped()) {
 		if(!fromInternalQueue_->waitForValueWithTimeout(queue_timeout_length)) {
-			auto message = fromInternalQueue_->front();
+			if(fromInternalQueue_->front().disconnected()){
+				fromInternalQueue_->pop();
+				continue;
+			}
+			auto message = fromInternalQueue_->front().getMessage();
 			fromInternalQueue_->pop();
 			if(message.has_deviceconnect()) {
 				if(onConnect && timeoutNumber > 0) {
