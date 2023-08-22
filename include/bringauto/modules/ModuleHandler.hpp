@@ -54,7 +54,7 @@ private:
      *
      * @param device device identification
      */
-    void handleDisconnect(device_identification device);
+    void handleDisconnect(device_identification deviceId);
 
 	/**
 	 * @brief Process connect message

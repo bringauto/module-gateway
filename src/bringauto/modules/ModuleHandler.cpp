@@ -41,7 +41,8 @@ void ModuleHandler::handle_messages() {
 	}
 }
 
-void ModuleHandler::handleDisconnect(device_identification device){
+void ModuleHandler::handleDisconnect(device_identification deviceId){
+	utils::deallocateDeviceId(deviceId);
 	log::logCritical("Disconnected");
 }
 
