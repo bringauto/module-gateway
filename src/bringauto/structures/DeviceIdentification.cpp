@@ -1,5 +1,6 @@
 #include <bringauto/structures/DeviceIdentification.hpp>
-#include <bringauto/utils/utils.hpp>
+#include <bringauto/common_utils/StringUtils.hpp>
+#include <bringauto/common_utils/MemoryUtils.hpp>
 
 
 
@@ -15,13 +16,13 @@ DeviceIdentification::DeviceIdentification(const InternalProtocol::Device &devic
 DeviceIdentification::DeviceIdentification(const device_identification &device) {
 	module_ = device.module;
 	deviceType_ = device.device_type;
-	deviceRole_ = std::string{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes};
-	deviceName_ = std::string{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes};
+	deviceRole_ = std::string { static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes };
+	deviceName_ = std::string { static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes };
 	priority_ = device.priority;
 }
 
 DeviceIdentification::DeviceIdentification(const std::string &deviceId) {
-	std::vector <std::string> tokens = utils::splitString(deviceId, '/');
+	std::vector<std::string> tokens = common_utils::StringUtils::splitString(deviceId, '/');
 	module_ = std::stoi(tokens[0]);
 	deviceType_ = static_cast<unsigned int>(std::stoi(tokens[1]));
 	deviceRole_ = tokens[2];
@@ -50,7 +51,7 @@ const std::string &DeviceIdentification::getDeviceName() const {
 	return deviceName_;
 }
 
-bool DeviceIdentification::isSame(const std::shared_ptr <DeviceIdentification> &toCompare) {
+bool DeviceIdentification::isSame(const std::shared_ptr<DeviceIdentification> &toCompare) {
 	return module_ == toCompare->getModule() &&
 		   deviceType_ == toCompare->getDeviceType() &&
 		   deviceRole_ == toCompare->getDeviceRole() &&
@@ -58,11 +59,11 @@ bool DeviceIdentification::isSame(const std::shared_ptr <DeviceIdentification> &
 }
 
 device_identification DeviceIdentification::convertToCStruct() const {
-	struct buffer deviceRoleBuff{};
-    utils::initBuffer(deviceRoleBuff, deviceRole_);
+	struct buffer deviceRoleBuff {};
+	common_utils::MemoryUtils::initBuffer(deviceRoleBuff, deviceRole_);
 
-	struct buffer deviceNameBuff{};
-    utils::initBuffer(deviceNameBuff, deviceName_);
+	struct buffer deviceNameBuff {};
+	common_utils::MemoryUtils::initBuffer(deviceNameBuff, deviceName_);
 
 	return device_identification {
 			.module = static_cast<int>(module_),

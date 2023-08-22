@@ -1,8 +1,8 @@
 #include <bringauto/external_client/ExternalClient.hpp>
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
+#include <bringauto/common_utils/MemoryUtils.hpp>
 #include <bringauto/external_client/connection/ConnectionState.hpp>
-#include <bringauto/utils/utils.hpp>
 #include <bringauto/logging/Logger.hpp>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -56,7 +56,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 
 	auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
 	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);
-	utils::deallocateDeviceId(deviceId);
+	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	if(ret != OK) {
 		deallocate(&commandBuffer);
 		log::logError("Update command failed with error code: {}", ret);

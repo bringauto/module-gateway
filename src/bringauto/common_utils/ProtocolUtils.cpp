@@ -1,5 +1,7 @@
 #include <bringauto/common_utils/ProtobufUtils.hpp>
-#include <bringauto/utils/utils.hpp>
+#include <bringauto/common_utils/MemoryUtils.hpp>
+
+#include <sstream>
 
 #include <general_error_codes.h>
 
@@ -50,10 +52,10 @@ InternalProtocol::DeviceStatus ProtobufUtils::createDeviceStatus(const device_id
 
 device_identification ProtobufUtils::parseDevice(const InternalProtocol::Device &device) {
     struct buffer deviceRoleBuff{};
-    utils::initBuffer(deviceRoleBuff, device.devicerole());
+    MemoryUtils::initBuffer(deviceRoleBuff, device.devicerole());
 
 	struct buffer deviceNameBuff{};
-    utils::initBuffer(deviceNameBuff, device.devicename());
+    MemoryUtils::initBuffer(deviceNameBuff, device.devicename());
 
 	return ::device_identification { .module = device.module(),
 			.device_type = device.devicetype(),
@@ -132,5 +134,11 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientCommandRespo
 	return externalMessage;
 }
 
+std::string ProtobufUtils::getId(const ::device_identification &device) {
+	std::stringstream ss;
+	ss << device.module << "/" << device.device_type << "/" << std::string{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes} << "/"
+	   << std::string{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes}; // TODO we need to be able to get priority
+	return ss.str();
+}
 
 }

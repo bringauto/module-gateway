@@ -27,7 +27,11 @@ public:
 	 */
 	virtual void setProperties(const std::string &company, const std::string &vehicleName) = 0;
 
-	virtual int initializeConnection() = 0;
+	/**
+	 * @brief Initialize connection with the server
+	 *
+	 */
+	virtual void initializeConnection() = 0;
 
 	/**
 	 * @brief Send message

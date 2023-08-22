@@ -14,7 +14,7 @@ struct GlobalContext {
 
 	GlobalContext() = default;
 
-	explicit GlobalContext(const std::shared_ptr <bringauto::settings::Settings> &settings_): settings(settings_) {}
+	explicit GlobalContext(const std::shared_ptr<bringauto::settings::Settings> &settings_): settings(settings_) {}
 
 	/**
 	 * @brief io_context shared across Module Gateway
@@ -24,6 +24,6 @@ struct GlobalContext {
 	/**
 	 * @brief settings used in the project
 	 */
-	std::shared_ptr <bringauto::settings::Settings> settings {};
+	std::shared_ptr<bringauto::settings::Settings> settings {};
 };
 }

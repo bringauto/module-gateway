@@ -20,7 +20,7 @@ public:
 
 	void setProperties(const std::string &company, const std::string &vehicleName) override;
 
-	int initializeConnection() override;
+	void initializeConnection() override;
 
 	void sendMessage(ExternalProtocol::ExternalClient *message) override;
 

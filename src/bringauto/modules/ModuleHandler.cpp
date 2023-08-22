@@ -2,7 +2,7 @@
 #include <bringauto/logging/Logger.hpp>
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
-#include <bringauto/utils/utils.hpp>
+#include <bringauto/common_utils/MemoryUtils.hpp>
 
 #include <memory_management.h>
 
@@ -42,7 +42,7 @@ void ModuleHandler::handle_messages() {
 }
 
 void ModuleHandler::handleDisconnect(device_identification deviceId){
-	utils::deallocateDeviceId(deviceId);
+	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	log::logCritical("Disconnected");
 }
 
@@ -116,7 +116,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	toInternalQueue_->pushAndNotify(deviceCommandMessage);
 	log::logDebug("Module handler succesfully retrieved command and sent it to device: {}", deviceName);
 
-	utils::deallocateDeviceId(deviceId);
+	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	deallocate(&commandBuffer);
 	deallocate(&statusBuffer);
 }

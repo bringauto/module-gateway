@@ -137,5 +137,8 @@ public:
 	static ExternalProtocol::ExternalClient createExternalClientCommandResponse(const std::string &sessionId,
 																				ExternalProtocol::CommandResponse::Type type,
 																				u_int32_t messageCounter);
+
+	static std::string getId(const ::device_identification &device);
+
 };
 }

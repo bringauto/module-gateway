@@ -31,7 +31,7 @@ public:
 	 * @param interval	Interval of time in which function will be executed
 	 *					(in seconds)
 	 */
-	explicit ThreadTimer(std::shared_ptr <bringauto::structures::GlobalContext> &context,
+	explicit ThreadTimer(std::shared_ptr<bringauto::structures::GlobalContext> &context,
 						 std::function<int(const struct ::device_identification)> fun,
 						 const device_identification &deviceId): timer_ { context->ioContext },
 																 fun_ { fun },

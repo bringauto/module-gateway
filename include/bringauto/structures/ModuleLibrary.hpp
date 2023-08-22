@@ -16,7 +16,7 @@ struct ModuleLibrary {
 
 	void loadLibraries(const std::map<int, std::string> &libPaths);
 
-	void initStatusAggregators(std::shared_ptr <bringauto::structures::GlobalContext> &context);
+	void initStatusAggregators(std::shared_ptr<bringauto::structures::GlobalContext> &context);
 
 	std::map<unsigned int, std::shared_ptr<modules::ModuleManagerLibraryHandler>> moduleLibraryHandlers {};
 

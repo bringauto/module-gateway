@@ -42,19 +42,13 @@ void MqttCommunication::setProperties(const std::string &company, const std::str
 	}
 }
 
-int MqttCommunication::initializeConnection() {
+void MqttCommunication::initializeConnection() {
 	if(client_ != nullptr && client_->is_connected()) {
-		return 0;
+		return;
 	} else if(client_ != nullptr) {
 		closeConnection();
 	}
-	try {
-		connect();
-	} catch(std::exception &e) {
-		logging::Logger::logError("Unable to connect to MQTT: {}", e.what());
-		return -1;
-	}
-	return 0;
+	connect();
 }
 
 void MqttCommunication::connect() {

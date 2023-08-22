@@ -1,7 +1,8 @@
 #include <bringauto/external_client/connection/ExternalConnection.hpp>
 #include <bringauto/external_client/connection/communication/MqttCommunication.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
-#include <bringauto/utils/utils.hpp>
+#include <bringauto/common_utils/StringUtils.hpp>
+#include <bringauto/common_utils/MemoryUtils.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
 
 #include <bringauto/logging/Logger.hpp>
@@ -94,8 +95,10 @@ int ExternalConnection::initializeConnection() {
 		state_.exchange(ConnectionState::NOT_CONNECTED);
 	}
 
-	if(communicationChannel_->initializeConnection() != 0) {
-		log::logError("Unable to create connection to {}:{}", settings_.serverIp, settings_.port);
+	try {
+		communicationChannel_->initializeConnection();
+	} catch(std::exception &e){
+		log::logError("Unable to create connection to {}:{} reason: {}", settings_.serverIp, settings_.port, e.what());
 		return -1;
 	}
 	log::logInfo("Initializing connection to endpoint {}:{}", settings_.serverIp, settings_.port);
@@ -180,7 +183,7 @@ int ExternalConnection::statusMessageHandle(const std::vector <structures::Devic
 		auto deviceStatus = common_utils::ProtobufUtils::createDeviceStatus(device, statusBuffer);
 		sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_CONNECTING, errorBuffer);
 
-		utils::deallocateDeviceId(device);
+		common_utils::MemoryUtils::deallocateDeviceId(device);
 	}
 	for(int i = 0; i < devices.size(); ++i) {
 		const auto statusResponseMsg = communicationChannel_->receiveMessage();
@@ -350,7 +353,7 @@ void ExternalConnection::fillErrorAggregator() {
 
 		auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
 		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer, deviceId);
-		utils::deallocateDeviceId(deviceId);
+		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 		deallocate(&statusBuffer);
 	}
 	sentMessagesHandler_->clearAll();
@@ -370,7 +373,7 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 
 		auto deviceId = common_utils::ProtobufUtils::parseDevice(deviceStatus.device());
 		errorAggregators[moduleNum].add_status_to_error_aggregator(statusBuffer, deviceId);
-		utils::deallocateDeviceId(deviceId);
+		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 		deallocate(&statusBuffer);
 	} else {
 		log::logError("Device status with unsupported module was passed to fillErrorAggregator()");
@@ -382,7 +385,7 @@ int ExternalConnection::forceAggregationOnAllDevices() {
 	for(const auto &device: devices) {
 		auto deviceId = device.convertToCStruct();
 		moduleLibrary_.statusAggregators.at(device.getModule())->force_aggregation_on_device(deviceId);
-		utils::deallocateDeviceId(deviceId);
+		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	}
 	return devices.size();
 }
@@ -399,7 +402,7 @@ std::vector <structures::DeviceIdentification> ExternalConnection::getAllConnect
 		}
 		std::string devicesString { static_cast<char *>(unique_devices.data), unique_devices.size_in_bytes };
 		deallocate(&unique_devices);
-		auto devicesVec = utils::splitString(devicesString, ',');
+		auto devicesVec = common_utils::StringUtils::splitString(devicesString, ',');
 		for(const auto &device: devicesVec) {
 			devices.emplace_back(device);
 		}

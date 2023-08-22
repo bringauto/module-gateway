@@ -1,8 +1,9 @@
-#include <dlfcn.h>
-
-#include <bringauto/logging/Logger.hpp>
 #include <bringauto/modules/StatusAggregator.hpp>
-#include <bringauto/utils/utils.hpp>
+#include <bringauto/logging/Logger.hpp>
+#include <bringauto/common_utils/MemoryUtils.hpp>
+#include <bringauto/common_utils/ProtobufUtils.hpp>
+
+#include <dlfcn.h>
 
 
 
@@ -46,7 +47,7 @@ int StatusAggregator::clear_all_devices() {
 }
 
 int StatusAggregator::clear_device(const struct ::device_identification device) {
-	std::string id = utils::getId(device);
+	std::string id = common_utils::ProtobufUtils::getId(device);
 	if(is_device_valid(device) == NOT_OK) {
 		return DEVICE_NOT_REGISTERED;
 	}
@@ -58,7 +59,7 @@ int StatusAggregator::clear_device(const struct ::device_identification device) 
 }
 
 int StatusAggregator::remove_device(const struct ::device_identification device) {
-	std::string id = utils::getId(device);
+	std::string id = common_utils::ProtobufUtils::getId(device);
 	if(is_device_valid(device) == NOT_OK) {
 		return DEVICE_NOT_REGISTERED;
 	}
@@ -73,7 +74,7 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 		return DEVICE_NOT_SUPPORTED;
 	}
 
-	std::string id = utils::getId(device);
+	std::string id = common_utils::ProtobufUtils::getId(device);
 	if(status.size_in_bytes == 0 || module_->statusDataValid(status, device_type) == NOT_OK) {
 		log::logWarning("Invalid status data on device: {}", id);
 		return NOT_OK;
@@ -90,9 +91,9 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 		deviceId.module = device.module;
 		deviceId.priority = device.priority;
 		deviceId.device_type = device_type;
-		utils::initBuffer(deviceId.device_name,
+		common_utils::MemoryUtils::initBuffer(deviceId.device_name,
 						  { static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes });
-		utils::initBuffer(deviceId.device_role,
+		common_utils::MemoryUtils::initBuffer(deviceId.device_role,
 						  { static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes });
 
 		std::function<int(struct ::device_identification)> fun = [&](
@@ -126,7 +127,7 @@ int StatusAggregator::get_aggregated_status(struct ::buffer *generated_status,
 		return DEVICE_NOT_REGISTERED;
 	}
 
-	std::string id = utils::getId(device);
+	std::string id = common_utils::ProtobufUtils::getId(device);
 	auto &aggregatedMessages = devices.at(id).getAggregatedMessages();
 	if(aggregatedMessages.size() == 0) {
 		return NO_MESSAGE_AVAILABLE;
@@ -157,7 +158,7 @@ int StatusAggregator::get_unique_devices(struct ::buffer *unique_devices_buffer)
 }
 
 int StatusAggregator::force_aggregation_on_device(const struct ::device_identification device) {
-	std::string id = utils::getId(device);
+	std::string id = common_utils::ProtobufUtils::getId(device);
 	if(is_device_valid(device) == NOT_OK) {
 		return DEVICE_NOT_REGISTERED;
 	}
@@ -177,7 +178,7 @@ int StatusAggregator::force_aggregation_on_device(const struct ::device_identifi
 }
 
 int StatusAggregator::is_device_valid(const struct ::device_identification device) {
-	if(is_device_type_supported(device.device_type) == OK && devices.contains(utils::getId(device))) {
+	if(is_device_type_supported(device.device_type) == OK && devices.contains(common_utils::ProtobufUtils::getId(device))) {
 		return OK;
 	}
 	return NOT_OK;
@@ -191,7 +192,7 @@ int StatusAggregator::update_command(const struct ::buffer command, const struct
 		return DEVICE_NOT_SUPPORTED;
 	}
 
-	std::string id = utils::getId(device);
+	std::string id = common_utils::ProtobufUtils::getId(device);
 	if(not devices.contains(id)) {
 		return DEVICE_NOT_REGISTERED;
 	}
@@ -217,7 +218,7 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 		return DEVICE_NOT_SUPPORTED;
 	}
 
-	std::string id = utils::getId(device);
+	std::string id = common_utils::ProtobufUtils::getId(device);
 	auto &currStatus = devices[id].getStatus();
 
 	if(status.size_in_bytes == 0 || module_->statusDataValid(status, device_type) == NOT_OK) {

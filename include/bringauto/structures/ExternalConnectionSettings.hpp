@@ -19,7 +19,7 @@ struct ExternalConnectionSettings {
 	 */
 	ProtocolType protocolType;
 
-	std::map <std::string, std::string> protocolSettings;
+	std::map<std::string, std::string> protocolSettings;
 
 	std::string serverIp;
 

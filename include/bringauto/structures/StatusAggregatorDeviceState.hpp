@@ -16,7 +16,7 @@ public:
 
 	StatusAggregatorDeviceState() = default;
 
-	StatusAggregatorDeviceState(std::shared_ptr <bringauto::structures::GlobalContext> &context,
+	StatusAggregatorDeviceState(std::shared_ptr<bringauto::structures::GlobalContext> &context,
 								std::function<int(const struct ::device_identification)> fun,
 								const device_identification &deviceId, const buffer command, const buffer status);
 
@@ -33,7 +33,7 @@ public:
 	struct buffer command;
 
 private:
-	std::unique_ptr <bringauto::structures::ThreadTimer> timer_ {};
+	std::unique_ptr<bringauto::structures::ThreadTimer> timer_ {};
 
 	std::queue<struct buffer> aggregatedMessages;
 
