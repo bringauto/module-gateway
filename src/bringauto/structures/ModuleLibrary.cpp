@@ -15,20 +15,36 @@ ModuleLibrary::~ModuleLibrary() {
 
 void ModuleLibrary::loadLibraries(const std::map<int, std::string> &libPaths) {
 	for(auto const &[key, path]: libPaths) {
-		moduleLibraryHandlers.emplace(key, std::make_shared<bringauto::modules::ModuleManagerLibraryHandler>());
+		moduleLibraryHandlers.emplace(key, std::make_shared<modules::ModuleManagerLibraryHandler>());
 		if(moduleLibraryHandlers[key]->loadLibrary(path) != OK) {
 			throw std::runtime_error("Unable to load library " + path);
 		}
 	}
 }
 
-void ModuleLibrary::initStatusAggregators(std::shared_ptr<bringauto::structures::GlobalContext> &context) {
+void ModuleLibrary::initStatusAggregators(std::shared_ptr<structures::GlobalContext> &context) {
 	for(auto const &[key, libraryHandler]: moduleLibraryHandlers) {
-		auto statusAgregator = std::make_shared<bringauto::modules::StatusAggregator>(context, libraryHandler);
+		auto statusAgregator = std::make_shared<modules::StatusAggregator>(context, libraryHandler);
 		statusAgregator->init_status_aggregator();
 		auto moduleNumber = statusAgregator->get_module_number();
-		bringauto::logging::Logger::logInfo("Module with number: {} started", moduleNumber);
-		statusAggregators.emplace(moduleNumber, statusAgregator);
+		if (statusAggregators.find(moduleNumber) != statusAggregators.end()){
+			logging::Logger::logWarning("Module with number: {} is already initialized, so skipping this module", moduleNumber);
+			continue;
+		}
+
+		bool found = false;
+		for(const auto &connection: context->settings->externalConnectionSettingsList){
+			const auto &modules = connection.modules;
+			if(std::find(modules.cbegin(), modules.cend(), moduleNumber) != modules.cend()){
+				statusAggregators.emplace(moduleNumber, statusAgregator);
+				logging::Logger::logInfo("Module with number: {} started", moduleNumber);
+				found = true;
+				break;
+			}
+		}
+		if(not found){
+			logging::Logger::logWarning("Module with number: {} does now have endpoint, so skipping this module", moduleNumber);
+		}
 	}
 }
 
