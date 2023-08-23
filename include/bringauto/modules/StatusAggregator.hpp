@@ -25,9 +25,10 @@ namespace bringauto::modules {
 class StatusAggregator {
 public:
 
-	explicit StatusAggregator(const std::shared_ptr <structures::GlobalContext> &context,
-							  const std::shared_ptr <ModuleManagerLibraryHandler> &libraryHandler): context_ { context },
-																									module_ { libraryHandler } {};
+	explicit StatusAggregator(const std::shared_ptr<structures::GlobalContext> &context,
+							  const std::shared_ptr<ModuleManagerLibraryHandler> &libraryHandler): context_ { context },
+																								   module_ {
+																										   libraryHandler } {};
 
 	StatusAggregator() = default;
 
@@ -135,14 +136,20 @@ private:
 
 	void clear_device(const std::string &key);
 
-	void aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
-						 const unsigned int &device_type);
+	struct buffer aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
+								  const unsigned int &device_type);
 
-	std::shared_ptr <structures::GlobalContext> context_;
+	void aggregateSetStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
+							const unsigned int &device_type);
 
-	const std::shared_ptr <ModuleManagerLibraryHandler> module_ {};
+	void aggregateSetSendStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
+								const unsigned int &device_type);
 
-	std::map <std::string, structures::StatusAggregatorDeviceState> devices {};
+	std::shared_ptr<structures::GlobalContext> context_;
+
+	const std::shared_ptr<ModuleManagerLibraryHandler> module_ {};
+
+	std::map<std::string, structures::StatusAggregatorDeviceState> devices {};
 
 	std::mutex mutex_ {};
 };

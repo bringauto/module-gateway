@@ -91,9 +91,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 }
 
 int ExternalConnection::initializeConnection() {
-	if(state_.load() == ConnectionState::NOT_INITIALIZED) {
-		state_.exchange(ConnectionState::NOT_CONNECTED);
-	}
+	state_.exchange(ConnectionState::NOT_CONNECTED);
 
 	try {
 		communicationChannel_->initializeConnection();

@@ -74,6 +74,7 @@ int main(int argc, char **argv) {
 	contextThread.join();
 	internalServer.destroy();
 	moduleHandler.destroy();
+	externalClientThread.join();
 	externalClient.destroy();
 
 	google::protobuf::ShutdownProtobufLibrary();

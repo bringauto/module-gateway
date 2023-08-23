@@ -22,15 +22,19 @@ public:
 
 	void setStatus(const buffer &statusBuffer);
 
-	const struct buffer &getStatus();
+	const struct buffer &getStatus() const;
 
 	void deallocateStatus();
 
 	void setStatusAndResetTimer(const buffer &statusBuffer);
 
-	std::queue<struct buffer> &getAggregatedMessages();
+	void setCommand(const buffer &commandBuffer);
 
-	struct buffer command;
+	const struct buffer &getCommand() const;
+
+	void deallocateCommand();
+
+	std::queue<struct buffer> &getAggregatedMessages();
 
 private:
 	std::unique_ptr<bringauto::structures::ThreadTimer> timer_ {};
@@ -38,6 +42,8 @@ private:
 	std::queue<struct buffer> aggregatedMessages;
 
 	struct buffer status_;
+
+	struct buffer command_;
 };
 
 }

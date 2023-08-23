@@ -124,7 +124,7 @@ private:
 	 * State of the car
 	 * - thread safe
 	 */
-	std::atomic <ConnectionState> state_ { ConnectionState::NOT_INITIALIZED };
+	std::atomic <ConnectionState> state_ { ConnectionState::NOT_CONNECTED };
 
 	std::shared_ptr <structures::GlobalContext> context_;
 

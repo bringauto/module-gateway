@@ -43,6 +43,9 @@ public:
 	int commandDataValid(const struct buffer command, unsigned int device_type);
 
 private:
+
+	void *checkFunction(const char *functionName);
+
 	void *module_ {};
 
 	std::function<int()> getModuleNumber_ {};

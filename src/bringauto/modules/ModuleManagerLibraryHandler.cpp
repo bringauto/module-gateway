@@ -3,6 +3,7 @@
 #include <bringauto/logging/Logger.hpp>
 #include <general_error_codes.h>
 
+#include <stdexcept>
 #include <dlfcn.h>
 
 
@@ -19,42 +20,45 @@ struct FunctionTypeDeducer<std::function<R(Args...)>> {
 
 using log = bringauto::logging::Logger;
 
-int ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path &path) {
-	try {
-		module_ = dlopen(path.c_str(), RTLD_LAZY);
-		if(module_ == nullptr) {
-			return NOT_OK;
-		}
-		isDeviceTypeSupported_ = reinterpret_cast<FunctionTypeDeducer<decltype(isDeviceTypeSupported_)>::fncptr>(dlsym(
-				module_, "is_device_type_supported"));
-		getModuleNumber_ = reinterpret_cast<FunctionTypeDeducer<decltype(getModuleNumber_)>::fncptr>(dlsym(module_,
-																										   "get_module_number"));
-		generateFirstCommand_ = reinterpret_cast<FunctionTypeDeducer<decltype(generateFirstCommand_)>::fncptr>(dlsym(
-				module_, "generate_first_command"));
-		statusDataValid_ = reinterpret_cast<FunctionTypeDeducer<decltype(statusDataValid_)>::fncptr>(dlsym(module_,
-																										   "status_data_valid"));
-		commandDataValid_ = reinterpret_cast<FunctionTypeDeducer<decltype(commandDataValid_)>::fncptr>(dlsym(module_,
-																											 "command_data_valid"));
-		sendStatusCondition_ = reinterpret_cast<FunctionTypeDeducer<decltype(sendStatusCondition_)>::fncptr>(dlsym(
-				module_, "send_status_condition"));
-		aggregateStatus_ = reinterpret_cast<FunctionTypeDeducer<decltype(aggregateStatus_)>::fncptr>(dlsym(module_,
-																										   "aggregate_status"));
-		generateCommand_ = reinterpret_cast<FunctionTypeDeducer<decltype(generateCommand_)>::fncptr>(dlsym(module_,
-																										   "generate_command"));
-		aggregateError_ = reinterpret_cast<FunctionTypeDeducer<decltype(aggregateError_)>::fncptr>(dlsym(module_,
-																										 "aggregate_error"));
-		return OK;
-	} catch(const std::exception &e) {
-		log::logError("Error occurred during loading library: \"{}\": {}", path.string(), e.what());
-		return NOT_OK;
-	}
-}
-
 ModuleManagerLibraryHandler::~ModuleManagerLibraryHandler() {
 	if(module_ != nullptr) {
 		dlclose(module_);
 		module_ == nullptr;
 	}
+}
+
+int ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path &path) {
+	module_ = dlopen(path.c_str(), RTLD_LAZY);
+	if(module_ == nullptr) {
+		return NOT_OK;
+	}
+	isDeviceTypeSupported_ = reinterpret_cast<FunctionTypeDeducer<decltype(isDeviceTypeSupported_)>::fncptr>(checkFunction(
+			"is_device_type_supported"));
+	getModuleNumber_ = reinterpret_cast<FunctionTypeDeducer<decltype(getModuleNumber_)>::fncptr>(checkFunction(
+			"get_module_number"));
+	generateFirstCommand_ = reinterpret_cast<FunctionTypeDeducer<decltype(generateFirstCommand_)>::fncptr>(checkFunction(
+			"generate_first_command"));
+	statusDataValid_ = reinterpret_cast<FunctionTypeDeducer<decltype(statusDataValid_)>::fncptr>(checkFunction(
+			"status_data_valid"));
+	commandDataValid_ = reinterpret_cast<FunctionTypeDeducer<decltype(commandDataValid_)>::fncptr>(checkFunction(
+			"command_data_valid"));
+	sendStatusCondition_ = reinterpret_cast<FunctionTypeDeducer<decltype(sendStatusCondition_)>::fncptr>(checkFunction(
+			"send_status_condition"));
+	aggregateStatus_ = reinterpret_cast<FunctionTypeDeducer<decltype(aggregateStatus_)>::fncptr>(checkFunction(
+			"aggregate_status"));
+	generateCommand_ = reinterpret_cast<FunctionTypeDeducer<decltype(generateCommand_)>::fncptr>(checkFunction(
+			"generate_command"));
+	aggregateError_ = reinterpret_cast<FunctionTypeDeducer<decltype(aggregateError_)>::fncptr>(checkFunction(
+			"aggregate_error"));
+	return OK;
+}
+
+void *ModuleManagerLibraryHandler::checkFunction(const char *functionName) {
+	auto function = dlsym(module_, functionName);
+	if(not function) {
+		throw std::runtime_error("Function " + std::string(functionName) + " is not included in library");
+	}
+	return function;
 }
 
 int ModuleManagerLibraryHandler::getModuleNumber() {

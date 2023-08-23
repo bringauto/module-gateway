@@ -98,37 +98,35 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	struct ::device_identification deviceId = common_utils::ProtobufUtils::parseDevice(device);
 
 	auto &statusAggregator = statusAggregators[moduleNumber];
-	int ret = statusAggregator->add_status_to_aggregator(statusBuffer, deviceId);
-	if(ret < 0) {
-		log::logWarning("Add status to aggregator failed with return code: {}", ret);
-		return;
-	} else if(ret > 0) {
-		while(ret != 0) {
-			struct ::buffer aggregatedStatusBuffer {};
-			statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
-			auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device,
-																								aggregatedStatusBuffer);
-			toExternalQueue_->pushAndNotify(statusMessage);
-			log::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}",
-						  toExternalQueue_->size());
-			deallocate(&aggregatedStatusBuffer);
-			ret--;
-		}
+	int addStatusToAggregatorRc = statusAggregator->add_status_to_aggregator(statusBuffer, deviceId);
+	if(addStatusToAggregatorRc < 0) {
+		log::logWarning("Add status to aggregator failed with return code: {}", addStatusToAggregatorRc);
 	}
 
 	struct ::buffer commandBuffer {};
-	ret = statusAggregator->get_command(statusBuffer, deviceId, &commandBuffer);
-	if(ret != OK) {
-		log::logWarning("Retrieving command failed with return code: {}", ret);
-		return;
+	int getCommandrRc = statusAggregator->get_command(statusBuffer, deviceId, &commandBuffer);
+	if(getCommandrRc == OK) {
+		auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device, commandBuffer);
+		toInternalQueue_->pushAndNotify(deviceCommandMessage);
+		log::logDebug("Module handler succesfully retrieved command and sent it to device: {}", deviceName);
+		deallocate(&commandBuffer);
+	} else {
+		log::logWarning("Retrieving command failed with return code: {}", getCommandrRc);
 	}
 
-	auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device, commandBuffer);
-	toInternalQueue_->pushAndNotify(deviceCommandMessage);
-	log::logDebug("Module handler succesfully retrieved command and sent it to device: {}", deviceName);
+	while(addStatusToAggregatorRc > 0) {
+		struct ::buffer aggregatedStatusBuffer {};
+		statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
+		auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device,
+																							aggregatedStatusBuffer);
+		toExternalQueue_->pushAndNotify(statusMessage);
+		log::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}",
+					  toExternalQueue_->size());
+		deallocate(&aggregatedStatusBuffer);
+		addStatusToAggregatorRc--;
+	}
 
 	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
-	deallocate(&commandBuffer);
 	deallocate(&statusBuffer);
 }
 

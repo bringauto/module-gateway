@@ -49,12 +49,12 @@ private:
 	 */
 	void handle_messages();
 
-    /**
-     * @brief Process disconnect device
-     *
-     * @param device device identification
-     */
-    void handleDisconnect(device_identification deviceId);
+	/**
+	 * @brief Process disconnect device
+	 *
+	 * @param device device identification
+	 */
+	void handleDisconnect(device_identification deviceId);
 
 	/**
 	 * @brief Process connect message

@@ -48,8 +48,6 @@ private:
 
 	structures::ModuleLibrary &moduleLibrary_;
 
-	bool insideConnectSequence_ = false;
-
 	std::map<unsigned int, std::reference_wrapper<connection::ExternalConnection>> externalConnectionMap_;
 
 	std::list <connection::ExternalConnection> externalConnectionsList_;

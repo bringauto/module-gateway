@@ -119,19 +119,10 @@ void ExternalClient::sendStatus(const InternalProtocol::DeviceStatus &deviceStat
 
 	auto &connection = it->second.get();
 	if(connection.getState() != connection::ConnectionState::CONNECTED) {
-
 		connection.fillErrorAggregator(deviceStatus);
 		toExternalQueue_->pop();
 
-		// this if is tottaly useless i think, because this is just one thread that knows about insideConnectSequence_
-		if(connection.getState() == connection::ConnectionState::NOT_INITIALIZED) {
-			if(insideConnectSequence_) {
-				log::logWarning(
-						"Status moved to error aggregator. Cannot initialize connect sequence, when different is running");
-				return;
-			}
-			startExternalConnectSequence(connection);
-		}
+		startExternalConnectSequence(connection);
 	} else {
 		connection.sendStatus(deviceStatus);
 		toExternalQueue_->pop();
@@ -140,8 +131,6 @@ void ExternalClient::sendStatus(const InternalProtocol::DeviceStatus &deviceStat
 
 void ExternalClient::startExternalConnectSequence(connection::ExternalConnection &connection) {
 	log::logInfo("Initializing new connection");
-	insideConnectSequence_ = true;
-	log::logDebug("External client is forcing aggregation on all modules");
 
 	while(not toExternalQueue_->empty()){
 		auto &message = toExternalQueue_->front().devicestatus();
@@ -154,10 +143,11 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		}
 	}
 
+	log::logDebug("External client is forcing aggregation on all modules");
 	auto statusesLeft = connection.forceAggregationOnAllDevices();
 
 	std::set <std::string> devices {};
-	while(statusesLeft != 0) {
+	while(statusesLeft != 0 && not context_->ioContext.stopped()) {
 		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
@@ -185,7 +175,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		toExternalQueue_->pop();
 	}
 
-	if(connection.initializeConnection() != 0) {
+	if(connection.initializeConnection() != 0 && not context_->ioContext.stopped()) {
 		log::logDebug("Waiting for reconnect timer to expire");
 		boost::asio::deadline_timer timer(context_->ioContext);
 		timer.expires_from_now(boost::posix_time::seconds(settings::reconnect_delay));
@@ -193,7 +183,6 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		log::logDebug("Reconnect timer expired");
 		reconnectQueue_->push(std::ref(connection));
 	}
-	insideConnectSequence_ = false;
 }
 
 }
