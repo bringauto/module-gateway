@@ -44,18 +44,18 @@ ProtobufUtils::createInternalClientStatusMessage(const InternalProtocol::Device 
 
 InternalProtocol::DeviceStatus ProtobufUtils::createDeviceStatus(const device_identification &deviceId,
 																 const buffer &status) {
-    InternalProtocol::DeviceStatus deviceStatus;
+	InternalProtocol::DeviceStatus deviceStatus;
 	deviceStatus.mutable_device()->CopyFrom(createDevice(deviceId));
 	deviceStatus.set_statusdata(status.data, status.size_in_bytes);
 	return deviceStatus;
 }
 
 device_identification ProtobufUtils::parseDevice(const InternalProtocol::Device &device) {
-    struct buffer deviceRoleBuff{};
-    MemoryUtils::initBuffer(deviceRoleBuff, device.devicerole());
+	struct buffer deviceRoleBuff{};
+	MemoryUtils::initBuffer(deviceRoleBuff, device.devicerole());
 
 	struct buffer deviceNameBuff{};
-    MemoryUtils::initBuffer(deviceNameBuff, device.devicename());
+	MemoryUtils::initBuffer(deviceNameBuff, device.devicename());
 
 	return ::device_identification { .module = device.module(),
 			.device_type = device.devicetype(),
@@ -65,8 +65,8 @@ device_identification ProtobufUtils::parseDevice(const InternalProtocol::Device 
 }
 
 InternalProtocol::Device ProtobufUtils::createDevice(const device_identification &device) {
-    std::string device_role{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes};
-    std::string device_name{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes};
+	std::string device_role{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes};
+	std::string device_name{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes};
 	return createDevice(device.module, device.device_type, device_role, device_name, device.priority);
 }
 
@@ -137,7 +137,7 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientCommandRespo
 std::string ProtobufUtils::getId(const ::device_identification &device) {
 	std::stringstream ss;
 	ss << device.module << "/" << device.device_type << "/" << std::string{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes} << "/"
-	   << std::string{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes}<< "/" << device.priority;
+	   << std::string{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes};
 	return ss.str();
 }
 

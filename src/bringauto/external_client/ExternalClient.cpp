@@ -122,7 +122,14 @@ void ExternalClient::sendStatus(const InternalProtocol::DeviceStatus &deviceStat
 		connection.fillErrorAggregator(deviceStatus);
 		toExternalQueue_->pop();
 
-		startExternalConnectSequence(connection);
+		if(connection.getState() == connection::ConnectionState::NOT_INITIALIZED) {
+			if(insideConnectSequence_) {
+				log::logWarning(
+						"Status moved to error aggregator. Cannot initialize connect sequence, when different is running");
+				return;
+			}
+			startExternalConnectSequence(connection);
+		}
 	} else {
 		connection.sendStatus(deviceStatus);
 		toExternalQueue_->pop();
@@ -131,6 +138,7 @@ void ExternalClient::sendStatus(const InternalProtocol::DeviceStatus &deviceStat
 
 void ExternalClient::startExternalConnectSequence(connection::ExternalConnection &connection) {
 	log::logInfo("Initializing new connection");
+	insideConnectSequence_ = true;
 
 	while(not toExternalQueue_->empty()){
 		auto &message = toExternalQueue_->front().devicestatus();
@@ -183,6 +191,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		log::logDebug("Reconnect timer expired");
 		reconnectQueue_->push(std::ref(connection));
 	}
+	insideConnectSequence_ = false;
 }
 
 }

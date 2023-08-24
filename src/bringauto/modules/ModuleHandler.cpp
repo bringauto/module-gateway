@@ -57,22 +57,30 @@ void ModuleHandler::handleDisconnect(device_identification deviceId) {
 void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
 	const auto &device = connect.device();
 	const auto &moduleNumber = device.module();
+	const auto &deviceName = device.devicename();
 	auto &statusAggregators = moduleLibrary_.statusAggregators;
-	log::logInfo("Module handler received Connect message from device: {}", device.devicename());
+	auto &statusAggregator = statusAggregators.at(moduleNumber);
+	log::logInfo("Module handler received Connect message from device: {}", deviceName);
 
 	auto response_type = ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_OK;
 	if(not statusAggregators.contains(moduleNumber)) {
 		response_type =
 				ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_MODULE_NOT_SUPPORTED;
-	} else if(statusAggregators[moduleNumber]->is_device_type_supported(device.devicetype()) == NOT_OK) {
+	} else if(statusAggregator->is_device_type_supported(device.devicetype()) == NOT_OK) {
 		response_type =
 				ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_DEVICE_NOT_SUPPORTED;
 	}
 
+	struct ::device_identification deviceId = common_utils::ProtobufUtils::parseDevice(device);
+	if (statusAggregator->is_device_valid(deviceId) == OK){
+		log::logInfo("Device {} is replaced with device with higher priority", deviceName);
+	}
+	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
+
 	auto response = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(device, response_type);
 
 	toInternalQueue_->pushAndNotify(response);
-	log::logInfo("New device {} is trying to connect, sending response {}", device.devicename(), response_type);
+	log::logInfo("New device {} is trying to connect, sending response {}", deviceName, response_type);
 }
 
 void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
