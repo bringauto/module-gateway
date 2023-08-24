@@ -47,7 +47,7 @@ const struct buffer &StatusAggregatorDeviceState::getCommand() const {
 }
 
 std::queue<struct buffer> &StatusAggregatorDeviceState::getAggregatedMessages() {
-	return aggregatedMessages;
+	return aggregatedMessages_;
 }
 
 }

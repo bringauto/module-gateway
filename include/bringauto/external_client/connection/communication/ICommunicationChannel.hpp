@@ -41,7 +41,7 @@ public:
 	virtual void sendMessage(ExternalProtocol::ExternalClient *message) = 0;
 
 	/**
-	 * @brief Receives message
+	 * @brief Receive message
 	 *
 	 * @return std::shared_ptr<ExternalProtocol::ExternalServer>
 	 */

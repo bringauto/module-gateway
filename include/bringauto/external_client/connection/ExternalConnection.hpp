@@ -30,7 +30,6 @@ public:
 					   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
 					   const std::shared_ptr <structures::AtomicQueue<
 							   std::reference_wrapper < connection::ExternalConnection>>
-
 	>& reconnectQueue);
 
 	/**
@@ -44,7 +43,7 @@ public:
 
 	/**
 	 * @brief Handles all etapes of connect sequence. If connect sequence is successful,
-     * infinite receive loop is started in new thread.
+	 * infinite receive loop is started in new thread.
 	 */
 	int initializeConnection();
 
@@ -54,6 +53,11 @@ public:
 					ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING,
 					const buffer &errorMessage = {});
 
+	/**
+	 * @brief Check if any device is connected to the external connection
+	 *
+	 * @return true if yes otherwise false
+	 */
 	bool hasAnyDeviceConnected();
 
 	/**
@@ -73,6 +77,10 @@ public:
 	bool isModuleSupported(int moduleNum);
 
 private:
+
+	/**
+	 * @brief Generate and set the session id
+	 */
 	void setSessionId();
 
 	[[nodiscard]] u_int32_t getNextStatusCounter();
@@ -100,7 +108,7 @@ private:
 
 	/**
 	 * @brief This loop is started after successful connect sequence in own thread.
-     * Loop is receiving messages from external server and processes them.
+	 * Loop is receiving messages from external server and processes them.
 	 */
 	void receivingHandlerLoop();
 

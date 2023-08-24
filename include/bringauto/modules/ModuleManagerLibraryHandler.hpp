@@ -16,7 +16,12 @@ public:
 
 	~ModuleManagerLibraryHandler();
 
-	int loadLibrary(const std::filesystem::path &path);
+	/**
+	 * @brief Load library created by a module maintainer
+	 *
+	 * @param path path to the library
+	 */
+	void loadLibrary(const std::filesystem::path &path);
 
 	int getModuleNumber();
 

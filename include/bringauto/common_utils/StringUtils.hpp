@@ -14,6 +14,13 @@ class StringUtils {
 public:
 	StringUtils() = delete;
 
+	/**
+	 * @brief Split string by delimiter
+	 *
+	 * @param input string to split
+	 * @param delimiter
+	 * @return std::vector<std::string>
+	 */
 	static std::vector<std::string> splitString(const std::string &input, char delimiter);
 
 };

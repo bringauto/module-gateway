@@ -16,9 +16,7 @@ ModuleLibrary::~ModuleLibrary() {
 void ModuleLibrary::loadLibraries(const std::map<int, std::string> &libPaths) {
 	for(auto const &[key, path]: libPaths) {
 		moduleLibraryHandlers.emplace(key, std::make_shared<modules::ModuleManagerLibraryHandler>());
-		if(moduleLibraryHandlers[key]->loadLibrary(path) != OK) {
-			throw std::runtime_error("Unable to load library " + path);
-		}
+		moduleLibraryHandlers[key]->loadLibrary(path);
 	}
 }
 

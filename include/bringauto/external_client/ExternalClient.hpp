@@ -34,16 +34,40 @@ public:
 
 private:
 
+	/**
+	 * @brief Initialize connections with external server
+	 */
 	void initConnections();
 
+	/**
+	 * @brief Start connect sequence with given connection
+	 *
+	 * @param connection connection which wants to start connect sequence
+	 */
 	void startExternalConnectSequence(connection::ExternalConnection &connection);
 
+	/**
+	 * @brief Handle aggregated status messages from a module handler
+	 */
 	void handleAggregatedMessages();
 
+	/**
+	 * @brief Handle commands messages from from an external server
+	 */
 	void handleCommands();
 
+	/**
+	 * @brief Update command on device
+	 *
+	 * @param deviceCommand new command which replaces the old one
+	 */
 	void handleCommand(const InternalProtocol::DeviceCommand &deviceCommand);
 
+	/**
+	 * @brief Send aggregated status message to the external server
+	 *
+	 * @param deviceStatus aggregated status message ready to send
+	 */
 	void sendStatus(const InternalProtocol::DeviceStatus &deviceStatus);
 
 	structures::ModuleLibrary &moduleLibrary_;

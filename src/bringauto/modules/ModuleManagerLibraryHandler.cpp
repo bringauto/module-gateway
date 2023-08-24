@@ -23,14 +23,14 @@ using log = bringauto::logging::Logger;
 ModuleManagerLibraryHandler::~ModuleManagerLibraryHandler() {
 	if(module_ != nullptr) {
 		dlclose(module_);
-		module_ == nullptr;
+		module_ = nullptr;
 	}
 }
 
-int ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path &path) {
+void ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path &path) {
 	module_ = dlopen(path.c_str(), RTLD_LAZY);
 	if(module_ == nullptr) {
-		return NOT_OK;
+		throw std::runtime_error("Unable to load library " + path.string());
 	}
 	isDeviceTypeSupported_ = reinterpret_cast<FunctionTypeDeducer<decltype(isDeviceTypeSupported_)>::fncptr>(checkFunction(
 			"is_device_type_supported"));
@@ -50,7 +50,6 @@ int ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path &path) 
 			"generate_command"));
 	aggregateError_ = reinterpret_cast<FunctionTypeDeducer<decltype(aggregateError_)>::fncptr>(checkFunction(
 			"aggregate_error"));
-	return OK;
 }
 
 void *ModuleManagerLibraryHandler::checkFunction(const char *functionName) {

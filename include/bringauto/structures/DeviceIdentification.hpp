@@ -9,17 +9,22 @@ namespace bringauto::structures {
 class DeviceIdentification {
 public:
 	/**
-	 * @brief construct object and fill params with values given in device
+	 * @brief Construct object and fill params with values given in device
 	 * @param device object holding values to be assigned to corresponding params
 	 */
 	explicit DeviceIdentification(const InternalProtocol::Device &device);
 
 	/**
-	 * @brief construct object and fill params with values given in device
+	 * @brief Construct object and fill params with values given in device
 	 * @param device object holding values to be assigned to corresponding params
 	 */
 	explicit DeviceIdentification(const device_identification &device);
 
+	/**
+	 * @brief Construct a new DeviceIdentification struct from passed string
+	 *
+	 * @param deviceId string with values divided by /
+	 */
 	explicit DeviceIdentification(const std::string &deviceId);
 
 	/**
@@ -59,6 +64,11 @@ public:
 	 */
 	bool isSame(const std::shared_ptr <DeviceIdentification> &toCompare);
 
+	/**
+	 * @brief Create device_identification struct from this object
+	 *
+	 * @return device_identification
+	 */
 	device_identification convertToCStruct() const;
 
 private:

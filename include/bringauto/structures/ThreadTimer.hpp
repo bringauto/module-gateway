@@ -40,8 +40,6 @@ public:
 
 	~ThreadTimer();
 
-	void tick(const boost::system::error_code &errorCode);
-
 	/**
 	 * Starting the timer
 	 */
@@ -58,6 +56,8 @@ public:
 	void restart();
 
 private:
+
+	void tick(const boost::system::error_code &errorCode);
 
 	boost::asio::deadline_timer timer_;
 

@@ -138,6 +138,12 @@ public:
 																				ExternalProtocol::CommandResponse::Type type,
 																				u_int32_t messageCounter);
 
+	/**
+	 * @brief Get the id string from struct device_identification
+	 *
+	 * @param device struct which generates id
+	 * @return std::string
+	 */
 	static std::string getId(const ::device_identification &device);
 
 };
