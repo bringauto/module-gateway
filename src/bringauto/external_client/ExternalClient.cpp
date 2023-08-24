@@ -16,7 +16,7 @@ using log = bringauto::logging::Logger;
 
 ExternalClient::ExternalClient(std::shared_ptr <structures::GlobalContext> &context,
 							   structures::ModuleLibrary &moduleLibrary,
-							   std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &toExternalQueue)
+							   std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue)
 		: context_ { context }, moduleLibrary_ { moduleLibrary }, toExternalQueue_ { toExternalQueue } {
 	fromExternalQueue_ = std::make_shared < structures::AtomicQueue < InternalProtocol::DeviceCommand >> ();
 	reconnectQueue_ =
@@ -105,7 +105,7 @@ void ExternalClient::handleAggregatedMessages() {
 		log::logInfo("External client received aggregated status, number of aggregated statuses in queue {}",
 					 toExternalQueue_->size());
 		auto &message = toExternalQueue_->front();
-		sendStatus(message.devicestatus());
+		sendStatus(message.getMessage().devicestatus());
 	}
 }
 
@@ -141,7 +141,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	insideConnectSequence_ = true;
 
 	while(not toExternalQueue_->empty()){
-		auto &message = toExternalQueue_->front().devicestatus();
+		auto &message = toExternalQueue_->front().getMessage().devicestatus();
 		if (connection.isModuleSupported(message.device().module())){
 			connection.fillErrorAggregator(message);
 			toExternalQueue_->pop();
@@ -159,7 +159,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
-		auto &status = toExternalQueue_->front().devicestatus();
+		auto &status = toExternalQueue_->front().getMessage().devicestatus();
 		auto &device = status.device();
 		if(connection.isModuleSupported(device.module())) {
 			std::string deviceString = device.SerializeAsString();

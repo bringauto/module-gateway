@@ -182,7 +182,7 @@ bool InternalServer::handleStatus(const std::shared_ptr <structures::Connection>
 											 connection->socket.remote_endpoint().address().to_string());
 		return false;
 	}
-	fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(client));
+	fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(false, client));
 	connection->ready = false;
 	return true;
 }
@@ -224,7 +224,7 @@ void InternalServer::connectNewDevice(const std::shared_ptr <structures::Connect
 									  const std::shared_ptr <structures::DeviceIdentification> &deviceId) {
 	connection->deviceId = deviceId;
 	connectedDevices_.push_back(connection);
-	fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(connect));
+	fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(false, connect));
 	logging::Logger::logInfo(
 			"Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
 			"has been added into the vector of active connections",

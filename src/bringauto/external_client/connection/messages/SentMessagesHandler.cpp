@@ -33,7 +33,7 @@ int SentMessagesHandler::acknowledgeStatus(const ExternalProtocol::StatusRespons
 	return NOT_OK;
 }
 
-const std::vector <std::shared_ptr<NotAckedStatus>> &SentMessagesHandler::getNotAckedStatus() const {
+const std::vector <std::shared_ptr<NotAckedStatus>> &SentMessagesHandler::getNotAckedStatuses() const {
 	return notAckedStatuses_;
 }
 
@@ -68,7 +68,7 @@ bool SentMessagesHandler::isDeviceConnected(const InternalProtocol::Device &devi
 }
 
 bool SentMessagesHandler::isAnyDeviceConnected() const {
-	return connectedDevices_.empty();
+	return not connectedDevices_.empty();
 };
 
 void SentMessagesHandler::clearAllTimers() {

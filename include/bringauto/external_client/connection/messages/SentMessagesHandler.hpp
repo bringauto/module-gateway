@@ -27,7 +27,12 @@ public:
 	 */
 	int acknowledgeStatus(const ExternalProtocol::StatusResponse &statusResponse);
 
-	[[nodiscard]] const std::vector <std::shared_ptr<NotAckedStatus>> &getNotAckedStatus() const;
+	/**
+	 * @brief Get not acknowledged statuses messages
+	 *
+	 * @return const std::vector <std::shared_ptr<NotAckedStatus>>&
+	 */
+	[[nodiscard]] const std::vector <std::shared_ptr<NotAckedStatus>> &getNotAckedStatuses() const;
 
 	/**
 	 * @brief Return true if all statuses were acknowledged
@@ -35,16 +40,43 @@ public:
 	 */
 	[[nodiscard]] bool allStatusesAcked() const;
 
+	/**
+	 * @brief Clear all timers and erase them
+	 */
 	void clearAll();
 
+	/**
+	 * @brief Add connected device
+	 *
+	 * @param device connected device
+	 */
 	void addDeviceAsConnected(const InternalProtocol::Device &device);
 
+	/**
+	 * @brief Delete connected device
+	 *
+	 * @param device connected device
+	 */
 	void deleteConnectedDevice(const InternalProtocol::Device &device);
 
+	/**
+	 * @brief Check if device is connected
+	 *
+	 * @param device connected device
+	 * @return true if given device is connected otherwise false
+	 */
 	bool isDeviceConnected(const InternalProtocol::Device &device);
 
+	/**
+	 * @brief Check if any device is connected
+	 *
+	 * @return true if any device is connected otherwise false
+	 */
 	[[nodiscard]] bool isAnyDeviceConnected() const;
 
+	/**
+	 * @brief Clear all timers
+	 */
 	void clearAllTimers();
 
 private:

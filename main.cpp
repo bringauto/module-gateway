@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
 
 	auto toInternalQueue = std::make_shared<bas::AtomicQueue<InternalProtocol::InternalServer >>();
 	auto fromInternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
-	auto toExternalQueue = std::make_shared<bas::AtomicQueue<InternalProtocol::InternalClient >>();
+	auto toExternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
 
 	bais::InternalServer internalServer { context, fromInternalQueue, toInternalQueue };
 	bringauto::modules::ModuleHandler moduleHandler { context, moduleLibrary, fromInternalQueue, toInternalQueue,

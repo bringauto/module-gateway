@@ -22,7 +22,7 @@ public:
 			structures::ModuleLibrary &moduleLibrary,
 			std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &fromInternalQueue,
 			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> &toInternalQueue,
-			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &toExternalQueue)
+			std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue)
 			: context_ { context }, moduleLibrary_ { moduleLibrary }, fromInternalQueue_ { fromInternalQueue },
 			  toInternalQueue_ { toInternalQueue },
 			  toExternalQueue_ { toExternalQueue } {}
@@ -44,10 +44,10 @@ public:
 private:
 
 	/**
-	 * @brief Process all incoming messages
+	 * @brief Process all incoming messages from internal server
 	 *
 	 */
-	void handle_messages();
+	void handleMessages();
 
 	/**
 	 * @brief Process disconnect device
@@ -64,6 +64,14 @@ private:
 	void handleConnect(const InternalProtocol::DeviceConnect &connect);
 
 	/**
+	 * @brief Send connect response message to internal client
+	 *
+	 * @param device internal client
+	 * @param response_type type of the response
+	 */
+	void sendConnectResponse(const InternalProtocol::Device &device, InternalProtocol::DeviceConnectResponse_ResponseType response_type);
+
+	/**
 	 * @brief Process status message
 	 *
 	 * @param status Status message
@@ -78,7 +86,7 @@ private:
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
 
-	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> toExternalQueue_;
+	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> toExternalQueue_;
 };
 
 }

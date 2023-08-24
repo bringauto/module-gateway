@@ -259,7 +259,7 @@ void ExternalConnection::endConnection(bool completeDisconnect = false) {
 	}
 
 	if(not completeDisconnect) {
-		fillErrorAggregator();
+		fillErrorAggregatorWithNotAckedStatuses();
 	} else {
 		for(auto &[moduleNumber, errorAggregator]: errorAggregators) {
 			errorAggregator.destroy_error_aggregator();
@@ -339,8 +339,8 @@ u_int32_t ExternalConnection::getCommandCounter(const ExternalProtocol::Command 
 	return command.messagecounter();
 }
 
-void ExternalConnection::fillErrorAggregator() {
-	for(const auto &notAckedStatus: sentMessagesHandler_->getNotAckedStatus()) {
+void ExternalConnection::fillErrorAggregatorWithNotAckedStatuses() {
+	for(const auto &notAckedStatus: sentMessagesHandler_->getNotAckedStatuses()) {
 		const auto &device = notAckedStatus->getDevice();
 
 		struct ::buffer statusBuffer {};
@@ -360,7 +360,7 @@ void ExternalConnection::fillErrorAggregator() {
 }
 
 void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatus &deviceStatus) {
-	fillErrorAggregator();
+	fillErrorAggregatorWithNotAckedStatuses();
 	int moduleNum = deviceStatus.device().module();
 	if(errorAggregators.find(moduleNum) != errorAggregators.end()) {
 		struct ::buffer statusBuffer {};
@@ -410,6 +410,8 @@ std::vector <structures::DeviceIdentification> ExternalConnection::getAllConnect
 
 	return devices;
 }
+
+ConnectionState ExternalConnection::getState() const { return state_.load(); }
 
 bool ExternalConnection::isModuleSupported(int moduleNum) {
 	return errorAggregators.find(moduleNum) != errorAggregators.end();

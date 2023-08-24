@@ -44,8 +44,10 @@ constexpr uint8_t header { 4 };
  */
 constexpr size_t buffer_length = 1024;
 
+/**
+ * @brief Constant string views
+ */
 class Constants {
-	/// constant strings for parsing command line arguments
 public:
 	inline static constexpr std::string_view CONFIG_PATH { "config-path" };
 	inline static constexpr std::string_view VERBOSE { "verbose" };

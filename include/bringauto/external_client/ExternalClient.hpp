@@ -5,6 +5,7 @@
 #include <bringauto/structures/GlobalContext.hpp>
 #include <bringauto/structures/ModuleLibrary.hpp>
 #include <bringauto/structures/AtomicQueue.hpp>
+#include <bringauto/structures/InternalClientMessage.hpp>
 #include <InternalProtocol.pb.h>
 
 #include <memory>
@@ -20,7 +21,7 @@ public:
 
 	ExternalClient(std::shared_ptr <structures::GlobalContext> &context,
 				   structures::ModuleLibrary &moduleLibrary,
-				   std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &toExternalQueue);
+				   std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue);
 
 	/**
 	 * @brief Initialize connections, error aggregators
@@ -78,7 +79,7 @@ private:
 
 	std::list <connection::ExternalConnection> externalConnectionsList_;
 
-	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> toExternalQueue_;
+	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> toExternalQueue_;
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> fromExternalQueue_;
 

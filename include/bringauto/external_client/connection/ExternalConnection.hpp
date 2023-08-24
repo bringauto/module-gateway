@@ -47,8 +47,22 @@ public:
 	 */
 	int initializeConnection();
 
+	/**
+	 * @brief Disconnect from the external server
+	 * complete disconnect means it also clears aggregators
+	 * otherwise it fills error aggregators with not acknowledged status messages
+	 *
+	 * @param completeDisconnect
+	 */
 	void endConnection(bool completeDisconnect);
 
+	/**
+	 * @brief Send status message to the external server
+	 *
+	 * @param status status message
+	 * @param deviceState state of the device
+	 * @param errorMessage error message
+	 */
 	void sendStatus(const InternalProtocol::DeviceStatus &status,
 					ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING,
 					const buffer &errorMessage = {});
@@ -68,12 +82,31 @@ public:
 	 */
 	int forceAggregationOnAllDevices();
 
-	void fillErrorAggregator();
+	/**
+	 * @brief Fill error aggregator with not acknowledged status messages
+	 */
+	void fillErrorAggregatorWithNotAckedStatuses();
 
+	/**
+	 * @brief Fill error aggregator with not acknowledged status messages and given status message
+	 *
+	 * @param deviceStatus status message
+	 */
 	void fillErrorAggregator(const InternalProtocol::DeviceStatus &deviceStatus);
 
-	[[nodiscard]] ConnectionState getState() const { return state_.load(); }
+	/**
+	 * @brief Get connection state
+	 *
+	 * @return ConnectionState
+	 */
+	[[nodiscard]] ConnectionState getState() const;
 
+	/**
+	 * @brief Check if module type is supported
+	 *
+	 * @param moduleNum module type number
+	 * @return true if moudle type is supported otherwise false
+	 */
 	bool isModuleSupported(int moduleNum);
 
 private:
@@ -99,6 +132,7 @@ private:
 
 	/**
 	 * @brief Check if command is in order and send commandResponse
+	 *
 	 * @param commandMessage
 	 * @return 0 if OK
 	 * @return -1 if command is out of order
