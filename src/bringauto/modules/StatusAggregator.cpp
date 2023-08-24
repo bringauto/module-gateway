@@ -127,7 +127,8 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 		devices.insert(
 				{ id, structures::StatusAggregatorDeviceState(context_, fun, deviceId, commandBuffer, statusBuffer) });
 
-		return 0;
+		force_aggregation_on_device(device);
+		return 1;
 	}
 
 	auto &deviceState = devices.at(id);
