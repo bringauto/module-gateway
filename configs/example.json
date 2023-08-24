@@ -8,7 +8,8 @@
   },
   "module-paths": {
     "1": "./libs/mission_module/libmission_module.so",
-    "2": "./libs/button_module/libbutton_module.so"
+    "2": "./libs/button_module/libbutton_module.so",
+    "3": "./libio_module_module_manager.so"
   },
   "external-connection" : {
     "company" : "BringAuto",
@@ -25,7 +26,7 @@
         },
         "server-ip": "127.0.0.1",
         "port": 1883,
-        "modules": [ 1,2 ]
+        "modules": [ 1,2,3 ]
       },
       {
         "protocol-type" : "example",
