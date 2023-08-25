@@ -57,6 +57,15 @@ private:
 	void handleDisconnect(device_identification deviceId);
 
 	/**
+	 * @brief Send aggregated status to external server
+	 *
+	 * @param deviceId device identification
+	 * @param device protobuf device
+	 * @param disconnected true if device is disconnected otherwise false
+	 */
+	void sendAggregatedStatus(const device_identification &deviceId, const InternalProtocol::Device &device, bool disconnected);
+
+	/**
 	 * @brief Process connect message
 	 *
 	 * @param connect Connect message

@@ -69,19 +69,23 @@ void ModuleHandler::handleDisconnect(device_identification deviceId) {
 	statusAggregator->force_aggregation_on_device(deviceId);
 	auto device = common_utils::ProtobufUtils::createDevice(deviceId);
 
-	//create function probably
+	sendAggregatedStatus(deviceId, device, true);
+	statusAggregator->remove_device(deviceId);
+
+	log::logCritical("Device {} disconnects", deviceName);
+	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
+}
+
+void ModuleHandler::sendAggregatedStatus(const device_identification &deviceId, const ip::Device &device, bool disconnected){
+	auto &statusAggregator = moduleLibrary_.statusAggregators.at(deviceId.module);
 	struct ::buffer aggregatedStatusBuffer {};
 	statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
 	auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device,
 																						aggregatedStatusBuffer);
-	toExternalQueue_->pushAndNotify(structures::InternalClientMessage(true, statusMessage));
+	toExternalQueue_->pushAndNotify(structures::InternalClientMessage(disconnected, statusMessage));
 	log::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}",
 				  toExternalQueue_->size());
 	deallocate(&aggregatedStatusBuffer);
-
-	statusAggregator->remove_device(deviceId);
-	log::logCritical("Device {} disconnects", deviceName);
-	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 }
 
 void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
@@ -163,14 +167,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	}
 
 	while(addStatusToAggregatorRc > 0) {
-		struct ::buffer aggregatedStatusBuffer {};
-		statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
-		auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device,
-																							aggregatedStatusBuffer);
-		toExternalQueue_->pushAndNotify(structures::InternalClientMessage(false, statusMessage));
-		log::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}",
-					  toExternalQueue_->size());
-		deallocate(&aggregatedStatusBuffer);
+		sendAggregatedStatus(deviceId, device, false);
 		addStatusToAggregatorRc--;
 	}
 
