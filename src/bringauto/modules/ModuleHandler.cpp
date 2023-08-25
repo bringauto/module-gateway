@@ -139,13 +139,8 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 
 	struct ::device_identification deviceId = common_utils::ProtobufUtils::parseDevice(device);
 
-	auto &statusAggregator = statusAggregators[moduleNumber];
-	int addStatusToAggregatorRc = statusAggregator->add_status_to_aggregator(statusBuffer, deviceId);
-	if(addStatusToAggregatorRc < 0) {
-		log::logWarning("Add status to aggregator failed with return code: {}", addStatusToAggregatorRc);
-	}
-
 	struct ::buffer commandBuffer {};
+	auto &statusAggregator = statusAggregators[moduleNumber];
 	int getCommandrRc = statusAggregator->get_command(statusBuffer, deviceId, &commandBuffer);
 	if(getCommandrRc == OK) {
 		auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device, commandBuffer);
@@ -154,6 +149,17 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 		deallocate(&commandBuffer);
 	} else {
 		log::logWarning("Retrieving command failed with return code: {}", getCommandrRc);
+		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
+		deallocate(&statusBuffer);
+		return;
+	}
+
+	int addStatusToAggregatorRc = statusAggregator->add_status_to_aggregator(statusBuffer, deviceId);
+	if(addStatusToAggregatorRc < 0) {
+		log::logWarning("Add status to aggregator failed with return code: {}", addStatusToAggregatorRc);
+		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
+		deallocate(&statusBuffer);
+		return;
 	}
 
 	while(addStatusToAggregatorRc > 0) {

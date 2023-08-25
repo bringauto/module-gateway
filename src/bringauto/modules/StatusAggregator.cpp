@@ -99,10 +99,6 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	}
 
 	std::string id = common_utils::ProtobufUtils::getId(device);
-	if(status.size_in_bytes == 0 || module_->statusDataValid(status, device_type) == NOT_OK) {
-		log::logWarning("Invalid status data on device: {}", id);
-		return NOT_OK;
-	}
 
 	if(not devices.contains(id)) {
 		struct buffer commandBuffer {};
@@ -230,7 +226,6 @@ int StatusAggregator::update_command(const struct ::buffer command, const struct
 	return OK;
 }
 
-// maybe not registered
 int StatusAggregator::get_command(const struct ::buffer status, const struct ::device_identification device,
 								  struct ::buffer *command) {
 	const auto &device_type = device.device_type;
@@ -244,6 +239,11 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 	if(status.size_in_bytes == 0 || module_->statusDataValid(status, device_type) == NOT_OK) {
 		log::logWarning("Invalid status data on device id: {}", id);
 		return STATUS_INVALID;
+	}
+
+	if(is_device_valid(device) == NOT_OK){
+		module_->generateFirstCommand(command, device_type);
+		return OK;
 	}
 
 	auto &deviceState = devices.at(id);
