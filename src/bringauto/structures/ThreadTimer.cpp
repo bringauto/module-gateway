@@ -3,6 +3,8 @@
 #include <bringauto/logging/Logger.hpp>
 #include <bringauto/common_utils/MemoryUtils.hpp>
 
+#include <iostream>
+
 
 
 namespace bringauto::structures {
@@ -34,8 +36,7 @@ void ThreadTimer::stop() {
 	try {
 		timer_.cancel();
 	} catch(boost::system::system_error &e) {
-		std::string name(static_cast<char *>(deviceId_.device_name.data), deviceId_.device_name.size_in_bytes);
-		logging::Logger::logDebug("System error in thread timer on device: {}", name);
+		std::cerr << "System error in thread timer\n";
 	}
 }
 

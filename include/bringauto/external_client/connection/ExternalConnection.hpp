@@ -118,7 +118,7 @@ private:
 
 	[[nodiscard]] u_int32_t getNextStatusCounter();
 
-	static u_int32_t getCommandCounter(const ExternalProtocol::Command &command);
+	[[nodiscard]] static u_int32_t getCommandCounter(const ExternalProtocol::Command &command);
 
 	int connectMessageHandle(const std::vector <structures::DeviceIdentification> &devices);
 

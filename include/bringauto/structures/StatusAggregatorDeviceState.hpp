@@ -35,7 +35,7 @@ public:
 	 *
 	 * @return const struct buffer&
 	 */
-	const struct buffer &getStatus() const;
+	[[nodiscard]] const struct buffer &getStatus() const;
 
 	/**
 	 * @brief Deallocate status buffer
@@ -61,7 +61,7 @@ public:
 	 *
 	 * @return const struct buffer&
 	 */
-	const struct buffer &getCommand() const;
+	[[nodiscard]] const struct buffer &getCommand() const;
 
 	/**
 	 * @brief Deallocate command buffer
@@ -73,7 +73,7 @@ public:
 	 *
 	 * @return std::queue<struct buffer>&
 	 */
-	std::queue<struct buffer> &getAggregatedMessages();
+	[[nodiscard]] std::queue<struct buffer> &getAggregatedMessages();
 
 private:
 	std::unique_ptr<bringauto::structures::ThreadTimer> timer_ {};
