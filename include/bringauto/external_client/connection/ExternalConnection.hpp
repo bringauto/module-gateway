@@ -9,6 +9,7 @@
 #include <bringauto/external_client/ErrorAggregator.hpp>
 #include <bringauto/external_client/connection/ConnectionState.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
+#include <bringauto/structures/ReconnectQueueItem.hpp>
 
 #include <general_error_codes.h>
 
@@ -29,7 +30,7 @@ public:
 					   const structures::ExternalConnectionSettings &settings,
 					   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
 					   const std::shared_ptr <structures::AtomicQueue<
-							   std::reference_wrapper < connection::ExternalConnection>>
+							   structures::ReconnectQueueItem>
 	>& reconnectQueue);
 
 	/**
@@ -100,6 +101,11 @@ public:
 	 * @return ConnectionState
 	 */
 	[[nodiscard]] ConnectionState getState() const;
+
+	/**
+	 * @brief Set state to NotInitialized
+	 */
+	void setNotInitialized();
 
 	/**
 	 * @brief Check if module type is supported
@@ -180,7 +186,7 @@ private:
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_;
 
-	std::shared_ptr <structures::AtomicQueue<std::reference_wrapper < connection::ExternalConnection>>>
+	std::shared_ptr <structures::AtomicQueue<structures::ReconnectQueueItem>>
 	reconnectQueue_;
 
 	std::string carId_ {};

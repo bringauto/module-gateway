@@ -19,13 +19,13 @@ ExternalConnection::ExternalConnection(const std::shared_ptr <structures::Global
 									   const structures::ExternalConnectionSettings &settings,
 									   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
 									   const std::shared_ptr <structures::AtomicQueue<
-											   std::reference_wrapper < connection::ExternalConnection>>>& reconnectQueue):
+											   structures::ReconnectQueueItem>>& reconnectQueue):
 												context_ {context},
 												moduleLibrary_ {moduleLibrary},
 												settings_ {settings },
 												commandQueue_ {commandQueue },
 												reconnectQueue_ {reconnectQueue } {
-	sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context, [this]() { reconnectQueue_->push(std::ref(*this)); });
+	sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context, [this]() { reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(*this), true)); });
 }
 
 void ExternalConnection::init(const std::string &company, const std::string &vehicleName) {
@@ -55,18 +55,22 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 				device.module());
 	}
 
+	auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
+	std::string id = common_utils::ProtobufUtils::getId(deviceId);
+	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
+
 	switch(deviceState) {
 		case ExternalProtocol::Status_DeviceState_CONNECTING:
-			sentMessagesHandler_->addDeviceAsConnected(device);
+			sentMessagesHandler_->addDeviceAsConnected(id);
 			break;
 		case ExternalProtocol::Status_DeviceState_RUNNING:
-			if(not sentMessagesHandler_->isDeviceConnected(device)) {
+			if(not sentMessagesHandler_->isDeviceConnected(id)) {
 				deviceState = ExternalProtocol::Status_DeviceState_CONNECTING;
-				sentMessagesHandler_->addDeviceAsConnected(device);
+				sentMessagesHandler_->addDeviceAsConnected(id);
 			}
 			break;
 		case ExternalProtocol::Status_DeviceState_DISCONNECT:
-			sentMessagesHandler_->deleteConnectedDevice(device);
+			sentMessagesHandler_->deleteConnectedDevice(id);
 			break;
 		case ExternalProtocol::Status_DeviceState_ERROR:
 		default:
@@ -316,19 +320,19 @@ void ExternalConnection::receivingHandlerLoop() {
 			const auto &command = serverMessage->command();
 			log::logDebug("Handling COMMAND messageCounter={}", command.messagecounter());
 			if(handleCommand(command) != 0) {
-				endConnection(false);
+				reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(*this), true));
 				return;
 			}
 		} else if(serverMessage->has_statusresponse()) {
 			const auto &statusResponse = serverMessage->statusresponse();
 			log::logDebug("Handling STATUS_RESPONSE messageCounter={}", statusResponse.messagecounter());
 			if(sentMessagesHandler_->acknowledgeStatus(statusResponse) != OK) {
-				endConnection(false);
+				reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(*this), false));
 				return;
 			}
 		} else {
 			log::logError("Received message with unexpected type(connect response), closing connection");
-			endConnection(false);
+			reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(*this), true));
 			return;
 		}
 
@@ -412,6 +416,10 @@ std::vector <structures::DeviceIdentification> ExternalConnection::getAllConnect
 }
 
 ConnectionState ExternalConnection::getState() const { return state_.load(); }
+
+void ExternalConnection::setNotInitialized(){
+	state_.exchange(ConnectionState::NOT_INITIALIZED);
+}
 
 bool ExternalConnection::isModuleSupported(int moduleNum) {
 	return errorAggregators.find(moduleNum) != errorAggregators.end();

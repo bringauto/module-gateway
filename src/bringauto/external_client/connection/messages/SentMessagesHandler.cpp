@@ -27,6 +27,9 @@ int SentMessagesHandler::acknowledgeStatus(const ExternalProtocol::StatusRespons
 		if(getStatusCounter(notAckedStatuses_[i]->getStatus()) == responseCounter) {
 			notAckedStatuses_[i]->cancelTimer();
 			notAckedStatuses_.erase(notAckedStatuses_.begin() + i);
+			if (not isAnyDeviceConnected() && allStatusesAcked()){
+				return NOT_OK; //maybe change to other and not NOT_OK
+			}
 			return OK;
 		}
 	}
@@ -46,24 +49,23 @@ void SentMessagesHandler::clearAll() {
 	notAckedStatuses_.clear();
 }
 
-void SentMessagesHandler::addDeviceAsConnected(const InternalProtocol::Device &device) {
+void SentMessagesHandler::addDeviceAsConnected(const std::string &device) {
 	connectedDevices_.push_back(device);
 }
 
-void SentMessagesHandler::deleteConnectedDevice(const InternalProtocol::Device &device) {
+void SentMessagesHandler::deleteConnectedDevice(const std::string &device) {
 	for(auto i = 0; i < connectedDevices_.size(); ++i) {
-		if(google::protobuf::util::MessageDifferencer::Equals(device, connectedDevices_[i])) {
+		if(device == connectedDevices_[i]) {
 			connectedDevices_.erase(connectedDevices_.begin() + i);
 			return;
 		}
 	}
-	logging::Logger::logError("Trying to delete not connected device. role: {}, name: {}", device.devicerole(),
-							  device.devicename());
+	logging::Logger::logError("Trying to delete not connected device id: {}", device);
 }
 
-bool SentMessagesHandler::isDeviceConnected(const InternalProtocol::Device &device) {
+bool SentMessagesHandler::isDeviceConnected(const std::string &device) {
 	return std::any_of(connectedDevices_.begin(), connectedDevices_.end(), [&](const auto &connectedDevice) {
-		return google::protobuf::util::MessageDifferencer::Equals(device, connectedDevice);
+		return device == connectedDevice;
 	});
 }
 

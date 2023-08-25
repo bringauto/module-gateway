@@ -48,24 +48,24 @@ public:
 	/**
 	 * @brief Add connected device
 	 *
-	 * @param device connected device
+	 * @param device connected device id
 	 */
-	void addDeviceAsConnected(const InternalProtocol::Device &device);
+	void addDeviceAsConnected(const std::string &device);
 
 	/**
 	 * @brief Delete connected device
 	 *
-	 * @param device connected device
+	 * @param device connected device id
 	 */
-	void deleteConnectedDevice(const InternalProtocol::Device &device);
+	void deleteConnectedDevice(const std::string &device);
 
 	/**
 	 * @brief Check if device is connected
 	 *
-	 * @param device connected device
+	 * @param device connected device id
 	 * @return true if given device is connected otherwise false
 	 */
-	bool isDeviceConnected(const InternalProtocol::Device &device);
+	bool isDeviceConnected(const std::string &device);
 
 	/**
 	 * @brief Check if any device is connected
@@ -97,7 +97,7 @@ private:
 
 	std::vector <std::shared_ptr<NotAckedStatus>> notAckedStatuses_;
 
-	std::vector <InternalProtocol::Device> connectedDevices_;
+	std::vector <std::string> connectedDevices_;
 
 	std::shared_ptr <structures::GlobalContext> context_;
 

@@ -6,6 +6,7 @@
 #include <bringauto/structures/ModuleLibrary.hpp>
 #include <bringauto/structures/AtomicQueue.hpp>
 #include <bringauto/structures/InternalClientMessage.hpp>
+#include <bringauto/structures/ReconnectQueueItem.hpp>
 #include <InternalProtocol.pb.h>
 
 #include <memory>
@@ -69,7 +70,7 @@ private:
 	 *
 	 * @param deviceStatus aggregated status message ready to send
 	 */
-	void sendStatus(const InternalProtocol::DeviceStatus &deviceStatus);
+	void sendStatus(const structures::InternalClientMessage &deviceStatus);
 
 	structures::ModuleLibrary &moduleLibrary_;
 
@@ -83,8 +84,7 @@ private:
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> fromExternalQueue_;
 
-	std::shared_ptr <structures::AtomicQueue<std::reference_wrapper < connection::ExternalConnection>>>
-	reconnectQueue_;
+	std::shared_ptr <structures::AtomicQueue<structures::ReconnectQueueItem>> reconnectQueue_;
 
 	std::jthread fromExternalClientThread_;
 

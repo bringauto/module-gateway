@@ -20,7 +20,7 @@ ExternalClient::ExternalClient(std::shared_ptr <structures::GlobalContext> &cont
 		: context_ { context }, moduleLibrary_ { moduleLibrary }, toExternalQueue_ { toExternalQueue } {
 	fromExternalQueue_ = std::make_shared < structures::AtomicQueue < InternalProtocol::DeviceCommand >> ();
 	reconnectQueue_ =
-			std::make_shared < structures::AtomicQueue < std::reference_wrapper < connection::ExternalConnection>>>();
+			std::make_shared < structures::AtomicQueue < structures::ReconnectQueueItem >>();
 	fromExternalClientThread_ = std::jthread(&ExternalClient::handleCommands, this);
 };
 
@@ -94,9 +94,15 @@ void ExternalClient::initConnections() {
 void ExternalClient::handleAggregatedMessages() {
 	while(not context_->ioContext.stopped()) {
 		if(not reconnectQueue_->empty()) {
-			auto &connection = reconnectQueue_->front().get();
+			auto &reconnectItem = reconnectQueue_->front();
+			auto &connection = reconnectItem.connection_.get();
 			connection.endConnection(false);
-			startExternalConnectSequence(connection);
+			if (reconnectItem.reconnect_){
+				startExternalConnectSequence(connection);
+			} else {
+				log::logInfo("External connection is disconnected from external server");
+				connection.setNotInitialized();
+			}
 			reconnectQueue_->pop();
 		}
 		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
@@ -105,11 +111,12 @@ void ExternalClient::handleAggregatedMessages() {
 		log::logInfo("External client received aggregated status, number of aggregated statuses in queue {}",
 					 toExternalQueue_->size());
 		auto &message = toExternalQueue_->front();
-		sendStatus(message.getMessage().devicestatus());
+		sendStatus(message);
 	}
 }
 
-void ExternalClient::sendStatus(const InternalProtocol::DeviceStatus &deviceStatus) {
+void ExternalClient::sendStatus(const structures::InternalClientMessage &internalMessage) {
+	auto &deviceStatus = internalMessage.getMessage().devicestatus();
 	const auto &moduleNumber = deviceStatus.device().module();
 	auto it = externalConnectionMap_.find(moduleNumber);
 	if(it == externalConnectionMap_.end()) {
@@ -131,7 +138,11 @@ void ExternalClient::sendStatus(const InternalProtocol::DeviceStatus &deviceStat
 			startExternalConnectSequence(connection);
 		}
 	} else {
-		connection.sendStatus(deviceStatus);
+		if (internalMessage.disconnected()){
+			connection.sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_DISCONNECT);
+		} else {
+			connection.sendStatus(deviceStatus);
+		}
 		toExternalQueue_->pop();
 	}
 }
@@ -147,7 +158,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 			toExternalQueue_->pop();
 		} else {
 			// check if this works
-			sendStatus(message);
+			// sendStatus(message);
 		}
 	}
 
@@ -178,7 +189,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		} else {
 			log::logDebug("Sending status inside connect sequence init");
 			 // Send status from different connection, so it won't get lost. Shouldn't initialize bad recursion
-			sendStatus(status);
+			// sendStatus(status);
 		}
 		toExternalQueue_->pop();
 	}
@@ -189,7 +200,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		timer.expires_from_now(boost::posix_time::seconds(settings::reconnect_delay));
 		timer.wait();
 		log::logDebug("Reconnect timer expired");
-		reconnectQueue_->push(std::ref(connection));
+		reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(connection), true));
 	}
 	insideConnectSequence_ = false;
 }
