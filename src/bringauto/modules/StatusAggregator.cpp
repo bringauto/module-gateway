@@ -87,7 +87,7 @@ int StatusAggregator::remove_device(const struct ::device_identification device)
 	}
 	std::string id = common_utils::ProtobufUtils::getId(device);
 	clear_device(device);
-	devices.erase(id);
+	boost::asio::post(context_->ioContext, [this, id](){ devices.erase(id); });
 	return OK;
 }
 
