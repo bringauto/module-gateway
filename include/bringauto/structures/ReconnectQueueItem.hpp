@@ -10,6 +10,9 @@ class ExternalConnection;
 
 namespace bringauto::structures {
 
+/**
+ * @brief Item in reconnect queue in external client
+ */
 struct ReconnectQueueItem {
 public:
 	explicit ReconnectQueueItem(
@@ -19,7 +22,6 @@ public:
 	std::reference_wrapper<external_client::connection::ExternalConnection> connection_;
 
 	bool reconnect_;
-
 };
 
 }

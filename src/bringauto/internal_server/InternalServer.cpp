@@ -295,12 +295,18 @@ bool InternalServer::sendResponse(const std::shared_ptr <structures::Connection>
 											 connection->socket.remote_endpoint().address().to_string());
 		return false;
 	}
-	const auto dataWSize = connection->socket.write_some(boost::asio::buffer(data));
-	if(dataWSize != header) {
+	try {
+		const auto dataWSize = connection->socket.write_some(boost::asio::buffer(data));
+		if(dataWSize != header) {
+			logging::Logger::logError("Error in sendResponse(...): "
+												 "Cannot write data to Internal Client, "
+												 "connection's ip address is {}",
+												 connection->socket.remote_endpoint().address().to_string());
+			return false;
+		}
+	} catch (const boost::exception &e){
 		logging::Logger::logError("Error in sendResponse(...): "
-											 "Cannot write data to Internal Client, "
-											 "connection's ip address is {}",
-											 connection->socket.remote_endpoint().address().to_string());
+									"Cannot write data to Internal Client");
 		return false;
 	}
 	return true;

@@ -66,10 +66,14 @@ void ModuleHandler::handleDisconnect(device_identification deviceId) {
 		return;
 	}
 
-	statusAggregator->force_aggregation_on_device(deviceId);
+	int ret = statusAggregator->force_aggregation_on_device(deviceId);
+	if (ret < 1) {
+		log::logWarning("Force aggregation failed on device: {} with error code: {}", deviceName, ret);
+		return;
+	}
 	auto device = common_utils::ProtobufUtils::createDevice(deviceId);
-
 	sendAggregatedStatus(deviceId, device, true);
+
 	statusAggregator->remove_device(deviceId);
 
 	log::logCritical("Device {} disconnects", deviceName);

@@ -166,7 +166,7 @@ int ExternalConnection::connectMessageHandle(const std::vector <structures::Devi
 
 int ExternalConnection::statusMessageHandle(const std::vector <structures::DeviceIdentification> &devices) {
 	for(const auto &deviceIdentification: devices) {
-		auto device = deviceIdentification.convertToCStruct();    // TODO could override all functions to accept the class
+		auto device = deviceIdentification.convertToCStruct();
 		const int &deviceModule = device.module;
 		struct buffer errorBuffer {};
 		struct buffer statusBuffer {};
@@ -280,19 +280,22 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command &commandMe
 	}
 	if(serverMessageCounter_ != 0) {
 		if(serverMessageCounter_ + 1 != messageCounter) {
-			log::logError("Command {} is out of order", messageCounter);    // TODO order commands
-			return -1; /// Out of order
+			log::logError("Command {} is out of order", messageCounter);
+			return -1; // Out of order
 		}
 	}
 	serverMessageCounter_ = messageCounter;
+
 	ExternalProtocol::CommandResponse::Type responseType;
-	// fix method isDeviceConnected it is completely bad implemented
-	// if(sentMessagesHandler_->isDeviceConnected(commandMessage.devicecommand().device())) {
+	auto deviceId = common_utils::ProtobufUtils::parseDevice(commandMessage.devicecommand().device());
+	auto id = common_utils::ProtobufUtils::getId(deviceId);
+	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
+	if(sentMessagesHandler_->isDeviceConnected(id)) {
 		responseType = ExternalProtocol::CommandResponse_Type_OK;
 		commandQueue_->pushAndNotify(commandMessage.devicecommand());
-	// } else {
-	// 	responseType = ExternalProtocol::CommandResponse_Type_DEVICE_NOT_CONNECTED; // TODO check if is supported
-	// }
+	} else {
+		responseType = ExternalProtocol::CommandResponse_Type_DEVICE_NOT_CONNECTED; // TODO check if is supported
+	}
 
 	auto commandResponse = common_utils::ProtobufUtils::createExternalClientCommandResponse(sessionId_, responseType,
 																							messageCounter);
