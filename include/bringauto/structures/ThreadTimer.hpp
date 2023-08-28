@@ -61,6 +61,8 @@ private:
 
 	boost::asio::deadline_timer timer_;
 
+	std::atomic_bool end_ {false};
+
 	std::function<int(const struct ::device_identification)> fun_;
 
 	device_identification deviceId_;

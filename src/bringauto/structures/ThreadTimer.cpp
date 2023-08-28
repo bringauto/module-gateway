@@ -15,7 +15,7 @@ ThreadTimer::~ThreadTimer() {
 }
 
 void ThreadTimer::tick(const boost::system::error_code &errorCode) {
-	if(errorCode == boost::asio::error::operation_aborted) {
+	if(errorCode == boost::asio::error::operation_aborted || end_) {
 		return;
 	}
 	fun_(deviceId_);
@@ -26,6 +26,7 @@ void ThreadTimer::tick(const boost::system::error_code &errorCode) {
 }
 
 void ThreadTimer::start() {
+	end_ = false;
 	timer_.expires_from_now(interval_);
 	timer_.async_wait([this](const boost::system::error_code &errorCode) {
 		tick(errorCode);
@@ -34,6 +35,7 @@ void ThreadTimer::start() {
 
 void ThreadTimer::stop() {
 	try {
+		end_ = true;
 		timer_.cancel();
 	} catch(boost::system::system_error &e) {
 		std::cerr << "System error in thread timer\n";
