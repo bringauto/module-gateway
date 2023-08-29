@@ -87,7 +87,7 @@ int StatusAggregator::remove_device(const struct ::device_identification device)
 	}
 	std::string id = common_utils::ProtobufUtils::getId(device);
 	clear_device(device);
-	boost::asio::post(context_->ioContext, [this, id](){ devices.erase(id); });
+	boost::asio::post(context_->ioContext, [this, id]() { devices.erase(id); });
 	return OK;
 }
 
@@ -241,7 +241,7 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 		return STATUS_INVALID;
 	}
 
-	if(is_device_valid(device) == NOT_OK){
+	if(is_device_valid(device) == NOT_OK) {
 		module_->generateFirstCommand(command, device_type);
 		return OK;
 	}

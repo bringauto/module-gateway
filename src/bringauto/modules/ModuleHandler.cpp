@@ -51,7 +51,7 @@ void ModuleHandler::handleMessages() {
 
 void ModuleHandler::handleDisconnect(device_identification deviceId) {
 	const auto &moduleNumber = deviceId.module;
-	std::string deviceName {static_cast<char *>(deviceId.device_name.data), deviceId.device_name.size_in_bytes};
+	std::string deviceName { static_cast<char *>(deviceId.device_name.data), deviceId.device_name.size_in_bytes };
 	auto &statusAggregators = moduleLibrary_.statusAggregators;
 
 	if(not statusAggregators.contains(moduleNumber)) {
@@ -61,13 +61,13 @@ void ModuleHandler::handleDisconnect(device_identification deviceId) {
 	}
 
 	auto &statusAggregator = statusAggregators.at(moduleNumber);
-	if (statusAggregator->is_device_valid(deviceId) == NOT_OK){
+	if(statusAggregator->is_device_valid(deviceId) == NOT_OK) {
 		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 		return;
 	}
 
 	int ret = statusAggregator->force_aggregation_on_device(deviceId);
-	if (ret < 1) {
+	if(ret < 1) {
 		log::logWarning("Force aggregation failed on device: {} with error code: {}", deviceName, ret);
 		return;
 	}
@@ -80,7 +80,8 @@ void ModuleHandler::handleDisconnect(device_identification deviceId) {
 	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 }
 
-void ModuleHandler::sendAggregatedStatus(const device_identification &deviceId, const ip::Device &device, bool disconnected){
+void ModuleHandler::sendAggregatedStatus(const device_identification &deviceId, const ip::Device &device,
+										 bool disconnected) {
 	auto &statusAggregator = moduleLibrary_.statusAggregators.at(deviceId.module);
 	struct ::buffer aggregatedStatusBuffer {};
 	statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
@@ -100,18 +101,20 @@ void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
 	log::logInfo("Module handler received Connect message from device: {}", deviceName);
 
 	if(not statusAggregators.contains(moduleNumber)) {
-		sendConnectResponse(device, ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_MODULE_NOT_SUPPORTED);
+		sendConnectResponse(device,
+							ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_MODULE_NOT_SUPPORTED);
 		return;
 	}
 
 	auto &statusAggregator = statusAggregators.at(moduleNumber);
 	if(statusAggregator->is_device_type_supported(device.devicetype()) == NOT_OK) {
-		sendConnectResponse(device, ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_DEVICE_NOT_SUPPORTED);
+		sendConnectResponse(device,
+							ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_DEVICE_NOT_SUPPORTED);
 		return;
 	}
 
 	struct ::device_identification deviceId = common_utils::ProtobufUtils::parseDevice(device);
-	if (statusAggregator->is_device_valid(deviceId) == OK){
+	if(statusAggregator->is_device_valid(deviceId) == OK) {
 		log::logInfo("Device {} is replaced with device with higher priority", deviceName);
 	}
 	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
@@ -119,7 +122,8 @@ void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
 	sendConnectResponse(device, ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_OK);
 }
 
-void ModuleHandler::sendConnectResponse(const ip::Device &device, ip::DeviceConnectResponse_ResponseType response_type){
+void
+ModuleHandler::sendConnectResponse(const ip::Device &device, ip::DeviceConnectResponse_ResponseType response_type) {
 	auto response = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(device, response_type);
 	toInternalQueue_->pushAndNotify(response);
 	log::logInfo("New device {} is trying to connect, sending response {}", device.devicename(), response_type);
@@ -151,7 +155,8 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	auto &statusAggregator = statusAggregators[moduleNumber];
 	int getCommandRc = statusAggregator->get_command(statusBuffer, deviceId, &commandBuffer);
 	if(getCommandRc == OK) {
-		auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device, commandBuffer);
+		auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device,
+																									commandBuffer);
 		toInternalQueue_->pushAndNotify(deviceCommandMessage);
 		log::logDebug("Module handler succesfully retrieved command and sent it to device: {}", deviceName);
 		deallocate(&commandBuffer);

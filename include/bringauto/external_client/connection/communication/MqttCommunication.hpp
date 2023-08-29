@@ -24,7 +24,7 @@ public:
 
 	void sendMessage(ExternalProtocol::ExternalClient *message) override;
 
-	std::shared_ptr <ExternalProtocol::ExternalServer> receiveMessage() override;
+	std::shared_ptr<ExternalProtocol::ExternalServer> receiveMessage() override;
 
 	void closeConnection() override;
 
@@ -61,7 +61,7 @@ private:
 	/**
 	 * MQTT client
 	 */
-	std::unique_ptr <mqtt::async_client> client_ { nullptr };
+	std::unique_ptr<mqtt::async_client> client_ { nullptr };
 
 	std::string clientId_ {};
 

@@ -14,13 +14,14 @@ namespace bringauto::external_client {
 namespace ip = InternalProtocol;
 using log = bringauto::logging::Logger;
 
-ExternalClient::ExternalClient(std::shared_ptr <structures::GlobalContext> &context,
+ExternalClient::ExternalClient(std::shared_ptr<structures::GlobalContext> &context,
 							   structures::ModuleLibrary &moduleLibrary,
-							   std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue)
-		: context_ { context }, moduleLibrary_ { moduleLibrary }, toExternalQueue_ { toExternalQueue }, timer_ { context->ioContext } {
-	fromExternalQueue_ = std::make_shared < structures::AtomicQueue < InternalProtocol::DeviceCommand >> ();
+							   std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue)
+		: context_ { context }, moduleLibrary_ { moduleLibrary }, toExternalQueue_ { toExternalQueue },
+		  timer_ { context->ioContext } {
+	fromExternalQueue_ = std::make_shared<structures::AtomicQueue<InternalProtocol::DeviceCommand >>();
 	reconnectQueue_ =
-			std::make_shared < structures::AtomicQueue < structures::ReconnectQueueItem >>();
+			std::make_shared<structures::AtomicQueue<structures::ReconnectQueueItem >>();
 	fromExternalClientThread_ = std::jthread(&ExternalClient::handleCommands, this);
 };
 
@@ -97,7 +98,7 @@ void ExternalClient::handleAggregatedMessages() {
 			auto &reconnectItem = reconnectQueue_->front();
 			auto &connection = reconnectItem.connection_.get();
 			connection.endConnection(false);
-			if (reconnectItem.reconnect_){
+			if(reconnectItem.reconnect_) {
 				startExternalConnectSequence(connection);
 			} else {
 				log::logInfo("External connection is disconnected from external server");
@@ -138,7 +139,7 @@ void ExternalClient::sendStatus(const structures::InternalClientMessage &interna
 			startExternalConnectSequence(connection);
 		}
 	} else {
-		if (internalMessage.disconnected()){
+		if(internalMessage.disconnected()) {
 			connection.sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_DISCONNECT);
 		} else {
 			connection.sendStatus(deviceStatus);
@@ -151,10 +152,10 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	log::logInfo("Initializing new connection");
 	insideConnectSequence_ = true;
 
-	while(not toExternalQueue_->empty()){
+	while(not toExternalQueue_->empty()) {
 		auto &internalMessage = toExternalQueue_->front();
 		auto &deviceStatus = internalMessage.getMessage().devicestatus();
-		if (connection.isModuleSupported(deviceStatus.device().module())){
+		if(connection.isModuleSupported(deviceStatus.device().module())) {
 			connection.fillErrorAggregator(deviceStatus);
 			toExternalQueue_->pop();
 		} else {
@@ -165,7 +166,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	log::logDebug("External client is forcing aggregation on all modules");
 	auto statusesLeft = connection.forceAggregationOnAllDevices();
 
-	std::set <std::string> devices {};
+	std::set<std::string> devices {};
 	while(statusesLeft != 0 && not context_->ioContext.stopped()) {
 		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
@@ -190,7 +191,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 			toExternalQueue_->pop();
 		} else {
 			log::logDebug("Sending status inside connect sequence init");
-			 // Send status from different connection, so it won't get lost. Shouldn't initialize bad recursion
+			// Send status from different connection, so it won't get lost. Shouldn't initialize bad recursion
 			sendStatus(internalMessage);
 		}
 	}

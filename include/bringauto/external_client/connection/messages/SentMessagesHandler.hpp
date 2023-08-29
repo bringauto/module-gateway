@@ -13,7 +13,7 @@ namespace bringauto::external_client::connection::messages {
 class SentMessagesHandler {
 public:
 	explicit SentMessagesHandler(const std::shared_ptr <structures::GlobalContext> &context,
-								 const std::function<void()> endConnectionFunc);
+								 const std::function<void()> &endConnectionFunc);
 
 	/**
 	 * @brief call this method for each sent status - will add status as not acknowledged

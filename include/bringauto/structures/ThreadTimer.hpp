@@ -32,9 +32,9 @@ public:
 	 *					(in seconds)
 	 */
 	explicit ThreadTimer(std::shared_ptr<bringauto::structures::GlobalContext> &context,
-						 std::function<int(const struct ::device_identification)> fun,
+						 std::function<int(const struct ::device_identification)> &function,
 						 const device_identification &deviceId): timer_ { context->ioContext },
-																 fun_ { fun },
+																 fun_ { function },
 																 deviceId_ { deviceId },
 																 interval_ { settings::status_aggregation_timeout } {}
 
@@ -61,7 +61,7 @@ private:
 
 	boost::asio::deadline_timer timer_;
 
-	std::atomic_bool end_ {false};
+	std::atomic_bool end_ { false };
 
 	std::function<int(const struct ::device_identification)> fun_;
 

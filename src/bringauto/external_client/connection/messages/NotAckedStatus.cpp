@@ -27,7 +27,7 @@ void NotAckedStatus::cancelTimer() {
 
 void NotAckedStatus::timeoutHandler(const std::function<void()> &endConnectionFunc) {
 	std::string loggingStr("Status response Timeout (" + std::to_string(status_.messagecounter()) + "):");
-	std::unique_lock <std::mutex> lock(responseHandledMutex_);
+	std::unique_lock<std::mutex> lock(responseHandledMutex_);
 	if(responseHandled_.load()) {
 		logging::Logger::logError("{} already handled, skipping.", loggingStr);
 		return;

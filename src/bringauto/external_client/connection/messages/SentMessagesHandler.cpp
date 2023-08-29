@@ -7,11 +7,12 @@
 #include <utility>
 
 
+
 namespace bringauto::external_client::connection::messages {
 
 
-SentMessagesHandler::SentMessagesHandler(const std::shared_ptr <structures::GlobalContext> &context,
-										 const std::function<void()> endConnectionFunc): context_ { context },
+SentMessagesHandler::SentMessagesHandler(const std::shared_ptr<structures::GlobalContext> &context,
+										 const std::function<void()> &endConnectionFunc): context_ { context },
 																						 endConnectionFunc_ {
 																								 endConnectionFunc } {}
 
@@ -27,7 +28,7 @@ int SentMessagesHandler::acknowledgeStatus(const ExternalProtocol::StatusRespons
 		if(getStatusCounter(notAckedStatuses_[i]->getStatus()) == responseCounter) {
 			notAckedStatuses_[i]->cancelTimer();
 			notAckedStatuses_.erase(notAckedStatuses_.begin() + i);
-			if (not isAnyDeviceConnected() && allStatusesAcked()){
+			if(not isAnyDeviceConnected() && allStatusesAcked()) {
 				return NOT_OK; //maybe change to other and not NOT_OK
 			}
 			return OK;
@@ -36,7 +37,7 @@ int SentMessagesHandler::acknowledgeStatus(const ExternalProtocol::StatusRespons
 	return NOT_OK;
 }
 
-const std::vector <std::shared_ptr<NotAckedStatus>> &SentMessagesHandler::getNotAckedStatuses() const {
+const std::vector<std::shared_ptr<NotAckedStatus>> &SentMessagesHandler::getNotAckedStatuses() const {
 	return notAckedStatuses_;
 }
 

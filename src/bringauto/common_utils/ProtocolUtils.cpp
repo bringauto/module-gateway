@@ -51,10 +51,10 @@ InternalProtocol::DeviceStatus ProtobufUtils::createDeviceStatus(const device_id
 }
 
 device_identification ProtobufUtils::parseDevice(const InternalProtocol::Device &device) {
-	struct buffer deviceRoleBuff{};
+	struct buffer deviceRoleBuff {};
 	MemoryUtils::initBuffer(deviceRoleBuff, device.devicerole());
 
-	struct buffer deviceNameBuff{};
+	struct buffer deviceNameBuff {};
 	MemoryUtils::initBuffer(deviceNameBuff, device.devicename());
 
 	return ::device_identification { .module = device.module(),
@@ -65,8 +65,8 @@ device_identification ProtobufUtils::parseDevice(const InternalProtocol::Device 
 }
 
 InternalProtocol::Device ProtobufUtils::createDevice(const device_identification &device) {
-	std::string device_role{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes};
-	std::string device_name{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes};
+	std::string device_role { static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes };
+	std::string device_name { static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes };
 	return createDevice(device.module, device.device_type, device_role, device_name, device.priority);
 }
 
@@ -90,7 +90,7 @@ ProtobufUtils::createDevice(int module, unsigned int type, const std::string &ro
 ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientConnect(const std::string &sessionId,
 																			const std::string &company,
 																			const std::string &vehicleName,
-																			const std::vector <structures::DeviceIdentification> &devices) {
+																			const std::vector<structures::DeviceIdentification> &devices) {
 	ExternalProtocol::ExternalClient externalMessage;
 	auto connectMessage = externalMessage.mutable_connect();
 
@@ -136,8 +136,9 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientCommandRespo
 
 std::string ProtobufUtils::getId(const ::device_identification &device) {
 	std::stringstream ss;
-	ss << device.module << "/" << device.device_type << "/" << std::string{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes} << "/"
-	   << std::string{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes};
+	ss << device.module << "/" << device.device_type << "/"
+	   << std::string { static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes } << "/"
+	   << std::string { static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes };
 	return ss.str();
 }
 

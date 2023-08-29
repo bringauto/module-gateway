@@ -33,11 +33,11 @@ void StatusAggregatorDeviceState::setStatusAndResetTimer(const buffer &statusBuf
 	timer_->restart();
 }
 
-void StatusAggregatorDeviceState::deallocateCommand(){
+void StatusAggregatorDeviceState::deallocateCommand() {
 	deallocate(&command_);
 }
 
-void StatusAggregatorDeviceState::setCommand(const buffer &commandBuffer){
+void StatusAggregatorDeviceState::setCommand(const buffer &commandBuffer) {
 	deallocateCommand();
 	command_ = commandBuffer;
 }

@@ -20,9 +20,9 @@ namespace bringauto::external_client {
 class ExternalClient {
 public:
 
-	ExternalClient(std::shared_ptr <structures::GlobalContext> &context,
+	ExternalClient(std::shared_ptr<structures::GlobalContext> &context,
 				   structures::ModuleLibrary &moduleLibrary,
-				   std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue);
+				   std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue);
 
 	/**
 	 * @brief Initialize connections, error aggregators
@@ -78,17 +78,17 @@ private:
 
 	std::map<unsigned int, std::reference_wrapper<connection::ExternalConnection>> externalConnectionMap_;
 
-	std::list <connection::ExternalConnection> externalConnectionsList_;
+	std::list<connection::ExternalConnection> externalConnectionsList_;
 
-	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> toExternalQueue_;
+	std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> toExternalQueue_;
 
-	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> fromExternalQueue_;
+	std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>> fromExternalQueue_;
 
-	std::shared_ptr <structures::AtomicQueue<structures::ReconnectQueueItem>> reconnectQueue_;
+	std::shared_ptr<structures::AtomicQueue<structures::ReconnectQueueItem>> reconnectQueue_;
 
 	std::jthread fromExternalClientThread_;
 
-	std::shared_ptr <structures::GlobalContext> context_;
+	std::shared_ptr<structures::GlobalContext> context_;
 
 	boost::asio::deadline_timer timer_;
 };

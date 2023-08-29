@@ -108,7 +108,7 @@ public:
 	static ExternalProtocol::ExternalClient createExternalClientConnect(const std::string &sessionId,
 																		const std::string &company,
 																		const std::string &vehicleName,
-																		const std::vector <structures::DeviceIdentification> &devices);
+																		const std::vector<structures::DeviceIdentification> &devices);
 
 	/**
 	 * @brief Create a External Client Status message

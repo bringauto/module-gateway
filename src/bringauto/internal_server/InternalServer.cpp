@@ -32,14 +32,14 @@ void InternalServer::addAsyncAccept() {
 			return;
 		}
 		logging::Logger::logInfo("accepted connection with Internal Client, "
-											"connection's ip address is {}",
-											connection->socket.remote_endpoint().address().to_string());
+								 "connection's ip address is {}",
+								 connection->socket.remote_endpoint().address().to_string());
 		addAsyncReceive(connection);
 		addAsyncAccept();
 	});
 }
 
-void InternalServer::addAsyncReceive(const std::shared_ptr <structures::Connection> &connection) {
+void InternalServer::addAsyncReceive(const std::shared_ptr<structures::Connection> &connection) {
 	connection->socket.async_receive(
 			boost::asio::buffer(connection->connContext.buffer),
 			[this, connection](const boost::system::error_code &error,
@@ -50,7 +50,7 @@ void InternalServer::addAsyncReceive(const std::shared_ptr <structures::Connecti
 }
 
 void InternalServer::asyncReceiveHandler(
-		const std::shared_ptr <structures::Connection> &connection,
+		const std::shared_ptr<structures::Connection> &connection,
 		const boost::system::error_code &error,
 		std::size_t bytesTransferred) {
 	if(error) {
@@ -66,7 +66,7 @@ void InternalServer::asyncReceiveHandler(
 					"Internal Client with ip address {} has been disconnected. Reason: {}",
 					connection->socket.remote_endpoint().address().to_string(), error.message());
 		}
-		std::lock_guard <std::mutex> lock(serverMutex_);
+		std::lock_guard<std::mutex> lock(serverMutex_);
 		removeConnFromMap(connection);
 		return;
 	}
@@ -75,13 +75,13 @@ void InternalServer::asyncReceiveHandler(
 	if(result) {
 		addAsyncReceive(connection);
 	} else {
-		std::lock_guard <std::mutex> lock(serverMutex_);
+		std::lock_guard<std::mutex> lock(serverMutex_);
 		removeConnFromMap(connection);
 	}
 }
 
 bool InternalServer::processBufferData(
-		const std::shared_ptr <structures::Connection> &connection,
+		const std::shared_ptr<structures::Connection> &connection,
 		std::size_t bytesTransferred) {
 	auto &completeMessageSize = connection->connContext.completeMessageSize;
 	auto &completeMessage = connection->connContext.completeMessage;
@@ -102,7 +102,7 @@ bool InternalServer::processBufferData(
 
 		uint32_t size { 0 };
 
-		std::copy(dataBegin, dataBegin + headerSize, (uint8_t*) & size);
+		std::copy(dataBegin, dataBegin + headerSize, (uint8_t *)&size);
 		completeMessageSize = size;
 		completeMessage.reserve(completeMessageSize);
 
@@ -117,9 +117,9 @@ bool InternalServer::processBufferData(
 	bytesLeft -= messageBytesLeft;
 	if(bytesLeft) {
 		logging::Logger::logError("Error in processBufferData(...): "
-											 "Received extra bytes of data: {} from Internal Client, "
-											 "connection's ip address is {}", bytesLeft,
-											 connection->socket.remote_endpoint().address().to_string());
+								  "Received extra bytes of data: {} from Internal Client, "
+								  "connection's ip address is {}", bytesLeft,
+								  connection->socket.remote_endpoint().address().to_string());
 		return false;
 	}
 
@@ -133,7 +133,7 @@ bool InternalServer::processBufferData(
 	return true;
 }
 
-bool InternalServer::handleMessage(const std::shared_ptr <structures::Connection> &connection) {
+bool InternalServer::handleMessage(const std::shared_ptr<structures::Connection> &connection) {
 
 	InternalProtocol::InternalClient client {};
 	if(!client.ParseFromArray(connection->connContext.completeMessage.data(),
@@ -157,28 +157,28 @@ bool InternalServer::handleMessage(const std::shared_ptr <structures::Connection
 				"connection's ip address is {}", connection->socket.remote_endpoint().address().to_string());
 		return false;
 	}
-	std::unique_lock <std::mutex> lk(connection->connectionMutex);
+	std::unique_lock<std::mutex> lk(connection->connectionMutex);
 	connection->conditionVariable.wait_for(lk, settings::fleet_protocol_timeout_length,
 										   [this, connection]() {
 											   return connection->ready || context_->ioContext.stopped();
 										   });
 	if(!connection->ready) {
 		logging::Logger::logError("Error in handleMessage(...): "
-											 "Module Handler did not response to a message in time, "
-											 "connection's ip address is {}",
-											 connection->socket.remote_endpoint().address().to_string());
+								  "Module Handler did not response to a message in time, "
+								  "connection's ip address is {}",
+								  connection->socket.remote_endpoint().address().to_string());
 		return false;
 	}
 	return !context_->ioContext.stopped();
 }
 
-bool InternalServer::handleStatus(const std::shared_ptr <structures::Connection> &connection,
+bool InternalServer::handleStatus(const std::shared_ptr<structures::Connection> &connection,
 								  const InternalProtocol::InternalClient &client) {
 	if(!connection->ready) {
 		logging::Logger::logError("Error in handleStatus(...): "
-											 "received status from Internal Client without being connected, "
-											 "connection's ip address is {}",
-											 connection->socket.remote_endpoint().address().to_string());
+								  "received status from Internal Client without being connected, "
+								  "connection's ip address is {}",
+								  connection->socket.remote_endpoint().address().to_string());
 		return false;
 	}
 	fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(false, client));
@@ -186,14 +186,14 @@ bool InternalServer::handleStatus(const std::shared_ptr <structures::Connection>
 	return true;
 }
 
-bool InternalServer::handleConnection(const std::shared_ptr <structures::Connection> &connection,
+bool InternalServer::handleConnection(const std::shared_ptr<structures::Connection> &connection,
 									  const InternalProtocol::InternalClient &client) {
-	std::lock_guard <std::mutex> lock(serverMutex_);
+	std::lock_guard<std::mutex> lock(serverMutex_);
 	if(connection->ready) {
 		logging::Logger::logError("Error in handleConnection(...): "
-											 "Internal Client is sending connect while already connected, "
-											 "connection's ip address is {}",
-											 connection->socket.remote_endpoint().address().to_string());
+								  "Internal Client is sending connect while already connected, "
+								  "connection's ip address is {}",
+								  connection->socket.remote_endpoint().address().to_string());
 		return false;
 	}
 
@@ -218,9 +218,9 @@ bool InternalServer::handleConnection(const std::shared_ptr <structures::Connect
 	return true;
 }
 
-void InternalServer::connectNewDevice(const std::shared_ptr <structures::Connection> &connection,
+void InternalServer::connectNewDevice(const std::shared_ptr<structures::Connection> &connection,
 									  const InternalProtocol::InternalClient &connect,
-									  const std::shared_ptr <structures::DeviceIdentification> &deviceId) {
+									  const std::shared_ptr<structures::DeviceIdentification> &deviceId) {
 	connection->deviceId = deviceId;
 	connectedDevices_.push_back(connection);
 	fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(false, connect));
@@ -232,9 +232,9 @@ void InternalServer::connectNewDevice(const std::shared_ptr <structures::Connect
 			connection->deviceId->getDeviceName(), connection->deviceId->getPriority());
 }
 
-void InternalServer::respondWithHigherPriorityConnected(const std::shared_ptr <structures::Connection> &connection,
+void InternalServer::respondWithHigherPriorityConnected(const std::shared_ptr<structures::Connection> &connection,
 														const InternalProtocol::InternalClient &connect,
-														const std::shared_ptr <structures::DeviceIdentification> &deviceId) {
+														const std::shared_ptr<structures::DeviceIdentification> &deviceId) {
 	auto message = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(
 			connect.deviceconnect().device(),
 			InternalProtocol::DeviceConnectResponse_ResponseType_HIGHER_PRIORITY_ALREADY_CONNECTED);
@@ -247,9 +247,9 @@ void InternalServer::respondWithHigherPriorityConnected(const std::shared_ptr <s
 	sendResponse(connection, message);
 }
 
-void InternalServer::respondWithAlreadyConnected(const std::shared_ptr <structures::Connection> &connection,
+void InternalServer::respondWithAlreadyConnected(const std::shared_ptr<structures::Connection> &connection,
 												 const InternalProtocol::InternalClient &connect,
-												 const std::shared_ptr <structures::DeviceIdentification> &deviceId) {
+												 const std::shared_ptr<structures::DeviceIdentification> &deviceId) {
 	auto message = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(
 			connect.deviceconnect().device(),
 			InternalProtocol::DeviceConnectResponse_ResponseType_ALREADY_CONNECTED);
@@ -262,24 +262,24 @@ void InternalServer::respondWithAlreadyConnected(const std::shared_ptr <structur
 	sendResponse(connection, message);
 }
 
-void InternalServer::changeConnection(const std::shared_ptr <structures::Connection> &newConnection,
+void InternalServer::changeConnection(const std::shared_ptr<structures::Connection> &newConnection,
 									  const InternalProtocol::InternalClient &connect,
-									  const std::shared_ptr <structures::DeviceIdentification> &deviceId) {
+									  const std::shared_ptr<structures::DeviceIdentification> &deviceId) {
 	auto oldConnection = findConnection(deviceId.get());
 	if(oldConnection) {
 		removeConnFromMap(oldConnection);
 	}
 	connectNewDevice(newConnection, connect, deviceId);
 	logging::Logger::logInfo("Old connection has been removed and replaced with new connection"
-										" with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})",
-										newConnection->deviceId->getModule(),
-										newConnection->deviceId->getDeviceType(),
-										newConnection->deviceId->getDeviceRole(),
-										newConnection->deviceId->getDeviceName(),
-										newConnection->deviceId->getPriority());
+							 " with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})",
+							 newConnection->deviceId->getModule(),
+							 newConnection->deviceId->getDeviceType(),
+							 newConnection->deviceId->getDeviceRole(),
+							 newConnection->deviceId->getDeviceName(),
+							 newConnection->deviceId->getPriority());
 }
 
-bool InternalServer::sendResponse(const std::shared_ptr <structures::Connection> &connection,
+bool InternalServer::sendResponse(const std::shared_ptr<structures::Connection> &connection,
 								  const InternalProtocol::InternalServer &message) {
 	if(not connection->socket.is_open()) {
 		return false;
@@ -289,23 +289,23 @@ bool InternalServer::sendResponse(const std::shared_ptr <structures::Connection>
 	const auto headerWSize = connection->socket.write_some(boost::asio::buffer(&header, sizeof(uint32_t)));
 	if(headerWSize != sizeof(uint32_t)) {
 		logging::Logger::logError("Error in sendResponse(...): "
-											 "Cannot write message header to Internal Client, "
-											 "connection's ip address is {}",
-											 connection->socket.remote_endpoint().address().to_string());
+								  "Cannot write message header to Internal Client, "
+								  "connection's ip address is {}",
+								  connection->socket.remote_endpoint().address().to_string());
 		return false;
 	}
 	try {
 		const auto dataWSize = connection->socket.write_some(boost::asio::buffer(data));
 		if(dataWSize != header) {
 			logging::Logger::logError("Error in sendResponse(...): "
-												 "Cannot write data to Internal Client, "
-												 "connection's ip address is {}",
-												 connection->socket.remote_endpoint().address().to_string());
+									  "Cannot write data to Internal Client, "
+									  "connection's ip address is {}",
+									  connection->socket.remote_endpoint().address().to_string());
 			return false;
 		}
-	} catch (const boost::exception &e){
+	} catch(const boost::exception &e) {
 		logging::Logger::logError("Error in sendResponse(...): "
-									"Cannot write data to Internal Client");
+								  "Cannot write data to Internal Client");
 		return false;
 	}
 	return true;
@@ -322,27 +322,27 @@ void InternalServer::listenToQueue() {
 }
 
 void InternalServer::validateResponse(const InternalProtocol::InternalServer &message) {
-	std::shared_ptr <structures::DeviceIdentification> deviceId;
+	std::shared_ptr<structures::DeviceIdentification> deviceId;
 	if(message.has_devicecommand()) {
 		deviceId = std::make_shared<structures::DeviceIdentification>(message.devicecommand().device());
 	}
 	if(message.has_deviceconnectresponse()) {
 		deviceId = std::make_shared<structures::DeviceIdentification>(message.deviceconnectresponse().device());
 	}
-	std::lock_guard <std::mutex> lock(serverMutex_);
+	std::lock_guard<std::mutex> lock(serverMutex_);
 	auto connection = findConnection(deviceId.get());
 
 	if(connection && connection->deviceId->getPriority() == deviceId->getPriority()) {
 		sendResponse(connection, message);
 		{
-			std::lock_guard <std::mutex> lk(connection->connectionMutex);
+			std::lock_guard<std::mutex> lk(connection->connectionMutex);
 			connection->ready = true;
 		}
 		connection->conditionVariable.notify_one();
 	}
 }
 
-void InternalServer::removeConnFromMap(const std::shared_ptr <structures::Connection> &connection) {
+void InternalServer::removeConnFromMap(const std::shared_ptr<structures::Connection> &connection) {
 	boost::system::error_code error {};
 	connection->socket.shutdown(boost::asio::socket_base::shutdown_both, error);
 	connection->socket.close(error);
@@ -350,7 +350,7 @@ void InternalServer::removeConnFromMap(const std::shared_ptr <structures::Connec
 		return;
 	}
 	auto it = std::find_if(connectedDevices_.begin(), connectedDevices_.end(),
-						   [&connection](const std::shared_ptr <structures::Connection> &toCompare) {
+						   [&connection](const std::shared_ptr<structures::Connection> &toCompare) {
 							   return connection->deviceId->isSame(toCompare->deviceId);
 						   });
 
@@ -366,9 +366,9 @@ void InternalServer::removeConnFromMap(const std::shared_ptr <structures::Connec
 
 }
 
-std::shared_ptr <structures::Connection>
+std::shared_ptr<structures::Connection>
 InternalServer::findConnection(structures::DeviceIdentification *deviceId) {
-	std::shared_ptr <structures::Connection> connectionFound;
+	std::shared_ptr<structures::Connection> connectionFound;
 	auto it = std::find_if(connectedDevices_.begin(), connectedDevices_.end(),
 						   [deviceId](auto toCompare) {
 							   return deviceId->isSame(toCompare->deviceId);

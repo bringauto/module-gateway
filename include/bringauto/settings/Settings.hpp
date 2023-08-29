@@ -45,7 +45,7 @@ struct Settings {
 	/**
 	 * @brief Setting of external connection endpoints and protocols
 	 */
-	std::vector <structures::ExternalConnectionSettings> externalConnectionSettingsList;
+	std::vector<structures::ExternalConnectionSettings> externalConnectionSettingsList;
 
 };
 }

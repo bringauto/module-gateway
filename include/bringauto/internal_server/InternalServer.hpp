@@ -32,9 +32,9 @@ public:
 	 * @param fromInternalQueue queue for sending data from Server to Module Handler
 	 * @param toInternalQueue queue for sending data from Module Handler to Server
 	 */
-	InternalServer(const std::shared_ptr <structures::GlobalContext> &context,
-				   const std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &fromInternalQueue,
-				   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> &toInternalQueue)
+	InternalServer(const std::shared_ptr<structures::GlobalContext> &context,
+				   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &fromInternalQueue,
+				   const std::shared_ptr<structures::AtomicQueue<InternalProtocol::InternalServer>> &toInternalQueue)
 			: context_ { context }, acceptor_(context->ioContext), fromInternalQueue_ { fromInternalQueue },
 			  toInternalQueue_ { toInternalQueue } {}
 
@@ -67,7 +67,7 @@ private:
 	 * @brief Asynchronously receives data.
 	 * @param connection connection that data are being sent thru
 	 */
-	void addAsyncReceive(const std::shared_ptr <structures::Connection> &connection);
+	void addAsyncReceive(const std::shared_ptr<structures::Connection> &connection);
 
 	/**
 	 * @brief Handles received data and connection. If error occurs connection is closed and cleaned.
@@ -75,7 +75,7 @@ private:
 	 * @param error possible error code
 	 * @param bytesTransferred size of received data
 	 */
-	void asyncReceiveHandler(const std::shared_ptr <structures::Connection> &connection,
+	void asyncReceiveHandler(const std::shared_ptr<structures::Connection> &connection,
 							 const boost::system::error_code &error, std::size_t bytesTransferred);
 
 	/**
@@ -84,7 +84,7 @@ private:
 	 * @param bytesTransferred  size of received data
 	 * @return true if data and whole message is correct in context to fleet protocol
 	 */
-	bool processBufferData(const std::shared_ptr <structures::Connection> &connection,
+	bool processBufferData(const std::shared_ptr<structures::Connection> &connection,
 						   std::size_t bytesTransferred);
 
 	/**
@@ -94,7 +94,7 @@ private:
 	 * @param connection connection with data to be parsed into message
 	 * @return true if everything was successful and method was notified that response was resent to client
 	 */
-	bool handleMessage(const std::shared_ptr <structures::Connection> &connection);
+	bool handleMessage(const std::shared_ptr<structures::Connection> &connection);
 
 	/**
 	 * @brief Checks if status is valid, if it is sends message to Module Handler.
@@ -102,7 +102,7 @@ private:
 	 * @param client message to be checked and sent
 	 * @return true if status is valid.
 	 */
-	bool handleStatus(const std::shared_ptr <structures::Connection> &connection,
+	bool handleStatus(const std::shared_ptr<structures::Connection> &connection,
 					  const InternalProtocol::InternalClient &client);
 
 	/**
@@ -111,7 +111,7 @@ private:
 	 * @param client message to be checked
 	 * @return true if connect is valid.
 	 */
-	bool handleConnection(const std::shared_ptr <structures::Connection> &connection,
+	bool handleConnection(const std::shared_ptr<structures::Connection> &connection,
 						  const InternalProtocol::InternalClient &client);
 
 	/**
@@ -120,27 +120,27 @@ private:
 	 * @param connect message to be sent
 	 * @param deviceId unique device identification
 	 */
-	void connectNewDevice(const std::shared_ptr <structures::Connection> &connection,
+	void connectNewDevice(const std::shared_ptr<structures::Connection> &connection,
 						  const InternalProtocol::InternalClient &connect,
-						  const std::shared_ptr <structures::DeviceIdentification> &deviceId);
+						  const std::shared_ptr<structures::DeviceIdentification> &deviceId);
 
 	/**
 	 * @brief Sends response to InternalClient, that device is already connected and with higher priority.
 	 * @param connection connection response will be sent thru
 	 * @param connect message containing data for response message
 	 */
-	void respondWithHigherPriorityConnected(const std::shared_ptr <structures::Connection> &connection,
+	void respondWithHigherPriorityConnected(const std::shared_ptr<structures::Connection> &connection,
 											const InternalProtocol::InternalClient &connect,
-											const std::shared_ptr <structures::DeviceIdentification> &deviceId);
+											const std::shared_ptr<structures::DeviceIdentification> &deviceId);
 
 	/**
 	 * @brief Sends response to InternalClient, that device is already connected and with same priority.
 	 * @param connection connection response will be sent thru
 	 * @param connect message containing data for response message
 	 */
-	void respondWithAlreadyConnected(const std::shared_ptr <structures::Connection> &connection,
+	void respondWithAlreadyConnected(const std::shared_ptr<structures::Connection> &connection,
 									 const InternalProtocol::InternalClient &connect,
-									 const std::shared_ptr <structures::DeviceIdentification> &deviceId);
+									 const std::shared_ptr<structures::DeviceIdentification> &deviceId);
 
 	/**
 	 * Ends all operations of previous connection using same device,
@@ -150,9 +150,9 @@ private:
 	 * @param connect message to be sent
 	 * @param deviceId unique device identification
 	 */
-	void changeConnection(const std::shared_ptr <structures::Connection> &connection,
+	void changeConnection(const std::shared_ptr<structures::Connection> &connection,
 						  const InternalProtocol::InternalClient &connect,
-						  const std::shared_ptr <structures::DeviceIdentification> &deviceId);
+						  const std::shared_ptr<structures::DeviceIdentification> &deviceId);
 
 	/**
 	 * @brief Writes messages to Internal client.
@@ -160,14 +160,14 @@ private:
 	 * @param message message to be sent
 	 * @return true if writes are successful
 	 */
-	bool sendResponse(const std::shared_ptr <structures::Connection> &connection,
+	bool sendResponse(const std::shared_ptr<structures::Connection> &connection,
 					  const InternalProtocol::InternalServer &message);
 
 	/**
 	 * @brief Removes Connection from the map of active connections and clean up/closes its socket
 	 * @param connection connection to be removed
 	 */
-	void removeConnFromMap(const std::shared_ptr <structures::Connection> &connection);
+	void removeConnFromMap(const std::shared_ptr<structures::Connection> &connection);
 
 	/**
 	 * Periodicly checks for new messages received from module handler thru queue.
@@ -188,15 +188,15 @@ private:
 	 * @param deviceId that will be searched for in the vector
 	 * @return connection in connectedDevices_ vector
 	 */
-	std::shared_ptr <structures::Connection> findConnection(structures::DeviceIdentification *deviceId);
+	std::shared_ptr<structures::Connection> findConnection(structures::DeviceIdentification *deviceId);
 
-	std::shared_ptr <structures::GlobalContext> context_;
+	std::shared_ptr<structures::GlobalContext> context_;
 	boost::asio::ip::tcp::acceptor acceptor_;
-	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> fromInternalQueue_;
-	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
+	std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> fromInternalQueue_;
+	std::shared_ptr<structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
 
 	std::mutex serverMutex_;
-	std::vector <std::shared_ptr<structures::Connection>> connectedDevices_;
+	std::vector<std::shared_ptr<structures::Connection>> connectedDevices_;
 
 	std::jthread listeningThread;
 

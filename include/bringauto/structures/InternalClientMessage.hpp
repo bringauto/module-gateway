@@ -17,7 +17,8 @@ public:
 	explicit InternalClientMessage(const device_identification &deviceId): disconnect_ { true },
 																		   deviceId_ { deviceId } {};
 
-	explicit InternalClientMessage(bool disconnect, const InternalProtocol::InternalClient &message): message_ { message }, disconnect_ { disconnect } {}
+	explicit InternalClientMessage(bool disconnect, const InternalProtocol::InternalClient &message): message_ {
+			message }, disconnect_ { disconnect } {}
 
 	/**
 	 * @brief Get internal client message
@@ -46,7 +47,7 @@ private:
 
 	bool disconnect_;
 
-	device_identification deviceId_{};
+	device_identification deviceId_ {};
 };
 
 }

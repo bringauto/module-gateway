@@ -14,18 +14,20 @@
 namespace bringauto::external_client::connection {
 using log = bringauto::logging::Logger;
 
-ExternalConnection::ExternalConnection(const std::shared_ptr <structures::GlobalContext> &context,
+ExternalConnection::ExternalConnection(const std::shared_ptr<structures::GlobalContext> &context,
 									   structures::ModuleLibrary &moduleLibrary,
 									   const structures::ExternalConnectionSettings &settings,
-									   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
-									   const std::shared_ptr <structures::AtomicQueue<
-											   structures::ReconnectQueueItem>>& reconnectQueue):
-												context_ {context},
-												moduleLibrary_ {moduleLibrary},
-												settings_ {settings },
-												commandQueue_ {commandQueue },
-												reconnectQueue_ {reconnectQueue } {
-	sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context, [this]() { reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(*this), true)); });
+									   const std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
+									   const std::shared_ptr<structures::AtomicQueue<
+											   structures::ReconnectQueueItem>> &reconnectQueue):
+		context_ { context },
+		moduleLibrary_ { moduleLibrary },
+		settings_ { settings },
+		commandQueue_ { commandQueue },
+		reconnectQueue_ { reconnectQueue } {
+	sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context, [this]() {
+		reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(*this), true));
+	});
 }
 
 void ExternalConnection::init(const std::string &company, const std::string &vehicleName) {
@@ -86,7 +88,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 	sentMessagesHandler_->addNotAckedStatus(externalMessage.status());
 	try {
 		communicationChannel_->sendMessage(&externalMessage);
-	} catch (std::runtime_error &e){
+	} catch(std::runtime_error &e) {
 		log::logError(e.what());
 		endConnection(false);
 	}
@@ -101,13 +103,13 @@ int ExternalConnection::initializeConnection() {
 
 	try {
 		communicationChannel_->initializeConnection();
-	} catch(std::exception &e){
+	} catch(std::exception &e) {
 		log::logError("Unable to create connection to {}:{} reason: {}", settings_.serverIp, settings_.port, e.what());
 		return -1;
 	}
 	log::logInfo("Initializing connection to endpoint {}:{}", settings_.serverIp, settings_.port);
 
-	std::vector <structures::DeviceIdentification> devices = getAllConnectedDevices();
+	std::vector<structures::DeviceIdentification> devices = getAllConnectedDevices();
 
 	state_.exchange(ConnectionState::CONNECTING);
 	log::logInfo("Connect sequence: 1st step (sending list of devices)");
@@ -137,7 +139,7 @@ int ExternalConnection::initializeConnection() {
 	return 0;
 }
 
-int ExternalConnection::connectMessageHandle(const std::vector <structures::DeviceIdentification> &devices) {
+int ExternalConnection::connectMessageHandle(const std::vector<structures::DeviceIdentification> &devices) {
 	setSessionId();
 
 	auto connectMessage = common_utils::ProtobufUtils::createExternalClientConnect(sessionId_, company_, vehicleName_,
@@ -164,7 +166,7 @@ int ExternalConnection::connectMessageHandle(const std::vector <structures::Devi
 	return 0;
 }
 
-int ExternalConnection::statusMessageHandle(const std::vector <structures::DeviceIdentification> &devices) {
+int ExternalConnection::statusMessageHandle(const std::vector<structures::DeviceIdentification> &devices) {
 	for(const auto &deviceIdentification: devices) {
 		auto device = deviceIdentification.convertToCStruct();
 		const int &deviceModule = device.module;
@@ -173,15 +175,21 @@ int ExternalConnection::statusMessageHandle(const std::vector <structures::Devic
 
 		const auto &lastErrorStatusRc = errorAggregators[deviceModule].get_error(&errorBuffer, device);
 		if(lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
-			logging::Logger::logError("Device is not registered in error aggregator: {} {}", std::string{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes},
-									  std::string{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes});
+			logging::Logger::logError("Device is not registered in error aggregator: {} {}",
+									  std::string { static_cast<char *>(device.device_role.data),
+													device.device_role.size_in_bytes },
+									  std::string { static_cast<char *>(device.device_name.data),
+													device.device_name.size_in_bytes });
 			return -1;
 		}
 
 		int lastStatusRc = errorAggregators[deviceModule].get_last_status(&statusBuffer, device);
 		if(lastStatusRc != OK) {
-			logging::Logger::logError("Cannot obtain status for device: {} {}", std::string{static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes},
-									  std::string{static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes});
+			logging::Logger::logError("Cannot obtain status for device: {} {}",
+									  std::string { static_cast<char *>(device.device_role.data),
+													device.device_role.size_in_bytes },
+									  std::string { static_cast<char *>(device.device_name.data),
+													device.device_name.size_in_bytes });
 			return -1;
 		}
 		auto deviceStatus = common_utils::ProtobufUtils::createDeviceStatus(device, statusBuffer);
@@ -212,7 +220,7 @@ int ExternalConnection::statusMessageHandle(const std::vector <structures::Devic
 	return 0;
 }
 
-int ExternalConnection::commandMessageHandle(const std::vector <structures::DeviceIdentification> &devices) {
+int ExternalConnection::commandMessageHandle(const std::vector<structures::DeviceIdentification> &devices) {
 	for(int i = 0; i < devices.size(); ++i) {
 		const auto commandMsg = communicationChannel_->receiveMessage();
 		if(commandMsg == nullptr) {
@@ -238,7 +246,7 @@ void ExternalConnection::setSessionId() {
 	thread_local
 	static std::mt19937 rg { std::random_device {}() };
 	thread_local
-	static std::uniform_int_distribution <std::string::size_type> pick(0, sizeof(chrs) - 2);
+	static std::uniform_int_distribution<std::string::size_type> pick(0, sizeof(chrs) - 2);
 
 	for(int i = 0; i < KEY_LENGHT; i++) {
 		sessionId_ += chrs[pick(rg)];
@@ -258,7 +266,7 @@ void ExternalConnection::endConnection(bool completeDisconnect = false) {
 
 	stopReceiving.exchange(true);
 	communicationChannel_->closeConnection();
-	if (listeningThread.joinable()){
+	if(listeningThread.joinable()) {
 		listeningThread.join();
 	}
 
@@ -293,7 +301,7 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command &commandMe
 	if(sentMessagesHandler_->isDeviceConnected(id)) {
 		responseType = ExternalProtocol::CommandResponse_Type_OK;
 		commandQueue_->pushAndNotify(commandMessage.devicecommand());
-	} else if(errorAggregator.is_device_type_supported(deviceId.device_type) == NOT_OK){
+	} else if(errorAggregator.is_device_type_supported(deviceId.device_type) == NOT_OK) {
 		responseType = ExternalProtocol::CommandResponse_Type_DEVICE_NOT_SUPPORTED;
 	} else {
 		responseType = ExternalProtocol::CommandResponse_Type_DEVICE_NOT_CONNECTED;
@@ -400,8 +408,8 @@ int ExternalConnection::forceAggregationOnAllDevices() {
 	return devices.size();
 }
 
-std::vector <structures::DeviceIdentification> ExternalConnection::getAllConnectedDevices() {
-	std::vector <structures::DeviceIdentification> devices {};
+std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnectedDevices() {
+	std::vector<structures::DeviceIdentification> devices {};
 	for(const auto &moduleNumber: settings_.modules) {
 		struct buffer unique_devices {};
 		int ret = moduleLibrary_.statusAggregators.at(moduleNumber)->get_unique_devices(&unique_devices);
@@ -423,7 +431,7 @@ std::vector <structures::DeviceIdentification> ExternalConnection::getAllConnect
 
 ConnectionState ExternalConnection::getState() const { return state_.load(); }
 
-void ExternalConnection::setNotInitialized(){
+void ExternalConnection::setNotInitialized() {
 	state_.exchange(ConnectionState::NOT_INITIALIZED);
 }
 
