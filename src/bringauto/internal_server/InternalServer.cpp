@@ -61,7 +61,6 @@ void InternalServer::asyncReceiveHandler(
 					connection->deviceId->getDeviceType(), connection->deviceId->getDeviceRole(),
 					connection->deviceId->getDeviceName(), connection->deviceId->getPriority(),
 					error.message());
-			fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(connection->deviceId->convertToCStruct()));
 		} else {
 			logging::Logger::logWarning(
 					"Internal Client with ip address {} has been disconnected. Reason: {}",
@@ -362,6 +361,7 @@ void InternalServer::removeConnFromMap(const std::shared_ptr <structures::Connec
 				" has been closed and erased", connection->deviceId->getModule(),
 				connection->deviceId->getDeviceType(), connection->deviceId->getDeviceRole(),
 				connection->deviceId->getDeviceName(), connection->deviceId->getPriority());
+		fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(connection->deviceId->convertToCStruct()));
 	}
 
 }

@@ -89,6 +89,8 @@ private:
 	std::jthread fromExternalClientThread_;
 
 	std::shared_ptr <structures::GlobalContext> context_;
+
+	boost::asio::deadline_timer timer_;
 };
 
 }

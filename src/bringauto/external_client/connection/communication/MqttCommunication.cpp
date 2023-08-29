@@ -81,7 +81,7 @@ std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMess
 	}
 	mqtt::const_message_ptr msg { nullptr };
 	if(client_->is_connected()) {
-		msg = client_->try_consume_message_for(std::chrono::seconds(10));
+		msg = client_->try_consume_message_for(std::chrono::seconds(5));
 	} else {
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}

@@ -76,7 +76,7 @@ void ModuleHandler::handleDisconnect(device_identification deviceId) {
 
 	statusAggregator->remove_device(deviceId);
 
-	log::logCritical("Device {} disconnects", deviceName);
+	log::logInfo("Device {} disconnects", deviceName);
 	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 }
 
@@ -149,14 +149,14 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 
 	struct ::buffer commandBuffer {};
 	auto &statusAggregator = statusAggregators[moduleNumber];
-	int getCommandrRc = statusAggregator->get_command(statusBuffer, deviceId, &commandBuffer);
-	if(getCommandrRc == OK) {
+	int getCommandRc = statusAggregator->get_command(statusBuffer, deviceId, &commandBuffer);
+	if(getCommandRc == OK) {
 		auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device, commandBuffer);
 		toInternalQueue_->pushAndNotify(deviceCommandMessage);
 		log::logDebug("Module handler succesfully retrieved command and sent it to device: {}", deviceName);
 		deallocate(&commandBuffer);
 	} else {
-		log::logWarning("Retrieving command failed with return code: {}", getCommandrRc);
+		log::logWarning("Retrieving command failed with return code: {}", getCommandRc);
 		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 		deallocate(&statusBuffer);
 		return;

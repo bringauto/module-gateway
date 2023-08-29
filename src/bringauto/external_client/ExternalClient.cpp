@@ -17,7 +17,7 @@ using log = bringauto::logging::Logger;
 ExternalClient::ExternalClient(std::shared_ptr <structures::GlobalContext> &context,
 							   structures::ModuleLibrary &moduleLibrary,
 							   std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue)
-		: context_ { context }, moduleLibrary_ { moduleLibrary }, toExternalQueue_ { toExternalQueue } {
+		: context_ { context }, moduleLibrary_ { moduleLibrary }, toExternalQueue_ { toExternalQueue }, timer_ { context->ioContext } {
 	fromExternalQueue_ = std::make_shared < structures::AtomicQueue < InternalProtocol::DeviceCommand >> ();
 	reconnectQueue_ =
 			std::make_shared < structures::AtomicQueue < structures::ReconnectQueueItem >>();
@@ -152,13 +152,13 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	insideConnectSequence_ = true;
 
 	while(not toExternalQueue_->empty()){
-		auto &message = toExternalQueue_->front().getMessage().devicestatus();
-		if (connection.isModuleSupported(message.device().module())){
-			connection.fillErrorAggregator(message);
+		auto &internalMessage = toExternalQueue_->front();
+		auto &deviceStatus = internalMessage.getMessage().devicestatus();
+		if (connection.isModuleSupported(deviceStatus.device().module())){
+			connection.fillErrorAggregator(deviceStatus);
 			toExternalQueue_->pop();
 		} else {
-			// check if this works
-			// sendStatus(message);
+			sendStatus(internalMessage);
 		}
 	}
 
@@ -170,8 +170,9 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
-		auto &status = toExternalQueue_->front().getMessage().devicestatus();
-		auto &device = status.device();
+		auto &internalMessage = toExternalQueue_->front();
+		auto &deviceStatus = internalMessage.getMessage().devicestatus();
+		auto &device = deviceStatus.device();
 		if(connection.isModuleSupported(device.module())) {
 			std::string deviceString = device.SerializeAsString();
 			if(devices.find(deviceString) != devices.end()) {
@@ -183,24 +184,24 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 				continue;
 			}
 			log::logDebug("Filling error aggregator of device: {} {}", device.devicerole(), device.devicename());
-			connection.fillErrorAggregator(status);
+			connection.fillErrorAggregator(deviceStatus);
 			devices.emplace(deviceString);
 			statusesLeft--;
+			toExternalQueue_->pop();
 		} else {
 			log::logDebug("Sending status inside connect sequence init");
 			 // Send status from different connection, so it won't get lost. Shouldn't initialize bad recursion
-			// sendStatus(status);
+			sendStatus(internalMessage);
 		}
-		toExternalQueue_->pop();
 	}
 
 	if(connection.initializeConnection() != 0 && not context_->ioContext.stopped()) {
 		log::logDebug("Waiting for reconnect timer to expire");
-		boost::asio::deadline_timer timer(context_->ioContext);
-		timer.expires_from_now(boost::posix_time::seconds(settings::reconnect_delay));
-		timer.wait();
-		log::logDebug("Reconnect timer expired");
-		reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(connection), true));
+		timer_.expires_from_now(boost::posix_time::seconds(settings::reconnect_delay));
+		timer_.async_wait([this, &connection](const boost::system::error_code &errorCode) {
+			reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(connection), true));
+			log::logDebug("Reconnect timer expired");
+		});
 	}
 	insideConnectSequence_ = false;
 }

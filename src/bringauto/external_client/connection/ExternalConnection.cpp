@@ -289,13 +289,16 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command &commandMe
 	ExternalProtocol::CommandResponse::Type responseType;
 	auto deviceId = common_utils::ProtobufUtils::parseDevice(commandMessage.devicecommand().device());
 	auto id = common_utils::ProtobufUtils::getId(deviceId);
-	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
+	auto &errorAggregator = errorAggregators.at(deviceId.module);
 	if(sentMessagesHandler_->isDeviceConnected(id)) {
 		responseType = ExternalProtocol::CommandResponse_Type_OK;
 		commandQueue_->pushAndNotify(commandMessage.devicecommand());
+	} else if(errorAggregator.is_device_type_supported(deviceId.device_type) == NOT_OK){
+		responseType = ExternalProtocol::CommandResponse_Type_DEVICE_NOT_SUPPORTED;
 	} else {
-		responseType = ExternalProtocol::CommandResponse_Type_DEVICE_NOT_CONNECTED; // TODO check if is supported
+		responseType = ExternalProtocol::CommandResponse_Type_DEVICE_NOT_CONNECTED;
 	}
+	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 
 	auto commandResponse = common_utils::ProtobufUtils::createExternalClientCommandResponse(sessionId_, responseType,
 																							messageCounter);
