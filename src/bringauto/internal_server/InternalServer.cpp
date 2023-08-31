@@ -30,6 +30,8 @@ void InternalServer::addAsyncAccept() {
 			logging::Logger::logError("Error in addAsyncAccept(): {}", error.message());
 			return;
 		}
+		boost::asio::socket_base::keep_alive option(true);
+		connection->socket.set_option(option);
 		logging::Logger::logInfo("accepted connection with Internal Client, "
 								 "connection's ip address is {}",
 								 connection->socket.remote_endpoint().address().to_string());
