@@ -22,11 +22,6 @@ protected:
 		bringauto::logging::Logger::LoggerSettings settings { "StatusAggregatorTests",
 															  bringauto::logging::Logger::Verbosity::Critical };
 		bringauto::logging::Logger::init(settings);
-		context = std::make_shared<bringauto::structures::GlobalContext>();
-
-		auto libHandler = std::make_shared<bringauto::modules::ModuleManagerLibraryHandler>();
-		libHandler->loadLibrary(PATH_TO_MODULE);
-		statusAggregator = std::make_unique<bringauto::modules::StatusAggregator>(context, libHandler);
 	}
 
 	const struct device_identification init_device_id(unsigned int type, const char* deviceRole, const char* deviceName);
@@ -37,9 +32,11 @@ protected:
 
 	void add_status_to_aggregator();
 
-	inline static std::shared_ptr<bringauto::structures::GlobalContext> context;
+	void remove_device_from_status_aggregator();
 
-	inline static std::unique_ptr <bringauto::modules::StatusAggregator> statusAggregator;
+	std::shared_ptr<bringauto::structures::GlobalContext> context;
+
+	std::unique_ptr <bringauto::modules::StatusAggregator> statusAggregator;
 
 	static constexpr const char* PATH_TO_MODULE { "./libs/button_module/libbutton_module.so" };
 	const std::string WRONG_PATH_TO_MODULE { "./bad_path.so" };
