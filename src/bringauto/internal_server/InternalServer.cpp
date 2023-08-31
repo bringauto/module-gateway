@@ -2,9 +2,6 @@
 #include <bringauto/logging/Logger.hpp>
 
 #include <algorithm>
-#include <iostream>
-#include <thread>
-#include <memory>
 
 
 

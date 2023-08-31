@@ -3,8 +3,6 @@
 #include <bringauto/common_utils/MemoryUtils.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 
-#include <dlfcn.h>
-
 
 
 namespace bringauto::modules {

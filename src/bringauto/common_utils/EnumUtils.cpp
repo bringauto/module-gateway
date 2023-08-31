@@ -1,6 +1,7 @@
 #include <bringauto/common_utils/EnumUtils.hpp>
-
 #include <bringauto/settings/Constants.hpp>
+
+#include <algorithm>
 
 
 
