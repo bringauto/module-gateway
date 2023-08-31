@@ -23,6 +23,8 @@ void InternalServer::addAsyncAccept() {
 		return;
 	}
 	auto connection = std::make_shared<structures::Connection>(context_->ioContext);
+	boost::asio::socket_base::keep_alive option(true);
+	connection->socket.set_option(option);
 	acceptor_.async_accept(connection->socket, [this, connection](const boost::system::error_code &error) {
 		if(error) {
 			logging::Logger::logError("Error in addAsyncAccept(): {}", error.message());
