@@ -296,8 +296,15 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command &commandMe
 
 	ExternalProtocol::CommandResponse::Type responseType;
 	auto deviceId = common_utils::ProtobufUtils::parseDevice(commandMessage.devicecommand().device());
+	const auto &moduleNumber = deviceId.module;
+
+	if (not errorAggregators.contains(moduleNumber)){
+		log::logError("Module with module number {} does no exists", moduleNumber);
+		return -1;
+	}
+
 	auto id = common_utils::ProtobufUtils::getId(deviceId);
-	auto &errorAggregator = errorAggregators.at(deviceId.module);
+	auto &errorAggregator = errorAggregators.at(moduleNumber);
 	if(sentMessagesHandler_->isDeviceConnected(id)) {
 		responseType = ExternalProtocol::CommandResponse_Type_OK;
 		commandQueue_->pushAndNotify(commandMessage.devicecommand());
