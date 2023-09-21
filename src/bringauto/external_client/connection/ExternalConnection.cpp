@@ -300,6 +300,7 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command &commandMe
 
 	if (not errorAggregators.contains(moduleNumber)){
 		log::logError("Module with module number {} does no exists", moduleNumber);
+		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 		return -1;
 	}
 
