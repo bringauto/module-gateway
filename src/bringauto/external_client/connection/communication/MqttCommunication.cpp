@@ -76,14 +76,11 @@ void MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
 
 std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMessage() {
 	if(client_ == nullptr) {
-		std::this_thread::sleep_for(std::chrono::seconds(1));
 		return nullptr;
 	}
 	mqtt::const_message_ptr msg { nullptr };
 	if(client_->is_connected()) {
-		msg = client_->try_consume_message_for(std::chrono::seconds(5));
-	} else {
-		std::this_thread::sleep_for(std::chrono::seconds(1));
+		msg = client_->try_consume_message_for(settings::receive_message_timeout);
 	}
 
 	if(!msg) {

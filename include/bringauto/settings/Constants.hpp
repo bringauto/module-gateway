@@ -11,7 +11,7 @@ namespace bringauto::settings {
  * @brief timeout that is defined in fleet protocol,
  * active connection between Internal Client and internal Server is disconnected and removed after this timeout
  */
-constexpr std::chrono::seconds fleet_protocol_timeout_length { 30 };
+constexpr std::chrono::milliseconds fleet_protocol_timeout_length { 250 };
 
 /**
  * @brief timeout that is defined in fleet protocol,
@@ -33,7 +33,12 @@ constexpr std::chrono::seconds queue_timeout_length { 3 };
 /**
  * @brief timeout that defines force aggregation on device
  */
-constexpr long status_aggregation_timeout { 5 };
+constexpr std::chrono::seconds status_aggregation_timeout { 30 };
+
+/**
+ * @bief timeout to wait on receive message for external client transport layer
+ */
+constexpr std::chrono::seconds receive_message_timeout { 5 };
 
 /**
  * &brief Fleet Protocol defines messages as always starting with 4 bytes header
