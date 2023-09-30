@@ -35,8 +35,7 @@ public:
 						 std::function<int(const struct ::device_identification)> &function,
 						 const device_identification &deviceId): timer_ { context->ioContext },
 																 fun_ { function },
-																 deviceId_ { deviceId },
-																 interval_ { settings::status_aggregation_timeout } {}
+																 deviceId_ { deviceId } {}
 
 	~ThreadTimer();
 
@@ -67,7 +66,7 @@ private:
 
 	device_identification deviceId_;
 
-	boost::posix_time::seconds interval_;
+	boost::posix_time::seconds interval_ { settings::status_aggregation_timeout.count() };
 };
 
 }

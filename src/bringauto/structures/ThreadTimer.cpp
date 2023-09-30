@@ -20,9 +20,11 @@ void ThreadTimer::tick(const boost::system::error_code &errorCode) {
 	}
 	fun_(deviceId_);
 	std::string name(static_cast<char *>(deviceId_.device_name.data), deviceId_.device_name.size_in_bytes);
-	logging::Logger::logDebug("Timer expired and force aggregation was invoked on device: {}", name);
-	timer_.expires_at(timer_.expires_at() + interval_);
-	timer_.async_wait(boost::bind(&ThreadTimer::tick, this, errorCode));
+	logging::Logger::logDebug("Timer expired and force aggregation was invoked on device: {}, {}", name, errorCode.value());
+	timer_.expires_from_now(interval_);
+	timer_.async_wait([this](const boost::system::error_code &errorCode) {
+		tick(errorCode);
+	});
 }
 
 void ThreadTimer::start() {
