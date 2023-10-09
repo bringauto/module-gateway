@@ -31,6 +31,7 @@ connection is broken and as soon as the connection is up, then error aggregated 
 - [boost](https://github.com/boostorg/boost) >= v1.74.0
 - [nlohmann-json](https://github.com/nlohmann/json) >= v3.2.0
 - [ba-logger](https://github.com/bringauto/ba-logger) >= v1.2.0
+- g++ >= 10
 
 - [cmlib](https://github.com/cmakelib/cmakelib)
 
