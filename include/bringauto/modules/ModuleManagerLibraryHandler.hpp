@@ -47,6 +47,10 @@ public:
 
 	int commandDataValid(const struct buffer command, unsigned int device_type);
 
+	int allocate(struct buffer *buffer_pointer, size_t size_in_bytes);
+
+	void deallocate(struct buffer *buffer);
+
 private:
 
 	void *checkFunction(const char *functionName);
@@ -65,6 +69,8 @@ private:
 					  const struct buffer status,
 					  unsigned int device_type)> aggregateError_ {};
 	std::function<int(struct buffer *, struct buffer, struct buffer, struct buffer, unsigned int)> generateCommand_ {};
+	std::function<int(struct buffer *, size_t)> allocate_ {};
+	std::function<void(struct buffer *)> deallocate_ {};
 };
 
 }

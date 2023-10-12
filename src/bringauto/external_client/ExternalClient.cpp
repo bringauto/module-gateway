@@ -49,7 +49,8 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 
 	struct ::buffer commandBuffer {};
 	const auto &commandData = deviceCommand.commanddata();
-	if(allocate(&commandBuffer, commandData.size()) == NOT_OK) {
+	auto &moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
+	if(moduleLibraryHandler->allocate(&commandBuffer, commandData.size()) == NOT_OK) {
 		log::logError("Could not allocate memory for command message");
 		return;
 	}
@@ -59,7 +60,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);
 	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	if(ret != OK) {
-		deallocate(&commandBuffer);
+		moduleLibraryHandler->deallocate(&commandBuffer);
 		log::logError("Update command failed with error code: {}", ret);
 		return;
 	}

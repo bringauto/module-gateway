@@ -50,6 +50,11 @@ void ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path &path)
 			"generate_command"));
 	aggregateError_ = reinterpret_cast<FunctionTypeDeducer<decltype(aggregateError_)>::fncptr>(checkFunction(
 			"aggregate_error"));
+	allocate_ = reinterpret_cast<FunctionTypeDeducer<decltype(allocate_)>::fncptr>(checkFunction(
+			"allocate"));
+	deallocate_ = reinterpret_cast<FunctionTypeDeducer<decltype(deallocate_)>::fncptr>(checkFunction(
+			"deallocate"));
+	log::logDebug("Library " + path.string() + " was succesfully loaded");
 }
 
 void *ModuleManagerLibraryHandler::checkFunction(const char *functionName) {
@@ -99,6 +104,14 @@ int ModuleManagerLibraryHandler::statusDataValid(const struct buffer status, uns
 
 int ModuleManagerLibraryHandler::commandDataValid(const struct buffer command, unsigned int device_type) {
 	return commandDataValid_(command, device_type);
+}
+
+int ModuleManagerLibraryHandler::allocate(struct buffer *buffer_pointer, size_t size_in_bytes){
+	return allocate_(buffer_pointer, size_in_bytes);
+}
+
+void ModuleManagerLibraryHandler::deallocate(struct buffer *buffer){
+	deallocate_(buffer);
 }
 
 }

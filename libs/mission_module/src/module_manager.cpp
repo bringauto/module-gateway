@@ -4,6 +4,9 @@
 
 
 int send_status_condition(const struct buffer current_status, const struct buffer new_status, unsigned int device_type) {
+    //just for linking purposes
+    struct buffer test;
+    allocate(&test, 15);
 	return 0;
 }
 

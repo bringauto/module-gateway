@@ -21,7 +21,7 @@ public:
 
 	StatusAggregatorDeviceState(std::shared_ptr<bringauto::structures::GlobalContext> &context,
 								std::function<int(const struct ::device_identification)> fun,
-								const device_identification &deviceId, const buffer command, const buffer status);
+								const device_identification &deviceId, const buffer command, const buffer status, std::function<void(struct buffer *)> dealloc);
 
 	/**
 	 * @brief Deallocate and replace status buffer
@@ -79,6 +79,8 @@ private:
 	std::unique_ptr<bringauto::structures::ThreadTimer> timer_ {};
 
 	std::queue<struct buffer> aggregatedMessages_;
+
+	std::function<void(struct buffer *)> dealloc_;
 
 	struct buffer status_;
 

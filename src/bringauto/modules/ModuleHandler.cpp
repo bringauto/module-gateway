@@ -90,7 +90,7 @@ void ModuleHandler::sendAggregatedStatus(const device_identification &deviceId, 
 	toExternalQueue_->pushAndNotify(structures::InternalClientMessage(disconnected, statusMessage));
 	log::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}",
 				  toExternalQueue_->size());
-	deallocate(&aggregatedStatusBuffer);
+	statusAggregator->moduleDeallocate(&aggregatedStatusBuffer);
 }
 
 void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
@@ -140,10 +140,11 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 		log::logWarning("Module number: {} is not supported", moduleNumber);
 		return;
 	}
+	auto &statusAggregator = statusAggregators[moduleNumber];
 
 	struct ::buffer statusBuffer {};
 	const auto &statusData = status.statusdata();
-	if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
+	if(statusAggregator->moduelAllocate(&statusBuffer, statusData.size()) == NOT_OK) {
 		log::logError("Could not allocate memory for status message");
 		return;
 	}
@@ -152,18 +153,17 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	struct ::device_identification deviceId = common_utils::ProtobufUtils::parseDevice(device);
 
 	struct ::buffer commandBuffer {};
-	auto &statusAggregator = statusAggregators[moduleNumber];
 	int getCommandRc = statusAggregator->get_command(statusBuffer, deviceId, &commandBuffer);
 	if(getCommandRc == OK) {
 		auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device,
 																									commandBuffer);
 		toInternalQueue_->pushAndNotify(deviceCommandMessage);
 		log::logDebug("Module handler succesfully retrieved command and sent it to device: {}", deviceName);
-		deallocate(&commandBuffer);
+		statusAggregator->moduleDeallocate(&commandBuffer);
 	} else {
 		log::logWarning("Retrieving command failed with return code: {}", getCommandRc);
 		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
-		deallocate(&statusBuffer);
+		statusAggregator->moduleDeallocate(&statusBuffer);
 		return;
 	}
 
@@ -171,7 +171,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	if(addStatusToAggregatorRc < 0) {
 		log::logWarning("Add status to aggregator failed with return code: {}", addStatusToAggregatorRc);
 		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
-		deallocate(&statusBuffer);
+		statusAggregator->moduleDeallocate(&statusBuffer);
 		return;
 	}
 
@@ -181,7 +181,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	}
 
 	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
-	deallocate(&statusBuffer);
+	statusAggregator->moduleDeallocate(&statusBuffer);
 }
 
 }

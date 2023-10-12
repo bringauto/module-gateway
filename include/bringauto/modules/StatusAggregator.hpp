@@ -132,6 +132,21 @@ public:
 	 */
 	int is_device_type_supported(unsigned int device_type);
 
+	/**
+	 * @brief Allocates struct buffer with size
+	 *
+	 * @param buffer pointer to struct
+	 * @param size_in_bytes
+	 * @return 0 if success, otherwise -1
+	 */
+	int moduelAllocate(struct buffer *buffer, size_t size_in_bytes);
+
+	/**
+	 * @brief Deallocates struct buffer in loaded module
+	 *
+	 */
+	void moduleDeallocate(struct buffer *buffer);
+
 private:
 
 	void clear_device(const std::string &key);

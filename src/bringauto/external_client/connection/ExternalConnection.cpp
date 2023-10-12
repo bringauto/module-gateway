@@ -423,7 +423,6 @@ std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnecte
 		int ret = moduleLibrary_.statusAggregators.at(moduleNumber)->get_unique_devices(&unique_devices);
 		if(ret <= 0) {
 			log::logWarning("Module {} does not have any connected devices", moduleNumber);
-			deallocate(&unique_devices);
 			continue;
 		}
 		std::string devicesString { static_cast<char *>(unique_devices.data), unique_devices.size_in_bytes };
