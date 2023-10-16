@@ -40,9 +40,9 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 
 	auto &lastStatus = devices_[id].lastStatus;
 	if(lastStatus.data != nullptr && lastStatus.size_in_bytes > 0) { // status.size_in_bytes > lastStatus.size_in_bytes
-		deallocate(&lastStatus);
+		module_->deallocate(&lastStatus);
 	}
-	if(allocate(&lastStatus, status.size_in_bytes) == NOT_OK) {
+	if(module_->allocate(&lastStatus, status.size_in_bytes) == NOT_OK) {
 		log::logError("Could not allocate memory for status buffer in function add_status_to_error_aggregator");
 		return NOT_OK;
 	}
@@ -60,7 +60,7 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 		return NOT_OK;
 	}
 	if(currentError.data != nullptr) {
-		deallocate(&currentError);
+		module_->deallocate(&currentError);
 	}
 	currentError = errorMessageBuffer;
 	return OK;
@@ -101,10 +101,10 @@ int ErrorAggregator::get_error(struct buffer *error, const struct device_identif
 int ErrorAggregator::clear_error_aggregator() {
 	for(auto &[key, device]: devices_) {
 		if(device.lastStatus.data != nullptr && device.lastStatus.size_in_bytes > 0) {
-			deallocate(&device.lastStatus);
+			module_->deallocate(&device.lastStatus);
 		}
 		if(device.errorMessage.data != nullptr && device.errorMessage.size_in_bytes > 0) {
-			deallocate(&device.errorMessage);
+			module_->deallocate(&device.errorMessage);
 		}
 	}
 	devices_.clear();
