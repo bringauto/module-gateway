@@ -30,7 +30,7 @@ void InternalServer::addAsyncAccept() {
 		}
 		boost::asio::socket_base::keep_alive option(true);
 		connection->socket.set_option(option);
-		logging::Logger::logInfo("accepted connection with Internal Client, "
+		logging::Logger::logInfo("Accepted connection with Internal Client, "
 								 "connection's ip address is {}",
 								 connection->socket.remote_endpoint().address().to_string());
 		addAsyncReceive(connection);
@@ -53,7 +53,13 @@ void InternalServer::asyncReceiveHandler(
 		const boost::system::error_code &error,
 		std::size_t bytesTransferred) {
 	if(error) {
-		if(connection->deviceId) {
+		if(connection->deviceId && error.value() == boost::asio::error::eof) {
+			logging::Logger::logWarning(
+					"Internal Client with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})"
+					" has closed connection.", connection->deviceId->getModule(),
+					connection->deviceId->getDeviceType(), connection->deviceId->getDeviceRole(),
+					connection->deviceId->getDeviceName(), connection->deviceId->getPriority());
+		} else if(connection->deviceId){
 			logging::Logger::logWarning(
 					"Internal Client with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})"
 					" has been disconnected. Reason: {}", connection->deviceId->getModule(),

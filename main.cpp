@@ -69,7 +69,12 @@ int main(int argc, char **argv) {
 	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.run(); });
 	std::jthread externalClientThread([&externalClient]() { externalClient.run(); });
 	std::jthread contextThread([&context]() { context->ioContext.run(); });
-	internalServer.run();
+	try {
+		internalServer.run();
+	} catch (boost::system::system_error &e){
+		std::cerr << e.what() << "\n";
+		context->ioContext.stop();
+	}
 
 	contextThread.join();
 	externalClientThread.join();
