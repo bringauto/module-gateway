@@ -21,15 +21,6 @@ DeviceIdentification::DeviceIdentification(const device_identification &device) 
 	priority_ = device.priority;
 }
 
-DeviceIdentification::DeviceIdentification(const std::string &deviceId) {
-	std::vector<std::string> tokens = common_utils::StringUtils::splitString(deviceId, '/');
-	module_ = std::stoi(tokens[0]);
-	deviceType_ = static_cast<unsigned int>(std::stoi(tokens[1]));
-	deviceRole_ = tokens[2];
-	deviceName_ = tokens[3];
-	priority_ = 0;
-}
-
 uint32_t DeviceIdentification::getPriority() const {
 	return priority_;
 }

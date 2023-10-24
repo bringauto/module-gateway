@@ -21,13 +21,6 @@ public:
 	explicit DeviceIdentification(const device_identification &device);
 
 	/**
-	 * @brief Construct a new DeviceIdentification struct from passed string
-	 *
-	 * @param deviceId string with values divided by /
-	 */
-	explicit DeviceIdentification(const std::string &deviceId);
-
-	/**
 	 * @brief get value of module_
 	 * @return value of module_
 	 */

@@ -425,12 +425,20 @@ std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnecte
 			log::logWarning("Module {} does not have any connected devices", moduleNumber);
 			continue;
 		}
-		std::string devicesString { static_cast<char *>(unique_devices.data), unique_devices.size_in_bytes };
-		deallocate(&unique_devices);
-		auto devicesVec = common_utils::StringUtils::splitString(devicesString, ',');
-		for(const auto &device: devicesVec) {
-			devices.emplace_back(device);
+		
+		device_identification *devicesPointer = static_cast<device_identification *>(unique_devices.data);
+		for (int i = 0; i < ret; i++){
+			struct device_identification deviceId {
+				.module = devicesPointer[i].module,
+				.device_type = devicesPointer[i].device_type,
+				.device_role = devicesPointer[i].device_role,
+				.device_name = devicesPointer[i].device_name
+			};
+			devices.emplace_back(deviceId);
+			deallocate(&devicesPointer[i].device_role);
+			deallocate(&devicesPointer[i].device_name);
 		}
+		deallocate(&unique_devices);
 	}
 
 	return devices;

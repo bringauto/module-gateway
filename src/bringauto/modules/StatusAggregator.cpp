@@ -159,23 +159,32 @@ int StatusAggregator::get_aggregated_status(struct ::buffer *generated_status,
 }
 
 int StatusAggregator::get_unique_devices(struct ::buffer *unique_devices_buffer) {
-	std::stringstream output {};
-	if (devices.size() == 0){
-		return 0;
-	}
-	for(auto const &[key, value]: devices) {
-		output << key << ",";
-	}
-	std::string str = output.str();
-	if(!str.empty()) {
-		str.pop_back();
-	}
-	if(allocate(unique_devices_buffer, str.size()) == NOT_OK) {
+	const auto devicesSize = devices.size();
+
+	if(allocate(unique_devices_buffer, sizeof(struct device_identification) * devicesSize) == NOT_OK) {
 		log::logError("Could not allocate buffer in get_unique_devices");
 		return NOT_OK;
 	}
-	std::memcpy(unique_devices_buffer->data, str.c_str(), str.size());
-	return devices.size();
+
+	device_identification *devicesPointer = static_cast<device_identification *>(unique_devices_buffer->data);
+	int i = 0;
+	for(auto const &[key, value]: devices) {
+		std::string keyPom = key;
+		size_t pos = 0;
+		std::vector<std::string> tokenVec{};
+		while((pos = keyPom.find('/')) != std::string::npos){
+			tokenVec.push_back(keyPom.substr(0, pos));
+			keyPom.erase(0, pos + 1);
+		}
+		tokenVec.push_back(keyPom);
+		devicesPointer[i].module = std::stoi(tokenVec[0]);
+		devicesPointer[i].device_type = std::stoi(tokenVec[1]);
+		common_utils::MemoryUtils::initBuffer(devicesPointer[i].device_role, tokenVec[2]);
+		common_utils::MemoryUtils::initBuffer(devicesPointer[i].device_name, tokenVec[3]);
+		i++;
+	}
+
+	return devicesSize;
 }
 
 int StatusAggregator::force_aggregation_on_device(const struct ::device_identification device) {
