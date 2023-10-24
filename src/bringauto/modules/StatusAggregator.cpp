@@ -2,6 +2,7 @@
 #include <bringauto/logging/Logger.hpp>
 #include <bringauto/common_utils/MemoryUtils.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
+#include <bringauto/common_utils/StringUtils.hpp>
 
 
 
@@ -169,14 +170,7 @@ int StatusAggregator::get_unique_devices(struct ::buffer *unique_devices_buffer)
 	device_identification *devicesPointer = static_cast<device_identification *>(unique_devices_buffer->data);
 	int i = 0;
 	for(auto const &[key, value]: devices) {
-		std::string keyPom = key;
-		size_t pos = 0;
-		std::vector<std::string> tokenVec{};
-		while((pos = keyPom.find('/')) != std::string::npos){
-			tokenVec.push_back(keyPom.substr(0, pos));
-			keyPom.erase(0, pos + 1);
-		}
-		tokenVec.push_back(keyPom);
+		auto tokenVec = common_utils::StringUtils::splitString(key, '/');
 		devicesPointer[i].module = std::stoi(tokenVec[0]);
 		devicesPointer[i].device_type = std::stoi(tokenVec[1]);
 		common_utils::MemoryUtils::initBuffer(devicesPointer[i].device_role, tokenVec[2]);

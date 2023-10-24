@@ -425,7 +425,7 @@ std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnecte
 			log::logWarning("Module {} does not have any connected devices", moduleNumber);
 			continue;
 		}
-		
+
 		device_identification *devicesPointer = static_cast<device_identification *>(unique_devices.data);
 		for (int i = 0; i < ret; i++){
 			struct device_identification deviceId {
