@@ -55,7 +55,14 @@ public:
 	 * @param toCompare device used for comparison
 	 * @return true if all parameters outside of priority are equal
 	 */
-	bool isSame(const std::shared_ptr <DeviceIdentification> &toCompare);
+	bool isSame(const std::shared_ptr <DeviceIdentification> &toCompare) const;
+
+	/**
+	 * @brief Checks if all parameters except priority are equal.
+	 * @param deviceId device used for comparison
+	 * @return true if all parameters outside of priority are equal
+	 */
+	bool operator==(const DeviceIdentification &deviceId) const;
 
 	/**
 	 * @brief Create device_identification struct from this object

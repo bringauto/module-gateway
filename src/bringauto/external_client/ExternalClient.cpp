@@ -165,10 +165,10 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	}
 
 	log::logDebug("External client is forcing aggregation on all modules");
-	auto statusesLeft = connection.forceAggregationOnAllDevices();
+	auto connectedDevices = connection.getAllConnectedDevices();
+	auto forcedDevices = connection.forceAggregationOnAllDevices(connectedDevices);
 
-	std::set<std::string> devices {};
-	while(statusesLeft != 0 && not context_->ioContext.stopped()) {
+	while(not forcedDevices.empty() && not context_->ioContext.stopped()) {
 		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
@@ -176,28 +176,29 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		auto &deviceStatus = internalMessage.getMessage().devicestatus();
 		auto &device = deviceStatus.device();
 		if(connection.isModuleSupported(device.module())) {
-			std::string deviceString = device.SerializeAsString();
-			if(devices.find(deviceString) != devices.end()) {
+			structures::DeviceIdentification deviceId = structures::DeviceIdentification(device);
+			auto it = std::find(forcedDevices.cbegin(), forcedDevices.cend(), deviceId);
+			if(it == forcedDevices.cend()) {
 				log::logDebug("Cannot fill error aggregator for same device: {} {}", device.devicerole(),
 							  device.devicename());
 				auto &message = toExternalQueue_->front();
 				toExternalQueue_->pushAndNotify(message);
 				toExternalQueue_->pop();
-				continue;
+			} else {
+				log::logDebug("Filling error aggregator of device: {} {}", device.devicerole(), device.devicename());
+				connection.fillErrorAggregator(deviceStatus);
+				forcedDevices.erase(it);
+				toExternalQueue_->pop();
 			}
-			log::logDebug("Filling error aggregator of device: {} {}", device.devicerole(), device.devicename());
-			connection.fillErrorAggregator(deviceStatus);
-			devices.emplace(deviceString);
-			statusesLeft--;
-			toExternalQueue_->pop();
 		} else {
 			log::logDebug("Sending status inside connect sequence init");
 			// Send status from different connection, so it won't get lost. Shouldn't initialize bad recursion
 			sendStatus(internalMessage);
 		}
 	}
+	connection.fillErrorAggregatorWithNotAckedStatuses();
 
-	if(connection.initializeConnection() != 0 && not context_->ioContext.stopped()) {
+	if(connection.initializeConnection(connectedDevices) != 0 && not context_->ioContext.stopped()) {
 		log::logDebug("Waiting for reconnect timer to expire");
 		timer_.expires_from_now(boost::posix_time::seconds(settings::reconnect_delay));
 		timer_.async_wait([this, &connection](const boost::system::error_code &errorCode) {

@@ -50,14 +50,31 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 									ExternalProtocol::Status::DeviceState deviceState,
 									const buffer &errorMessage) {
 	const auto &device = status.device();
+	const auto &deviceModule = device.module();
 
-	if(errorAggregators.find(device.module()) == errorAggregators.end()) {
+	if(errorAggregators.find(deviceModule) == errorAggregators.end()) {
 		log::logError(
 				"Status with module number ({}) was passed to external connection, that doesn't support this module",
 				device.module());
 	}
 
+	auto &errorAggregator = errorAggregators.at(deviceModule);
 	auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
+	struct buffer lastStatus{};
+	auto isRegistered = errorAggregator.get_last_status(&lastStatus, deviceId);
+	if (isRegistered == DEVICE_NOT_REGISTERED){
+		deviceState = ExternalProtocol::Status_DeviceState_CONNECTING;
+
+		struct ::buffer statusBuffer {};
+		const auto &statusData = status.statusdata();
+		if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
+			log::logError("Could not allocate memory for status message");
+			return;
+		}
+		std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
+		errorAggregator.add_status_to_error_aggregator(statusBuffer, deviceId);
+		deallocate(&statusBuffer);
+	}
 	std::string id = common_utils::ProtobufUtils::getId(deviceId);
 	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 
@@ -96,7 +113,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 				  errorMessage.size_in_bytes > 0 ? errorMessage.data : "");
 }
 
-int ExternalConnection::initializeConnection() {
+int ExternalConnection::initializeConnection(std::vector<structures::DeviceIdentification> connectedDevices) {
 	if(state_.load() == ConnectionState::NOT_INITIALIZED) {
 		state_.exchange(ConnectionState::NOT_CONNECTED);
 	}
@@ -109,23 +126,21 @@ int ExternalConnection::initializeConnection() {
 	}
 	log::logInfo("Initializing connection to endpoint {}:{}", settings_.serverIp, settings_.port);
 
-	std::vector<structures::DeviceIdentification> devices = getAllConnectedDevices();
-
 	state_.exchange(ConnectionState::CONNECTING);
 	log::logInfo("Connect sequence: 1st step (sending list of devices)");
-	if(connectMessageHandle(devices) != 0) {
+	if(connectMessageHandle(connectedDevices) != 0) {
 		log::logError("Connect sequence to server {}:{}, failed in 1st step", settings_.serverIp, settings_.port);
 		state_.exchange(ConnectionState::NOT_CONNECTED);
 		return -1;
 	}
 	log::logInfo("Connect sequence: 2nd step (sending statuses of all connected devices)");
-	if(statusMessageHandle(devices) != 0) {
+	if(statusMessageHandle(connectedDevices) != 0) {
 		log::logError("Connect sequence to server {}:{}, failed in 2nd step", settings_.serverIp, settings_.port);
 		state_.exchange(ConnectionState::NOT_CONNECTED);
 		return -1;
 	}
 	log::logInfo("Connect sequence: 3rd step (receiving commands for devices in previous step)");
-	if(commandMessageHandle(devices) != 0) {
+	if(commandMessageHandle(connectedDevices) != 0) {
 		log::logError("Connect sequence to server {}:{}, failed in 3rd step", settings_.serverIp, settings_.port);
 		state_.exchange(ConnectionState::NOT_CONNECTED);
 		return -1;
@@ -180,6 +195,7 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 													device.device_role.size_in_bytes },
 									  std::string { static_cast<char *>(device.device_name.data),
 													device.device_name.size_in_bytes });
+			common_utils::MemoryUtils::deallocateDeviceId(device);
 			return -1;
 		}
 
@@ -190,6 +206,7 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 													device.device_role.size_in_bytes },
 									  std::string { static_cast<char *>(device.device_name.data),
 													device.device_name.size_in_bytes });
+			common_utils::MemoryUtils::deallocateDeviceId(device);
 			return -1;
 		}
 		auto deviceStatus = common_utils::ProtobufUtils::createDeviceStatus(device, statusBuffer);
@@ -398,7 +415,8 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 		std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
 		auto deviceId = common_utils::ProtobufUtils::parseDevice(deviceStatus.device());
-		errorAggregators[moduleNum].add_status_to_error_aggregator(statusBuffer, deviceId);
+		auto &errorAggregator = errorAggregators.at(moduleNum);
+		errorAggregator.add_status_to_error_aggregator(statusBuffer, deviceId);
 		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 		deallocate(&statusBuffer);
 	} else {
@@ -406,14 +424,20 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 	}
 }
 
-int ExternalConnection::forceAggregationOnAllDevices() {
-	auto devices = getAllConnectedDevices();
-	for(const auto &device: devices) {
+std::vector<structures::DeviceIdentification> ExternalConnection::forceAggregationOnAllDevices(std::vector<structures::DeviceIdentification> connectedDevices) {
+	std::vector<structures::DeviceIdentification> forcedDevices{};
+	for(const auto &device: connectedDevices) {
 		auto deviceId = device.convertToCStruct();
+		struct buffer last_status{};
+		if (errorAggregators.at(deviceId.module).get_last_status(&last_status, deviceId) == OK){
+			common_utils::MemoryUtils::deallocateDeviceId(deviceId);
+			continue;
+		}
 		moduleLibrary_.statusAggregators.at(device.getModule())->force_aggregation_on_device(deviceId);
+		forcedDevices.push_back(device);
 		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	}
-	return devices.size();
+	return forcedDevices;
 }
 
 std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnectedDevices() {
