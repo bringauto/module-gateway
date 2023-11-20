@@ -107,7 +107,6 @@ int ErrorAggregator::clear_error_aggregator() {
 			module_->deallocate(&device.errorMessage);
 		}
 	}
-	devices_.clear();
 	return OK;
 }
 

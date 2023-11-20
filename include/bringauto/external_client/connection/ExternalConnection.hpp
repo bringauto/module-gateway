@@ -46,7 +46,7 @@ public:
 	 * @brief Handles all etapes of connect sequence. If connect sequence is successful,
 	 * infinite receive loop is started in new thread.
 	 */
-	int initializeConnection();
+	int initializeConnection(std::vector<structures::DeviceIdentification> connectedDevices);
 
 	/**
 	 * @brief Disconnect from the external server
@@ -81,7 +81,7 @@ public:
 	 *
 	 * @return number of devices
 	 */
-	int forceAggregationOnAllDevices();
+	std::vector<structures::DeviceIdentification> forceAggregationOnAllDevices(std::vector<structures::DeviceIdentification> connectedDevices);
 
 	/**
 	 * @brief Fill error aggregator with not acknowledged status messages
@@ -114,6 +114,8 @@ public:
 	 * @return true if moudle type is supported otherwise false
 	 */
 	bool isModuleSupported(int moduleNum);
+
+	std::vector <structures::DeviceIdentification> getAllConnectedDevices();
 
 private:
 
@@ -151,8 +153,6 @@ private:
 	 * Loop is receiving messages from external server and processes them.
 	 */
 	void receivingHandlerLoop();
-
-	std::vector <structures::DeviceIdentification> getAllConnectedDevices();
 
 	std::atomic<bool> stopReceiving { false };
 

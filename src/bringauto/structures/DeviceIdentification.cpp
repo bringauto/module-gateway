@@ -41,11 +41,18 @@ const std::string &DeviceIdentification::getDeviceName() const {
 	return deviceName_;
 }
 
-bool DeviceIdentification::isSame(const std::shared_ptr<DeviceIdentification> &toCompare) {
+bool DeviceIdentification::isSame(const std::shared_ptr<DeviceIdentification> &toCompare) const {
 	return module_ == toCompare->getModule() &&
 		   deviceType_ == toCompare->getDeviceType() &&
 		   deviceRole_ == toCompare->getDeviceRole() &&
 		   deviceName_ == toCompare->getDeviceName();
+}
+
+bool DeviceIdentification::operator==(const DeviceIdentification &deviceId) const {
+	return module_ == deviceId.getModule() &&
+		   deviceType_ == deviceId.getDeviceType() &&
+		   deviceRole_ == deviceId.getDeviceRole() &&
+		   deviceName_ == deviceId.getDeviceName();
 }
 
 device_identification DeviceIdentification::convertToCStruct() const {
