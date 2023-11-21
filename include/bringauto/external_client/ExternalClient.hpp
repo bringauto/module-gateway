@@ -69,8 +69,9 @@ private:
 	 * @brief Send aggregated status message to the external server
 	 *
 	 * @param deviceStatus aggregated status message ready to send
+	 * @return reconnect expected if true, reconnect not expected if false
 	 */
-	void sendStatus(const structures::InternalClientMessage &deviceStatus);
+	bool sendStatus(const structures::InternalClientMessage &deviceStatus);
 
 	structures::ModuleLibrary &moduleLibrary_;
 
