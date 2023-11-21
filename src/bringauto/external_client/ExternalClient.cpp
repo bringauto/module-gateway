@@ -113,17 +113,19 @@ void ExternalClient::handleAggregatedMessages() {
 		log::logInfo("External client received aggregated status, number of aggregated statuses in queue {}",
 					 toExternalQueue_->size());
 		auto &message = toExternalQueue_->front();
-		sendStatus(message);
+		if(not sendStatus(message)) {
+			reconnectQueue_->waitForValueWithTimeout(std::chrono::seconds(10));
+		}
 	}
 }
 
-void ExternalClient::sendStatus(const structures::InternalClientMessage &internalMessage) {
+bool ExternalClient::sendStatus(const structures::InternalClientMessage &internalMessage) {
 	auto &deviceStatus = internalMessage.getMessage().devicestatus();
 	const auto &moduleNumber = deviceStatus.device().module();
 	auto it = externalConnectionMap_.find(moduleNumber);
 	if(it == externalConnectionMap_.end()) {
 		log::logError("Module number {} not found in the map\n", moduleNumber);
-		return;
+		return true;
 	}
 
 	auto &connection = it->second.get();
@@ -135,18 +137,23 @@ void ExternalClient::sendStatus(const structures::InternalClientMessage &interna
 			if(insideConnectSequence_) {
 				log::logWarning(
 						"Status moved to error aggregator. Cannot initialize connect sequence, when different is running");
-				return;
+				return true;
 			}
 			startExternalConnectSequence(connection);
 		}
 	} else {
+		bool ret = true;
 		if(internalMessage.disconnected()) {
 			connection.sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_DISCONNECT);
+			ret = false;
 		} else {
 			connection.sendStatus(deviceStatus);
 		}
 		toExternalQueue_->pop();
+		return ret;
 	}
+
+	return true;
 }
 
 void ExternalClient::startExternalConnectSequence(connection::ExternalConnection &connection) {

@@ -366,7 +366,7 @@ void ExternalConnection::receivingHandlerLoop() {
 			const auto &statusResponse = serverMessage->statusresponse();
 			log::logDebug("Handling STATUS_RESPONSE messageCounter={}", statusResponse.messagecounter());
 			if(sentMessagesHandler_->acknowledgeStatus(statusResponse) != OK) {
-				reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(*this), false));
+				reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), false));
 				return;
 			}
 		} else {
