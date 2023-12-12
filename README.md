@@ -20,6 +20,10 @@ The external client updates the command for each connected device and subsequent
 
 ### External Client
 
+The external client is responsible for initializing connection with external server, reconnecting, delivering protobuf messages from module
+handler to external server and updating devices commands. It uses error aggregator to process messages which could not be delivered, when
+connection is broken and as soon as the connection is up, then error aggregated message is sent.
+
 ## Requirements
 
 - [protobuf](https://github.com/protocolbuffers/protobuf/tree/main/src) >= v3.21.12
@@ -27,6 +31,7 @@ The external client updates the command for each connected device and subsequent
 - [boost](https://github.com/boostorg/boost) >= v1.74.0
 - [nlohmann-json](https://github.com/nlohmann/json) >= v3.2.0
 - [ba-logger](https://github.com/bringauto/ba-logger) >= v1.2.0
+- g++ >= 10
 
 - [cmlib](https://github.com/cmakelib/cmakelib)
 
@@ -51,7 +56,8 @@ make
 * `-l | --log-path <string>` logs will be saved to provided path
 * `-h | --help` print help
 
-* `--port ` unsigned short, port on which Internal Server communicates
+* `--port <unsigned short>` port on which Internal Server communicates
+* `--module-paths <string>` path to shared module libraries
 
 ### CMAKE arguments
 
@@ -77,12 +83,18 @@ make
 
 * CURRENTLY UNUSED
   * BRINGAUTO_SAMPLES=ON/OFF
-      - DEFAULT: OFF
-      - if on enable build/configure of sample aplications
-      - if off disable build/configure of sample application
+	  - DEFAULT: OFF
+	  - if on enable build/configure of sample aplications
+	  - if off disable build/configure of sample application
 
 
 
 ## Tests
 
 [Tests Readme](./test/README.md)
+
+## Memory leaks
+
+It is possible, that valgrind will show you, that there are still reachable memory leaks. It is caused by dlopen function.
+We are not sure, if bug is in dlopen or in valgrind, but we cannot do anything with that.
+The bug is already [reported](https://bugs.kde.org/show_bug.cgi?id=358980).

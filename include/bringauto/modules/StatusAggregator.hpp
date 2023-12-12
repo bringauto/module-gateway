@@ -1,13 +1,17 @@
 #pragma once
 
+#include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
+#include <bringauto/structures/StatusAggregatorDeviceState.hpp>
+
+#include <command_manager.h>
+#include <module_manager.h>
+
 #include <functional>
 #include <map>
 #include <queue>
 #include <string>
 #include <filesystem>
-
-#include <command_manager.h>
-#include <module_manager.h>
+#include <mutex>
 
 
 
@@ -20,12 +24,20 @@ namespace bringauto::modules {
  */
 class StatusAggregator {
 public:
+
+	explicit StatusAggregator(const std::shared_ptr<structures::GlobalContext> &context,
+							  const std::shared_ptr<ModuleManagerLibraryHandler> &libraryHandler): context_ { context },
+																								   module_ {
+																										   libraryHandler } {};
+
+	StatusAggregator() = default;
+
 	/**
 	 * @short Status aggregator init.
 	 *
-     * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
+	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int init_status_aggregator(std::filesystem::path path);
+	int init_status_aggregator();
 
 	/**
 	 * @short Clean up.
@@ -85,10 +97,10 @@ public:
 	int force_aggregation_on_device(const struct ::device_identification device);
 
 	/**
-     * @short Check if device is valid and registered
-     *
-     * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
-     */
+	 * @short Check if device is valid and registered
+	 *
+	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
+	 */
 	int is_device_valid(const struct ::device_identification device);
 
 	/**
@@ -114,40 +126,62 @@ public:
 	int get_module_number();
 
 	/**
-     * @short Check if device is supported
-     *
-     * @see fleet-protocol/lib/common_headers/include/device_management.h
-     */
+	 * @short Check if device is supported
+	 *
+	 * @see fleet-protocol/lib/common_headers/include/device_management.h
+	 */
 	int is_device_type_supported(unsigned int device_type);
 
+	/**
+	 * @brief Allocates struct buffer with size
+	 *
+	 * @param buffer pointer to struct
+	 * @param size_in_bytes
+	 * @return 0 if success, otherwise -1
+	 */
+	int moduelAllocate(struct buffer *buffer, size_t size_in_bytes);
+
+	/**
+	 * @brief Deallocates struct buffer in loaded module
+	 *
+	 */
+	void moduleDeallocate(struct buffer *buffer);
+
+	/**
+	 * @brief Unset timeouted message ready
+	 *
+	 */
+	void unsetTimeoutedMessageReady();
+
+	/**
+	 * @brief Get the timeouted message ready
+	 *
+	 * @return true if force timeout was called on any device otherwise false
+	 */
+	bool getTimeoutedMessageReady() const;
+
 private:
-	struct device_state {
-		std::queue<struct buffer> aggregatedMessages;
-		struct buffer status;
-		struct buffer command;
 
-		device_state() = default;
+	void clear_device(const std::string &key);
 
-		device_state(const buffer command, const buffer status) {
-			this->status = status;
-			this->command = command;
-		}
-	};
+	struct buffer aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
+								  const unsigned int &device_type);
 
-	std::string getId(const ::device_identification &device);
+	void aggregateSetStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
+							const unsigned int &device_type);
 
-	void *module { nullptr };
+	void aggregateSetSendStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
+								const unsigned int &device_type);
 
-	std::map <std::string, device_state> devices {};
+	std::shared_ptr<structures::GlobalContext> context_;
 
-	std::function<int()> getModuleNumber {};
-	std::function<int(unsigned int)> isDeviceTypeSupported {};
-	std::function<int(struct buffer *, unsigned int)> generateFirstCommand {};
-	std::function<int(struct buffer, unsigned int)> statusDataValid {};
-	std::function<int(struct buffer, unsigned int)> commandDataValid {};
-	std::function<int(struct buffer, struct buffer, unsigned int)> sendStatusCondition {};
-	std::function<int(struct buffer *, struct buffer, struct buffer, unsigned int)> aggregateStatus {};
-	std::function<int(struct buffer *, struct buffer, struct buffer, struct buffer, unsigned int)> generateCommand {};
+	const std::shared_ptr<ModuleManagerLibraryHandler> module_ {};
+
+	std::map<std::string, structures::StatusAggregatorDeviceState> devices {};
+
+	std::mutex mutex_ {};
+
+	std::atomic_bool timeoutedMessageReady_ { false };
 };
 
 }

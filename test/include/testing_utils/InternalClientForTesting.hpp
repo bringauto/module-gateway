@@ -22,14 +22,14 @@ class ClientForTesting {
 	std::shared_ptr<boost::asio::ip::tcp::socket> socket;
 public:
 
-	ClientForTesting(const std::shared_ptr<bringauto::structures::GlobalContext> &context_)
+	explicit ClientForTesting(const std::shared_ptr<bringauto::structures::GlobalContext> &context_)
 			: context(context_) {}
 
 	void connectSocket();
 
 	void disconnectSocket();
 
-	bool isOpen();
+	[[nodiscard]] bool isOpen();
 
 	void sendMessage(const InternalProtocol::InternalClient &message);
 

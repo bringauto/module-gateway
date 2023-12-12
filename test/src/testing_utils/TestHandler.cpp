@@ -1,10 +1,12 @@
 #include <testing_utils/TestHandler.hpp>
+#include <testing_utils/ProtobufUtils.hpp>
 
 #include <thread>
 
 
 
 namespace testing_utils {
+
 namespace common_utils = bringauto::common_utils;
 namespace internal_server = bringauto::internal_server;
 namespace settings = bringauto::settings;
@@ -12,23 +14,23 @@ namespace structures = bringauto::structures;
 
 
 
-TestHandler::TestHandler(const std::vector<InternalProtocol::Device> &devices, const std::vector<std::string> &data) {
+TestHandler::TestHandler(const std::vector <InternalProtocol::Device> &devices, const std::vector <std::string> &data) {
 	settings = std::make_shared<settings::Settings>();
 	settings->port = port;
 
-	toInternalQueue = std::make_shared<structures::AtomicQueue<InternalProtocol::InternalServer>>();
-	fromInternalQueue = std::make_shared<structures::AtomicQueue<InternalProtocol::InternalClient>>();
+	toInternalQueue = std::make_shared < structures::AtomicQueue < InternalProtocol::InternalServer >> ();
+	fromInternalQueue = std::make_shared < structures::AtomicQueue < bringauto::structures::InternalClientMessage >> ();
 	for(size_t i = 0; i < devices.size(); ++i) {
-
-		connects.push_back(common_utils::ProtocolUtils::CreateClientMessage(devices[i]));
-		statuses.push_back(common_utils::ProtocolUtils::CreateClientMessage(devices[i], data[i]));
-		commands.push_back(common_utils::ProtocolUtils::CreateServerMessage(devices[i], data[i]));
-		responses.push_back(common_utils::ProtocolUtils::CreateServerMessage(devices[i], InternalProtocol::DeviceConnectResponse_ResponseType_OK));
+		connects.push_back(ProtobufUtils::CreateClientMessage(devices[i]));
+		statuses.push_back(ProtobufUtils::CreateClientMessage(devices[i], data[i]));
+		commands.push_back(ProtobufUtils::CreateServerMessage(devices[i], data[i]));
+		responses.push_back(ProtobufUtils::CreateServerMessage(devices[i],
+															   InternalProtocol::DeviceConnectResponse_ResponseType_OK));
 
 		contexts.push_back(std::make_shared<structures::GlobalContext>());
 		contexts[i]->settings = std::make_shared<settings::Settings>();
 		contexts[i]->settings->port = (port);
-		clients.push_back(contexts[i]);
+		clients.emplace_back(contexts[i]);
 		expectedMessageNumber += numberOfMessages;
 		for(size_t y = 0; y < i; ++y) {
 			auto a = std::make_shared<structures::DeviceIdentification>(devices[y]);
@@ -41,24 +43,24 @@ TestHandler::TestHandler(const std::vector<InternalProtocol::Device> &devices, c
 	}
 }
 
-TestHandler::TestHandler(const std::vector<InternalProtocol::Device> &devices,
-						 const std::vector<InternalProtocol::DeviceConnectResponse_ResponseType> &responseTypes,
-						 const std::vector<std::string> &data) {
+TestHandler::TestHandler(const std::vector <InternalProtocol::Device> &devices,
+						 const std::vector <InternalProtocol::DeviceConnectResponse_ResponseType> &responseTypes,
+						 const std::vector <std::string> &data) {
 	settings = std::make_shared<settings::Settings>();
 	settings->port = port;
 
-	toInternalQueue = std::make_shared<structures::AtomicQueue<InternalProtocol::InternalServer>>();
-	fromInternalQueue = std::make_shared<structures::AtomicQueue<InternalProtocol::InternalClient>>();
+	toInternalQueue = std::make_shared < structures::AtomicQueue < InternalProtocol::InternalServer >> ();
+	fromInternalQueue = std::make_shared < structures::AtomicQueue < bringauto::structures::InternalClientMessage >> ();
 	for(size_t i = 0; i < devices.size(); ++i) {
-		connects.push_back(common_utils::ProtocolUtils::CreateClientMessage(devices[i]));
-		statuses.push_back(common_utils::ProtocolUtils::CreateClientMessage(devices[i], data[i]));
-		commands.push_back(common_utils::ProtocolUtils::CreateServerMessage(devices[i], data[i]));
-		responses.push_back(common_utils::ProtocolUtils::CreateServerMessage(devices[i], responseTypes[i]));
+		connects.push_back(ProtobufUtils::CreateClientMessage(devices[i]));
+		statuses.push_back(ProtobufUtils::CreateClientMessage(devices[i], data[i]));
+		commands.push_back(ProtobufUtils::CreateServerMessage(devices[i], data[i]));
+		responses.push_back(ProtobufUtils::CreateServerMessage(devices[i], responseTypes[i]));
 
 		contexts.push_back(std::make_shared<structures::GlobalContext>());
 		contexts[i]->settings = std::make_shared<settings::Settings>();
 		contexts[i]->settings->port = (port);
-		clients.push_back(contexts[i]);
+		clients.emplace_back(contexts[i]);
 		if(responseTypes[i] == InternalProtocol::DeviceConnectResponse_ResponseType_OK) {
 			expectedMessageNumber += numberOfMessages;
 			for(size_t y = 0; y < i; ++y) {
@@ -113,15 +115,15 @@ void TestHandler::runTestsParallelConnections() {
 	signals.async_wait([context](auto, auto) { context->ioContext.stop(); });
 
 	internal_server::InternalServer internalServer { context, fromInternalQueue,
-																toInternalQueue };
+													 toInternalQueue };
 	testing_utils::ModuleHandlerForTesting moduleHandler(context, fromInternalQueue, toInternalQueue,
 														 expectedMessageNumber);
 
-	std::thread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
-	std::thread contextThread([&context]() { context->ioContext.run(); });
-	internalServer.start();
+	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
+	std::jthread contextThread([&context]() { context->ioContext.run(); });
+	internalServer.run();
 
-	std::vector<std::thread> clientThreads;
+	std::vector <std::jthread> clientThreads;
 	for(size_t i = 0; i < responses.size(); ++i) {
 		clientThreads.emplace_back([this, i]() { (ParallelRun(i)); });
 	}
@@ -132,9 +134,7 @@ void TestHandler::runTestsParallelConnections() {
 	if(!context->ioContext.stopped()) {
 		context->ioContext.stop();
 	}
-	moduleHandlerThread.join();
-	contextThread.join();
-	internalServer.stop();
+	internalServer.destroy();
 }
 
 void TestHandler::runConnects() {
@@ -160,6 +160,7 @@ void TestHandler::runConnects() {
 		}
 	}
 }
+
 void TestHandler::runStatuses() {
 	InternalProtocol::InternalServer receivedMessage;
 	for(size_t i = 0; i < clients.size()*(numberOfMessages - 1); ++i) {
@@ -170,11 +171,13 @@ void TestHandler::runStatuses() {
 		}
 	}
 }
+
 void TestHandler::disconnectAll() {
 	for(size_t i = 0; i < clients.size(); ++i) {
 		clients[i].disconnectSocket();
 	}
 }
+
 void TestHandler::serialRun() {
 	runConnects();
 	runStatuses();
@@ -188,25 +191,24 @@ void TestHandler::runTestsSerialConnections() {
 	signals.async_wait([context](auto, auto) { context->ioContext.stop(); });
 
 	internal_server::InternalServer internalServer { context, fromInternalQueue,
-																toInternalQueue };
+													 toInternalQueue };
 
 	testing_utils::ModuleHandlerForTesting moduleHandler(context, fromInternalQueue, toInternalQueue,
 														 expectedMessageNumber);
 
-	std::thread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
-	std::thread contextThread([&context]() { context->ioContext.run(); });
-	internalServer.start();
+	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
+	std::jthread contextThread([&context]() { context->ioContext.run(); });
+	internalServer.run();
 
 	serialRun();
 
 	if(!context->ioContext.stopped()) {
 		context->ioContext.stop();
 	}
-	moduleHandlerThread.join();
-	contextThread.join();
-	internalServer.stop();
+	internalServer.destroy();
 }
-void TestHandler::runConnects(size_t index, size_t header, std::string data,  bool recastHeader) {
+
+void TestHandler::runConnects(size_t index, size_t header, std::string data, bool recastHeader) {
 	InternalProtocol::InternalServer receivedMessage;
 	for(size_t i = 0; i < clients.size(); ++i) {
 		if(index == i) {
@@ -236,7 +238,8 @@ void TestHandler::runConnects(size_t index, size_t header, std::string data,  bo
 		}
 	}
 }
-void TestHandler::runStatuses(size_t index, size_t header, std::string data,  bool recastHeader) {
+
+void TestHandler::runStatuses(size_t index, size_t header, std::string data, bool recastHeader) {
 	InternalProtocol::InternalServer receivedMessage;
 	for(size_t i = 0; i < clients.size()*(numberOfMessages - 1); ++i) {
 		if(index == i) {
@@ -250,6 +253,7 @@ void TestHandler::runStatuses(size_t index, size_t header, std::string data,  bo
 		}
 	}
 }
+
 void TestHandler::serialRunWithExpectedError(size_t index, size_t header, std::string data, bool onConnect,
 											 bool recastHeader) {
 	if(onConnect) {
@@ -270,7 +274,7 @@ void TestHandler::runTestsWithWrongMessage(size_t index, uint32_t header, std::s
 	signals.async_wait([context](auto, auto) { context->ioContext.stop(); });
 
 	internal_server::InternalServer internalServer { context, fromInternalQueue,
-																toInternalQueue };
+													 toInternalQueue };
 
 	if(onConnect) {
 		expectedMessageNumber -= numberOfMessages;
@@ -280,18 +284,16 @@ void TestHandler::runTestsWithWrongMessage(size_t index, uint32_t header, std::s
 	testing_utils::ModuleHandlerForTesting moduleHandler(context, fromInternalQueue, toInternalQueue,
 														 expectedMessageNumber);
 
-	std::thread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
-	std::thread contextThread([&context]() { context->ioContext.run(); });
-	internalServer.start();
+	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
+	std::jthread contextThread([&context]() { context->ioContext.run(); });
+	internalServer.run();
 
 	serialRunWithExpectedError(index, header, data, onConnect, recastHeader);
 
 	if(!context->ioContext.stopped()) {
 		context->ioContext.stop();
 	}
-	moduleHandlerThread.join();
-	contextThread.join();
-	internalServer.stop();
+	internalServer.destroy();
 }
 
 void TestHandler::runConnects(size_t numberOfErrors) {
@@ -324,6 +326,7 @@ void TestHandler::runConnects(size_t numberOfErrors) {
 		}
 	}
 }
+
 void TestHandler::runStatuses(size_t numberOfErrors) {
 	InternalProtocol::InternalServer receivedMessage;
 	for(size_t i = 0; i < clients.size()*(numberOfMessages - 1); ++i) {
@@ -338,6 +341,7 @@ void TestHandler::runStatuses(size_t numberOfErrors) {
 		}
 	}
 }
+
 void TestHandler::serialRunWithExpectedError(bool onConnect, size_t numberOfErrors) {
 	if(onConnect) {
 		runConnects(numberOfErrors);
@@ -356,7 +360,7 @@ void TestHandler::runTestsWithModuleHandlerTimeout(bool onConnect, size_t timeou
 	signals.async_wait([context](auto, auto) { context->ioContext.stop(); });
 
 	internal_server::InternalServer internalServer { context, fromInternalQueue,
-																toInternalQueue };
+													 toInternalQueue };
 
 	if(onConnect) {
 		expectedMessageNumber -= timeoutNumber*numberOfMessages;
@@ -366,11 +370,11 @@ void TestHandler::runTestsWithModuleHandlerTimeout(bool onConnect, size_t timeou
 	testing_utils::ModuleHandlerForTesting moduleHandler(context, fromInternalQueue, toInternalQueue,
 														 expectedMessageNumber);
 
-	std::thread moduleHandlerThread([&moduleHandler, onConnect, timeoutNumber]() {
+	std::jthread moduleHandlerThread([&moduleHandler, onConnect, timeoutNumber]() {
 		moduleHandler.startWithTimeout(onConnect, timeoutNumber);
 	});
-	std::thread contextThread([&context]() { context->ioContext.run(); });
-	internalServer.start();
+	std::jthread contextThread([&context]() { context->ioContext.run(); });
+	internalServer.run();
 
 	serialRunWithExpectedError(onConnect, timeoutNumber);
 
@@ -378,9 +382,7 @@ void TestHandler::runTestsWithModuleHandlerTimeout(bool onConnect, size_t timeou
 	if(!context->ioContext.stopped()) {
 		context->ioContext.stop();
 	}
-	moduleHandlerThread.join();
-	contextThread.join();
-	internalServer.stop();
+	internalServer.destroy();
 }
 
 

@@ -9,15 +9,16 @@ namespace bringauto::structures {
 class DeviceIdentification {
 public:
 	/**
-	 * @brief construct object and fill params with values given in device
+	 * @brief Construct object and fill params with values given in device
 	 * @param device object holding values to be assigned to corresponding params
 	 */
 	explicit DeviceIdentification(const InternalProtocol::Device &device);
+
 	/**
-	 * @brief construct object and fill params with values given in device
+	 * @brief Construct object and fill params with values given in device
 	 * @param device object holding values to be assigned to corresponding params
 	 */
-	explicit DeviceIdentification(const device_identification& device);
+	explicit DeviceIdentification(const device_identification &device);
 
 	/**
 	 * @brief get value of module_
@@ -54,8 +55,21 @@ public:
 	 * @param toCompare device used for comparison
 	 * @return true if all parameters outside of priority are equal
 	 */
-	bool isSame(const std::shared_ptr<DeviceIdentification> &toCompare);
+	bool isSame(const std::shared_ptr <DeviceIdentification> &toCompare) const;
 
+	/**
+	 * @brief Checks if all parameters except priority are equal.
+	 * @param deviceId device used for comparison
+	 * @return true if all parameters outside of priority are equal
+	 */
+	bool operator==(const DeviceIdentification &deviceId) const;
+
+	/**
+	 * @brief Create device_identification struct from this object
+	 *
+	 * @return device_identification
+	 */
+	device_identification convertToCStruct() const;
 
 private:
 	uint32_t module_;

@@ -1,9 +1,10 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.25 FATAL_ERROR)
 PROJECT(ModuleGateway)
+INCLUDE(GNUInstallDirs)
 
+SET(BRINGAUTO_MODULE_GATEWAY_VERSION 0.1.0)
+SET(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 SET(CMAKE_CXX_STANDARD 20)
-
-
 
 OPTION(BRINGAUTO_TESTS "Disable tests" OFF)
 OPTION(BRINGAUTO_PACKAGE "Package creation" OFF)
@@ -39,6 +40,8 @@ FIND_PACKAGE(Boost 1.74 REQUIRED)
 FIND_PACKAGE(Protobuf 3.21.12 REQUIRED)
 FIND_PACKAGE(cxxopts 3.0.0 REQUIRED)
 FIND_PACKAGE(nlohmann_json 3.2.0 REQUIRED)
+FIND_PACKAGE(PahoMqttCpp REQUIRED)
+FIND_PACKAGE(eclipse-paho-mqtt-c REQUIRED)
 FIND_PACKAGE(libbringauto_logger 1.2.0 REQUIRED)
 
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/fleet-protocol)
@@ -49,20 +52,39 @@ ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/memory_management)
 FILE(GLOB_RECURSE source_files "src/*")
 ADD_LIBRARY(bringautolib STATIC "${source_files}")
 TARGET_INCLUDE_DIRECTORIES(bringautolib PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
-TARGET_LINK_LIBRARIES(bringautolib PUBLIC memory_management fleet-protocol::protobuf_cpp fleet-protocol::common_headers fleet-protocol::module_gateway module_gateway_maintainer nlohmann_json::nlohmann_json cxxopts::cxxopts bringauto_logger::bringauto_logger ${CMAKE_DL_LIBS})
+TARGET_LINK_LIBRARIES(bringautolib PUBLIC
+                        Boost::headers
+                        memory_management
+                        fleet-protocol::protobuf_cpp
+                        fleet-protocol::common_headers
+                        fleet-protocol::module_gateway
+                        module_gateway_maintainer
+                        nlohmann_json::nlohmann_json
+                        cxxopts::cxxopts
+                        bringauto_logger::bringauto_logger
+                        eclipse-paho-mqtt-c::paho-mqtt3as
+                        PahoMqttCpp::paho-mqttpp3
+                        ${CMAKE_DL_LIBS})
 
-ADD_EXECUTABLE(${PROJECT_NAME} main.cpp)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC bringautolib)
+CMDEF_ADD_EXECUTABLE(
+        TARGET module_gateway_app
+        SOURCES main.cpp
+        VERSION ${BRINGAUTO_MODULE_GATEWAY_VERSION}
+)
+TARGET_COMPILE_OPTIONS(module_gateway_app PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address)
+TARGET_LINK_LIBRARIES(module_gateway_app PUBLIC bringautolib -fsanitize=address)
 
 IF (BRINGAUTO_INSTALL)
-    CMDEF_INSTALL(TARGET virtual-vehicle-utility)
-    BA_PACKAGE_DEPS_IMPORTED(virtual-vehicle-utility)
+    CMDEF_INSTALL(TARGET module_gateway_app)
+    BA_PACKAGE_DEPS_IMPORTED(module_gateway_app)
+    INCLUDE(GNUInstallDirs)
 ENDIF ()
 
 
 IF (BRINGAUTO_PACKAGE)
     CMDEF_PACKAGE(
-            MAIN_TARGET virtual-vehicle-utility
+            MAIN_TARGET module_gateway_app
+            VERSION ${BRINGAUTO_MODULE_GATEWAY_VERSION}
     )
     SET(CPACK_GENERATOR ZIP)
     SET(CPACK_PACKAGE_CONTACT "BringAuto s.r.o. <maintainers@bringauto.com>")
