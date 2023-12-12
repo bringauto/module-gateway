@@ -1,8 +1,12 @@
 #pragma once
 
+#include <bringauto/structures/ExternalConnectionSettings.hpp>
+
 #include <filesystem>
 #include <vector>
 #include <string>
+#include <map>
+
 
 
 namespace bringauto::settings {
@@ -24,10 +28,24 @@ struct Settings {
 	bool verbose;
 
 	/**
+	 * @brief company name for external connection
+	 */
+	std::string company;
+
+	/**
+	 * @brief vehicle name used in external connection
+	 */
+	std::string vehicleName;
+
+	/**
 	 * @brief paths to shared module libraries
 	 */
-	std::vector<std::string> modulePaths;
+	std::map<int, std::string> modulePaths;
 
+	/**
+	 * @brief Setting of external connection endpoints and protocols
+	 */
+	std::vector<structures::ExternalConnectionSettings> externalConnectionSettingsList;
 
 };
 }

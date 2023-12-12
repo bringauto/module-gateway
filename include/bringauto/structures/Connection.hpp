@@ -19,7 +19,7 @@ struct Connection {
 	 * @brief Constructs connection, adds socket into io_context.
 	 * @param io_context_ context shared across Gateway
 	 */
-	Connection(boost::asio::io_context &io_context_): socket(io_context_) {}
+	explicit Connection(boost::asio::io_context &io_context_): socket(io_context_) {}
 
 	/**
 	 * @brief socket endpoint in communication between server and client
@@ -28,7 +28,7 @@ struct Connection {
 	/**
 	 * @brief identification of connected device
 	 */
-	std::shared_ptr<DeviceIdentification> deviceId;
+	std::shared_ptr <DeviceIdentification> deviceId;
 	/**
 	 * @brief Context for connection
 	 */

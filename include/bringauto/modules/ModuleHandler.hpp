@@ -1,13 +1,14 @@
 #pragma once
 
-#include <memory>
-#include <unordered_map>
-
 #include <InternalProtocol.pb.h>
 #include <bringauto/structures/GlobalContext.hpp>
+#include <bringauto/structures/ModuleLibrary.hpp>
 #include <bringauto/modules/StatusAggregator.hpp>
 #include <bringauto/structures/AtomicQueue.hpp>
+#include <bringauto/structures/InternalClientMessage.hpp>
 #include <device_management.h>
+
+#include <memory>
 
 
 
@@ -18,9 +19,13 @@ class ModuleHandler {
 public:
 	ModuleHandler(
 			std::shared_ptr <structures::GlobalContext> &context,
-			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> &fromInternalQueue,
-			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> &toInternalQueue)
-			: context_ { context }, fromInternalQueue_ { fromInternalQueue }, toInternalQueue_ { toInternalQueue } {}
+			structures::ModuleLibrary &moduleLibrary,
+			std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &fromInternalQueue,
+			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> &toInternalQueue,
+			std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue)
+			: context_ { context }, moduleLibrary_ { moduleLibrary }, fromInternalQueue_ { fromInternalQueue },
+			  toInternalQueue_ { toInternalQueue },
+			  toExternalQueue_ { toExternalQueue } {}
 
 	/**
 	 * @brief Start Module handler
@@ -39,53 +44,64 @@ public:
 private:
 
 	/**
-	 * @brief Initialize all modules defined in config file
+	 * @brief Process all incoming messages from internal server
 	 *
 	 */
-	void init_modules();
+	void handleMessages();
 
 	/**
-	 * @brief Initialize single module
+	 * @brief Check if there are any timeouted messages
 	 *
-	 * @param path path to the module
 	 */
-	void init_module(const std::string &path);
+	void checkTimeoutedMessages();
 
 	/**
-	 * @brief Process all incoming messages
+	 * @brief Process disconnect device
 	 *
+	 * @param device device identification
 	 */
-	void handle_messages();
+	void handleDisconnect(device_identification deviceId);
+
+	/**
+	 * @brief Send aggregated status to external server
+	 *
+	 * @param deviceId device identification
+	 * @param device protobuf device
+	 * @param disconnected true if device is disconnected otherwise false
+	 */
+	void sendAggregatedStatus(const device_identification &deviceId, const InternalProtocol::Device &device, bool disconnected);
 
 	/**
 	 * @brief Process connect message
 	 *
 	 * @param connect Connect message
 	 */
-	void handle_connect(const InternalProtocol::DeviceConnect &connect);
+	void handleConnect(const InternalProtocol::DeviceConnect &connect);
+
+	/**
+	 * @brief Send connect response message to internal client
+	 *
+	 * @param device internal client
+	 * @param response_type type of the response
+	 */
+	void sendConnectResponse(const InternalProtocol::Device &device, InternalProtocol::DeviceConnectResponse_ResponseType response_type);
 
 	/**
 	 * @brief Process status message
 	 *
 	 * @param status Status message
 	 */
-	void handle_status(const InternalProtocol::DeviceStatus &status);
-
-	/**
-	 * @brief Creates device_identification from protobuf device
-	 *
-	 * @param device internal protocol device
-	 * @return ::device_identification
-	 */
-	::device_identification mapToDeviceId(const InternalProtocol::Device &device);
-
-	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalClient>> fromInternalQueue_;
-
-	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
+	void handleStatus(const InternalProtocol::DeviceStatus &status);
 
 	std::shared_ptr <structures::GlobalContext> context_;
 
-	std::unordered_map<unsigned int, StatusAggregator> modules_ {};
+	structures::ModuleLibrary &moduleLibrary_;
+
+	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> fromInternalQueue_;
+
+	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
+
+	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> toExternalQueue_;
 };
 
 }

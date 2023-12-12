@@ -1,0 +1,31 @@
+{
+  "general-settings": {
+    "log-path": "/home/bringauto/log",
+    "verbose": true
+  },
+  "internal-server-settings": {
+    "port": 8888
+  },
+  "module-paths": {
+    "3": "/home/bringauto/modules/libio_module_module_manager.so"
+  },
+  "external-connection" : {
+    "company" : "BringAuto",
+    "vehicle-name" : "VirtualVehicle",
+    "endpoints" :
+    [
+      {
+        "protocol-type" : "mqtt",
+        "mqtt-settings" : {
+          "ssl" : false,
+          "ca-file" : "ca.pem",
+          "client-cert" : "client.pem",
+          "client-key" : "key.pem"
+        },
+        "server-ip": "mosquitto",
+        "port": 1883,
+        "modules": [ 3 ]
+      }
+    ]
+  }
+}

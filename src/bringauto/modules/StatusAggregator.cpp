@@ -1,98 +1,92 @@
-#include <dlfcn.h>
-#include <sstream>
-
-#include <bringauto/logging/Logger.hpp>
 #include <bringauto/modules/StatusAggregator.hpp>
+#include <bringauto/logging/Logger.hpp>
+#include <bringauto/common_utils/MemoryUtils.hpp>
+#include <bringauto/common_utils/ProtobufUtils.hpp>
+#include <bringauto/common_utils/StringUtils.hpp>
 
 
 
 namespace bringauto::modules {
 
-template <typename T>
-struct FunctionTypeDeducer;
-
-template <typename R, typename ...Args>
-struct FunctionTypeDeducer<std::function < R(Args...)>> {
-using fncptr = R (*)(Args...);
-};
-
 using log = bringauto::logging::Logger;
 
-std::string StatusAggregator::getId(const ::device_identification &device) {
-	std::stringstream ss;
-	ss << device.module << "/" << device.device_type << "/" << device.device_role << "/" << device.device_name;
-	return ss.str();
+void StatusAggregator::clear_device(const std::string &key) {
+	auto &deviceState = devices.at(key);
+	auto &aggregatedMessages = deviceState.getAggregatedMessages();
+	while(not aggregatedMessages.empty()) {
+		auto message = aggregatedMessages.front();
+		if(message.data != nullptr) {
+			moduleDeallocate(&message);
+		}
+		aggregatedMessages.pop();
+	}
+	deviceState.deallocateStatus();
+	std::lock_guard<std::mutex> lock(mutex_);
+	deviceState.deallocateCommand();
 }
 
-int StatusAggregator::init_status_aggregator(std::filesystem::path path) {
-	module = dlopen(path.c_str(), RTLD_LAZY | RTLD_DEEPBIND);
-	if(module == nullptr) {
-		return NOT_OK;
-	}
-	isDeviceTypeSupported = reinterpret_cast<FunctionTypeDeducer<decltype(isDeviceTypeSupported)>::fncptr>(dlsym(module,
-																												 "is_device_type_supported"));
-	getModuleNumber = reinterpret_cast<FunctionTypeDeducer<decltype(getModuleNumber)>::fncptr>(dlsym(module,
-																									 "get_module_number"));
-	generateFirstCommand = reinterpret_cast<FunctionTypeDeducer<decltype(generateFirstCommand)>::fncptr>(dlsym(module,
-																											   "generate_first_command"));
-	statusDataValid = reinterpret_cast<FunctionTypeDeducer<decltype(statusDataValid)>::fncptr>(dlsym(module,
-																									 "status_data_valid"));
-	commandDataValid = reinterpret_cast<FunctionTypeDeducer<decltype(commandDataValid)>::fncptr>(dlsym(module,
-																									   "command_data_valid"));
-	sendStatusCondition = reinterpret_cast<FunctionTypeDeducer<decltype(sendStatusCondition)>::fncptr>(dlsym(module,
-																											 "send_status_condition"));
-	aggregateStatus = reinterpret_cast<FunctionTypeDeducer<decltype(aggregateStatus)>::fncptr>(dlsym(module,
-																									 "aggregate_status"));
-	generateCommand = reinterpret_cast<FunctionTypeDeducer<decltype(generateCommand)>::fncptr>(dlsym(module,
-																									 "generate_command"));
+struct buffer
+StatusAggregator::aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
+								  const unsigned int &device_type) {
+	auto &currStatus = deviceState.getStatus();
+	struct buffer aggregatedStatusBuff {};
+	module_->aggregateStatus(&aggregatedStatusBuff, currStatus, status, device_type);
+	return aggregatedStatusBuff;
+}
+
+void StatusAggregator::aggregateSetStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
+										  const unsigned int &device_type) {
+	auto aggregatedStatusBuff = aggregateStatus(deviceState, status, device_type);
+	deviceState.setStatus(aggregatedStatusBuff);
+}
+
+void
+StatusAggregator::aggregateSetSendStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
+										 const unsigned int &device_type) {
+	auto aggregatedStatusBuff = aggregateStatus(deviceState, status, device_type);
+	deviceState.setStatusAndResetTimer(aggregatedStatusBuff);
+
+	auto &currStatus = deviceState.getStatus();
+	struct buffer statusToSendBuff {};
+	moduelAllocate(&statusToSendBuff, currStatus.size_in_bytes);
+	std::memcpy(statusToSendBuff.data, currStatus.data, currStatus.size_in_bytes);
+
+	auto &aggregatedMessages = deviceState.getAggregatedMessages();
+	aggregatedMessages.push(statusToSendBuff);
+}
+
+int StatusAggregator::init_status_aggregator() {
 	return OK;
 }
 
 int StatusAggregator::destroy_status_aggregator() {
-	if(module == nullptr) {
-		return OK;
-	}
-	dlclose(module);
-	module = nullptr;
 	clear_all_devices();
 	return OK;
 }
 
 int StatusAggregator::clear_all_devices() {
 	for(auto &[key, device]: devices) {
-		auto &aggregatedMessages = device.aggregatedMessages;
-		while(not aggregatedMessages.empty()) {
-			auto message = aggregatedMessages.front();
-			if(message.data != nullptr) {
-				deallocate(&message);
-			}
-			aggregatedMessages.pop();
-		}
-		deallocate(&device.status);
-		deallocate(&device.command);
+		clear_device(key);
 	}
-	devices.clear();
 	return OK;
 }
 
 int StatusAggregator::clear_device(const struct ::device_identification device) {
-	std::string id = getId(device);
 	if(is_device_valid(device) == NOT_OK) {
 		return DEVICE_NOT_REGISTERED;
 	}
-	auto &aggregatedMessages = devices[id].aggregatedMessages;
-	while(not aggregatedMessages.empty()) {
-		aggregatedMessages.pop();
-	}
+	std::string id = common_utils::ProtobufUtils::getId(device);
+	clear_device(id);
 	return OK;
 }
 
 int StatusAggregator::remove_device(const struct ::device_identification device) {
-	std::string id = getId(device);
 	if(is_device_valid(device) == NOT_OK) {
 		return DEVICE_NOT_REGISTERED;
 	}
-	devices.erase(id);
+	std::string id = common_utils::ProtobufUtils::getId(device);
+	clear_device(device);
+	boost::asio::post(context_->ioContext, [this, id]() { devices.erase(id); });
 	return OK;
 }
 
@@ -103,36 +97,47 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 		return DEVICE_NOT_SUPPORTED;
 	}
 
-	std::string id = getId(device);
-
-	if(status.size_in_bytes == 0 || statusDataValid(status, device_type) == NOT_OK) {
-		log::logWarning("Invalid status data on device id: {}", id);
-		return NOT_OK;
-	}
+	std::string id = common_utils::ProtobufUtils::getId(device);
 
 	if(not devices.contains(id)) {
 		struct buffer commandBuffer {};
-		generateFirstCommand(&commandBuffer, device_type);
-		struct buffer buf {};
-		allocate(&buf, status.size_in_bytes);
-		strncpy(static_cast<char *>(buf.data), static_cast<char *>(status.data), status.size_in_bytes - 1);
-		devices.insert({ id, { commandBuffer, buf }});
-		return 0;
+		module_->generateFirstCommand(&commandBuffer, device_type);
+		struct buffer statusBuffer {};
+		moduelAllocate(&statusBuffer, status.size_in_bytes);
+		std::memcpy(statusBuffer.data, status.data, status.size_in_bytes);
+
+		struct ::device_identification deviceId {};
+		deviceId.module = device.module;
+		deviceId.priority = device.priority;
+		deviceId.device_type = device_type;
+		common_utils::MemoryUtils::initBuffer(deviceId.device_name,
+											  { static_cast<char *>(device.device_name.data),
+												device.device_name.size_in_bytes });
+		common_utils::MemoryUtils::initBuffer(deviceId.device_role,
+											  { static_cast<char *>(device.device_role.data),
+												device.device_role.size_in_bytes });
+
+		std::function<int(struct ::device_identification)> timeouted_force_aggregation = [&](
+				struct ::device_identification deviceId) {
+					timeoutedMessageReady_.store(true);
+					return force_aggregation_on_device(deviceId);
+		};
+		std::function<void(struct buffer *)> dealloc = [&](
+				struct buffer *device) { moduleDeallocate(device); };
+		devices.insert(
+				{ id, structures::StatusAggregatorDeviceState(context_, timeouted_force_aggregation, deviceId, commandBuffer, statusBuffer, dealloc) });
+
+		force_aggregation_on_device(device);
+		return 1;
 	}
 
-	auto &currStatus = devices[id].status;
-	auto &aggregatedMessages = devices[id].aggregatedMessages;
-	if(sendStatusCondition(currStatus, status, device_type) == OK) {
-		struct buffer aggregatedStatusBuff {};
-		aggregateStatus(&aggregatedStatusBuff, currStatus, status, device_type);
-		deallocate(&currStatus);
-		currStatus = aggregatedStatusBuff;
+	auto &deviceState = devices.at(id);
+	auto &currStatus = deviceState.getStatus();
+	auto &aggregatedMessages = deviceState.getAggregatedMessages();
+	if(module_->sendStatusCondition(currStatus, status, device_type) == OK) {
+		aggregateSetSendStatus(deviceState, status, device_type);
 	} else {
-		aggregatedMessages.push(currStatus);
-		struct buffer buf {};
-		allocate(&buf, status.size_in_bytes);
-		strncpy(static_cast<char *>(buf.data), static_cast<char *>(status.data), status.size_in_bytes - 1);
-		currStatus = buf;
+		aggregateSetStatus(deviceState, status, device_type);
 	}
 
 	return aggregatedMessages.size();
@@ -144,56 +149,73 @@ int StatusAggregator::get_aggregated_status(struct ::buffer *generated_status,
 		return DEVICE_NOT_REGISTERED;
 	}
 
-	std::string id = getId(device);
-	auto &aggregatedMessages = devices[id].aggregatedMessages;
+	std::string id = common_utils::ProtobufUtils::getId(device);
+	auto &aggregatedMessages = devices.at(id).getAggregatedMessages();
 	if(aggregatedMessages.size() == 0) {
 		return NO_MESSAGE_AVAILABLE;
 	}
 
-	auto status = aggregatedMessages.front();
-	aggregatedMessages.pop();
+	auto &status = aggregatedMessages.front();
 	generated_status->data = status.data;
 	generated_status->size_in_bytes = status.size_in_bytes;
+	aggregatedMessages.pop();
 	return OK;
 }
 
 int StatusAggregator::get_unique_devices(struct ::buffer *unique_devices_buffer) {
-	if(devices.empty()) {
+	const auto devicesSize = devices.size();
+	if (devicesSize == 0) {
 		return 0;
 	}
-	std::stringstream output {};
-	for(auto const &[key, value]: devices) {
-		output << key << ",";
-	}
-	std::string unique_devices = output.str();
-	unique_devices.pop_back();
-	size_t size = unique_devices.size();
-	if(allocate(unique_devices_buffer, size + 1) == NOT_OK) {
+
+	if(allocate(unique_devices_buffer, sizeof(struct device_identification) * devicesSize) == NOT_OK) {
+		log::logError("Could not allocate buffer in get_unique_devices");
 		return NOT_OK;
 	}
-	strcpy(static_cast<char *>(unique_devices_buffer->data), unique_devices.c_str());
-	return devices.size();
+
+	device_identification *devicesPointer = static_cast<device_identification *>(unique_devices_buffer->data);
+	int i = 0;
+	for(auto const &[key, value]: devices) {
+		auto tokenVec = common_utils::StringUtils::splitString(key, '/');
+		devicesPointer[i].module = std::stoi(tokenVec[0]);
+		devicesPointer[i].device_type = std::stoi(tokenVec[1]);
+		common_utils::MemoryUtils::initBuffer(devicesPointer[i].device_role, tokenVec[2]);
+		common_utils::MemoryUtils::initBuffer(devicesPointer[i].device_name, tokenVec[3]);
+		i++;
+	}
+
+	return devicesSize;
 }
 
 int StatusAggregator::force_aggregation_on_device(const struct ::device_identification device) {
-	std::string id = getId(device);
+	std::string id = common_utils::ProtobufUtils::getId(device);
 	if(is_device_valid(device) == NOT_OK) {
 		return DEVICE_NOT_REGISTERED;
 	}
 
-	auto &aggregatedMessages = devices[id].aggregatedMessages;
-	aggregatedMessages.push(devices[id].status);
+	const auto &statusBuffer = devices.at(id).getStatus();
+	struct buffer forcedStatusBuffer {};
+	if(moduelAllocate(&forcedStatusBuffer, statusBuffer.size_in_bytes) == NOT_OK) {
+		log::logError("Could not allocate buffer in force_aggregation_on_device");
+		return NOT_OK;
+	}
+
+	std::memcpy(forcedStatusBuffer.data, statusBuffer.data, statusBuffer.size_in_bytes);
+	auto &aggregatedMessages = devices.at(id).getAggregatedMessages();
+	aggregatedMessages.push(forcedStatusBuffer);
+
 	return aggregatedMessages.size();
 }
 
 int StatusAggregator::is_device_valid(const struct ::device_identification device) {
-	if(is_device_type_supported(device.device_type) == OK && devices.contains(getId(device))) {
+	if(is_device_type_supported(device.device_type) == OK &&
+	   devices.contains(common_utils::ProtobufUtils::getId(device))) {
 		return OK;
 	}
 	return NOT_OK;
 }
 
-int StatusAggregator::get_module_number() { return getModuleNumber(); }
+int StatusAggregator::get_module_number() { return module_->getModuleNumber(); }
 
 int StatusAggregator::update_command(const struct ::buffer command, const struct ::device_identification device) {
 	const auto &device_type = device.device_type;
@@ -201,23 +223,21 @@ int StatusAggregator::update_command(const struct ::buffer command, const struct
 		return DEVICE_NOT_SUPPORTED;
 	}
 
-	std::string id = getId(device);
+	std::string id = common_utils::ProtobufUtils::getId(device);
 	if(not devices.contains(id)) {
 		return DEVICE_NOT_REGISTERED;
 	}
 
-	if(commandDataValid(command, device_type) == NOT_OK) {
-		log::logWarning("Invalid command data on device id: {}", id);
+	if(module_->commandDataValid(command, device_type) == NOT_OK) {
+		log::logWarning("Invalid command data on device: {}", id);
 		return COMMAND_INVALID;
 	}
 
-	auto &currCommand = devices[id].command;
-	deallocate(&currCommand);
-	currCommand = command;
+	std::lock_guard<std::mutex> lock(mutex_);
+	devices.at(id).setCommand(command);
 	return OK;
 }
 
-// maybe not registered
 int StatusAggregator::get_command(const struct ::buffer status, const struct ::device_identification device,
 								  struct ::buffer *command) {
 	const auto &device_type = device.device_type;
@@ -226,31 +246,54 @@ int StatusAggregator::get_command(const struct ::buffer status, const struct ::d
 		return DEVICE_NOT_SUPPORTED;
 	}
 
-	std::string id = getId(device);
-	auto &currStatus = devices[id].status;
-	auto &currCommand = devices[id].command;
+	std::string id = common_utils::ProtobufUtils::getId(device);
 
-	if(status.size_in_bytes == 0 || statusDataValid(status, device_type) == NOT_OK) {
+	if(status.size_in_bytes == 0 || module_->statusDataValid(status, device_type) == NOT_OK) {
 		log::logWarning("Invalid status data on device id: {}", id);
 		return STATUS_INVALID;
 	}
 
+	if(is_device_valid(device) == NOT_OK) {
+		module_->generateFirstCommand(command, device_type);
+		return OK;
+	}
+
+	auto &deviceState = devices.at(id);
 	struct buffer generatedCommandBuffer {};
-	generateCommand(&generatedCommandBuffer, status, currStatus, currCommand, device_type);
-	deallocate(&currCommand);
-	currCommand = generatedCommandBuffer;
+	std::lock_guard<std::mutex> lock(mutex_);
+	auto &currCommand = devices.at(id).getCommand();
+	module_->generateCommand(&generatedCommandBuffer, status, deviceState.getStatus(), deviceState.getCommand(),
+							 device_type);
+	deviceState.setCommand(generatedCommandBuffer);
 
 	int currCommandSize = currCommand.size_in_bytes;
-	if(allocate(command, currCommandSize) == NOT_OK) {
+	if(moduelAllocate(command, currCommandSize) == NOT_OK) {
 		log::logError("Could not allocate memory for command message");
 		return NOT_OK;
 	}
-	memcpy(command->data, currCommand.data, currCommandSize);
+	std::memcpy(command->data, currCommand.data, currCommandSize);
 	command->size_in_bytes = currCommandSize;
-
 	return OK;
 }
 
-int StatusAggregator::is_device_type_supported(unsigned int device_type) { return isDeviceTypeSupported(device_type); }
+int StatusAggregator::is_device_type_supported(unsigned int device_type) {
+	return module_->isDeviceTypeSupported(device_type);
+}
+
+int StatusAggregator::moduelAllocate(struct buffer *buffer, size_t size_in_bytes){
+	return module_->allocate(buffer, size_in_bytes);
+}
+
+void StatusAggregator::moduleDeallocate(struct buffer *buffer){
+	module_->deallocate(buffer);
+}
+
+void StatusAggregator::unsetTimeoutedMessageReady(){
+	timeoutedMessageReady_.store(false);
+}
+
+bool StatusAggregator::getTimeoutedMessageReady() const {
+	return timeoutedMessageReady_.load();
+}
 
 }

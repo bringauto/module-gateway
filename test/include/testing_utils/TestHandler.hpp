@@ -2,9 +2,9 @@
 
 #include <bringauto/internal_server/InternalServer.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
+#include <bringauto/structures/InternalClientMessage.hpp>
 #include <testing_utils/InternalClientForTesting.hpp>
 #include <testing_utils/ModuleHandlerForTesting.hpp>
-
 
 #include <memory>
 #include <vector>
@@ -20,7 +20,7 @@ class TestHandler {
 	std::shared_ptr<bringauto::settings::Settings> settings;
 
 	std::shared_ptr<bringauto::structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue;
-	std::shared_ptr<bringauto::structures::AtomicQueue<InternalProtocol::InternalClient>> fromInternalQueue;
+	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>> fromInternalQueue;
 
 	std::vector<InternalProtocol::InternalClient> connects;
 	std::vector<InternalProtocol::InternalClient> statuses;
