@@ -3,7 +3,6 @@
 
 #include <bringauto/structures/AtomicQueue.hpp>
 #include <bringauto/structures/Connection.hpp>
-#include <bringauto/structures/ConnectionContext.hpp>
 #include <bringauto/structures/GlobalContext.hpp>
 #include <bringauto/structures/InternalClientMessage.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>

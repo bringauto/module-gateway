@@ -1,7 +1,7 @@
 #pragma once
 
-#include <bringauto/structures/ConnectionContext.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
+#include <bringauto/settings/Constants.hpp>
 #include <boost/asio.hpp>
 
 #include <condition_variable>
@@ -32,7 +32,20 @@ struct Connection {
 	/**
 	 * @brief Context for connection
 	 */
-	bringauto::structures::ConnectionContext connContext;
+	struct {
+		/**
+		 * @brief buffer for receive handler
+		 */
+		std::array<uint8_t, bringauto::settings::buffer_length> buffer;
+		/**
+		 * @brief complete size of one message
+		 */
+		std::size_t completeMessageSize { 0 };
+		/**
+		 * @brief message data
+		 */
+		std::vector<uint8_t> completeMessage {};
+	} connContext;
 	/**
 	 * @brief condition variable used for wait - after a message was send from server to module handler.
 	 * and notify - when response to that message was received in server and resent to internal client
