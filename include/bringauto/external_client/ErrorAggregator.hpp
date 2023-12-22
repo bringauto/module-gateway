@@ -123,6 +123,9 @@ private:
 
 	std::shared_ptr <modules::ModuleManagerLibraryHandler> module_ {};
 
+	/**
+	 * @brief Map of devices states, key is device identification converted to string
+	 */
 	std::map <std::string, DeviceState> devices_ {};
 };
 

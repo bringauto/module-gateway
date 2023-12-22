@@ -60,8 +60,14 @@ private:
 
 	boost::asio::deadline_timer timer_;
 
+	/**
+	 * @brief Flag which indicates if timer should be stopped
+	 */
 	std::atomic_bool end_ { false };
 
+	/**
+	 * @brief Function which should be executed if timer expires
+	 */
 	std::function<int(const struct ::device_identification)> fun_;
 
 	device_identification deviceId_;

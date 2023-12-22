@@ -80,7 +80,7 @@ private:
 
 	std::queue<struct buffer> aggregatedMessages_;
 
-	std::function<void(struct buffer *)> dealloc_;
+	std::function<void(struct buffer *)> deallocateFun_;
 
 	struct buffer status_;
 

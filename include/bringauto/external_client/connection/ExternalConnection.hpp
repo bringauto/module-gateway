@@ -185,6 +185,9 @@ private:
 
 	std::unique_ptr <messages::SentMessagesHandler> sentMessagesHandler_;
 
+	/**
+	 * @brief Map of error aggregators, key is module number
+	 */
 	std::map<unsigned int, ErrorAggregator> errorAggregators;
 
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_;

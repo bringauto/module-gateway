@@ -99,7 +99,7 @@ void ExternalClient::handleAggregatedMessages() {
 			auto &reconnectItem = reconnectQueue_->front();
 			auto &connection = reconnectItem.connection_.get();
 			connection.endConnection(false);
-			if(reconnectItem.reconnect_) {
+			if(reconnectItem.reconnect) {
 				startExternalConnectSequence(connection);
 			} else {
 				log::logInfo("External connection is disconnected from external server");

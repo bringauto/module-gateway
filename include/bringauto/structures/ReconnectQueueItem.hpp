@@ -17,11 +17,14 @@ struct ReconnectQueueItem {
 public:
 	explicit ReconnectQueueItem(
 			const std::reference_wrapper<external_client::connection::ExternalConnection> &connection,
-			bool reconnect): connection_ { connection }, reconnect_ { reconnect } {}
+			bool reconnect): connection_ { connection }, reconnect { reconnect } {}
 
 	std::reference_wrapper<external_client::connection::ExternalConnection> connection_;
 
-	bool reconnect_;
+	/**
+	 * @brief If true, connection will be reconnected
+	 */
+	bool reconnect;
 };
 
 }

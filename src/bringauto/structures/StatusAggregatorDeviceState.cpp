@@ -9,15 +9,15 @@ namespace bringauto::structures {
 StatusAggregatorDeviceState::StatusAggregatorDeviceState(
 		std::shared_ptr<bringauto::structures::GlobalContext> &context,
 		std::function<int(const struct ::device_identification)> fun, const device_identification &deviceId,
-		const buffer command, const buffer status, std::function<void(struct buffer *)> dealloc): status_ { status } {
+		const buffer command, const buffer status, std::function<void(struct buffer *)> deallocateFun): status_ { status } {
 	command_ = command;
 	timer_ = std::make_unique<bringauto::structures::ThreadTimer>(context, fun, deviceId);
-	dealloc_ = dealloc;
+	deallocateFun_ = deallocateFun;
 	timer_->start();
 }
 
 void StatusAggregatorDeviceState::deallocateStatus() {
-	dealloc_(&status_);
+	deallocateFun_(&status_);
 }
 
 void StatusAggregatorDeviceState::setStatus(const buffer &statusBuffer) {
@@ -35,7 +35,7 @@ void StatusAggregatorDeviceState::setStatusAndResetTimer(const buffer &statusBuf
 }
 
 void StatusAggregatorDeviceState::deallocateCommand() {
-	dealloc_(&command_);
+	deallocateFun_(&command_);
 }
 
 void StatusAggregatorDeviceState::setCommand(const buffer &commandBuffer) {

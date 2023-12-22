@@ -77,6 +77,10 @@ private:
 
 	bool insideConnectSequence_ { false };
 
+	/**
+	 * @brief Map of external connections, key is number from settings
+	 * - map is needed because of the possibility of multiple modules connected to one external server
+	 */
 	std::map<unsigned int, std::reference_wrapper<connection::ExternalConnection>> externalConnectionMap_;
 
 	std::list<connection::ExternalConnection> externalConnectionsList_;

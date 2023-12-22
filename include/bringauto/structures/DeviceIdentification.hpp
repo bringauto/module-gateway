@@ -80,9 +80,13 @@ public:
 
 private:
 	uint32_t module_;
+
 	uint32_t deviceType_;
+
 	std::string deviceRole_;
+
 	std::string deviceName_;
+
 	uint32_t priority_;
 };
 }

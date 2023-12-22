@@ -205,6 +205,9 @@ private:
 
 	const std::shared_ptr<ModuleManagerLibraryHandler> module_ {};
 
+	/**
+	 * @brief Map of devices states, key is device identification coverted to string
+	 */
 	std::map<std::string, structures::StatusAggregatorDeviceState> devices {};
 
 	std::mutex mutex_ {};
