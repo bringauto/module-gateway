@@ -52,10 +52,7 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 	auto &currentError = devices_[id].errorMessage;
 
 	auto retCode = module_->aggregateError(&errorMessageBuffer, currentError, status, device_type);
-	if(retCode == WRONG_FORMAT) {
-		log::logWarning("Wrong status format in Error aggregator for device: {}", id);
-		return NOT_OK;
-	} else if(retCode != OK) {
+	if(retCode != OK) {
 		log::logWarning("Error occurred in Error aggregator for device: {}", id);
 		return NOT_OK;
 	}

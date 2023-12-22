@@ -1,7 +1,7 @@
 FROM eu.gcr.io/bringauto-infrastructure/teamcity-build-images/ubuntu22.04:latest
 WORKDIR /home/bringauto/module-gateway
 COPY --chown=bringauto:bringauto . /home/bringauto/module-gateway/tmp
-COPY configs/for_docker.json /home/bringauto/config/for_docker.json
+COPY resources/config/for_docker.json /home/bringauto/config/for_docker.json
 
 # Install Module gateway
 RUN mkdir -p /home/bringauto/module-gateway/build && \
