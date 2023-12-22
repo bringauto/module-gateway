@@ -37,8 +37,10 @@ public:
 	 * @brief Send message
 	 *
 	 * @param message data, which are sent
+     *
+     * @return bool true if message was sent successfully, false otherwise
 	 */
-	virtual void sendMessage(ExternalProtocol::ExternalClient *message) = 0;
+	virtual bool sendMessage(ExternalProtocol::ExternalClient *message) = 0;
 
 	/**
 	 * @brief Receive message

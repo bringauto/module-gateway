@@ -139,7 +139,7 @@ public:
 	 * @param size_in_bytes
 	 * @return 0 if success, otherwise -1
 	 */
-	int moduelAllocate(struct buffer *buffer, size_t size_in_bytes);
+	int moduleAllocate(struct buffer *buffer, size_t size_in_bytes);
 
 	/**
 	 * @brief Deallocates struct buffer in loaded module
@@ -162,14 +162,42 @@ public:
 
 private:
 
-	void clear_device(const std::string &key);
+    /**
+     * @brief Clear the device by string key
+     *
+     * @param device unique device key
+     * @return OK if success, otherwise NOT_OK
+     */
+	int clear_device(const std::string &key);
 
+    /**
+     * @brief Aggregate status message
+     *
+     * @param deviceState device state
+     * @param status status message
+     * @param device_type device type
+     * @return struct buffer with aggregated status message
+     */
 	struct buffer aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
 								  const unsigned int &device_type);
 
+    /**
+     * @brief Aggregate and set status message
+     *
+     * @param deviceState device state
+     * @param status status message
+     * @param device_type device type
+     */
 	void aggregateSetStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
 							const unsigned int &device_type);
 
+    /**
+     * @brief Aggregate, set and send status message
+     *
+     * @param deviceState device state
+     * @param status status message
+     * @param device_type device type
+     */
 	void aggregateSetSendStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
 								const unsigned int &device_type);
 

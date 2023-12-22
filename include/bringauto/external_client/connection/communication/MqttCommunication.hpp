@@ -22,7 +22,7 @@ public:
 
 	void initializeConnection() override;
 
-	void sendMessage(ExternalProtocol::ExternalClient *message) override;
+	bool sendMessage(ExternalProtocol::ExternalClient *message) override;
 
 	std::shared_ptr<ExternalProtocol::ExternalServer> receiveMessage() override;
 

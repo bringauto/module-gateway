@@ -93,7 +93,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 			break;
 		case ExternalProtocol::Status_DeviceState_ERROR:
 		default:
-			// TODO What does ERROR mean and what should happen?
+			log::logError("Status with unsupported deviceState was passed to sendStatus()");
 			break;
 	}
 
@@ -103,12 +103,10 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 																				   status,
 																				   errorMessage);
 	sentMessagesHandler_->addNotAckedStatus(externalMessage.status());
-	try {
-		communicationChannel_->sendMessage(&externalMessage);
-	} catch(std::runtime_error &e) {
-		log::logError(e.what());
+
+	if(not communicationChannel_->sendMessage(&externalMessage)){
 		endConnection(false);
-	}
+    }
 	log::logDebug("Sending status with messageCounter '{}' with aggregated errorMessage: {}", clientMessageCounter_,
 				  errorMessage.size_in_bytes > 0 ? errorMessage.data : "");
 }
@@ -131,19 +129,19 @@ int ExternalConnection::initializeConnection(std::vector<structures::DeviceIdent
 	if(connectMessageHandle(connectedDevices) != 0) {
 		log::logError("Connect sequence to server {}:{}, failed in 1st step", settings_.serverIp, settings_.port);
 		state_.exchange(ConnectionState::NOT_CONNECTED);
-		return -1;
+		return NOT_OK;
 	}
 	log::logInfo("Connect sequence: 2nd step (sending statuses of all connected devices)");
 	if(statusMessageHandle(connectedDevices) != 0) {
 		log::logError("Connect sequence to server {}:{}, failed in 2nd step", settings_.serverIp, settings_.port);
 		state_.exchange(ConnectionState::NOT_CONNECTED);
-		return -1;
+		return NOT_OK;
 	}
 	log::logInfo("Connect sequence: 3rd step (receiving commands for devices in previous step)");
 	if(commandMessageHandle(connectedDevices) != 0) {
 		log::logError("Connect sequence to server {}:{}, failed in 3rd step", settings_.serverIp, settings_.port);
 		state_.exchange(ConnectionState::NOT_CONNECTED);
-		return -1;
+		return NOT_OK;
 	}
 	listeningThread = std::jthread(&ExternalConnection::receivingHandlerLoop, this);
 	state_.exchange(ConnectionState::CONNECTED);
@@ -151,7 +149,7 @@ int ExternalConnection::initializeConnection(std::vector<structures::DeviceIdent
 		errorAggregator.clear_error_aggregator();
 	}
 	log::logInfo("Connect sequence successful. Server {}:{}", settings_.serverIp, settings_.port);
-	return 0;
+	return OK;
 }
 
 int ExternalConnection::connectMessageHandle(const std::vector<structures::DeviceIdentification> &devices) {
@@ -159,7 +157,10 @@ int ExternalConnection::connectMessageHandle(const std::vector<structures::Devic
 
 	auto connectMessage = common_utils::ProtobufUtils::createExternalClientConnect(sessionId_, company_, vehicleName_,
 																				   devices);
-	communicationChannel_->sendMessage(&connectMessage);
+	if(not communicationChannel_->sendMessage(&connectMessage)){
+        log::logError("Communication client couldn't send any message");
+        return -1;
+    }
 
 	const auto connectResponseMsg = communicationChannel_->receiveMessage();
 	if(connectResponseMsg == nullptr) {

@@ -17,13 +17,13 @@ constexpr std::chrono::milliseconds fleet_protocol_timeout_length { 250 };
  * @brief timeout that is defined in fleet protocol,
  * reconnect time between External client and External server after disconnect
  */
-constexpr int reconnect_delay { 30 };
+constexpr int reconnect_delay { 5 };
 
 /**
  * @brief timeout that defines how much time can be status without status response
  * if timeout expired, it evokes connection disconnect
  */
-constexpr int status_response_timeout { 30 };
+constexpr int status_response_timeout { 5 };
 
 /**
  * @brief time between checks of atomic queue used for one-way communication from Module Handler to Internal Server

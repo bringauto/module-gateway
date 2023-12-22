@@ -49,6 +49,11 @@ public:
 	const InternalProtocol::Device &getDevice() const;
 
 private:
+	/**
+	 * @brief Handler which is called when timer expires
+	 *
+	 * @param endConnectionFunc function which is called when status does not get response
+	 */
 	void timeoutHandler(const std::function<void()> &endConnectionFunc);
 
 	ExternalProtocol::Status status_;

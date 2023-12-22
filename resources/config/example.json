@@ -7,8 +7,7 @@
     "port": 8888
   },
   "module-paths": {
-    "1": "./libs/mission_module/libmission_module.so",
-    "2": "./libs/button_module/libbutton_module.so",
+    "1000": "./libs/example-module/libexample_module_manager.so",
     "3": "./libio_module_module_manager.so"
   },
   "external-connection" : {
@@ -26,7 +25,19 @@
         },
         "server-ip": "127.0.0.1",
         "port": 1883,
-        "modules": [ 1,2,3 ]
+        "modules": [ 1000 ]
+      },
+      {
+        "protocol-type" : "mqtt",
+        "mqtt-settings" : {
+          "ssl" : false,
+          "ca-file" : "ca.pem",
+          "client-cert" : "client.pem",
+          "client-key" : "key.pem"
+        },
+        "server-ip": "127.0.0.1",
+        "port": 3883,
+        "modules": [ 3 ]
       },
       {
         "protocol-type" : "example",

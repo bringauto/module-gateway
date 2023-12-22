@@ -54,6 +54,9 @@ void MqttCommunication::initializeConnection() {
 void MqttCommunication::connect() {
 	client_ = std::make_unique<mqtt::async_client>(serverAddress_, clientId_,
 												   mqtt::create_options(MQTTVERSION_5));
+	if(client_ == nullptr) {
+		throw std::runtime_error("Mqtt client could not be created");
+	}
 
 	client_->start_consuming();
 	mqtt::token_ptr conntok = client_->connect(connopts_);
@@ -63,15 +66,17 @@ void MqttCommunication::connect() {
 	client_->subscribe(subscribeTopic_, qos)->get_subscribe_response();
 }
 
-void MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
+bool MqttCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
 	if(client_ == nullptr || not client_->is_connected()) {
-		throw std::runtime_error("Mqtt client is not initialized or connected to the server");
+		logging::Logger::logError("Mqtt client is not initialized or connected to the server");
+		return false;
 	}
 	const auto size = message->ByteSizeLong();
 	auto buffer = std::make_unique<uint8_t[]>(size);
 
 	message->SerializeToArray(buffer.get(), static_cast<int>(size));
 	client_->publish(publishTopic_, buffer.get(), size, qos, false);
+	return true;
 }
 
 std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMessage() {

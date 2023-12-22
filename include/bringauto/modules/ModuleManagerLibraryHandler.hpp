@@ -10,6 +10,9 @@
 
 namespace bringauto::modules {
 
+/**
+ * @brief Class used to load and handle library created by module maintainer
+ */
 class ModuleManagerLibraryHandler {
 public:
 	ModuleManagerLibraryHandler() = default;

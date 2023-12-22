@@ -186,7 +186,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 
 	struct ::buffer statusBuffer {};
 	const auto &statusData = status.statusdata();
-	if(statusAggregator->moduelAllocate(&statusBuffer, statusData.size()) == NOT_OK) {
+	if(statusAggregator->moduleAllocate(&statusBuffer, statusData.size()) == NOT_OK) {
 		log::logError("Could not allocate memory for status message");
 		return;
 	}
