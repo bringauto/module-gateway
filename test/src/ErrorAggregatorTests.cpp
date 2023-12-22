@@ -94,7 +94,7 @@ TEST_F(ErrorAggregatorTests, get_last_status_device_ok) {
 
 TEST_F(ErrorAggregatorTests, get_module_number) {
 	int ret = errorAggregator.get_module_number();
-	EXPECT_EQ(ret, 2);
+	EXPECT_EQ(ret, 1000);
 }
 
 TEST_F(ErrorAggregatorTests, is_device_type_supported) {

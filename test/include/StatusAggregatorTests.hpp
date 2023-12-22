@@ -38,7 +38,7 @@ protected:
 
 	std::unique_ptr <bringauto::modules::StatusAggregator> statusAggregator;
 
-	static constexpr const char* PATH_TO_MODULE { "./libs/button_module/libbutton_module.so" };
+	static constexpr const char* PATH_TO_MODULE { "./libs/example-module/libexample_module_gateway.so" };
 	const std::string WRONG_PATH_TO_MODULE { "./bad_path.so" };
 	const unsigned int SUPPORTED_DEVICE_TYPE = 0;
 	const unsigned int UNSUPPORTED_DEVICE_TYPE = 1000;
