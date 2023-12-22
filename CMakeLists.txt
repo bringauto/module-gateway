@@ -6,6 +6,11 @@ SET(BRINGAUTO_MODULE_GATEWAY_VERSION 0.1.0)
 SET(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 SET(CMAKE_CXX_STANDARD 20)
 
+INCLUDE(CheckPIESupported)
+CHECK_PIE_SUPPORTED()
+SET(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+
 OPTION(BRINGAUTO_TESTS "Disable tests" OFF)
 OPTION(BRINGAUTO_PACKAGE "Package creation" OFF)
 OPTION(BRINGAUTO_INSTALL "Disable install" OFF)
@@ -45,8 +50,9 @@ FIND_PACKAGE(eclipse-paho-mqtt-c REQUIRED)
 FIND_PACKAGE(libbringauto_logger 1.2.0 REQUIRED)
 
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/fleet-protocol)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/button_module)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/mission_module)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/example-module)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/mission-module)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/io-module)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/memory_management)
 
 FILE(GLOB_RECURSE source_files "src/*")
@@ -66,6 +72,13 @@ TARGET_LINK_LIBRARIES(bringautolib PUBLIC
                         PahoMqttCpp::paho-mqttpp3
                         ${CMAKE_DL_LIBS})
 
+# Install modules
+TARGET_LINK_LIBRARIES(bringautolib PUBLIC
+        example_module_gateway
+        io_module_gateway
+        mission_module_gateway
+        )
+
 CMDEF_ADD_EXECUTABLE(
         TARGET module_gateway_app
         SOURCES main.cpp
@@ -75,9 +88,20 @@ TARGET_COMPILE_OPTIONS(module_gateway_app PRIVATE -Wall -Wextra -Wpedantic -fsan
 TARGET_LINK_LIBRARIES(module_gateway_app PUBLIC bringautolib -fsanitize=address)
 
 IF (BRINGAUTO_INSTALL)
-    CMDEF_INSTALL(TARGET module_gateway_app)
-    BA_PACKAGE_DEPS_IMPORTED(module_gateway_app)
     INCLUDE(GNUInstallDirs)
+    CONFIGURE_FILE(resources/systemd/module-gateway.service.in module-gateway.service @ONLY)
+    CMDEF_INSTALL(TARGET module_gateway_app)
+    CMDEF_INSTALL(TARGET io_module_gateway)
+    CMDEF_INSTALL(TARGET example_module_gateway)
+    CMDEF_INSTALL(TARGET mission_module_gateway)
+    BA_PACKAGE_DEPS_IMPORTED(module_gateway_app)
+    INSTALL(FILES "${CMAKE_CURRENT_LIST_DIR}/resources/config/default.json"
+            DESTINATION
+            "${CMAKE_INSTALL_SYSCONFDIR}/bringauto/module-gateway/"
+            RENAME "config.json")
+    INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/module-gateway.service"
+            DESTINATION
+            "${CMAKE_INSTALL_SYSCONFDIR}/systemd/system/")
 ENDIF ()
 
 
