@@ -45,9 +45,9 @@ public:
 	/**
 	 * @brief Handles all etapes of connect sequence. If connect sequence is successful,
 	 * infinite receive loop is started in new thread.
-     *
-     * @param connectedDevices devices that are connected to the internal server
-     * @return 0 if OK otherwise NOT_OK
+	 *
+	 * @param connectedDevices devices that are connected to the internal server
+	 * @return 0 if OK otherwise NOT_OK
 	 */
 	int initializeConnection(std::vector<structures::DeviceIdentification> connectedDevices);
 
