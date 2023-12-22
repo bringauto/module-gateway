@@ -57,38 +57,6 @@ public:
 															 const buffer &status);
 
 	/**
-	 * @brief Create a Device protobuf object
-	 *
-	 * @param module module number
-	 * @param type type of the device
-	 * @param role role of the device
-	 * @param name name of the device
-	 * @param priority device priority
-	 * @return InternalProtocol::Device
-	 */
-	static InternalProtocol::Device createDevice(int module,
-												 unsigned int type,
-												 const std::string &role,
-												 const std::string &name,
-												 unsigned int priority);
-
-	/**
-	 * @brief Create a Device protobuf object
-	 *
-	 * @param device device identification
-	 * @return InternalProtocol::Device
-	 */
-	static InternalProtocol::Device createDevice(const device_identification &device);
-
-	/**
-	 * @brief Create a Device protobuf object
-	 *
-	 * @param device DeviceIdentification
-	 * @return InternalProtocol::Device
-	 */
-	static InternalProtocol::Device createDevice(const structures::DeviceIdentification &device);
-
-	/**
 	 * @brief Create device identification from protobuf Device
 	 *
 	 * @param device protobuf

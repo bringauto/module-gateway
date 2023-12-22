@@ -1,9 +1,20 @@
 #include <InternalServerTests.hpp>
-#include <bringauto/common_utils/ProtobufUtils.hpp>
 
 
 
 namespace common_utils = bringauto::common_utils;
+
+InternalProtocol::Device
+createDevice(int module, unsigned int type, const std::string &role, const std::string &name,
+							unsigned int priority) {
+	InternalProtocol::Device device;
+	device.set_module(static_cast<InternalProtocol::Device::Module>(module));
+	device.set_devicetype(type);
+	device.set_devicerole(role);
+	device.set_devicename(name);
+	device.set_priority(priority);
+	return device;
+}
 
 ///TESTS FOR MULTIPLE CONNECTIONS
 /**
@@ -11,7 +22,7 @@ namespace common_utils = bringauto::common_utils;
  */
 TEST_F(InternalServerTests, OneClient) {
 	std::vector<InternalProtocol::Device> devices {
-			common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+			createDevice(defaultModule, defaultType,
 													  defaultRole,
 													  defaultName,
 													  defaultPriority) };
@@ -26,7 +37,7 @@ TEST_F(InternalServerTests, TwoClients) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(size_t i = 1; i <= 2; ++i) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole + std::to_string(i),
 																	   defaultName + std::to_string(i),
 																	   defaultPriority));
@@ -42,7 +53,7 @@ TEST_F(InternalServerTests, FiveClients) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(size_t i = 1; i <= 5; ++i) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole + std::to_string(i),
 																	   defaultName + std::to_string(i),
 																	   defaultPriority));
@@ -58,7 +69,7 @@ TEST_F(InternalServerTests, FiftyClients) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(size_t i = 1; i <= 50; ++i) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole + std::to_string(i),
 																	   defaultName + std::to_string(i),
 																	   defaultPriority));
@@ -81,7 +92,7 @@ TEST_F(InternalServerTests, SameRolePriority000) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(auto &priority: priorities) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole, defaultName,
 																	   priority));
 		data.push_back(defaultData);
@@ -103,7 +114,7 @@ TEST_F(InternalServerTests, SameRolePriority001) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(auto &priority: priorities) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole, defaultName,
 																	   priority));
 		data.push_back(defaultData);
@@ -125,7 +136,7 @@ TEST_F(InternalServerTests, SameRolePriority110) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(auto &priority: priorities) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole, defaultName,
 																	   priority));
 		data.push_back(defaultData);
@@ -147,7 +158,7 @@ TEST_F(InternalServerTests, SameRolePriority121) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(auto &priority: priorities) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole, defaultName,
 																	   priority));
 		data.push_back(defaultData);
@@ -169,7 +180,7 @@ TEST_F(InternalServerTests, SameRolePriority101) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(auto &priority: priorities) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole, defaultName,
 																	   priority));
 		data.push_back(defaultData);
@@ -192,7 +203,7 @@ TEST_F(InternalServerTests, SameRolePriority122) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(auto &priority: priorities) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole, defaultName,
 																	   priority));
 		data.push_back(defaultData);
@@ -214,7 +225,7 @@ TEST_F(InternalServerTests, SameRolePriority120) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(auto &priority: priorities) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole, defaultName,
 																	   priority));
 		data.push_back(defaultData);
@@ -235,7 +246,7 @@ TEST_F(InternalServerTests, SameRolePriority210) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(auto &priority: priorities) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole, defaultName,
 																	   priority));
 		data.push_back(defaultData);
@@ -257,7 +268,7 @@ TEST_F(InternalServerTests, SameRolePriority211) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(auto &priority: priorities) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole, defaultName,
 																	   priority));
 		data.push_back(defaultData);
@@ -277,7 +288,7 @@ TEST_F(InternalServerTests, RejectMessageOverflowingHeaderSize) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(size_t i = 0; i < responseType.size(); ++i) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole + std::to_string(i),
 																	   defaultName + std::to_string(i),
 																	   defaultPriority));
@@ -299,7 +310,7 @@ TEST_F(InternalServerTests, RejectMessageSmallerThen4Bytes) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(size_t i = 0; i < responseType.size(); ++i) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole + std::to_string(i),
 																	   defaultName + std::to_string(i),
 																	   defaultPriority));
@@ -321,7 +332,7 @@ TEST_F(InternalServerTests, RejectMesseageComposedOfOnlyHeaderWithNumber0) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(size_t i = 0; i < responseType.size(); ++i) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole + std::to_string(i),
 																	   defaultName + std::to_string(i),
 																	   defaultPriority));
@@ -345,7 +356,7 @@ TEST_F(InternalServerTests, RejectMessageComposedOfOnlyHeader) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(size_t i = 0; i < responseType.size(); ++i) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole + std::to_string(i),
 																	   defaultName + std::to_string(i),
 																	   defaultPriority));
@@ -367,7 +378,7 @@ TEST_F(InternalServerTests, RejectMessageWithGarbageDataMatchingHeaderSize) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(size_t i = 0; i < responseType.size(); ++i) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole + std::to_string(i),
 																	   defaultName + std::to_string(i),
 																	   defaultPriority));
@@ -393,7 +404,7 @@ TEST_F(InternalServerTests, RejectMessageWithLessDataThenHeaderSays) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(size_t i = 0; i < responseType.size(); ++i) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole + std::to_string(i),
 																	   defaultName + std::to_string(i),
 																	   defaultPriority));
@@ -416,7 +427,7 @@ TEST_F(InternalServerTests, RejectMessageWhereStatusIsSentBeforeConnection) {
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(size_t i = 0; i < responseType.size(); ++i) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole + std::to_string(i),
 																	   defaultName + std::to_string(i),
 																	   defaultPriority));
@@ -439,7 +450,7 @@ TEST_F(InternalServerTests, RejectMessageWhereConnectionIsSentAfterAlreadyBeingC
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(size_t i = 0; i < responseType.size(); ++i) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole + std::to_string(i),
 																	   defaultName + std::to_string(i),
 																	   defaultPriority));
@@ -463,7 +474,7 @@ TEST_F(InternalServerTests, TestForBehaviorWhereModuleHandlerDoesntRespondToConn
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(size_t i = 0; i < responseType.size(); ++i) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole + std::to_string(i),
 																	   defaultName + std::to_string(i),
 																	   defaultPriority));
@@ -485,7 +496,7 @@ TEST_F(InternalServerTests, TestForBehaviorWhereModuleHandlerDoesntRespondToStat
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(size_t i = 0; i < responseType.size(); ++i) {
-		devices.emplace_back(common_utils::ProtobufUtils::createDevice(defaultModule, defaultType,
+		devices.emplace_back(createDevice(defaultModule, defaultType,
 																	   defaultRole + std::to_string(i),
 																	   defaultName + std::to_string(i),
 																	   defaultPriority));

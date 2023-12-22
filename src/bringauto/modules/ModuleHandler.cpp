@@ -74,8 +74,9 @@ void ModuleHandler::checkTimeoutedMessages(){
 					if(remainingMessages == NO_MESSAGE_AVAILABLE) {
 						break;
 					}
-					auto device = common_utils::ProtobufUtils::createDevice(deviceId);
-					auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device,
+					auto device = structures::DeviceIdentification(deviceId);
+					auto internalProtocolDevice = device.convertToIPDevice();
+					auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(internalProtocolDevice,
 																										aggregatedStatusBuffer);
 					toExternalQueue_->pushAndNotify(structures::InternalClientMessage(false, statusMessage));
 					log::logDebug("Module handler pushed timeouted aggregated status, number of aggregated statuses in queue {}",
@@ -113,8 +114,9 @@ void ModuleHandler::handleDisconnect(device_identification deviceId) {
 		log::logWarning("Force aggregation failed on device: {} with error code: {}", deviceName, ret);
 		return;
 	}
-	auto device = common_utils::ProtobufUtils::createDevice(deviceId);
-	sendAggregatedStatus(deviceId, device, true);
+	auto device = structures::DeviceIdentification(deviceId);
+	auto internalProtocolDevice = device.convertToIPDevice();
+	sendAggregatedStatus(deviceId, internalProtocolDevice, true);
 
 	statusAggregator->remove_device(deviceId);
 

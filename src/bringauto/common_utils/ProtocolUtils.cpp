@@ -45,7 +45,8 @@ ProtobufUtils::createInternalClientStatusMessage(const InternalProtocol::Device 
 InternalProtocol::DeviceStatus ProtobufUtils::createDeviceStatus(const device_identification &deviceId,
 																 const buffer &status) {
 	InternalProtocol::DeviceStatus deviceStatus;
-	deviceStatus.mutable_device()->CopyFrom(createDevice(deviceId));
+    structures::DeviceIdentification deviceIdentification(deviceId);
+	deviceStatus.mutable_device()->CopyFrom(deviceIdentification.convertToIPDevice());
 	deviceStatus.set_statusdata(status.data, status.size_in_bytes);
 	return deviceStatus;
 }
@@ -64,29 +65,6 @@ device_identification ProtobufUtils::parseDevice(const InternalProtocol::Device 
 			.priority = device.priority() };
 }
 
-InternalProtocol::Device ProtobufUtils::createDevice(const device_identification &device) {
-	std::string device_role { static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes };
-	std::string device_name { static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes };
-	return createDevice(device.module, device.device_type, device_role, device_name, device.priority);
-}
-
-InternalProtocol::Device ProtobufUtils::createDevice(const structures::DeviceIdentification &device) {
-	return createDevice(device.getModule(), device.getDeviceType(), device.getDeviceRole(), device.getDeviceName(),
-						device.getPriority());
-}
-
-InternalProtocol::Device
-ProtobufUtils::createDevice(int module, unsigned int type, const std::string &role, const std::string &name,
-							unsigned int priority) {
-	InternalProtocol::Device device;
-	device.set_module(static_cast<InternalProtocol::Device::Module>(module));
-	device.set_devicetype(type);
-	device.set_devicerole(role);
-	device.set_devicename(name);
-	device.set_priority(priority);
-	return device;
-}
-
 ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientConnect(const std::string &sessionId,
 																			const std::string &company,
 																			const std::string &vehicleName,
@@ -100,7 +78,7 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientConnect(cons
 
 	for(const auto &tmpDevice: devices) {
 		auto devicePtr = connectMessage->add_devices();
-		devicePtr->CopyFrom(createDevice(tmpDevice));
+		devicePtr->CopyFrom(tmpDevice.convertToIPDevice());
 	}
 
 	return externalMessage;

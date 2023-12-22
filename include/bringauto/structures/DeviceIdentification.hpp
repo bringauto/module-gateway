@@ -71,6 +71,13 @@ public:
 	 */
 	device_identification convertToCStruct() const;
 
+	/**
+	 * @brief Create a Internal protocol protobuf device object
+	 *
+	 * @return InternalProtocol::Device
+	 */
+	InternalProtocol::Device convertToIPDevice() const;
+
 private:
 	uint32_t module_;
 	uint32_t deviceType_;

@@ -70,5 +70,15 @@ device_identification DeviceIdentification::convertToCStruct() const {
 	};
 }
 
+InternalProtocol::Device DeviceIdentification::convertToIPDevice() const {
+	InternalProtocol::Device device;
+	device.set_module(static_cast<InternalProtocol::Device::Module>(module_));
+	device.set_devicetype(deviceType_);
+	device.set_devicerole(deviceRole_);
+	device.set_devicename(deviceName_);
+	device.set_priority(priority_);
+	return device;
+}
+
 
 }
