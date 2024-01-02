@@ -82,11 +82,11 @@ private:
 	 * - map is needed because of the possibility of multiple modules connected to one external server
 	 */
 	std::map<unsigned int, std::reference_wrapper<connection::ExternalConnection>> externalConnectionMap_;
-
+	/// List of external connections, each device can have its own connection or multiple devices can share one connection
 	std::list<connection::ExternalConnection> externalConnectionsList_;
-
+	/// Queue for  messages from module handler to external client to be sent to external server
 	std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> toExternalQueue_;
-
+	/// Queue for device commands received by external client to module handler
 	std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>> fromExternalQueue_;
 
 	std::shared_ptr<structures::AtomicQueue<structures::ReconnectQueueItem>> reconnectQueue_;
@@ -94,7 +94,7 @@ private:
 	std::jthread fromExternalClientThread_;
 
 	std::shared_ptr<structures::GlobalContext> context_;
-
+	/// Timer for establishing connection with external server
 	boost::asio::deadline_timer timer_;
 };
 

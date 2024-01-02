@@ -69,9 +69,9 @@ private:
 	 * @brief Function which should be executed if timer expires
 	 */
 	std::function<int(const struct ::device_identification)> fun_;
-
+	/// Device identification struct
 	device_identification deviceId_;
-
+	/// Interval of time in which timer time out
 	boost::posix_time::seconds interval_ { settings::status_aggregation_timeout.count() };
 };
 

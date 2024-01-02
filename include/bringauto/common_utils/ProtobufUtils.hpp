@@ -107,7 +107,7 @@ public:
 																				u_int32_t messageCounter);
 
 	/**
-	 * @brief Get the id string from struct device_identification
+	 * @brief Get the id string from struct device_identification in format <module number>/<device type>/<device role>/<device name>
 	 *
 	 * @param device struct which generates id
 	 * @return std::string

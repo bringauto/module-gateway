@@ -55,7 +55,7 @@ public:
 	 * @param toCompare device used for comparison
 	 * @return true if all parameters outside of priority are equal
 	 */
-	bool isSame(const std::shared_ptr <DeviceIdentification> &toCompare) const;
+	[[nodiscard]] bool isSame(const std::shared_ptr <DeviceIdentification> &toCompare) const;
 
 	/**
 	 * @brief Checks if all parameters except priority are equal.
@@ -69,24 +69,25 @@ public:
 	 *
 	 * @return device_identification
 	 */
-	device_identification convertToCStruct() const;
+	[[nodiscard]] device_identification convertToCStruct() const;
 
 	/**
 	 * @brief Create a Internal protocol protobuf device object
 	 *
 	 * @return InternalProtocol::Device
 	 */
-	InternalProtocol::Device convertToIPDevice() const;
+	[[nodiscard]] InternalProtocol::Device convertToIPDevice() const;
 
 private:
+	/// Module number
 	uint32_t module_;
-
+	/// Device type
 	uint32_t deviceType_;
-
+	/// Role of the device
 	std::string deviceRole_;
-
+	/// Name of the device
 	std::string deviceName_;
-
+	/// Priority of the device
 	uint32_t priority_;
 };
 }

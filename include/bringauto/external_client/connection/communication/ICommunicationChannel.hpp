@@ -56,6 +56,7 @@ public:
 	virtual void closeConnection() = 0;
 
 protected:
+	/// Instance of the specific settings for the communication channel
 	structures::ExternalConnectionSettings settings_;
 };
 

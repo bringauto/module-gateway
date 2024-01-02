@@ -266,10 +266,10 @@ void ExternalConnection::setSessionId() {
 	thread_local
 	static std::uniform_int_distribution<std::string::size_type> pick(0, sizeof(chrs) - 2);
 
-	for(int i = 0; i < KEY_LENGHT; i++) {
+	for(int i = 0; i < KEY_LENGTH; i++) {
 		sessionId_ += chrs[pick(rg)];
 	}
-	sessionId_ = carId_ + sessionId_;
+	sessionId_ = vehicleId_ + sessionId_;
 }
 
 u_int32_t ExternalConnection::getNextStatusCounter() {

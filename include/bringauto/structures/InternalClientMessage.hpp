@@ -42,11 +42,11 @@ public:
 	const device_identification &getDeviceId() const;
 
 private:
-
+	/// Internal client message
 	InternalProtocol::InternalClient message_;
-
+	/// True if device is disconnected otherwise false
 	bool disconnect_;
-
+	/// Device identification struct
 	device_identification deviceId_ {};
 };
 

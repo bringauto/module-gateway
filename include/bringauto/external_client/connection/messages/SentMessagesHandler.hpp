@@ -95,17 +95,18 @@ private:
 	 */
 	[[nodiscard]] u_int32_t getStatusResponseCounter(const ExternalProtocol::StatusResponse &statusResponse);
 
+	/// Vector of statuses not acknowledged by the external server
 	std::vector <std::shared_ptr<NotAckedStatus>> notAckedStatuses_;
-
+	/// Vector of connected devices, the value is device id - @see ProtobufUtils::getId()
 	std::vector <std::string> connectedDevices_;
-
+	/// Global context of module gateway
 	std::shared_ptr <structures::GlobalContext> context_;
+	/// Callback called by timer when status does not get response, registered by constructor
+	std::function<void()> endConnectionFunc_;
 
 	std::atomic<bool> responseHandled_ { false };
 
 	std::mutex responseHandledMutex_;
-
-	std::function<void()> endConnectionFunc_;
 };
 
 }

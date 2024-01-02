@@ -58,24 +58,19 @@ private:
 	 */
 	std::string createSubscribeTopic(const std::string &company, const std::string &vehicleName);
 
-	/**
-	 * MQTT client
-	 */
+	/// MQTT client handling the connection
 	std::unique_ptr<mqtt::async_client> client_ { nullptr };
-
+	/// Unique ID of the client, changes with every connection
 	std::string clientId_ {};
-
+	/// Topic to publish messages to, sender is external client, receiver is external server
 	std::string publishTopic_ {};
-
+	/// Topic to subscribe to, sender is external server, receiver is external client
 	std::string subscribeTopic_ {};
-
+	/// MQTT library connection options
 	mqtt::connect_options connopts_ {};
-
+	/// Address of the MQTT server
 	std::string serverAddress_ {};
-
-	/**
-	 * MQTT QOS level. Level 0 has no assurance of delivery and does not buffer messages.
-	 */
+	/// MQTT QOS level. Level 0 has no assurance of delivery and does not buffer messages.
 	constexpr static int8_t qos { 0 };
 };
 

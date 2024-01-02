@@ -156,25 +156,22 @@ private:
 	 * Loop is receiving messages from external server and processes them.
 	 */
 	void receivingHandlerLoop();
-
+	/// Indication if receiving loop should be stopped
 	std::atomic<bool> stopReceiving { false };
-
-	const int KEY_LENGHT { 8 };
-
+	/// Length of the key used for identification
+	const int KEY_LENGTH { 8 };
+	/// Counter for sent messages
 	u_int32_t clientMessageCounter_ { 0 };
-
+	/// Counter for received messages
 	u_int32_t serverMessageCounter_ { 0 };
-
+	/// ID of the current external connection session, changes with every connect sequence
 	std::string sessionId_ {};
-
+	/// Communication channel to the external server
 	std::unique_ptr <communication::ICommunicationChannel> communicationChannel_ {};
-
+	/// Thread for receiving loop
 	std::jthread listeningThread;
 
-	/**
-	 * State of the car
-	 * - thread safe
-	 */
+	/// State of the external connection - thread safe
 	std::atomic <ConnectionState> state_ { ConnectionState::NOT_INITIALIZED };
 
 	std::shared_ptr <structures::GlobalContext> context_;
@@ -182,23 +179,20 @@ private:
 	structures::ModuleLibrary &moduleLibrary_;
 
 	const structures::ExternalConnectionSettings &settings_;
-
+	/// Class handling sent messages - timers, not acknowledged statuses etc.
 	std::unique_ptr <messages::SentMessagesHandler> sentMessagesHandler_;
-
-	/**
-	 * @brief Map of error aggregators, key is module number
-	 */
+	/// @brief Map of error aggregators, key is module number
 	std::map<unsigned int, ErrorAggregator> errorAggregators;
-
+	/// Queue of commands received from external server, commands are processed by aggregator
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_;
 
 	std::shared_ptr <structures::AtomicQueue<structures::ReconnectQueueItem>>
 	reconnectQueue_;
-
-	std::string carId_ {};
-
+	/// Unique id of the vehicle - car name + session id
+	std::string vehicleId_ {};
+	/// Name of the vehicle
 	std::string vehicleName_ {};
-
+	/// Name of the company
 	std::string company_ {};
 };
 

@@ -55,13 +55,12 @@ private:
 	 * @param endConnectionFunc function which is called when status does not get response
 	 */
 	void timeoutHandler(const std::function<void()> &endConnectionFunc);
-
+	/// Status message that was not acknowledged yet
 	ExternalProtocol::Status status_;
-
+	/// Timer for checking if status got response
 	boost::asio::deadline_timer timer_;
-
+	/// Flag which indicates if status got response
 	std::atomic<bool> &responseHandled_;
-
 	std::mutex &responseHandledMutex_;
 };
 
