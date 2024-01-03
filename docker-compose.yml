@@ -1,0 +1,13 @@
+services:
+  module-gateway:
+    image: module-gateway
+    entrypoint: ["/home/bringauto/module-gateway/bin/module_gateway_app",
+                 "--config-path=/home/bringauto/config/for_docker.json",
+                 "--verbose"]
+    restart: always
+    networks:
+      - bring-emulator
+
+networks:
+  bring-emulator:
+    name: bring-emulator

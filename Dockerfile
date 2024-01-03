@@ -4,22 +4,35 @@ COPY --chown=bringauto:bringauto . /home/bringauto/module-gateway/tmp
 COPY resources/config/for_docker.json /home/bringauto/config/for_docker.json
 
 # Install Module gateway
-RUN mkdir -p /home/bringauto/module-gateway/build && \
-    mkdir /home/bringauto/module-gateway/cmlib_cache && \
+RUN mkdir -p /home/bringauto/module-gateway/tmp/_build && \
+    mkdir /home/bringauto/module-gateway/tmp/_cmlib_cache && \
     mkdir /home/bringauto/log && \
-    mkdir /home/bringauto/modules && \
-    export CMLIB_REQUIRED_ENV_TMP_PATH=/home/bringauto/module-gateway/cmlib_cache && \
-    cd /home/bringauto/module-gateway/build && \
+    export CMLIB_REQUIRED_ENV_TMP_PATH=/home/bringauto/module-gateway/tmp/cmlib_cache && \
+    cd /home/bringauto/module-gateway/tmp/_build && \
     cmake /home/bringauto/module-gateway/tmp -DCMLIB_DIR=/cmakelib -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREFIX=/home/bringauto/module-gateway && \
     make -j 8 && \
     make install
 
 # Install IO module
-WORKDIR /home/bringauto/module-gateway/tmp//libs/io-module
-RUN mkdir _build && cd _build && \
-    cmake -DCMLIB_DIR=/cmakelib .. && \
-    make -j 8 && \
-    mv ./libio_module_module_manager.so /home/bringauto/modules/libio_module_module_manager.so
+#WORKDIR /home/bringauto/module-gateway/tmp/libs/io-module
+#RUN mkdir _build && cd _build && \
+#    cmake -DCMLIB_DIR=/cmakelib .. && \
+#    make -j 8 && \
+#    mv ./libio_module_gateway.so /home/bringauto/modules/libio_module_gateway.so
+
+# Install example module
+#WORKDIR /home/bringauto/module-gateway/tmp/libs/example-module
+#RUN mkdir _build && cd _build && \
+#    cmake -DCMLIB_DIR=/cmakelib .. && \
+#    make -j 8 && \
+#    mv ./libio_module_gateway.so /home/bringauto/modules/libio_module_gateway.so
+
+# Install IO module
+#WORKDIR /home/bringauto/module-gateway/tmp//libs/io-module
+#RUN mkdir _build && cd _build && \
+#    cmake -DCMLIB_DIR=/cmakelib .. && \
+#    make -j 8 && \
+#    mv ./libio_module_gateway.so /home/bringauto/modules/libio_module_gateway.so
 
 # Remove tmp library with source files
 RUN rm -rf /home/bringauto/module-gateway/tmp

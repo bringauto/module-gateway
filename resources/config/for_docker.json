@@ -7,7 +7,9 @@
     "port": 8888
   },
   "module-paths": {
-    "3": "/home/bringauto/modules/libio_module_module_manager.so"
+    "1": "/home/bringauto/module-gateway/lib/libmission_module_gateway.so",
+    "2": "/home/bringauto/module-gateway/lib/libio_module_gateway.so",
+    "999": "/home/bringauto/module-gateway/lib/libexample_module_gateway.so"
   },
   "external-connection" : {
     "company" : "BringAuto",
@@ -24,7 +26,7 @@
         },
         "server-ip": "mosquitto",
         "port": 1883,
-        "modules": [ 3 ]
+        "modules": [ 1, 2, 1000 ]
       }
     ]
   }
