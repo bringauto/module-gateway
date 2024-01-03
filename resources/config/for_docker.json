@@ -4,7 +4,7 @@
     "verbose": true
   },
   "internal-server-settings": {
-    "port": 8888
+    "port": 1636
   },
   "module-paths": {
     "1": "/home/bringauto/module-gateway/lib/libmission_module_gateway.so",
