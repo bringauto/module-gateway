@@ -5,6 +5,8 @@ services:
                  "--config-path=/home/bringauto/config/for_docker.json",
                  "--verbose"]
     restart: always
+    ports:
+      - 1636:1636
     networks:
       - bring-emulator
 
