@@ -1,0 +1,12 @@
+[submodule "libs/fleet-protocol"]
+	path = libs/fleet-protocol
+	url = https://github.com/bringauto/fleet-protocol.git
+[submodule "libs/example-module"]
+	path = libs/example-module
+	url = ssh://git@gitlab.bringauto.com:1999/bring-auto/fleet-protocol-v2/modules/example-module.git
+[submodule "libs/mission-module"]
+	path = libs/mission-module
+	url = ssh://git@gitlab.bringauto.com:1999/bring-auto/fleet-protocol-v2/modules/mission-module.git
+[submodule "libs/io-module"]
+	path = libs/io-module
+	url = ssh://git@gitlab.bringauto.com:1999/bring-auto/fleet-protocol-v2/modules/io-module.git
