@@ -49,7 +49,7 @@ public:
 	 * @param connectedDevices devices that are connected to the internal server
 	 * @return 0 if OK otherwise NOT_OK
 	 */
-	int initializeConnection(std::vector<structures::DeviceIdentification> connectedDevices);
+	int initializeConnection(const std::vector<structures::DeviceIdentification>& connectedDevices);
 
 	/**
 	 * @brief Disconnect from the external server

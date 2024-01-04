@@ -52,12 +52,12 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 	const auto &device = status.device();
 	const auto &deviceModule = device.module();
 
-	if(errorAggregators.find(deviceModule) == errorAggregators.end()) {
+	if(!errorAggregators.contains(deviceModule)){
 		log::logError(
 				"Status with module number ({}) was passed to external connection, that doesn't support this module",
 				device.module());
+		return;
 	}
-
 	auto &errorAggregator = errorAggregators.at(deviceModule);
 	auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
 	struct buffer lastStatus{};
@@ -111,7 +111,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 				  errorMessage.size_in_bytes > 0 ? errorMessage.data : "");
 }
 
-int ExternalConnection::initializeConnection(std::vector<structures::DeviceIdentification> connectedDevices) {
+int ExternalConnection::initializeConnection(const std::vector<structures::DeviceIdentification>& connectedDevices) {
 	if(state_.load() == ConnectionState::NOT_INITIALIZED) {
 		state_.exchange(ConnectionState::NOT_CONNECTED);
 	}
@@ -404,8 +404,12 @@ void ExternalConnection::fillErrorAggregatorWithNotAckedStatuses() {
 }
 
 void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatus &deviceStatus) {
-	fillErrorAggregatorWithNotAckedStatuses();
 	int moduleNum = deviceStatus.device().module();
+	if(not errorAggregators.contains(moduleNum)){
+		log::logError("Module with module number {} does no exists", moduleNum);
+		return;
+	}
+	fillErrorAggregatorWithNotAckedStatuses();
 	if(errorAggregators.find(moduleNum) != errorAggregators.end()) {
 		struct ::buffer statusBuffer {};
 		const auto &statusData = deviceStatus.statusdata();
@@ -418,6 +422,7 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 		auto deviceId = common_utils::ProtobufUtils::parseDevice(deviceStatus.device());
 		auto &errorAggregator = errorAggregators.at(moduleNum);
 		errorAggregator.add_status_to_error_aggregator(statusBuffer, deviceId);
+		log::logError("Module with module number {} does no exists", moduleNum);
 		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 		deallocate(&statusBuffer);
 	} else {
@@ -451,7 +456,7 @@ std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnecte
 			continue;
 		}
 
-		device_identification *devicesPointer = static_cast<device_identification *>(unique_devices.data);
+		auto *devicesPointer = static_cast<device_identification *>(unique_devices.data);
 		for (int i = 0; i < ret; i++){
 			struct device_identification deviceId {
 				.module = devicesPointer[i].module,

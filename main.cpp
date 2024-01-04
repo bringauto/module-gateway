@@ -39,7 +39,6 @@ int main(int argc, char **argv) {
 	namespace bas = bringauto::structures;
 	namespace baset = bringauto::settings;
 	auto context = std::make_shared<bas::GlobalContext>();
-	bas::ModuleLibrary moduleLibrary {};
 	try {
 		baset::SettingsParser settingsParser;
 		if(!settingsParser.parseSettings(argc, argv)) {
@@ -47,32 +46,46 @@ int main(int argc, char **argv) {
 		}
 		context->settings = settingsParser.getSettings();
 		initLogger(context->settings->logPath, context->settings->verbose);
+	} catch(std::exception &e) {
+		std::cerr << "[ERROR] Error occurred during reading configuration: " << e.what() << std::endl;
+		return 1;
+	}
+	bas::ModuleLibrary moduleLibrary {};
+	try {
 		moduleLibrary.loadLibraries(context->settings->modulePaths);
 		moduleLibrary.initStatusAggregators(context);
 	} catch(std::exception &e) {
-		std::cerr << "[ERROR] Error occurred during initialization: " << e.what() << std::endl;
+		std::cerr << "[ERROR] Error occurred during module initialization: " << e.what() << std::endl;
 		return 1;
 	}
 
-	boost::asio::signal_set signals(context->ioContext, SIGINT, SIGTERM);
-	signals.async_wait([context](auto, auto) { context->ioContext.stop(); });
-
-	auto toInternalQueue = std::make_shared<bas::AtomicQueue<InternalProtocol::InternalServer >>();
-	auto fromInternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
-	auto toExternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
-
-	bais::InternalServer internalServer { context, fromInternalQueue, toInternalQueue };
-	bringauto::modules::ModuleHandler moduleHandler { context, moduleLibrary, fromInternalQueue, toInternalQueue,
-													  toExternalQueue };
-	bringauto::external_client::ExternalClient externalClient { context, moduleLibrary, toExternalQueue };
-
-	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.run(); });
-	std::jthread externalClientThread([&externalClient]() { externalClient.run(); });
-	std::jthread contextThread([&context]() { context->ioContext.run(); });
+	std::jthread moduleHandlerThread;
+	std::jthread externalClientThread;
+	std::jthread contextThread;
+	std::unique_ptr<bais::InternalServer> internalServer;
+	std::unique_ptr<bringauto::modules::ModuleHandler> moduleHandler;
+	std::unique_ptr<bringauto::external_client::ExternalClient> externalClient;
 	try {
-		internalServer.run();
-	} catch (boost::system::system_error &e){
-		std::cerr << e.what() << "\n";
+		boost::asio::signal_set signals(context->ioContext, SIGINT, SIGTERM);
+		signals.async_wait([context](auto, auto) { context->ioContext.stop(); });
+
+		auto toInternalQueue = std::make_shared<bas::AtomicQueue<InternalProtocol::InternalServer >>();
+		auto fromInternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
+		auto toExternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
+
+		internalServer = std::make_unique<bais::InternalServer>(context, fromInternalQueue, toInternalQueue);
+		moduleHandler = std::make_unique<bringauto::modules::ModuleHandler>(context, moduleLibrary, fromInternalQueue,
+																			toInternalQueue,
+																			toExternalQueue);
+		externalClient = std::make_unique<bringauto::external_client::ExternalClient>(context, moduleLibrary,
+																					 toExternalQueue);
+
+		moduleHandlerThread = std::jthread([&moduleHandler]() { moduleHandler->run(); });
+		externalClientThread = std::jthread([&externalClient]() { externalClient->run(); });
+		contextThread = std::jthread([&context]() { context->ioContext.run(); });
+		internalServer->run();
+	} catch(boost::system::system_error &e) {
+		bringauto::logging::Logger::logError("Error during run {}", e.what());
 		context->ioContext.stop();
 	}
 
@@ -80,9 +93,9 @@ int main(int argc, char **argv) {
 	externalClientThread.join();
 	moduleHandlerThread.join();
 
-	internalServer.destroy();
-	moduleHandler.destroy();
-	externalClient.destroy();
+	internalServer->destroy();
+	moduleHandler->destroy();
+	externalClient->destroy();
 
 	google::protobuf::ShutdownProtobufLibrary();
 
