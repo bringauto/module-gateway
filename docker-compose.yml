@@ -9,7 +9,6 @@ services:
       - 1636:1636
     networks:
       - bring-emulator
-
 networks:
   bring-emulator:
     name: bring-emulator
