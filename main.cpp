@@ -59,31 +59,23 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	std::jthread moduleHandlerThread;
-	std::jthread externalClientThread;
-	std::jthread contextThread;
-	std::unique_ptr<bais::InternalServer> internalServer;
-	std::unique_ptr<bringauto::modules::ModuleHandler> moduleHandler;
-	std::unique_ptr<bringauto::external_client::ExternalClient> externalClient;
+	boost::asio::signal_set signals(context->ioContext, SIGINT, SIGTERM);
+	signals.async_wait([context](auto, auto) { context->ioContext.stop(); });
+
+	auto toInternalQueue = std::make_shared<bas::AtomicQueue<InternalProtocol::InternalServer >>();
+	auto fromInternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
+	auto toExternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
+
+	bais::InternalServer internalServer { context, fromInternalQueue, toInternalQueue };
+	bringauto::modules::ModuleHandler moduleHandler { context, moduleLibrary, fromInternalQueue, toInternalQueue,
+													  toExternalQueue };
+	bringauto::external_client::ExternalClient externalClient { context, moduleLibrary, toExternalQueue };
+
+	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.run(); });
+	std::jthread externalClientThread([&externalClient]() { externalClient.run(); });
+	std::jthread contextThread([&context]() { context->ioContext.run(); });
 	try {
-		boost::asio::signal_set signals(context->ioContext, SIGINT, SIGTERM);
-		signals.async_wait([context](auto, auto) { context->ioContext.stop(); });
-
-		auto toInternalQueue = std::make_shared<bas::AtomicQueue<InternalProtocol::InternalServer >>();
-		auto fromInternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
-		auto toExternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
-
-		internalServer = std::make_unique<bais::InternalServer>(context, fromInternalQueue, toInternalQueue);
-		moduleHandler = std::make_unique<bringauto::modules::ModuleHandler>(context, moduleLibrary, fromInternalQueue,
-																			toInternalQueue,
-																			toExternalQueue);
-		externalClient = std::make_unique<bringauto::external_client::ExternalClient>(context, moduleLibrary,
-																					 toExternalQueue);
-
-		moduleHandlerThread = std::jthread([&moduleHandler]() { moduleHandler->run(); });
-		externalClientThread = std::jthread([&externalClient]() { externalClient->run(); });
-		contextThread = std::jthread([&context]() { context->ioContext.run(); });
-		internalServer->run();
+		internalServer.run();
 	} catch(boost::system::system_error &e) {
 		bringauto::logging::Logger::logError("Error during run {}", e.what());
 		context->ioContext.stop();
@@ -93,9 +85,9 @@ int main(int argc, char **argv) {
 	externalClientThread.join();
 	moduleHandlerThread.join();
 
-	internalServer->destroy();
-	moduleHandler->destroy();
-	externalClient->destroy();
+	internalServer.destroy();
+	moduleHandler.destroy();
+	externalClient.destroy();
 
 	google::protobuf::ShutdownProtobufLibrary();
 
