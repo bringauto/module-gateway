@@ -84,8 +84,14 @@ CMDEF_ADD_EXECUTABLE(
         SOURCES main.cpp
         VERSION ${BRINGAUTO_MODULE_GATEWAY_VERSION}
 )
-TARGET_COMPILE_OPTIONS(module_gateway_app PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address)
-TARGET_LINK_LIBRARIES(module_gateway_app PUBLIC bringautolib -fsanitize=address)
+
+TARGET_LINK_LIBRARIES(module_gateway_app PUBLIC bringautolib)
+
+IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    TARGET_COMPILE_OPTIONS(module_gateway_app PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address)
+    TARGET_LINK_LIBRARIES(module_gateway_app PUBLIC -fsanitize=address)
+ENDIF()
+
 
 IF (BRINGAUTO_INSTALL)
     INCLUDE(GNUInstallDirs)
