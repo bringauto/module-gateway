@@ -9,7 +9,7 @@
   "module-paths": {
     "1": "/home/bringauto/module-gateway/lib/libmission_module_gateway.so",
     "2": "/home/bringauto/module-gateway/lib/libio_module_gateway.so",
-    "999": "/home/bringauto/module-gateway/lib/libexample_module_gateway.so"
+    "1000": "/home/bringauto/module-gateway/lib/libexample_module_gateway.so"
   },
   "external-connection" : {
     "company" : "BringAuto",
