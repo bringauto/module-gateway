@@ -422,7 +422,6 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 		auto deviceId = common_utils::ProtobufUtils::parseDevice(deviceStatus.device());
 		auto &errorAggregator = errorAggregators.at(moduleNum);
 		errorAggregator.add_status_to_error_aggregator(statusBuffer, deviceId);
-		log::logError("Module with module number {} does no exists", moduleNum);
 		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 		deallocate(&statusBuffer);
 	} else {
