@@ -101,11 +101,11 @@ bool SettingsParser::areSettingsCorrect() {
 		std::cerr << "No shared module library provided." << std::endl;
 		isCorrect = false;
 	}
-	if(std::regex_match(settings_->company, std::regex("^[a-z0-9_]+$"))) {
+	if(!std::regex_match(settings_->company, std::regex("^[a-z0-9_]+$"))) {
 		std::cerr << "Company name (" << settings_->company << ") is not valid." << std::endl;
 		isCorrect = false;
 	}
-	if(std::regex_match(settings_->vehicleName, std::regex("^[a-z0-9_]+$"))) {
+	if(!std::regex_match(settings_->vehicleName, std::regex("^[a-z0-9_]+$"))) {
 		std::cerr << "Vehicle name (" << settings_->vehicleName << ") is not valid." << std::endl;
 		isCorrect = false;
 	}

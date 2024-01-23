@@ -12,8 +12,8 @@
       "3": "./libio_module_module_manager.so"
     },
     "external-connection" : {
-      "company" : "BringAuto",
-      "vehicle-name" : "VirtualVehicle",
+      "company" : "bringauto",
+      "vehicle-name" : "virtual_vehicle",
       "endpoints" :
       [
         {
