@@ -17,7 +17,12 @@ constexpr std::chrono::milliseconds fleet_protocol_timeout_length { 250 };
  * @brief timeout that is defined in fleet protocol,
  * reconnect time between External client and External server after disconnect
  */
-constexpr int reconnect_delay { 30 };
+constexpr int reconnect_delay { 10 };
+
+/**
+ * @brief timeout that defines force aggregation on device
+ */
+constexpr std::chrono::seconds status_aggregation_timeout { 1 };
 
 /**
  * @brief timeout that defines how much time can be status without status response
@@ -29,11 +34,6 @@ constexpr int status_response_timeout { 30 };
  * @brief time between checks of atomic queue used for one-way communication from Module Handler to Internal Server
  */
 constexpr std::chrono::seconds queue_timeout_length { 3 };
-
-/**
- * @brief timeout that defines force aggregation on device
- */
-constexpr std::chrono::seconds status_aggregation_timeout { 30 };
 
 /**
  * @brief timeout to wait on receive message for external client transport layer
@@ -49,10 +49,16 @@ constexpr std::chrono::seconds immediate_disconnect_timeout { 10 };
  * &brief Fleet Protocol defines messages as always starting with 4 bytes header
  */
 constexpr uint8_t header { 4 };
+
 /**
  * @brief maximal amount of bytes received, that can be processed in one cycle
  */
 constexpr size_t buffer_length = 1024;
+
+/// TODO move MQTT constants here (or is there a better place?)
+// struct MqttConstants {
+//
+// };
 
 /**
  * @brief Constant string views
