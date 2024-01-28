@@ -71,7 +71,7 @@ private:
 	/// Address of the MQTT server
 	std::string serverAddress_ {};
 	/// MQTT QOS level. Level 0 has no assurance of delivery and does not buffer messages.
-	constexpr static int8_t qos { 0 };
+	constexpr static int8_t qos { 1 };
 };
 
 }
