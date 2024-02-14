@@ -55,10 +55,33 @@ constexpr uint8_t header { 4 };
  */
 constexpr size_t buffer_length = 1024;
 
-/// TODO move MQTT constants here (or is there a better place?)
-// struct MqttConstants {
-//
-// };
+/**
+ * @brief Constants for Mqtt communication
+*/
+struct MqttConstants {
+	/**
+	 * @brief keep alive interval in seconds;
+	 *        value reasoning: keepalive is half of the default timeout in Fleet protocol
+	*/
+	static constexpr uint8_t keepalive = status_response_timeout/2;
+
+	/**
+	 * @brief automatic reconnection of mqtt client option
+	*/
+	static constexpr bool automatic_reconnect = true;
+
+	/**
+	 * @brief max time that the mqtt client will wait for a connection before failing;
+	 *        value reasoning: TCP timeout for retransmission when TCP packet is dropped is 200ms, this value is multiple of three of this value
+	*/
+	static constexpr size_t connect_timeout = 600;
+
+	/**
+	 * @brief max messages that can be in the process of transmission simultaneously;
+	 *        value reasoning: module gateway can handle cca 20 devices
+	*/
+	static constexpr size_t max_inflight = 20;
+};
 
 /**
  * @brief Constant string views

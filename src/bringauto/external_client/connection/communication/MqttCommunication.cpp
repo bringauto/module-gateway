@@ -4,6 +4,17 @@
 
 
 namespace bringauto::external_client::connection::communication {
+
+MqttCommunication::MqttCommunication(const structures::ExternalConnectionSettings &settings)
+	: ICommunicationChannel(settings) {
+	
+	connopts_.set_mqtt_version(MQTTVERSION_3_1_1);
+	connopts_.set_keep_alive_interval(settings::MqttConstants::keepalive);
+	connopts_.set_automatic_reconnect(settings::MqttConstants::automatic_reconnect);
+	connopts_.set_connect_timeout(std::chrono::milliseconds(settings::MqttConstants::connect_timeout));
+	connopts_.set_max_inflight(settings::MqttConstants::max_inflight);
+};
+
 MqttCommunication::~MqttCommunication() {
 	closeConnection();
 }
@@ -61,13 +72,6 @@ void MqttCommunication::connect() {
 
 	client_->start_consuming();
 
-	/// TODO move to constructor together with make_unique from abouve
-	/// TODO reason the values below!
-	connopts_.set_mqtt_version(MQTTVERSION_3_1_1);
-	connopts_.set_keep_alive_interval(15);
-	connopts_.set_automatic_reconnect(true);
-	connopts_.set_connect_timeout(std::chrono::milliseconds(500));
-	connopts_.set_max_inflight(20);
 	const auto conntok = client_->connect(connopts_);
 	conntok->wait();
 	logging::Logger::logInfo("Connected to MQTT server {}", serverAddress_);
