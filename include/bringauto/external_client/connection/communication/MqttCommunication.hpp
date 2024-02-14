@@ -13,8 +13,7 @@ namespace bringauto::external_client::connection::communication {
 
 class MqttCommunication: public ICommunicationChannel {
 public:
-	explicit MqttCommunication(const structures::ExternalConnectionSettings &settings): ICommunicationChannel(
-			settings) {};
+	explicit MqttCommunication(const structures::ExternalConnectionSettings &settings);
 
 	~MqttCommunication() override;
 
@@ -70,7 +69,7 @@ private:
 	mqtt::connect_options connopts_ {};
 	/// Address of the MQTT server
 	std::string serverAddress_ {};
-	/// MQTT QOS level. Level 0 has no assurance of delivery and does not buffer messages.
+	/// MQTT QOS level. Level 1 assures that at least one message is delivered
 	constexpr static int8_t qos { 1 };
 };
 
