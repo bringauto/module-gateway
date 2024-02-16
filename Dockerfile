@@ -13,26 +13,5 @@ RUN mkdir -p /home/bringauto/module-gateway/tmp/build && \
     make -j 8 && \
     make install
 
-# Install IO module
-#WORKDIR /home/bringauto/module-gateway/tmp/libs/io-module
-#RUN mkdir _build && cd _build && \
-#    cmake -DCMLIB_DIR=/cmakelib .. && \
-#    make -j 8 && \
-#    mv ./libio_module_gateway.so /home/bringauto/modules/libio_module_gateway.so
-
-# Install example module
-#WORKDIR /home/bringauto/module-gateway/tmp/libs/example-module
-#RUN mkdir _build && cd _build && \
-#    cmake -DCMLIB_DIR=/cmakelib .. && \
-#    make -j 8 && \
-#    mv ./libio_module_gateway.so /home/bringauto/modules/libio_module_gateway.so
-
-# Install IO module
-#WORKDIR /home/bringauto/module-gateway/tmp//libs/io-module
-#RUN mkdir _build && cd _build && \
-#    cmake -DCMLIB_DIR=/cmakelib .. && \
-#    make -j 8 && \
-#    mv ./libio_module_gateway.so /home/bringauto/modules/libio_module_gateway.so
-
 # Remove tmp library with source files
 RUN rm -rf /home/bringauto/module-gateway/tmp
