@@ -69,7 +69,7 @@ private:
 	mqtt::connect_options connopts_ {};
 	/// Address of the MQTT server
 	std::string serverAddress_ {};
-	/// MQTT QOS level. Level 1 assures that at least one message is delivered
+	/// MQTT QOS level. Level 1 assures that message is delivered least once
 	constexpr static int8_t qos { 1 };
 };
 
