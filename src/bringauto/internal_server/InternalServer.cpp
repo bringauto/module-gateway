@@ -1,5 +1,6 @@
 #include <bringauto/internal_server/InternalServer.hpp>
 #include <bringauto/logging/Logger.hpp>
+#include <bringauto/common_utils/MemoryUtils.hpp>
 
 #include <algorithm>
 
@@ -223,6 +224,13 @@ bool InternalServer::handleConnection(const std::shared_ptr<structures::Connecti
 	return true;
 }
 
+void InternalServer::handleDisconnect(device_identification deviceId) {
+	auto deviceIdPtr = std::make_shared<structures::DeviceIdentification>(deviceId);
+	auto connection = findConnection(deviceIdPtr.get());
+	removeConnFromMap(connection);
+	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
+}
+
 void InternalServer::connectNewDevice(const std::shared_ptr<structures::Connection> &connection,
 									  const InternalProtocol::InternalClient &connect,
 									  const std::shared_ptr<structures::DeviceIdentification> &deviceId) {
@@ -319,8 +327,12 @@ bool InternalServer::sendResponse(const std::shared_ptr<structures::Connection> 
 void InternalServer::listenToQueue() {
 	while(!context_->ioContext.stopped()) {
 		if(!toInternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
-			auto message = toInternalQueue_->front();
-			validateResponse(message);
+			auto &message = toInternalQueue_->front();
+			if(message.disconnected()) {
+				handleDisconnect(message.getDeviceId());
+			} else {
+				validateResponse(message.getMessage());
+			}
 			toInternalQueue_->pop();
 		}
 	}

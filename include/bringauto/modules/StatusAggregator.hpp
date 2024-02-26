@@ -160,6 +160,14 @@ public:
 	 */
 	bool getTimeoutedMessageReady() const;
 
+	/**
+	 * @brief Get the device timeout count
+	 *
+	 * @param key device unique key
+	 * @return number of timeouts
+	 */
+	int getDeviceTimeoutCount(const std::string &key);
+
 private:
 
 	/**
@@ -209,6 +217,11 @@ private:
 	 * @brief Map of devices states, key is device identification converted to string
 	 */
 	std::map<std::string, structures::StatusAggregatorDeviceState> devices {};
+
+	/**
+	 * @brief Map of devices timeouts, key is device identification converted to string
+	 */
+	std::map<std::string, int> deviceTimeouts_ {};
 
 	std::mutex mutex_ {};
 

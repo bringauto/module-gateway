@@ -5,6 +5,7 @@
 #include <bringauto/structures/Connection.hpp>
 #include <bringauto/structures/GlobalContext.hpp>
 #include <bringauto/structures/InternalClientMessage.hpp>
+#include <bringauto/structures/ModuleHandlerMessage.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
 
@@ -33,7 +34,7 @@ public:
 	 */
 	InternalServer(const std::shared_ptr<structures::GlobalContext> &context,
 				   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &fromInternalQueue,
-				   const std::shared_ptr<structures::AtomicQueue<InternalProtocol::InternalServer>> &toInternalQueue)
+				   const std::shared_ptr<structures::AtomicQueue<structures::ModuleHandlerMessage>> &toInternalQueue)
 			: context_ { context }, acceptor_(context->ioContext), fromInternalQueue_ { fromInternalQueue },
 			  toInternalQueue_ { toInternalQueue } {}
 
@@ -112,6 +113,12 @@ private:
 	 */
 	bool handleConnection(const std::shared_ptr<structures::Connection> &connection,
 						  const InternalProtocol::InternalClient &client);
+
+	/**
+	 * @brief Disconnects device and removes it from the active connections.
+	 * @param deviceId unique device identification
+	 */
+	void handleDisconnect(device_identification deviceId);
 
 	/**
 	 * @brief Inserts connection into map of all active connections, sends message to module Handler.
@@ -194,7 +201,7 @@ private:
 	/// Queue for messages from Module Handler to Internal Client
 	std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> fromInternalQueue_;
 	/// Queue for messages from Internal Client to Module Handler
-	std::shared_ptr<structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
+	std::shared_ptr<structures::AtomicQueue<structures::ModuleHandlerMessage>> toInternalQueue_;
 
 	std::mutex serverMutex_;
 	/// Vector of all active connections of devices
