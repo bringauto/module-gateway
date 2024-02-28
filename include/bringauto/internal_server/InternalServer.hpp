@@ -81,10 +81,11 @@ private:
 	 * @brief Processes buffer data and once message is complete calls handleMessage(...)
 	 * @param connection conneection with context holding received and processed data
 	 * @param bytesTransferred  size of received data
+	 * @param bufferOffset offset of buffer where data starts
 	 * @return true if data and whole message is correct in context to fleet protocol
 	 */
 	bool processBufferData(const std::shared_ptr<structures::Connection> &connection,
-						   std::size_t bytesTransferred);
+						   std::size_t bytesTransferred, std::size_t bufferOffset = 0);
 
 	/**
 	 * Parses received data into Protobuf message, checks validity.

@@ -87,7 +87,7 @@ void InternalServer::asyncReceiveHandler(
 
 bool InternalServer::processBufferData(
 		const std::shared_ptr<structures::Connection> &connection,
-		std::size_t bytesTransferred) {
+		std::size_t bytesTransferred, std::size_t bufferOffset) {
 	auto &completeMessageSize = connection->connContext.completeMessageSize;
 	auto &completeMessage = connection->connContext.completeMessage;
 	auto &buffer = connection->connContext.buffer;
@@ -101,7 +101,7 @@ bool InternalServer::processBufferData(
 	}
 
 	std::size_t bytesLeft = bytesTransferred;
-	auto dataBegin = buffer.begin();
+	auto dataBegin = buffer.begin() + bufferOffset;
 
 	if(completeMessageSize == 0) {
 
@@ -119,21 +119,21 @@ bool InternalServer::processBufferData(
 
 	std::copy(dataBegin, dataEnd, std::back_inserter(completeMessage));
 
-	bytesLeft -= messageBytesLeft;
-	if(bytesLeft) {
-		logging::Logger::logError("Error in processBufferData(...): "
-								  "Received extra bytes of data: {} from Internal Client, "
-								  "connection's ip address is {}", bytesLeft,
-								  connection->socket.remote_endpoint().address().to_string());
-		return false;
-	}
-
 	if(completeMessageSize == completeMessage.size()) {
 		if(!handleMessage(connection)) {
 			return false;
 		}
 		completeMessage = {};
 		completeMessageSize = 0;
+	}
+
+	bytesLeft -= messageBytesLeft;
+	if(bytesLeft && !processBufferData(connection, bytesLeft, bytesTransferred - bytesLeft)) {
+		logging::Logger::logError("Error in processBufferData(...): "
+								  "Received extra invalid bytes of data: {} from Internal Client, "
+								  "connection's ip address is {}", bytesLeft,
+								  connection->socket.remote_endpoint().address().to_string());
+		return false;
 	}
 	return true;
 }
