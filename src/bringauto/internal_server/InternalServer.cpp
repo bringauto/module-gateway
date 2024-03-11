@@ -171,7 +171,7 @@ bool InternalServer::handleMessage(const std::shared_ptr<structures::Connection>
 										   });
 	if(!connection->ready) {
 		logging::Logger::logError("Error in handleMessage(...): "
-								  "Module Handler did not response to a message in time, "
+								  "Module Handler did not respond to a message in time, "
 								  "connection's ip address is {}",
 								  connection->socket.remote_endpoint().address().to_string());
 		return false;
@@ -198,7 +198,7 @@ bool InternalServer::handleConnection(const std::shared_ptr<structures::Connecti
 	std::lock_guard<std::mutex> lock(serverMutex_);
 	if(connection->ready) {
 		logging::Logger::logError("Error in handleConnection(...): "
-								  "Internal Client is sending connect while already connected, "
+								  "Internal Client is sending a connect message while already connected, "
 								  "connection's ip address is {}",
 								  connection->socket.remote_endpoint().address().to_string());
 		return false;
@@ -247,7 +247,7 @@ void InternalServer::respondWithHigherPriorityConnected(const std::shared_ptr<st
 			InternalProtocol::DeviceConnectResponse_ResponseType_HIGHER_PRIORITY_ALREADY_CONNECTED);
 	logging::Logger::logInfo(
 			"Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
-			"cannot be added same device is already connected with higher priority",
+			"cannot be added, same device is already connected with higher priority",
 			deviceId->getModule(),
 			deviceId->getDeviceType(), deviceId->getDeviceRole(),
 			deviceId->getDeviceName(), deviceId->getPriority());
@@ -262,7 +262,7 @@ void InternalServer::respondWithAlreadyConnected(const std::shared_ptr<structure
 			InternalProtocol::DeviceConnectResponse_ResponseType_ALREADY_CONNECTED);
 	logging::Logger::logInfo(
 			"Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
-			"cannot be added same device with same priority is already connected",
+			"cannot be added, same device with same priority is already connected",
 			deviceId->getModule(),
 			deviceId->getDeviceType(), deviceId->getDeviceRole(),
 			deviceId->getDeviceName(), deviceId->getPriority());
