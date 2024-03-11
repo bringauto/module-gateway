@@ -26,7 +26,8 @@ void ModuleHandler::destroy() {
 }
 
 void ModuleHandler::run() {
-	log::logInfo("Module handler started");
+	log::logInfo("Module handler started, constants used: queue_timeout_length: {}, status_aggregation_timeout: {}",
+				 settings::queue_timeout_length.count(), settings::status_aggregation_timeout.count());
 	handleMessages();
 }
 

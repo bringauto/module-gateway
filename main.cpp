@@ -16,6 +16,9 @@
 
 #include <thread>
 
+#ifndef MODULE_GATEWAY_VERSION
+#define MODULE_GATEWAY_VERSION "VERSION_NOT_SET"
+#endif
 
 
 void initLogger(const std::string &logPath, bool verbose) {
@@ -46,6 +49,8 @@ int main(int argc, char **argv) {
 		}
 		context->settings = settingsParser.getSettings();
 		initLogger(context->settings->logPath, context->settings->verbose);
+		bringauto::logging::Logger::logInfo("Version: {}", MODULE_GATEWAY_VERSION);
+		bringauto::logging::Logger::logInfo("Loaded config:\n{}", settingsParser.serializeToJson());
 	} catch(std::exception &e) {
 		std::cerr << "[ERROR] Error occurred during reading configuration: " << e.what() << std::endl;
 		return 1;

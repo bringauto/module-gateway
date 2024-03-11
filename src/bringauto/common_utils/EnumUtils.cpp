@@ -14,4 +14,13 @@ structures::ProtocolType EnumUtils::stringToProtocolType(std::string toEnum) {
 	}
 	return structures::ProtocolType::INVALID;
 }
+
+std::string EnumUtils::protocolTypeToString(structures::ProtocolType toString) {
+	std::string result;
+	if(toString == structures::ProtocolType::MQTT) {
+		result = settings::Constants::MQTT;
+	}
+	std::transform(result.begin(), result.end(), result.begin(), ::tolower);
+	return result;
+}
 }
