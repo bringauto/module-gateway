@@ -203,8 +203,8 @@ bool InternalServer::handleConnection(const std::shared_ptr<structures::Connecti
 		return false;
 	}
 
-	auto deviceId = std::make_shared<structures::DeviceIdentification>(client.deviceconnect().device());
-	auto existingConnection = findConnection(deviceId.get());
+	structures::DeviceIdentification deviceId { client.deviceconnect().device() };
+	auto existingConnection = findConnection(&deviceId);
 
 	if(not existingConnection) {
 		connectNewDevice(connection, client, deviceId);
@@ -225,16 +225,16 @@ bool InternalServer::handleConnection(const std::shared_ptr<structures::Connecti
 }
 
 void InternalServer::handleDisconnect(device_identification deviceId) {
-	auto deviceIdPtr = std::make_shared<structures::DeviceIdentification>(deviceId);
-	auto connection = findConnection(deviceIdPtr.get());
+	structures::DeviceIdentification deviceIdCopy { deviceId };
+	auto connection = findConnection(&deviceIdCopy);
 	removeConnFromMap(connection);
 	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 }
 
 void InternalServer::connectNewDevice(const std::shared_ptr<structures::Connection> &connection,
 									  const InternalProtocol::InternalClient &connect,
-									  const std::shared_ptr<structures::DeviceIdentification> &deviceId) {
-	connection->deviceId = deviceId;
+									  const structures::DeviceIdentification &deviceId) {
+	connection->deviceId = std::make_shared<structures::DeviceIdentification>(deviceId);
 	connectedDevices_.push_back(connection);
 	fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(false, connect));
 	logging::Logger::logInfo(
@@ -247,38 +247,38 @@ void InternalServer::connectNewDevice(const std::shared_ptr<structures::Connecti
 
 void InternalServer::respondWithHigherPriorityConnected(const std::shared_ptr<structures::Connection> &connection,
 														const InternalProtocol::InternalClient &connect,
-														const std::shared_ptr<structures::DeviceIdentification> &deviceId) {
+														const structures::DeviceIdentification &deviceId) {
 	auto message = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(
 			connect.deviceconnect().device(),
 			InternalProtocol::DeviceConnectResponse_ResponseType_HIGHER_PRIORITY_ALREADY_CONNECTED);
 	logging::Logger::logInfo(
 			"Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
 			"cannot be added same device is already connected with higher priority",
-			deviceId->getModule(),
-			deviceId->getDeviceType(), deviceId->getDeviceRole(),
-			deviceId->getDeviceName(), deviceId->getPriority());
+			deviceId.getModule(),
+			deviceId.getDeviceType(), deviceId.getDeviceRole(),
+			deviceId.getDeviceName(), deviceId.getPriority());
 	sendResponse(connection, message);
 }
 
 void InternalServer::respondWithAlreadyConnected(const std::shared_ptr<structures::Connection> &connection,
 												 const InternalProtocol::InternalClient &connect,
-												 const std::shared_ptr<structures::DeviceIdentification> &deviceId) {
+												 const structures::DeviceIdentification &deviceId) {
 	auto message = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(
 			connect.deviceconnect().device(),
 			InternalProtocol::DeviceConnectResponse_ResponseType_ALREADY_CONNECTED);
 	logging::Logger::logInfo(
 			"Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
 			"cannot be added same device with same priority is already connected",
-			deviceId->getModule(),
-			deviceId->getDeviceType(), deviceId->getDeviceRole(),
-			deviceId->getDeviceName(), deviceId->getPriority());
+			deviceId.getModule(),
+			deviceId.getDeviceType(), deviceId.getDeviceRole(),
+			deviceId.getDeviceName(), deviceId.getPriority());
 	sendResponse(connection, message);
 }
 
 void InternalServer::changeConnection(const std::shared_ptr<structures::Connection> &newConnection,
 									  const InternalProtocol::InternalClient &connect,
-									  const std::shared_ptr<structures::DeviceIdentification> &deviceId) {
-	auto oldConnection = findConnection(deviceId.get());
+									  const structures::DeviceIdentification &deviceId) {
+	auto oldConnection = findConnection(&deviceId);
 	if(oldConnection) {
 		removeConnFromMap(oldConnection);
 	}
@@ -339,17 +339,17 @@ void InternalServer::listenToQueue() {
 }
 
 void InternalServer::validateResponse(const InternalProtocol::InternalServer &message) {
-	std::shared_ptr<structures::DeviceIdentification> deviceId;
+	structures::DeviceIdentification deviceId { InternalProtocol::Device {} };
 	if(message.has_devicecommand()) {
-		deviceId = std::make_shared<structures::DeviceIdentification>(message.devicecommand().device());
+		deviceId = message.devicecommand().device();
 	}
 	if(message.has_deviceconnectresponse()) {
-		deviceId = std::make_shared<structures::DeviceIdentification>(message.deviceconnectresponse().device());
+		deviceId = message.deviceconnectresponse().device();
 	}
 	std::lock_guard<std::mutex> lock(serverMutex_);
-	auto connection = findConnection(deviceId.get());
+	auto connection = findConnection(&deviceId);
 
-	if(connection && connection->deviceId->getPriority() == deviceId->getPriority()) {
+	if(connection && connection->deviceId->getPriority() == deviceId.getPriority()) {
 		sendResponse(connection, message);
 		{
 			std::lock_guard<std::mutex> lk(connection->connectionMutex);
@@ -384,7 +384,7 @@ void InternalServer::removeConnFromMap(const std::shared_ptr<structures::Connect
 }
 
 std::shared_ptr<structures::Connection>
-InternalServer::findConnection(structures::DeviceIdentification *deviceId) {
+InternalServer::findConnection(const structures::DeviceIdentification *deviceId) {
 	std::shared_ptr<structures::Connection> connectionFound;
 	auto it = std::find_if(connectedDevices_.begin(), connectedDevices_.end(),
 						   [deviceId](auto toCompare) {

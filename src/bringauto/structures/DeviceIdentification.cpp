@@ -47,6 +47,15 @@ bool DeviceIdentification::isSame(const std::shared_ptr<DeviceIdentification> &t
 		   deviceRole_ == toCompare->getDeviceRole();
 }
 
+DeviceIdentification& DeviceIdentification::operator=(const InternalProtocol::Device &device) {
+	module_ = device.module();
+	deviceType_ = device.devicetype();
+	deviceRole_ = device.devicerole();
+	deviceName_ = device.devicename();
+	priority_ = device.priority();
+	return *this;
+}
+
 bool DeviceIdentification::operator==(const DeviceIdentification &deviceId) const {
 	return module_ == deviceId.getModule() &&
 		   deviceType_ == deviceId.getDeviceType() &&

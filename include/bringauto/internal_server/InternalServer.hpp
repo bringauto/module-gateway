@@ -128,25 +128,27 @@ private:
 	 */
 	void connectNewDevice(const std::shared_ptr<structures::Connection> &connection,
 						  const InternalProtocol::InternalClient &connect,
-						  const std::shared_ptr<structures::DeviceIdentification> &deviceId);
+						  const structures::DeviceIdentification &deviceId);
 
 	/**
 	 * @brief Sends response to InternalClient, that device is already connected and with higher priority.
 	 * @param connection connection response will be sent thru
 	 * @param connect message containing data for response message
+	 * @param deviceId unique device identification
 	 */
 	void respondWithHigherPriorityConnected(const std::shared_ptr<structures::Connection> &connection,
 											const InternalProtocol::InternalClient &connect,
-											const std::shared_ptr<structures::DeviceIdentification> &deviceId);
+											const structures::DeviceIdentification &deviceId);
 
 	/**
 	 * @brief Sends response to InternalClient, that device is already connected and with same priority.
 	 * @param connection connection response will be sent thru
 	 * @param connect message containing data for response message
+	 * @param deviceId unique device identification
 	 */
 	void respondWithAlreadyConnected(const std::shared_ptr<structures::Connection> &connection,
 									 const InternalProtocol::InternalClient &connect,
-									 const std::shared_ptr<structures::DeviceIdentification> &deviceId);
+									 const structures::DeviceIdentification &deviceId);
 
 	/**
 	 * Ends all operations of previous connection using same device,
@@ -158,7 +160,7 @@ private:
 	 */
 	void changeConnection(const std::shared_ptr<structures::Connection> &connection,
 						  const InternalProtocol::InternalClient &connect,
-						  const std::shared_ptr<structures::DeviceIdentification> &deviceId);
+						  const structures::DeviceIdentification &deviceId);
 
 	/**
 	 * @brief Writes messages to Internal client.
@@ -194,7 +196,7 @@ private:
 	 * @param deviceId that will be searched for in the vector
 	 * @return connection in connectedDevices_ vector
 	 */
-	std::shared_ptr<structures::Connection> findConnection(structures::DeviceIdentification *deviceId);
+	std::shared_ptr<structures::Connection> findConnection(const structures::DeviceIdentification *deviceId);
 
 	std::shared_ptr<structures::GlobalContext> context_;
 	boost::asio::ip::tcp::acceptor acceptor_;
