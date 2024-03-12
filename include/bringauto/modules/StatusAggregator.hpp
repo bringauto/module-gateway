@@ -163,7 +163,7 @@ public:
 	/**
 	 * @brief Get the device timeout count
 	 *
-	 * @param key device unique key
+	 * @param key device unique key, obtained from getId function in ProtobufUtils
 	 * @return number of timeouts
 	 */
 	int getDeviceTimeoutCount(const std::string &key);
