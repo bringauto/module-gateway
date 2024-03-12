@@ -225,7 +225,7 @@ bool InternalServer::handleConnection(const std::shared_ptr<structures::Connecti
 }
 
 void InternalServer::handleDisconnect(device_identification deviceId) {
-	structures::DeviceIdentification deviceIdCopy { deviceId };
+	const structures::DeviceIdentification deviceIdCopy { deviceId };
 	auto connection = findConnection(&deviceIdCopy);
 	removeConnFromMap(connection);
 	common_utils::MemoryUtils::deallocateDeviceId(deviceId);

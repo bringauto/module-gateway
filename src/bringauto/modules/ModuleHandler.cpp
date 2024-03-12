@@ -68,7 +68,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 					.device_role = devicesPointer[i].device_role,
 					.device_name = devicesPointer[i].device_name
 				};
-				auto device = structures::DeviceIdentification(deviceId);
+				const auto device = structures::DeviceIdentification(deviceId);
 				while(true) {
 					struct ::buffer aggregatedStatusBuffer {};
 					int remainingMessages = statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
@@ -83,7 +83,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 								  toExternalQueue_->size());
 					statusAggregator->moduleDeallocate(&aggregatedStatusBuffer);
 				}
-				std::string id = common_utils::ProtobufUtils::getId(devicesPointer[i]);
+				const std::string id = common_utils::ProtobufUtils::getId(devicesPointer[i]);
 				if(statusAggregator->getDeviceTimeoutCount(id) >= settings::status_aggregation_timeout_max_count){
 					log::logWarning("Device {} not sending statuses for too long, disconnecting it", id);
 					toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(device.convertToCStruct()));
