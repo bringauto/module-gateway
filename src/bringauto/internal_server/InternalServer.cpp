@@ -88,6 +88,15 @@ void InternalServer::asyncReceiveHandler(
 bool InternalServer::processBufferData(
 		const std::shared_ptr<structures::Connection> &connection,
 		std::size_t bytesTransferred, std::size_t bufferOffset) {
+	if(bytesTransferred < bufferOffset) {
+		logging::Logger::logError(
+				"Error in processBufferData(...): bufferOffset: {} is greater than bytesTransferred: {}, "
+				"Invalid bufferOffset: {} received from Internal Client, "
+				"connection's ip address is {}", bufferOffset, bytesTransferred, 
+				connection->socket.remote_endpoint().address().to_string());
+		return false;
+	}
+
 	auto &completeMessageSize = connection->connContext.completeMessageSize;
 	auto &completeMessage = connection->connContext.completeMessage;
 	auto &buffer = connection->connContext.buffer;
@@ -112,6 +121,13 @@ bool InternalServer::processBufferData(
 		completeMessage.reserve(completeMessageSize);
 
 		dataBegin = dataBegin + headerSize;
+
+		if(bytesLeft < headerSize) {
+			logging::Logger::logError(
+					"Error in processBufferData(...): Incomplete header received from Internal Client, "
+					"connection's ip address is {}", connection->socket.remote_endpoint().address().to_string());
+			return false;
+		}
 		bytesLeft -= headerSize;
 	}
 	const std::size_t messageBytesLeft = std::min(completeMessageSize - completeMessage.size(), bytesLeft);
@@ -127,7 +143,20 @@ bool InternalServer::processBufferData(
 		completeMessageSize = 0;
 	}
 
+	if(bytesLeft < messageBytesLeft) {
+		logging::Logger::logError("Error in processBufferData(...): messageBytesLeft: {} is greater than bytesLeft: {}, "
+								  "connection's ip address is {}", messageBytesLeft, bytesLeft,
+								  connection->socket.remote_endpoint().address().to_string());
+		return false;
+	}
 	bytesLeft -= messageBytesLeft;
+
+	if(bytesTransferred < bytesLeft) {
+		logging::Logger::logError("Error in processBufferData(...): bytesLeft: {} is greater than bytesTransferred: {}, "
+								  "connection's ip address is {}", bytesLeft, bytesTransferred,
+								  connection->socket.remote_endpoint().address().to_string());
+		return false;
+	}
 	if(bytesLeft && !processBufferData(connection, bytesLeft, bytesTransferred - bytesLeft)) {
 		logging::Logger::logError("Error in processBufferData(...): "
 								  "Received extra invalid bytes of data: {} from Internal Client, "
