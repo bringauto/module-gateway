@@ -196,7 +196,7 @@ private:
 	 * @param deviceId that will be searched for in the vector
 	 * @return connection in connectedDevices_ vector
 	 */
-	std::shared_ptr<structures::Connection> findConnection(const structures::DeviceIdentification *deviceId);
+	std::shared_ptr<structures::Connection> findConnection(const structures::DeviceIdentification &deviceId);
 
 	std::shared_ptr<structures::GlobalContext> context_;
 	boost::asio::ip::tcp::acceptor acceptor_;

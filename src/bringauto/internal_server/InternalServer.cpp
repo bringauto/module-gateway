@@ -204,7 +204,7 @@ bool InternalServer::handleConnection(const std::shared_ptr<structures::Connecti
 	}
 
 	structures::DeviceIdentification deviceId { client.deviceconnect().device() };
-	auto existingConnection = findConnection(&deviceId);
+	auto existingConnection = findConnection(deviceId);
 
 	if(not existingConnection) {
 		connectNewDevice(connection, client, deviceId);
@@ -226,7 +226,7 @@ bool InternalServer::handleConnection(const std::shared_ptr<structures::Connecti
 
 void InternalServer::handleDisconnect(device_identification deviceId) {
 	const structures::DeviceIdentification deviceIdCopy { deviceId };
-	auto connection = findConnection(&deviceIdCopy);
+	auto connection = findConnection(deviceIdCopy);
 	removeConnFromMap(connection);
 	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 }
@@ -278,7 +278,7 @@ void InternalServer::respondWithAlreadyConnected(const std::shared_ptr<structure
 void InternalServer::changeConnection(const std::shared_ptr<structures::Connection> &newConnection,
 									  const InternalProtocol::InternalClient &connect,
 									  const structures::DeviceIdentification &deviceId) {
-	auto oldConnection = findConnection(&deviceId);
+	auto oldConnection = findConnection(deviceId);
 	if(oldConnection) {
 		removeConnFromMap(oldConnection);
 	}
@@ -347,7 +347,7 @@ void InternalServer::validateResponse(const InternalProtocol::InternalServer &me
 		deviceId = message.deviceconnectresponse().device();
 	}
 	std::lock_guard<std::mutex> lock(serverMutex_);
-	auto connection = findConnection(&deviceId);
+	auto connection = findConnection(deviceId);
 
 	if(connection && connection->deviceId->getPriority() == deviceId.getPriority()) {
 		sendResponse(connection, message);
@@ -384,11 +384,11 @@ void InternalServer::removeConnFromMap(const std::shared_ptr<structures::Connect
 }
 
 std::shared_ptr<structures::Connection>
-InternalServer::findConnection(const structures::DeviceIdentification *deviceId) {
+InternalServer::findConnection(const structures::DeviceIdentification &deviceId) {
 	std::shared_ptr<structures::Connection> connectionFound;
 	auto it = std::find_if(connectedDevices_.begin(), connectedDevices_.end(),
-						   [deviceId](auto toCompare) {
-							   return deviceId->isSame(toCompare->deviceId);
+						   [&deviceId](const auto& toCompare) {
+							   return deviceId.isSame(toCompare->deviceId);
 						   });
 	if(it != connectedDevices_.end()) {
 		connectionFound = *it;
