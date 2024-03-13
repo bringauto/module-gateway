@@ -1,4 +1,4 @@
-FROM eu.gcr.io/bringauto-infrastructure/teamcity-build-images/ubuntu22.04:latest
+FROM europe-west1-docker.pkg.dev/bringauto-infrastructure/teamcity-build-images/ubuntu22.04:latest
 WORKDIR /home/bringauto/module-gateway
 COPY --chown=bringauto:bringauto . /home/bringauto/module-gateway/tmp
 COPY resources/config/for_docker.json /home/bringauto/config/for_docker.json
