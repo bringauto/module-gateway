@@ -21,9 +21,12 @@ protected:
 
 	void initLogger() {
 		using namespace bringauto::logging;
-		Logger::addSink<bringauto::logging::ConsoleSink>();
-		Logger::LoggerSettings params { "ModuleGatewayTests",
-										Logger::Verbosity::Debug };
+		Logger::destroy();
+		Logger::addSink<ConsoleSink>();
+		Logger::LoggerSettings params {
+			"ModuleGatewayTests",
+			Logger::Verbosity::Debug
+		};
 		Logger::init(params);
 	}
 	void SetUp() override {

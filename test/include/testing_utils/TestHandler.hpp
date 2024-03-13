@@ -19,7 +19,7 @@ const unsigned short port { 8888 };
 class TestHandler {
 	std::shared_ptr<bringauto::settings::Settings> settings;
 
-	std::shared_ptr<bringauto::structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue;
+	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage>> toInternalQueue;
 	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>> fromInternalQueue;
 
 	std::vector<InternalProtocol::InternalClient> connects;
@@ -35,9 +35,11 @@ public:
 
 	TestHandler(const std::vector<InternalProtocol::Device> &devices, const std::vector<std::string> &data);
 
-	TestHandler(const std::vector<InternalProtocol::Device> &devices,
-				const std::vector<InternalProtocol::DeviceConnectResponse_ResponseType> &responseTypes,
-				const std::vector<std::string> &data);
+	TestHandler(
+		const std::vector<InternalProtocol::Device> &devices,
+		const std::vector<InternalProtocol::DeviceConnectResponse_ResponseType> &responseTypes,
+		const std::vector<std::string> &data
+	);
 
 	InternalProtocol::InternalClient getConnect(size_t index);
 
@@ -59,7 +61,7 @@ public:
 	void runStatuses(size_t index, size_t header, std::string data,  bool recastHeader);
 	void serialRunWithExpectedError(size_t index, size_t header, std::string data, bool onConnect, bool recastHeader);
 	void runTestsWithWrongMessage(size_t index, uint32_t header, std::string data, bool onConnect,
-								  bool recastHeader = false);
+		bool recastHeader = false);
 
 	void runConnects(size_t numberOfErrors);
 	void runStatuses(size_t numberOfErrors);
