@@ -24,7 +24,7 @@ protected:
 		Logger::destroy();
 		Logger::addSink<ConsoleSink>();
 		Logger::LoggerSettings params {
-			"ModuleGatewayTests",
+			"InternalServerTests",
 			Logger::Verbosity::Debug
 		};
 		Logger::init(params);

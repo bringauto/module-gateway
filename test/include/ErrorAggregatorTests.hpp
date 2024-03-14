@@ -19,7 +19,7 @@ protected:
 		bringauto::logging::Logger::destroy();
 		bringauto::logging::Logger::addSink<bringauto::logging::ConsoleSink>();
 		bringauto::logging::Logger::LoggerSettings settings { 
-			"StatusAggregatorTests",
+			"ErrorAggregatorTests",
 			bringauto::logging::Logger::Verbosity::Critical
 		};
 		bringauto::logging::Logger::init(settings);
