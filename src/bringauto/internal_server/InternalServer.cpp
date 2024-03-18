@@ -8,7 +8,9 @@
 namespace bringauto::internal_server {
 
 void InternalServer::run() {
-	logging::Logger::logInfo("Internal server started");
+	logging::Logger::logInfo("Internal server started, constants used: fleet_protocol_timeout_length: {}, queue_timeout_length: {}",
+							 settings::fleet_protocol_timeout_length.count(),
+							 settings::queue_timeout_length.count());
 	boost::asio::ip::tcp::endpoint endpoint { boost::asio::ip::tcp::v4(), context_->settings->port };
 	acceptor_.open(endpoint.protocol());
 	acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
@@ -100,7 +102,7 @@ bool InternalServer::processBufferData(
 	auto &completeMessageSize = connection->connContext.completeMessageSize;
 	auto &completeMessage = connection->connContext.completeMessage;
 	auto &buffer = connection->connContext.buffer;
-	const uint8_t headerSize = 4;
+	const uint8_t headerSize = settings::header;
 
 	if(bytesTransferred < headerSize && completeMessageSize == 0) {
 		logging::Logger::logError(
@@ -198,7 +200,7 @@ bool InternalServer::handleMessage(const std::shared_ptr<structures::Connection>
 										   });
 	if(!connection->ready) {
 		logging::Logger::logError("Error in handleMessage(...): "
-								  "Module Handler did not response to a message in time, "
+								  "Module Handler did not respond to a message in time, "
 								  "connection's ip address is {}",
 								  connection->socket.remote_endpoint().address().to_string());
 		return false;
@@ -225,7 +227,7 @@ bool InternalServer::handleConnection(const std::shared_ptr<structures::Connecti
 	std::lock_guard<std::mutex> lock(serverMutex_);
 	if(connection->ready) {
 		logging::Logger::logError("Error in handleConnection(...): "
-								  "Internal Client is sending connect while already connected, "
+								  "Internal Client is sending a connect message while already connected, "
 								  "connection's ip address is {}",
 								  connection->socket.remote_endpoint().address().to_string());
 		return false;
@@ -274,7 +276,7 @@ void InternalServer::respondWithHigherPriorityConnected(const std::shared_ptr<st
 			InternalProtocol::DeviceConnectResponse_ResponseType_HIGHER_PRIORITY_ALREADY_CONNECTED);
 	logging::Logger::logInfo(
 			"Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
-			"cannot be added same device is already connected with higher priority",
+			"cannot be added, same device is already connected with higher priority",
 			deviceId->getModule(),
 			deviceId->getDeviceType(), deviceId->getDeviceRole(),
 			deviceId->getDeviceName(), deviceId->getPriority());
@@ -289,7 +291,7 @@ void InternalServer::respondWithAlreadyConnected(const std::shared_ptr<structure
 			InternalProtocol::DeviceConnectResponse_ResponseType_ALREADY_CONNECTED);
 	logging::Logger::logInfo(
 			"Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
-			"cannot be added same device with same priority is already connected",
+			"cannot be added, same device with same priority is already connected",
 			deviceId->getModule(),
 			deviceId->getDeviceType(), deviceId->getDeviceRole(),
 			deviceId->getDeviceName(), deviceId->getPriority());
@@ -329,6 +331,9 @@ bool InternalServer::sendResponse(const std::shared_ptr<structures::Connection> 
 		return false;
 	}
 	try {
+		logging::Logger::logDebug("Sending response to Internal Client, "
+								  "connection's ip address is {}, data: {}",
+								  connection->socket.remote_endpoint().address().to_string(), data);
 		const auto dataWSize = connection->socket.write_some(boost::asio::buffer(data));
 		if(dataWSize != header) {
 			logging::Logger::logError("Error in sendResponse(...): "

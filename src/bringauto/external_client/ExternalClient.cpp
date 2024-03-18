@@ -76,7 +76,10 @@ void ExternalClient::destroy() {
 }
 
 void ExternalClient::run() {
-	log::logInfo("External client started");
+	log::logInfo("External client started, constants used: reconnect_delay: {}, queue_timeout_length: {}, "
+				 "immediate_disconnect_timeout: {}, status_response_timeout: {}",
+				 settings::reconnect_delay, settings::queue_timeout_length.count(),
+				 settings::immediate_disconnect_timeout.count(), settings::status_response_timeout);
 	initConnections();
 	handleAggregatedMessages();
 }
