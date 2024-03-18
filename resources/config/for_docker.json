@@ -12,7 +12,7 @@
     "1000": "/home/bringauto/module-gateway/lib/libexample_module_gateway.so"
   },
   "external-connection" : {
-    "company" : "bringbuto",
+    "company" : "bringauto",
     "vehicle-name" : "virtual_vehicle",
     "endpoints" :
     [
