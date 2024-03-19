@@ -56,9 +56,9 @@ ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/io-module)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/memory_management)
 
 FILE(GLOB_RECURSE source_files "src/*")
-ADD_LIBRARY(bringautolib STATIC "${source_files}")
-TARGET_INCLUDE_DIRECTORIES(bringautolib PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
-TARGET_LINK_LIBRARIES(bringautolib PUBLIC
+ADD_LIBRARY(module-gateway-lib STATIC "${source_files}") # TODO remove this?
+TARGET_INCLUDE_DIRECTORIES(module-gateway-lib PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         Boost::headers
                         memory_management
                         fleet-protocol::protobuf_cpp
@@ -78,7 +78,7 @@ CMDEF_ADD_EXECUTABLE(
         VERSION ${BRINGAUTO_MODULE_GATEWAY_VERSION}
 )
 
-TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC bringautolib)
+TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC module-gateway-lib)
 
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
     TARGET_COMPILE_OPTIONS(module-gateway-app PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address)
