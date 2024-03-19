@@ -7,6 +7,7 @@
 #include <bringauto/structures/GlobalContext.hpp>
 #include <bringauto/structures/ModuleLibrary.hpp>
 #include <bringauto/structures/InternalClientMessage.hpp>
+#include <bringauto/structures/ModuleHandlerMessage.hpp>
 #include <bringauto/logging/Logger.hpp>
 
 #include <InternalProtocol.pb.h>
@@ -62,7 +63,7 @@ int main(int argc, char **argv) {
 	boost::asio::signal_set signals(context->ioContext, SIGINT, SIGTERM);
 	signals.async_wait([context](auto, auto) { context->ioContext.stop(); });
 
-	auto toInternalQueue = std::make_shared<bas::AtomicQueue<InternalProtocol::InternalServer >>();
+	auto toInternalQueue = std::make_shared<bas::AtomicQueue<bas::ModuleHandlerMessage >>();
 	auto fromInternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
 	auto toExternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
 

@@ -58,6 +58,12 @@ public:
 	[[nodiscard]] bool isSame(const std::shared_ptr <DeviceIdentification> &toCompare) const;
 
 	/**
+	 * @brief Assigns values from device to this object
+	 * @param device object holding values to be assigned to corresponding params
+	 */
+	DeviceIdentification& operator=(const InternalProtocol::Device &device);
+
+	/**
 	 * @brief Checks if all parameters except priority are equal.
 	 * @param deviceId device used for comparison
 	 * @return true if all parameters outside of priority are equal

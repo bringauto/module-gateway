@@ -101,6 +101,7 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 	}
 
 	std::string id = common_utils::ProtobufUtils::getId(device);
+	deviceTimeouts_[id] = 0;
 
 	if(not devices.contains(id)) {
 		struct buffer commandBuffer {};
@@ -120,9 +121,10 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 											  { static_cast<char *>(device.device_role.data),
 												device.device_role.size_in_bytes });
 
-		std::function<int(struct ::device_identification)> timeouted_force_aggregation = [&](
+		std::function<int(struct ::device_identification)> timeouted_force_aggregation = [id, this](
 				struct ::device_identification deviceId) {
 					timeoutedMessageReady_.store(true);
+					deviceTimeouts_[id]++;
 					return force_aggregation_on_device(deviceId);
 		};
 		std::function<void(struct buffer *)> dealloc = [&](
@@ -297,6 +299,10 @@ void StatusAggregator::unsetTimeoutedMessageReady(){
 
 bool StatusAggregator::getTimeoutedMessageReady() const {
 	return timeoutedMessageReady_.load();
+}
+
+int StatusAggregator::getDeviceTimeoutCount(const std::string &key) {
+	return deviceTimeouts_[key];
 }
 
 }

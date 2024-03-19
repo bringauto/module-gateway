@@ -42,7 +42,7 @@ void ClientForTesting::receiveMessage(InternalProtocol::InternalServer &message)
 	auto timeStart = std::chrono::steady_clock::now();
 	std::jthread timeoutCountThread([this, timeStart, &readFinished]() {
 		while(std::chrono::duration<double>(std::chrono::steady_clock::now() - timeStart) <
-			  timeoutLengthGreaterThenDefinedInFleetProtocol) {
+			timeoutLengthGreaterThenDefinedInFleetProtocol) {
 			if(readFinished) {
 				return;
 			}
@@ -102,7 +102,7 @@ void ClientForTesting::insteadOfMessageExpectError() {
 	auto timeStart = std::chrono::steady_clock::now();
 	std::jthread timeoutCountThread([this, timeStart, &readFinished]() {
 		while(std::chrono::duration<double>(std::chrono::steady_clock::now() - timeStart) <
-			  timeoutLengthGreaterThenDefinedInFleetProtocol) {
+			timeoutLengthGreaterThenDefinedInFleetProtocol) {
 			if(readFinished) {
 				return;
 			}
