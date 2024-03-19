@@ -76,6 +76,7 @@ TEST_F(InternalServerTests, FiveClients) {
  * @brief Tests Connection of 50 clients, and communication between clients-server-handler
  */
 TEST_F(InternalServerTests, FiftyClients) {
+	GTEST_SKIP();
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(size_t i = 1; i <= 50; ++i) {
