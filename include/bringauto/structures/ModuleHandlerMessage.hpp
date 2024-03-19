@@ -9,17 +9,17 @@
 namespace bringauto::structures {
 
 /**
- * @brief Class for storing information about internal client message and additional information
+ * @brief Class for storing information about module handler message and additional information
  */
-class InternalClientMessage {
+class ModuleHandlerMessage {
 
 public:
-	explicit InternalClientMessage(const device_identification &deviceId):
+	explicit ModuleHandlerMessage(const device_identification &deviceId):
 		disconnect_ { true },
 		deviceId_ { deviceId }
 	{}
 
-	explicit InternalClientMessage(bool disconnect, const InternalProtocol::InternalClient &message):
+	explicit ModuleHandlerMessage(bool disconnect, const InternalProtocol::InternalServer &message):
 		message_ { message },
 		disconnect_ { disconnect }
 	{}
@@ -27,14 +27,14 @@ public:
 	/**
 	 * @brief Get internal client message
 	 *
-	 * @return const InternalProtocol::InternalClient&
+	 * @return const InternalProtocol::InternalServer&
 	 */
-	const InternalProtocol::InternalClient &getMessage() const;
+	const InternalProtocol::InternalServer &getMessage() const;
 
 	/**
 	 * @brief Get disconnected
 	 *
-	 * @return true if device is disconnected otherwise false
+	 * @return true if device is to be disconnected otherwise false
 	 */
 	bool disconnected() const;
 
@@ -46,9 +46,9 @@ public:
 	const device_identification &getDeviceId() const;
 
 private:
-	/// Internal client message
-	InternalProtocol::InternalClient message_ {};
-	/// True if device is disconnected otherwise false
+	/// Internal server message
+	InternalProtocol::InternalServer message_ {};
+	/// True if device is to be disconnected otherwise false
 	bool disconnect_;
 	/// Device identification struct
 	device_identification deviceId_ {};

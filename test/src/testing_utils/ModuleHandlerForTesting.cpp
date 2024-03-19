@@ -15,14 +15,20 @@ void ModuleHandlerForTesting::start() {
 			auto message = fromInternalQueue_->front().getMessage();
 			fromInternalQueue_->pop();
 			if(message.has_deviceconnect()) {
-				auto res = ProtobufUtils::CreateServerMessage(message.deviceconnect().device(),
-																				 InternalProtocol::DeviceConnectResponse_ResponseType_OK);
-				toInternalQueue_->pushAndNotify(res);
+				auto res = ProtobufUtils::CreateServerMessage(
+					message.deviceconnect().device(),
+					InternalProtocol::DeviceConnectResponse_ResponseType_OK
+				);
+				auto resModuleHandlerMessage = bringauto::structures::ModuleHandlerMessage(false, res);
+				toInternalQueue_->pushAndNotify(resModuleHandlerMessage);
 			}
 			if(message.has_devicestatus()) {
-				auto com = ProtobufUtils::CreateServerMessage(message.devicestatus().device(),
-																				 message.devicestatus().statusdata());
-				toInternalQueue_->pushAndNotify(com);
+				auto com = ProtobufUtils::CreateServerMessage(
+					message.devicestatus().device(),
+					message.devicestatus().statusdata()
+				);
+				auto comModuleHandlerMessage = bringauto::structures::ModuleHandlerMessage(false, com);
+				toInternalQueue_->pushAndNotify(comModuleHandlerMessage);
 			}
 			++messageCounter;
 		}
@@ -45,18 +51,24 @@ void ModuleHandlerForTesting::startWithTimeout(bool onConnect, size_t timeoutNum
 					--timeoutNumber;
 					continue;
 				}
-				auto res = ProtobufUtils::CreateServerMessage(message.deviceconnect().device(),
-																				 InternalProtocol::DeviceConnectResponse_ResponseType_OK);
-				toInternalQueue_->pushAndNotify(res);
+				auto res = ProtobufUtils::CreateServerMessage(
+					message.deviceconnect().device(),
+					InternalProtocol::DeviceConnectResponse_ResponseType_OK
+				);
+				auto resModuleHandlerMessage = bringauto::structures::ModuleHandlerMessage(false, res);
+				toInternalQueue_->pushAndNotify(resModuleHandlerMessage);
 			}
 			if(message.has_devicestatus()) {
 				if(!onConnect && timeoutNumber > 0) {
 					--timeoutNumber;
 					continue;
 				}
-				auto com = ProtobufUtils::CreateServerMessage(message.devicestatus().device(),
-																				 message.devicestatus().statusdata());
-				toInternalQueue_->pushAndNotify(com);
+				auto com = ProtobufUtils::CreateServerMessage(
+					message.devicestatus().device(),
+					message.devicestatus().statusdata()
+				);
+				auto comModuleHandlerMessage = bringauto::structures::ModuleHandlerMessage(false, com);
+				toInternalQueue_->pushAndNotify(comModuleHandlerMessage);
 			}
 			++messageCounter;
 		}

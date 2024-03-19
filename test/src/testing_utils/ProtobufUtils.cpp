@@ -2,8 +2,9 @@
 
 namespace testing_utils {
 
-InternalProtocol::InternalServer ProtobufUtils::CreateServerMessage(const InternalProtocol::Device &device,
-																	const InternalProtocol::DeviceConnectResponse_ResponseType &resType) {
+InternalProtocol::InternalServer ProtobufUtils::CreateServerMessage(
+		const InternalProtocol::Device &device,
+		const InternalProtocol::DeviceConnectResponse_ResponseType &resType) {
 	InternalProtocol::InternalServer message;
 	auto response = message.mutable_deviceconnectresponse();
 	response->set_responsetype(resType);
@@ -12,8 +13,9 @@ InternalProtocol::InternalServer ProtobufUtils::CreateServerMessage(const Intern
 	return message;
 }
 
-InternalProtocol::InternalServer ProtobufUtils::CreateServerMessage(const InternalProtocol::Device &device,
-																	const std::string &data) {
+InternalProtocol::InternalServer ProtobufUtils::CreateServerMessage(
+		const InternalProtocol::Device &device,
+		const std::string &data) {
 	InternalProtocol::InternalServer message;
 	auto command = message.mutable_devicecommand();
 	command->set_commanddata(data);
@@ -30,8 +32,9 @@ InternalProtocol::InternalClient ProtobufUtils::CreateClientMessage(const Intern
 	return message;
 }
 
-InternalProtocol::InternalClient ProtobufUtils::CreateClientMessage(const InternalProtocol::Device &device,
-																	const std::string &data) {
+InternalProtocol::InternalClient ProtobufUtils::CreateClientMessage(
+		const InternalProtocol::Device &device,
+		const std::string &data) {
 	InternalProtocol::InternalClient message;
 	auto status = message.mutable_devicestatus();
 	status->set_statusdata(data);
@@ -40,4 +43,4 @@ InternalProtocol::InternalClient ProtobufUtils::CreateClientMessage(const Intern
 	return message;
 }
 
-}
+}// namespace testing_utils

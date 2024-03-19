@@ -13,11 +13,11 @@ const struct device_identification StatusAggregatorTests::init_device_id(unsigne
 	std::memcpy(deviceNameBuff.data, deviceName, deviceNameSize);
 
 	const struct ::device_identification device_id {
-			.module=2,
-			.device_type=type,
-			.device_role=deviceRoleBuff,
-			.device_name=deviceNameBuff,
-			.priority=10
+		.module=2,
+		.device_type=type,
+		.device_role=deviceRoleBuff,
+		.device_name=deviceNameBuff,
+		.priority=10
 	};
 	return device_id;
 }

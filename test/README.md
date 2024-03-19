@@ -44,6 +44,6 @@ make
 
 ## Run
 ```
-./modulegateway_tests
+./ctest
 ```
 

@@ -23,7 +23,7 @@ class ClientForTesting {
 public:
 
 	explicit ClientForTesting(const std::shared_ptr<bringauto::structures::GlobalContext> &context_)
-			: context(context_) {}
+		: context(context_) {}
 
 	void connectSocket();
 

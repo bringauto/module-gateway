@@ -18,9 +18,12 @@ protected:
 	void TearDown() override;
 
 	static void SetUpTestSuite() {
+		bringauto::logging::Logger::destroy();
 		bringauto::logging::Logger::addSink<bringauto::logging::ConsoleSink>();
-		bringauto::logging::Logger::LoggerSettings settings { "StatusAggregatorTests",
-															  bringauto::logging::Logger::Verbosity::Critical };
+		bringauto::logging::Logger::LoggerSettings settings {
+			"StatusAggregatorTests",
+			bringauto::logging::Logger::Verbosity::Critical
+		};
 		bringauto::logging::Logger::init(settings);
 	}
 

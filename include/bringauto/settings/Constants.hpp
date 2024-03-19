@@ -22,7 +22,12 @@ constexpr int reconnect_delay { 10 };
 /**
  * @brief timeout that defines force aggregation on device
  */
-constexpr std::chrono::seconds status_aggregation_timeout { 1 };
+constexpr std::chrono::seconds status_aggregation_timeout { 15 };
+
+/**
+ * @brief max amount of status aggregation timeouts before device is considered disconnected
+ */
+constexpr int status_aggregation_timeout_max_count { 2 };
 
 /**
  * @brief timeout that defines how much time can be status without status response
