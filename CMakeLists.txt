@@ -2,7 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.25 FATAL_ERROR)
 PROJECT(ModuleGateway)
 INCLUDE(GNUInstallDirs)
 
-SET(BRINGAUTO_MODULE_GATEWAY_VERSION 0.1.0)
+SET(BRINGAUTO_MODULE_GATEWAY_VERSION 1.0.2)
 SET(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 SET(CMAKE_CXX_STANDARD 20)
 
@@ -50,9 +50,9 @@ ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/io-module)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/memory_management)
 
 FILE(GLOB_RECURSE source_files "src/*")
-ADD_LIBRARY(bringautolib STATIC "${source_files}")
-TARGET_INCLUDE_DIRECTORIES(bringautolib PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
-TARGET_LINK_LIBRARIES(bringautolib PUBLIC
+ADD_LIBRARY(module-gateway-lib STATIC "${source_files}") # TODO remove this?
+TARGET_INCLUDE_DIRECTORIES(module-gateway-lib PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         Boost::headers
                         memory_management
                         fleet-protocol::protobuf_cpp
@@ -66,24 +66,17 @@ TARGET_LINK_LIBRARIES(bringautolib PUBLIC
                         PahoMqttCpp::paho-mqttpp3
                         ${CMAKE_DL_LIBS})
 
-# Install modules
-TARGET_LINK_LIBRARIES(bringautolib PUBLIC
-        example_module_gateway
-        io_module_gateway
-        mission_module_gateway
-        )
-
 CMDEF_ADD_EXECUTABLE(
-        TARGET module_gateway_app
+        TARGET module-gateway-app
         SOURCES main.cpp
         VERSION ${BRINGAUTO_MODULE_GATEWAY_VERSION}
 )
 
-TARGET_LINK_LIBRARIES(module_gateway_app PUBLIC bringautolib)
+TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC module-gateway-lib)
 
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    TARGET_COMPILE_OPTIONS(module_gateway_app PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address)
-    TARGET_LINK_LIBRARIES(module_gateway_app PUBLIC -fsanitize=address)
+    TARGET_COMPILE_OPTIONS(module-gateway-app PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address)
+    TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC -fsanitize=address)
 ENDIF()
 
 
@@ -97,11 +90,23 @@ ENDIF (BRINGAUTO_TESTS)
 IF (BRINGAUTO_INSTALL)
     INCLUDE(GNUInstallDirs)
     CONFIGURE_FILE(resources/systemd/module-gateway.service.in module-gateway.service @ONLY)
-    CMDEF_INSTALL(TARGET module_gateway_app)
-    CMDEF_INSTALL(TARGET io_module_gateway)
-    CMDEF_INSTALL(TARGET example_module_gateway)
-    CMDEF_INSTALL(TARGET mission_module_gateway)
-    BA_PACKAGE_DEPS_IMPORTED(module_gateway_app)
+    CMDEF_INSTALL(
+            TARGET module-gateway-app
+            NAMESPACE module-gateway-app::
+    )
+    CMDEF_INSTALL(
+            TARGET io_module_gateway
+            NAMESPACE module-gateway-app::
+    )
+    CMDEF_INSTALL(
+            TARGET example_module_gateway
+            NAMESPACE module-gateway-app::
+    )
+    CMDEF_INSTALL(
+            TARGET mission_module_gateway
+            NAMESPACE module-gateway-app::
+    )
+    BA_PACKAGE_DEPS_IMPORTED(module-gateway-app)
     INSTALL(FILES "${CMAKE_CURRENT_LIST_DIR}/resources/config/default.json"
             DESTINATION
             "${CMAKE_INSTALL_SYSCONFDIR}/bringauto/module-gateway/"
@@ -114,7 +119,7 @@ ENDIF ()
 
 IF (BRINGAUTO_PACKAGE)
     CMDEF_PACKAGE(
-            MAIN_TARGET module_gateway_app
+            MAIN_TARGET module-gateway-app
             VERSION ${BRINGAUTO_MODULE_GATEWAY_VERSION}
     )
     SET(CPACK_GENERATOR ZIP)
