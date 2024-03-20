@@ -3,8 +3,9 @@
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
 #include <bringauto/structures/StatusAggregatorDeviceState.hpp>
 
-#include <command_manager.h>
-#include <module_manager.h>
+#include <fleet_protocol/common_headers/device_management.h>
+#include <fleet_protocol/module_gateway/command_manager.h>
+#include <fleet_protocol/module_maintainer/module_gateway//module_manager.h>
 
 #include <functional>
 #include <map>

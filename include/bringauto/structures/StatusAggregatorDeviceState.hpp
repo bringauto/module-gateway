@@ -2,7 +2,7 @@
 
 #include <bringauto/structures/GlobalContext.hpp>
 #include <bringauto/structures/ThreadTimer.hpp>
-#include <device_management.h>
+#include <fleet_protocol/common_headers/device_management.h>
 
 #include <queue>
 #include <memory>

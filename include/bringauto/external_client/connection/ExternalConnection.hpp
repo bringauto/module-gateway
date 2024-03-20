@@ -11,7 +11,7 @@
 #include <bringauto/structures/DeviceIdentification.hpp>
 #include <bringauto/structures/ReconnectQueueItem.hpp>
 
-#include <general_error_codes.h>
+#include <fleet_protocol/common_headers/general_error_codes.h>
 
 #include <string>
 #include <vector>

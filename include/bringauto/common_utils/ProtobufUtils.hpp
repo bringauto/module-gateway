@@ -1,10 +1,11 @@
 #pragma once
 
 #include <bringauto/structures/DeviceIdentification.hpp>
+
 #include <InternalProtocol.pb.h>
 #include <ExternalProtocol.pb.h>
-#include <device_management.h>
-#include <memory_management.h>
+#include <fleet_protocol/common_headers/device_management.h>
+#include <fleet_protocol/common_headers/memory_management.h>
 
 
 
