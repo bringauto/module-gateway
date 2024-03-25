@@ -2,7 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.25 FATAL_ERROR)
 PROJECT(ModuleGateway)
 INCLUDE(GNUInstallDirs)
 
-SET(BRINGAUTO_MODULE_GATEWAY_VERSION 1.0.2)
+SET(BRINGAUTO_MODULE_GATEWAY_VERSION 1.0.3)
 SET(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 SET(CMAKE_CXX_STANDARD 20)
 
@@ -44,13 +44,10 @@ FIND_PACKAGE(eclipse-paho-mqtt-c REQUIRED)
 FIND_PACKAGE(libbringauto_logger 1.2.0 REQUIRED)
 FIND_PACKAGE(fleet-protocol-interface 2.0.0 REQUIRED)
 
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/example-module)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/mission-module)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/io-module)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/memory_management)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/lib/memory_management)
 
 FILE(GLOB_RECURSE source_files "source/*")
-ADD_LIBRARY(module-gateway-lib STATIC "${source_files}") # TODO remove this?
+ADD_LIBRARY(module-gateway-lib STATIC "${source_files}")
 TARGET_INCLUDE_DIRECTORIES(module-gateway-lib PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         Boost::headers
@@ -94,18 +91,6 @@ IF (BRINGAUTO_INSTALL)
     CONFIGURE_FILE(resources/systemd/module-gateway.service.in module-gateway.service @ONLY)
     CMDEF_INSTALL(
             TARGET module-gateway-app
-            NAMESPACE module-gateway-app::
-    )
-    CMDEF_INSTALL(
-            TARGET io_module_gateway
-            NAMESPACE module-gateway-app::
-    )
-    CMDEF_INSTALL(
-            TARGET example_module_gateway
-            NAMESPACE module-gateway-app::
-    )
-    CMDEF_INSTALL(
-            TARGET mission_module_gateway
             NAMESPACE module-gateway-app::
     )
     BA_PACKAGE_DEPS_IMPORTED(module-gateway-app)
