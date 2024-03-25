@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <bringauto/structures/AtomicQueue.hpp>
 #include <bringauto/structures/Connection.hpp>
 #include <bringauto/structures/GlobalContext.hpp>

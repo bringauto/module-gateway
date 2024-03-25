@@ -1,6 +1,8 @@
 #include <StatusAggregatorTests.hpp>
 #include <bringauto/common_utils/MemoryUtils.hpp>
 
+
+
 const struct device_identification StatusAggregatorTests::init_device_id(unsigned int type, const char* deviceRole, const char* deviceName){
 	size_t deviceRoleSize = strlen(deviceRole);
 	struct buffer deviceRoleBuff{};

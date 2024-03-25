@@ -2,9 +2,9 @@
 
 #include <bringauto/structures/GlobalContext.hpp>
 #include <bringauto/settings/Constants.hpp>
-#include <device_management.h>
-#include <memory_management.h>
 
+#include <fleet_protocol/common_headers/device_management.h>
+#include <fleet_protocol/common_headers/memory_management.h>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/bind/bind.hpp>

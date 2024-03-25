@@ -1,7 +1,7 @@
 #pragma once
 
-#include <memory_management.h>
-#include <device_management.h>
+#include <fleet_protocol/common_headers/memory_management.h>
+#include <fleet_protocol/common_headers/device_management.h>
 
 #include <functional>
 #include <filesystem>

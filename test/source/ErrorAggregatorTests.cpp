@@ -1,6 +1,6 @@
 #include <ErrorAggregatorTests.hpp>
 #include <bringauto/common_utils/MemoryUtils.hpp>
-#include <mg_error_codes.h>
+#include <fleet_protocol/module_gateway/error_codes.h>
 
 const struct device_identification ErrorAggregatorTests::init_device_id(unsigned int type, const char* deviceRole, const char* deviceName){
 	size_t deviceRoleSize = strlen(deviceRole);

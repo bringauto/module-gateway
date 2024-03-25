@@ -7,7 +7,8 @@
 #include <bringauto/structures/AtomicQueue.hpp>
 #include <bringauto/structures/InternalClientMessage.hpp>
 #include <bringauto/structures/ModuleHandlerMessage.hpp>
-#include <device_management.h>
+
+#include <fleet_protocol/common_headers/device_management.h>
 
 #include <memory>
 
@@ -16,7 +17,6 @@
 namespace bringauto::modules {
 
 class ModuleHandler {
-
 public:
 	ModuleHandler(
 			std::shared_ptr <structures::GlobalContext> &context,

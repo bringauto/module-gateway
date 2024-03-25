@@ -3,6 +3,7 @@
 #include <bringauto/logging/Logger.hpp>
 
 
+
 namespace bringauto::external_client::connection::communication {
 
 MqttCommunication::MqttCommunication(const structures::ExternalConnectionSettings &settings)

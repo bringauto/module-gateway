@@ -38,14 +38,14 @@ connection is broken and as soon as the connection is up, then error aggregated 
 ## Build
 ```
 mkdir -p _build && cd _build
-cmake ../ -DCMLIB_DIR=<absolute path cmakelib>
+cmake ../ -DCMLIB_DIR=</absolute/path/cmakelib>
 make
 ```
 
 ## Run
 
 ```
-./ModuleGateway --config-path=../configs/default.json
+./module-gateway-app --config-path=../configs/default.json
 ```
 
 ### Arguments

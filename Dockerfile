@@ -1,4 +1,29 @@
+FROM bringauto/cpp-build-environment:latest AS modules_builder
+
+ARG MISSION_MODULE_VERSION=v1.2.0
+ARG IO_MODULE_VERSION=v1.2.0
+
+RUN mkdir /home/bringauto/modules
+
+RUN sudo apt update -y && sudo apt-get install -y libcpprest-dev
+
+RUN git clone https://github.com/bringauto/mission-module.git && \
+    mkdir mission-module/_build && \
+    git checkout $MISSION_MODULE_VERSION && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_BUILD_PREFIX=./install .. && \
+    make install && \
+    mv -f install/lib/* /home/bringauto/modules/
+
+RUN git clone https://github.com/bringauto/io-module.git && \
+    mkdir mission-module/_build && \
+    git checkout $IO_MODULE_VERSION && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_BUILD_PREFIX=./install .. && \
+    make install && \
+    mv -f install/lib/* /home/bringauto/modules/
+
 FROM bringauto/cpp-build-environment:latest
+COPY --from=modules_builder /home/bringauto/modules /home/bringauto/modules
+
 WORKDIR /home/bringauto/module-gateway
 COPY --chown=bringauto:bringauto . /home/bringauto/module-gateway/tmp
 COPY resources/config/for_docker.json /home/bringauto/config/for_docker.json
