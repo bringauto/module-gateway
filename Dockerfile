@@ -4,22 +4,19 @@ ARG MISSION_MODULE_VERSION=v1.2.0
 ARG IO_MODULE_VERSION=v1.2.0
 
 RUN mkdir /home/bringauto/modules
-
-RUN sudo apt update -y && sudo apt-get install -y libcpprest-dev
+ARG CMLIB_REQUIRED_ENV_TMP_PATH=/home/bringauto/modules/cmlib_cache
 
 RUN git clone https://github.com/bringauto/mission-module.git && \
     mkdir mission-module/_build && \
     git checkout $MISSION_MODULE_VERSION && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_BUILD_PREFIX=./install .. && \
-    make install && \
-    mv -f install/lib/* /home/bringauto/modules/
+    cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_BUILD_PREFIX=/home/bringauto/modules/mission_module/ .. && \
+    make install
 
 RUN git clone https://github.com/bringauto/io-module.git && \
     mkdir mission-module/_build && \
     git checkout $IO_MODULE_VERSION && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_BUILD_PREFIX=./install .. && \
-    make install && \
-    mv -f install/lib/* /home/bringauto/modules/
+    cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_BUILD_PREFIX=/home/bringauto/modules/io_module/ .. && \
+    make install
 
 FROM bringauto/cpp-build-environment:latest
 COPY --from=modules_builder /home/bringauto/modules /home/bringauto/modules
