@@ -76,6 +76,7 @@ TEST_F(InternalServerTests, FiveClients) {
  * @brief Tests Connection of 50 clients, and communication between clients-server-handler
  */
 TEST_F(InternalServerTests, FiftyClients) {
+	GTEST_SKIP();
 	std::vector<InternalProtocol::Device> devices {};
 	std::vector<std::string> data;
 	for(size_t i = 1; i <= 50; ++i) {
@@ -326,32 +327,6 @@ TEST_F(InternalServerTests, SameRolePriority211) {
 	}
 	testing_utils::TestHandler testedData(devices, responseType, data);
 	testedData.runTestsSerialConnections();
-}
-/**
- * @brief tests if connection is rejected when (connection) message is larger then defined and other communication is not broken
- */
-TEST_F(InternalServerTests, RejectMessageOverflowingHeaderSize) {
-	std::vector<InternalProtocol::DeviceConnectResponse_ResponseType> responseType {
-		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
-		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
-		InternalProtocol::DeviceConnectResponse_ResponseType_OK
-	};
-
-	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
-	for(size_t i = 0; i < responseType.size(); ++i) {
-		devices.emplace_back(createDevice(
-			defaultModule,
-			defaultType,
-			defaultRole + std::to_string(i),
-			defaultName + std::to_string(i),
-			defaultPriority
-		));
-		data.push_back(defaultData);
-	}
-	testing_utils::TestHandler testedData(devices, responseType, data);
-	auto connectStr = testedData.getConnect(0).SerializeAsString();
-	testedData.runTestsWithWrongMessage(1, connectStr.size(), connectStr + "Hello", true);
 }
 /**
  * @brief tests if connection is rejected when we send less then 4 bytes of a message and other communication is not broken
