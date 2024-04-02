@@ -6,6 +6,7 @@
 #include <bringauto/modules/StatusAggregator.hpp>
 #include <bringauto/structures/AtomicQueue.hpp>
 #include <bringauto/structures/InternalClientMessage.hpp>
+#include <bringauto/structures/ModuleHandlerMessage.hpp>
 #include <device_management.h>
 
 #include <memory>
@@ -21,7 +22,7 @@ public:
 			std::shared_ptr <structures::GlobalContext> &context,
 			structures::ModuleLibrary &moduleLibrary,
 			std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &fromInternalQueue,
-			std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> &toInternalQueue,
+			std::shared_ptr <structures::AtomicQueue<structures::ModuleHandlerMessage>> &toInternalQueue,
 			std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue)
 			: context_ { context }, moduleLibrary_ { moduleLibrary }, fromInternalQueue_ { fromInternalQueue },
 			  toInternalQueue_ { toInternalQueue },
@@ -99,7 +100,7 @@ private:
 	/// Queue for incoming messages from internal server to be processed
 	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> fromInternalQueue_;
 	/// Queue for outgoing messages to internal server to be forwarded to devices
-	std::shared_ptr <structures::AtomicQueue<InternalProtocol::InternalServer>> toInternalQueue_;
+	std::shared_ptr <structures::AtomicQueue<structures::ModuleHandlerMessage>> toInternalQueue_;
 	/// Queue for outgoing messages to external server to be forwarded to external server
 	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> toExternalQueue_;
 };

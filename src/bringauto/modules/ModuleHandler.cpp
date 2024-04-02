@@ -69,13 +69,13 @@ void ModuleHandler::checkTimeoutedMessages(){
 					.device_role = devicesPointer[i].device_role,
 					.device_name = devicesPointer[i].device_name
 				};
+				const auto device = structures::DeviceIdentification(deviceId);
 				while(true) {
 					struct ::buffer aggregatedStatusBuffer {};
 					int remainingMessages = statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
 					if(remainingMessages == NO_MESSAGE_AVAILABLE) {
 						break;
 					}
-					auto device = structures::DeviceIdentification(deviceId);
 					auto internalProtocolDevice = device.convertToIPDevice();
 					auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(internalProtocolDevice,
 																										aggregatedStatusBuffer);
@@ -83,6 +83,11 @@ void ModuleHandler::checkTimeoutedMessages(){
 					log::logDebug("Module handler pushed timeouted aggregated status, number of aggregated statuses in queue {}",
 								  toExternalQueue_->size());
 					statusAggregator->moduleDeallocate(&aggregatedStatusBuffer);
+				}
+				const std::string id = common_utils::ProtobufUtils::getId(devicesPointer[i]);
+				if(statusAggregator->getDeviceTimeoutCount(id) >= settings::status_aggregation_timeout_max_count){
+					log::logWarning("Device {} not sending statuses for too long, disconnecting it", id);
+					toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(device.convertToCStruct()));
 				}
 				deallocate(&devicesPointer[i].device_role);
 				deallocate(&devicesPointer[i].device_name);
@@ -170,7 +175,7 @@ void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
 void
 ModuleHandler::sendConnectResponse(const ip::Device &device, ip::DeviceConnectResponse_ResponseType response_type) {
 	auto response = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(device, response_type);
-	toInternalQueue_->pushAndNotify(response);
+	toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false,response));
 	log::logInfo("New device {} is trying to connect, sending response {}", device.devicename(), response_type);
 }
 
@@ -202,7 +207,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	if(getCommandRc == OK) {
 		auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device,
 																									commandBuffer);
-		toInternalQueue_->pushAndNotify(deviceCommandMessage);
+		toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false, deviceCommandMessage));
 		log::logDebug("Module handler succesfully retrieved command and sent it to device: {}", deviceName);
 		statusAggregator->moduleDeallocate(&commandBuffer);
 	} else {
