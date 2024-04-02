@@ -340,8 +340,8 @@ bool InternalServer::sendResponse(const std::shared_ptr<structures::Connection> 
 	}
 	try {
 		logging::Logger::logDebug("Sending response to Internal Client, "
-								  "connection's ip address is {}, data: {}",
-								  connection->socket.remote_endpoint().address().to_string(), data);
+								  "connection's ip address is {}",
+								  connection->socket.remote_endpoint().address().to_string());
 		const auto dataWSize = connection->socket.write_some(boost::asio::buffer(data));
 		if(dataWSize != header) {
 			logging::Logger::logError("Error in sendResponse(...): "
