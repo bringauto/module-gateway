@@ -6,7 +6,6 @@ SET(CMAKE_CXX_STANDARD 20)
 ADD_SUBDIRECTORY("${CMAKE_CURRENT_LIST_DIR}/lib/example-module")
 
 FIND_PACKAGE(GTest REQUIRED)
-INCLUDE_DIRECTORIES(${GTEST_INCLUDE_DIRS})
 FILE(GLOB_RECURSE source_test_files "${CMAKE_CURRENT_LIST_DIR}/source/*" "${CMAKE_CURRENT_LIST_DIR}/source/testing_utils/*")
 ADD_EXECUTABLE(modulegateway_tests ${source_test_files} ${CMAKE_CURRENT_LIST_DIR}/mainTests.cpp)
 TARGET_INCLUDE_DIRECTORIES(modulegateway_tests PUBLIC "${CMAKE_CURRENT_LIST_DIR}/include/")
