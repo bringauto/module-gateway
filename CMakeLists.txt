@@ -2,7 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.25 FATAL_ERROR)
 PROJECT(ModuleGateway)
 INCLUDE(GNUInstallDirs)
 
-SET(BRINGAUTO_MODULE_GATEWAY_VERSION 1.0.2)
+SET(BRINGAUTO_MODULE_GATEWAY_VERSION 1.1.0)
 SET(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 SET(CMAKE_CXX_STANDARD 20)
 
@@ -42,29 +42,28 @@ FIND_PACKAGE(nlohmann_json 3.2.0 REQUIRED)
 FIND_PACKAGE(PahoMqttCpp REQUIRED)
 FIND_PACKAGE(eclipse-paho-mqtt-c REQUIRED)
 FIND_PACKAGE(libbringauto_logger 1.2.0 REQUIRED)
+FIND_PACKAGE(fleet-protocol-interface 2.0.0 REQUIRED)
 
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/fleet-protocol)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/example-module)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/mission-module)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/io-module)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/libs/memory_management)
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/lib/memory_management)
 
-FILE(GLOB_RECURSE source_files "src/*")
-ADD_LIBRARY(module-gateway-lib STATIC "${source_files}") # TODO remove this?
+FILE(GLOB_RECURSE source_files "source/*")
+ADD_LIBRARY(module-gateway-lib STATIC "${source_files}")
 TARGET_INCLUDE_DIRECTORIES(module-gateway-lib PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         Boost::headers
-                        memory_management
-                        fleet-protocol::protobuf_cpp
-                        fleet-protocol::common_headers
-                        fleet-protocol::module_gateway
-                        module_gateway_maintainer
+                        memory-management
+                        protobuf::libprotobuf
+                        fleet-protocol-interface::protobuf-cpp-interface
+                        fleet-protocol-interface::common-headers-interface
+                        fleet-protocol-interface::module-gateway-interface
+                        fleet-protocol-interface::module-maintainer-module-gateway-interface
                         nlohmann_json::nlohmann_json
                         cxxopts::cxxopts
                         bringauto_logger::bringauto_logger
                         eclipse-paho-mqtt-c::paho-mqtt3as
                         PahoMqttCpp::paho-mqttpp3
-                        ${CMAKE_DL_LIBS})
+                        ${CMAKE_DL_LIBS}
+)
 
 CMDEF_ADD_EXECUTABLE(
         TARGET module-gateway-app
@@ -92,18 +91,6 @@ IF (BRINGAUTO_INSTALL)
     CONFIGURE_FILE(resources/systemd/module-gateway.service.in module-gateway.service @ONLY)
     CMDEF_INSTALL(
             TARGET module-gateway-app
-            NAMESPACE module-gateway-app::
-    )
-    CMDEF_INSTALL(
-            TARGET io_module_gateway
-            NAMESPACE module-gateway-app::
-    )
-    CMDEF_INSTALL(
-            TARGET example_module_gateway
-            NAMESPACE module-gateway-app::
-    )
-    CMDEF_INSTALL(
-            TARGET mission_module_gateway
             NAMESPACE module-gateway-app::
     )
     BA_PACKAGE_DEPS_IMPORTED(module-gateway-app)

@@ -1,12 +1,12 @@
 #pragma once
 
-
 #include <bringauto/external_client/connection/ExternalConnection.hpp>
 #include <bringauto/structures/GlobalContext.hpp>
 #include <bringauto/structures/ModuleLibrary.hpp>
 #include <bringauto/structures/AtomicQueue.hpp>
 #include <bringauto/structures/InternalClientMessage.hpp>
 #include <bringauto/structures/ReconnectQueueItem.hpp>
+
 #include <InternalProtocol.pb.h>
 
 #include <memory>

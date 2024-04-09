@@ -1,7 +1,7 @@
 #include <bringauto/external_client/connection/messages/SentMessagesHandler.hpp>
 #include <bringauto/logging/Logger.hpp>
-#include <general_error_codes.h>
 
+#include <fleet_protocol/common_headers/general_error_codes.h>
 #include <google/protobuf/util/message_differencer.h>
 
 #include <utility>

@@ -1,8 +1,7 @@
 #pragma once
 
-#include <bringauto/settings/Settings.hpp>
-
 #include <boost/asio.hpp>
+#include <bringauto/settings/Settings.hpp>
 
 
 

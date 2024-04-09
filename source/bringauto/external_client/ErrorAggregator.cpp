@@ -1,9 +1,9 @@
 #include <bringauto/external_client/ErrorAggregator.hpp>
 
-#include <module_manager.h>
+#include <fleet_protocol/module_maintainer/module_gateway/module_manager.h>
+#include <fleet_protocol/module_gateway/error_codes.h>
 #include <bringauto/logging/Logger.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
-#include <mg_error_codes.h>
 
 
 
