@@ -1,3 +1,3 @@
 [submodule "test/lib/example-module"]
 	path = test/lib/example-module
-	url = git@github.com:bringauto/example-module.git
+	url = https://github.com/bringauto/example-module.git
