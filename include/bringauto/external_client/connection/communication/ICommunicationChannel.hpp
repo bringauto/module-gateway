@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bringauto/structures/ExternalConnectionSettings.hpp>
+
 #include <ExternalProtocol.pb.h>
 
 #include <utility>

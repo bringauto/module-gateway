@@ -26,38 +26,38 @@ connection is broken and as soon as the connection is up, then error aggregated 
 
 ## Requirements
 
+- [cmlib](https://github.com/cmakelib/cmakelib)
+
 - [protobuf](https://github.com/protocolbuffers/protobuf/tree/main/src) >= v3.21.12
 - [cxxopts](https://github.com/jarro2783/cxxopts) >= v3.0.0
 - [boost](https://github.com/boostorg/boost) >= v1.74.0
 - [nlohmann-json](https://github.com/nlohmann/json) >= v3.2.0
 - [ba-logger](https://github.com/bringauto/ba-logger) >= v1.2.0
-- g++ >= 10
-
-- [cmlib](https://github.com/cmakelib/cmakelib)
+- g++ >= 10 or other compiler with c++20 support
 
 ## Build
 ```
 mkdir -p _build && cd _build
-cmake ../ -DCMLIB_DIR=<absolute path cmakelib>
+cmake ../ -DCMLIB_DIR=</absolute/path/cmakelib>
 make
 ```
 
 ## Run
 
 ```
-./ModuleGateway --config-path=../configs/default.json
+./module-gateway-app --config-path=../resources/config/default.json
 ```
 
 ### Arguments
 
 * required arguments:
-	* `-c | --config-path <string>`path to json configuration file ([Configs Readme](./configs/README.md))
-* `-v | --verbose` logs will be printed to console
-* `-l | --log-path <string>` logs will be saved to provided path
-* `-h | --help` print help
-
-* `--port <unsigned short>` port on which Internal Server communicates
-* `--module-paths <string>` path to shared module libraries
+  * `-c | --config-path <string>`path to json configuration file ([Configs Readme](./configs/README.md))
+* All arguments:
+  * `-v | --verbose` logs will be printed to console
+  * `-l | --log-path <string>` logs will be saved to provided path
+  * `-h | --help` print help
+  * `--port <unsigned short>` port on which Internal Server communicates
+  * `--module-paths <string>` path to shared module libraries
 
 ### CMAKE arguments
 

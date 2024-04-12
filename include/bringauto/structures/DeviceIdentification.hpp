@@ -1,7 +1,7 @@
 #pragma once
 
 #include <InternalProtocol.pb.h>
-#include <device_management.h>
+#include <fleet_protocol/common_headers/device_management.h>
 
 
 
