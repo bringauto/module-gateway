@@ -32,6 +32,12 @@ public:
 	 */
 	std::shared_ptr<bringauto::settings::Settings> getSettings();
 
+	/**
+	 * @brief Serializes settings to json
+	 * @return string with json representation of settings
+	 */
+	std::string serializeToJson();
+
 private:
 	cxxopts::ParseResult cmdArguments_;
 	std::shared_ptr<bringauto::settings::Settings> settings_;

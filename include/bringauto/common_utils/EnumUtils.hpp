@@ -20,6 +20,14 @@ public:
 	 */
 	static structures::ProtocolType stringToProtocolType(std::string toEnum);
 
+	/**
+	 * @brief Converts protocol type to string
+	 *
+	 * @param toEnum structures::ProtocolType
+	 * @return std::string
+	 */
+	static std::string protocolTypeToString(structures::ProtocolType toString);
+
 };
 
 }

@@ -97,6 +97,7 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 											   const struct ::device_identification device) {
 	const auto &device_type = device.device_type;
 	if(is_device_type_supported(device_type) == NOT_OK) {
+		log::logError("Trying to add status to unsupported device type: {}", device_type);
 		return DEVICE_NOT_SUPPORTED;
 	}
 
@@ -151,6 +152,7 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 int StatusAggregator::get_aggregated_status(struct ::buffer *generated_status,
 											const struct ::device_identification device) {
 	if(is_device_valid(device) == NOT_OK) {
+		log::logError("Trying to get aggregated status from unregistered device");
 		return DEVICE_NOT_REGISTERED;
 	}
 
@@ -195,6 +197,7 @@ int StatusAggregator::get_unique_devices(struct ::buffer *unique_devices_buffer)
 int StatusAggregator::force_aggregation_on_device(const struct ::device_identification device) {
 	std::string id = common_utils::ProtobufUtils::getId(device);
 	if(is_device_valid(device) == NOT_OK) {
+		log::logError("Trying to force aggregation on unregistered device: {}", id);
 		return DEVICE_NOT_REGISTERED;
 	}
 
@@ -225,11 +228,13 @@ int StatusAggregator::get_module_number() { return module_->getModuleNumber(); }
 int StatusAggregator::update_command(const struct ::buffer command, const struct ::device_identification device) {
 	const auto &device_type = device.device_type;
 	if(is_device_type_supported(device_type) == NOT_OK) {
+		log::logError("Device type {} is not supported", device_type);
 		return DEVICE_NOT_SUPPORTED;
 	}
 
 	std::string id = common_utils::ProtobufUtils::getId(device);
 	if(not devices.contains(id)) {
+		log::logWarning("Received command for not registered device: {}", id);
 		return DEVICE_NOT_REGISTERED;
 	}
 

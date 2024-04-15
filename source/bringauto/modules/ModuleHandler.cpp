@@ -26,7 +26,8 @@ void ModuleHandler::destroy() {
 }
 
 void ModuleHandler::run() {
-	log::logInfo("Module handler started");
+	log::logInfo("Module handler started, constants used: queue_timeout_length: {}, status_aggregation_timeout: {}",
+				 settings::queue_timeout_length.count(), settings::status_aggregation_timeout.count());
 	handleMessages();
 }
 
@@ -110,6 +111,7 @@ void ModuleHandler::handleDisconnect(device_identification deviceId) {
 
 	auto &statusAggregator = statusAggregators.at(moduleNumber);
 	if(statusAggregator->is_device_valid(deviceId) == NOT_OK) {
+		log::logWarning("Trying to disconnect invalid device");
 		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 		return;
 	}
@@ -164,7 +166,7 @@ void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
 
 	struct ::device_identification deviceId = common_utils::ProtobufUtils::parseDevice(device);
 	if(statusAggregator->is_device_valid(deviceId) == OK) {
-		log::logInfo("Device {} is replaced with device with higher priority", deviceName);
+		log::logInfo("Device {} is replaced by device with higher priority", deviceName);
 	}
 	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 

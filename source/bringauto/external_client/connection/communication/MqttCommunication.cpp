@@ -14,6 +14,11 @@ MqttCommunication::MqttCommunication(const structures::ExternalConnectionSetting
 	connopts_.set_automatic_reconnect(settings::MqttConstants::automatic_reconnect);
 	connopts_.set_connect_timeout(std::chrono::milliseconds(settings::MqttConstants::connect_timeout));
 	connopts_.set_max_inflight(settings::MqttConstants::max_inflight);
+
+	logging::Logger::logInfo("MQTT communication parameters: keepalive: {}, automatic_reconnect: {}, connect_timeout: {}, "
+							 "max_inflight: {}, receive_message_timeout: {}", settings::MqttConstants::keepalive,
+							 settings::MqttConstants::automatic_reconnect, settings::MqttConstants::connect_timeout,
+							 settings::MqttConstants::max_inflight, settings::receive_message_timeout.count());
 };
 
 MqttCommunication::~MqttCommunication() {
