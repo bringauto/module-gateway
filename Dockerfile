@@ -39,3 +39,5 @@ RUN mkdir -p /home/bringauto/module-gateway/tmp/build && \
 
 # Remove tmp library with source files
 RUN rm -rf /home/bringauto/module-gateway/tmp
+
+EXPOSE 1636
