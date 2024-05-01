@@ -3,6 +3,8 @@
 #include <InternalProtocol.pb.h>
 #include <fleet_protocol/common_headers/device_management.h>
 
+#include <string>
+
 
 
 namespace bringauto::structures {
@@ -18,7 +20,17 @@ public:
 	 * @brief Construct object and fill params with values given in device
 	 * @param device object holding values to be assigned to corresponding params
 	 */
-	explicit DeviceIdentification(const device_identification &device);
+	explicit DeviceIdentification(const ::device_identification &device);
+
+	DeviceIdentification(const DeviceIdentification& device) {
+		module_ = device.module_;
+		deviceType_ = device.deviceType_;
+		priority_ = device.priority_;
+		deviceRole_ = device.deviceRole_;
+		deviceName_ = device.deviceName_;
+	}
+
+	DeviceIdentification() = default;
 
 	/**
 	 * @brief get value of module_
@@ -84,16 +96,43 @@ public:
 	 */
 	[[nodiscard]] InternalProtocol::Device convertToIPDevice() const;
 
+	/**
+	 * TODO
+	 * @return
+	 */
+	[[nodiscard]] std::string convertToString() const {
+		return module_ + "/" + std::to_string(deviceType_) + "/" + deviceRole_ + "/" + deviceName_;
+	}
+
 private:
 	/// Module number
-	uint32_t module_;
+	uint32_t module_ {};
 	/// Device type
-	uint32_t deviceType_;
+	uint32_t deviceType_ {};
 	/// Role of the device
-	std::string deviceRole_;
+	std::string deviceRole_ {};
 	/// Name of the device
-	std::string deviceName_;
+	std::string deviceName_ {};
 	/// Priority of the device
-	uint32_t priority_;
+	uint32_t priority_ {};
 };
+
+
 }
+
+template <>
+struct std::hash<::bringauto::structures::DeviceIdentification>
+{
+	std::size_t operator()(const ::bringauto::structures::DeviceIdentification& k) const
+	{
+		using std::size_t;
+		using std::hash;
+		using std::string;
+
+		//TODO is the hash ok?
+		//copy from https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
+		return ((hash<int>()(k.getModule())
+				 ^ (hash<int>()(k.getDeviceType()) << 1)) >> 1)
+				 ^ (hash<std::string>()(k.getDeviceRole()) << 1);
+	}
+};

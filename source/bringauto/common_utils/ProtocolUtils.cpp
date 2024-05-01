@@ -42,27 +42,17 @@ ProtobufUtils::createInternalClientStatusMessage(const InternalProtocol::Device 
 	return message;
 }
 
-InternalProtocol::DeviceStatus ProtobufUtils::createDeviceStatus(const device_identification &deviceId,
+InternalProtocol::DeviceStatus ProtobufUtils::createDeviceStatus(const structures::DeviceIdentification &deviceId,
 																 const buffer &status) {
 	InternalProtocol::DeviceStatus deviceStatus;
-    structures::DeviceIdentification deviceIdentification(deviceId);
-	deviceStatus.mutable_device()->CopyFrom(deviceIdentification.convertToIPDevice());
+	deviceStatus.mutable_device()->CopyFrom(deviceId.convertToIPDevice());
 	deviceStatus.set_statusdata(status.data, status.size_in_bytes);
 	return deviceStatus;
 }
 
-device_identification ProtobufUtils::parseDevice(const InternalProtocol::Device &device) {
-	struct buffer deviceRoleBuff {};
-	MemoryUtils::initBuffer(deviceRoleBuff, device.devicerole());
-
-	struct buffer deviceNameBuff {};
-	MemoryUtils::initBuffer(deviceNameBuff, device.devicename());
-
-	return ::device_identification { .module = device.module(),
-			.device_type = device.devicetype(),
-			.device_role = deviceRoleBuff,
-			.device_name = deviceNameBuff,
-			.priority = device.priority() };
+///TODO complatly remote this func.
+structures::DeviceIdentification ProtobufUtils::parseDevice(const InternalProtocol::Device &device) {
+	return structures::DeviceIdentification(device);
 }
 
 ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientConnect(const std::string &sessionId,
@@ -110,14 +100,6 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientCommandRespo
 	commandResponse->set_type(type);
 	commandResponse->set_messagecounter(messageCounter);
 	return externalMessage;
-}
-
-std::string ProtobufUtils::getId(const ::device_identification &device) {
-	std::stringstream ss;
-	ss << device.module << "/" << device.device_type << "/"
-	   << std::string { static_cast<char *>(device.device_role.data), device.device_role.size_in_bytes } << "/"
-	   << std::string { static_cast<char *>(device.device_name.data), device.device_name.size_in_bytes };
-	return ss.str();
 }
 
 }

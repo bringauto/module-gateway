@@ -22,23 +22,22 @@ int ErrorAggregator::destroy_error_aggregator() {
 }
 
 int
-ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, const struct device_identification device) {
-	const auto &device_type = device.device_type;
+ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, const structures::DeviceIdentification& device) {
+	const auto &device_type = device.getDeviceType();
 	if(is_device_type_supported(device_type) == NOT_OK) {
 		return DEVICE_NOT_SUPPORTED;
 	}
-	std::string id = common_utils::ProtobufUtils::getId(device);
 
 	if(status.size_in_bytes == 0) {
-		log::logWarning("Invalid status data for device: {}", id);
+		log::logWarning("Invalid status data for device: {}", device.convertToString());
 		return NOT_OK;
 	}
 
-	if(not devices_.contains(id)) {
-		devices_.insert({ id, {}});
+	if(not devices_.contains(device)) {
+		devices_.insert({ device, {}});
 	}
 
-	auto &lastStatus = devices_[id].lastStatus;
+	auto &lastStatus = devices_[device].lastStatus;
 	if(lastStatus.data != nullptr && lastStatus.size_in_bytes > 0) { // status.size_in_bytes > lastStatus.size_in_bytes
 		module_->deallocate(&lastStatus);
 	}
@@ -49,11 +48,11 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 	std::memcpy(lastStatus.data, status.data, status.size_in_bytes);
 
 	struct buffer errorMessageBuffer {};
-	auto &currentError = devices_[id].errorMessage;
+	auto &currentError = devices_[device].errorMessage;
 
 	auto retCode = module_->aggregateError(&errorMessageBuffer, currentError, status, device_type);
 	if(retCode != OK) {
-		log::logWarning("Error occurred in Error aggregator for device: {}", id);
+		log::logWarning("Error occurred in Error aggregator for device: {}", device.convertToString());
 		return NOT_OK;
 	}
 	if(currentError.data != nullptr) {
@@ -63,13 +62,12 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 	return OK;
 }
 
-int ErrorAggregator::get_last_status(struct buffer *status, const struct device_identification device) {
-	std::string id = common_utils::ProtobufUtils::getId(device);
-	if(not devices_.contains(id)) {
+int ErrorAggregator::get_last_status(struct buffer *status, const structures::DeviceIdentification& device) {
+	if(not devices_.contains(device)) {
 		return DEVICE_NOT_REGISTERED;
 	}
 
-	auto &lastStatus = devices_[id].lastStatus;
+	auto &lastStatus = devices_[device].lastStatus;
 
 	if(lastStatus.data == nullptr || lastStatus.size_in_bytes == 0) {
 		return NO_MESSAGE_AVAILABLE;
@@ -79,13 +77,12 @@ int ErrorAggregator::get_last_status(struct buffer *status, const struct device_
 	return OK;
 }
 
-int ErrorAggregator::get_error(struct buffer *error, const struct device_identification device) {
-	std::string id = common_utils::ProtobufUtils::getId(device);
-	if(not devices_.contains(id)) {
+int ErrorAggregator::get_error(struct buffer *error, const structures::DeviceIdentification& device) {
+	if(not devices_.contains(device)) {
 		return DEVICE_NOT_REGISTERED;
 	}
 
-	auto &currentError = devices_[id].errorMessage;
+	auto &currentError = devices_[device].errorMessage;
 
 	if(currentError.data == nullptr || currentError.size_in_bytes == 0) {
 		return NO_MESSAGE_AVAILABLE;

@@ -70,7 +70,7 @@ private:
 	 * @param device protobuf device
 	 * @param disconnected true if device is disconnected otherwise false
 	 */
-	void sendAggregatedStatus(const device_identification &deviceId, const InternalProtocol::Device &device, bool disconnected);
+	void sendAggregatedStatus(const structures::DeviceIdentification &deviceId, const InternalProtocol::Device &device, bool disconnected);
 
 	/**
 	 * @brief Process connect message

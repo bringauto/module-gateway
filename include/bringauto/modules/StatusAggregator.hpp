@@ -2,14 +2,13 @@
 
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
 #include <bringauto/structures/StatusAggregatorDeviceState.hpp>
+#include <bringauto/structures/DeviceIdentification.hpp>
 
-#include <fleet_protocol/common_headers/device_management.h>
 #include <fleet_protocol/module_gateway/command_manager.h>
 #include <fleet_protocol/module_maintainer/module_gateway//module_manager.h>
 
 #include <functional>
-#include <map>
-#include <queue>
+#include <unordered_map>
 #include <string>
 #include <filesystem>
 #include <mutex>
@@ -59,14 +58,14 @@ public:
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int clear_device(const struct ::device_identification device);
+	int clear_device(const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Remove device from aggregator
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int remove_device(const struct ::device_identification device);
+	int remove_device(const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Add protobuf status message to aggregator, aggregator will aggregate each unique devices messages of
@@ -74,14 +73,14 @@ public:
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int add_status_to_aggregator(const struct ::buffer status, const struct ::device_identification device);
+	int add_status_to_aggregator(const struct ::buffer status, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get the oldest aggregated protobuf status message that is aggregated
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int get_aggregated_status(struct ::buffer *generated_status, const struct ::device_identification device);
+	int get_aggregated_status(struct ::buffer *generated_status, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get all devices registered to aggregator
@@ -95,28 +94,28 @@ public:
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int force_aggregation_on_device(const struct ::device_identification device);
+	int force_aggregation_on_device(const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Check if device is valid and registered
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int is_device_valid(const struct ::device_identification device);
+	int is_device_valid(const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Update command message.
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/command_manager.h
 	 */
-	int update_command(const struct ::buffer command, const struct ::device_identification device);
+	int update_command(const struct ::buffer command, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get command message.
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/command_manager.h
 	 */
-	int get_command(const struct ::buffer status, const struct ::device_identification device,
+	int get_command(const struct ::buffer status, const structures::DeviceIdentification& device,
 					struct ::buffer *command);
 
 	/**
@@ -167,17 +166,9 @@ public:
 	 * @param key device unique key, obtained from getId function in ProtobufUtils
 	 * @return number of timeouts
 	 */
-	int getDeviceTimeoutCount(const std::string &key);
+	int getDeviceTimeoutCount(const structures::DeviceIdentification& );
 
 private:
-
-	/**
-	 * @brief Clear the device by string key
-	 *
-	 * @param device unique device key
-	 * @return OK if success, otherwise NOT_OK
-	 */
-	int clear_device(const std::string &key);
 
 	/**
 	 * @brief Aggregate status message
@@ -217,12 +208,12 @@ private:
 	/**
 	 * @brief Map of devices states, key is device identification converted to string
 	 */
-	std::map<std::string, structures::StatusAggregatorDeviceState> devices {};
+	std::unordered_map<structures::DeviceIdentification, structures::StatusAggregatorDeviceState> devices {};
 
 	/**
 	 * @brief Map of devices timeouts, key is device identification converted to string
 	 */
-	std::map<std::string, int> deviceTimeouts_ {};
+	std::unordered_map<structures::DeviceIdentification, int> deviceTimeouts_ {};
 
 	std::mutex mutex_ {};
 

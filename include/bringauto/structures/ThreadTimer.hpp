@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bringauto/structures/GlobalContext.hpp>
+#include <bringauto/structures/DeviceIdentification.hpp>
 #include <bringauto/settings/Constants.hpp>
 
 #include <fleet_protocol/common_headers/device_management.h>
@@ -32,8 +33,8 @@ public:
 	 *					(in seconds)
 	 */
 	explicit ThreadTimer(std::shared_ptr<bringauto::structures::GlobalContext> &context,
-						 std::function<int(const struct ::device_identification)> &function,
-						 const device_identification &deviceId): timer_ { context->ioContext },
+						 std::function<int(const structures::DeviceIdentification&)> &function,
+						 const structures::DeviceIdentification& deviceId): timer_ { context->ioContext },
 																 fun_ { function },
 																 deviceId_ { deviceId } {}
 
@@ -68,9 +69,9 @@ private:
 	/**
 	 * @brief Function which should be executed if timer expires
 	 */
-	std::function<int(const struct ::device_identification)> fun_;
+	std::function<int(const structures::DeviceIdentification&)> fun_;
 	/// Device identification struct
-	device_identification deviceId_;
+	structures::DeviceIdentification deviceId_;
 	/// Interval of time in which timer time out
 	boost::posix_time::seconds interval_ { settings::status_aggregation_timeout.count() };
 };

@@ -72,7 +72,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 				const auto device = structures::DeviceIdentification(deviceId);
 				while(true) {
 					struct ::buffer aggregatedStatusBuffer {};
-					int remainingMessages = statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
+					int remainingMessages = statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, device);
 					if(remainingMessages == NO_MESSAGE_AVAILABLE) {
 						break;
 					}
@@ -84,9 +84,10 @@ void ModuleHandler::checkTimeoutedMessages(){
 								  toExternalQueue_->size());
 					statusAggregator->moduleDeallocate(&aggregatedStatusBuffer);
 				}
-				const std::string id = common_utils::ProtobufUtils::getId(devicesPointer[i]);
-				if(statusAggregator->getDeviceTimeoutCount(id) >= settings::status_aggregation_timeout_max_count){
-					log::logWarning("Device {} not sending statuses for too long, disconnecting it", id);
+
+				//const std::string id = common_utils::ProtobufUtils::getId(devicesPointer[i]);
+				if(statusAggregator->getDeviceTimeoutCount(device) >= settings::status_aggregation_timeout_max_count){
+					log::logWarning("Device {} not sending statuses for too long, disconnecting it", device.convertToString());
 					toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(device.convertToCStruct()));
 				}
 				deallocate(&devicesPointer[i].device_role);
@@ -98,27 +99,31 @@ void ModuleHandler::checkTimeoutedMessages(){
 	}
 }
 
-void ModuleHandler::handleDisconnect(device_identification deviceId) {
-	const auto &moduleNumber = deviceId.module;
-	std::string deviceName { static_cast<char *>(deviceId.device_name.data), deviceId.device_name.size_in_bytes };
+///TODO can structures::DeviceIdentification be used here?
+void ModuleHandler::handleDisconnect(device_identification deviceIdRaw) {
+	structures::DeviceIdentification deviceId { deviceIdRaw };
+
+	const auto &moduleNumber = deviceId.getModule();
+	const std::string& deviceName { deviceId.getDeviceName() };
 	auto &statusAggregators = moduleLibrary_.statusAggregators;
 
 	if(not statusAggregators.contains(moduleNumber)) {
 		log::logWarning("Module number: {} is not supported", moduleNumber);
-		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
+		common_utils::MemoryUtils::deallocateDeviceId(deviceIdRaw);
 		return;
 	}
 
 	auto &statusAggregator = statusAggregators.at(moduleNumber);
 	if(statusAggregator->is_device_valid(deviceId) == NOT_OK) {
 		log::logWarning("Trying to disconnect invalid device");
-		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
+		common_utils::MemoryUtils::deallocateDeviceId(deviceIdRaw);
 		return;
 	}
 
 	int ret = statusAggregator->force_aggregation_on_device(deviceId);
 	if(ret < 1) {
 		log::logWarning("Force aggregation failed on device: {} with error code: {}", deviceName, ret);
+		common_utils::MemoryUtils::deallocateDeviceId(deviceIdRaw);
 		return;
 	}
 	auto device = structures::DeviceIdentification(deviceId);
@@ -128,12 +133,12 @@ void ModuleHandler::handleDisconnect(device_identification deviceId) {
 	statusAggregator->remove_device(deviceId);
 
 	log::logInfo("Device {} disconnects", deviceName);
-	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
+	common_utils::MemoryUtils::deallocateDeviceId(deviceIdRaw);
 }
 
-void ModuleHandler::sendAggregatedStatus(const device_identification &deviceId, const ip::Device &device,
+void ModuleHandler::sendAggregatedStatus(const structures::DeviceIdentification &deviceId, const ip::Device &device,
 										 bool disconnected) {
-	auto &statusAggregator = moduleLibrary_.statusAggregators.at(deviceId.module);
+	auto &statusAggregator = moduleLibrary_.statusAggregators.at(deviceId.getModule());
 	struct ::buffer aggregatedStatusBuffer {};
 	statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
 	auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device,
@@ -164,11 +169,10 @@ void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
 		return;
 	}
 
-	struct ::device_identification deviceId = common_utils::ProtobufUtils::parseDevice(device);
+	auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
 	if(statusAggregator->is_device_valid(deviceId) == OK) {
 		log::logInfo("Device {} is replaced by device with higher priority", deviceName);
 	}
-	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 
 	sendConnectResponse(device, ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_OK);
 }
@@ -201,7 +205,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	}
 	std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
-	struct ::device_identification deviceId = common_utils::ProtobufUtils::parseDevice(device);
+	const auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
 
 	struct ::buffer commandBuffer {};
 	int getCommandRc = statusAggregator->get_command(statusBuffer, deviceId, &commandBuffer);
@@ -213,7 +217,6 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 		statusAggregator->moduleDeallocate(&commandBuffer);
 	} else {
 		log::logWarning("Retrieving command failed with return code: {}", getCommandRc);
-		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 		statusAggregator->moduleDeallocate(&statusBuffer);
 		return;
 	}
@@ -221,7 +224,6 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	int addStatusToAggregatorRc = statusAggregator->add_status_to_aggregator(statusBuffer, deviceId);
 	if(addStatusToAggregatorRc < 0) {
 		log::logWarning("Add status to aggregator failed with return code: {}", addStatusToAggregatorRc);
-		common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 		statusAggregator->moduleDeallocate(&statusBuffer);
 		return;
 	}
@@ -231,7 +233,6 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 		addStatusToAggregatorRc--;
 	}
 
-	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	statusAggregator->moduleDeallocate(&statusBuffer);
 }
 

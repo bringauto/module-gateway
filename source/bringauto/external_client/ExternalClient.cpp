@@ -58,7 +58,6 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 
 	auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
 	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);
-	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	if(ret != OK) {
 		moduleLibraryHandler->deallocate(&commandBuffer);
 		log::logError("Update command failed with error code: {}", ret);

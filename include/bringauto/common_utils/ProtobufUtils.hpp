@@ -54,7 +54,7 @@ public:
 	 * @param status status data
 	 * @return InternalProtocol::DeviceStatus
 	 */
-	static InternalProtocol::DeviceStatus createDeviceStatus(const device_identification &deviceId,
+	static InternalProtocol::DeviceStatus createDeviceStatus(const structures::DeviceIdentification &deviceId,
 															 const buffer &status);
 
 	/**
@@ -63,7 +63,7 @@ public:
 	 * @param device protobuf
 	 * @return device_identification
 	 */
-	static device_identification parseDevice(const InternalProtocol::Device &device);
+	static structures::DeviceIdentification parseDevice(const InternalProtocol::Device &device);
 
 	/**
 	 * @brief Create a External Client Connect message
@@ -106,14 +106,6 @@ public:
 	static ExternalProtocol::ExternalClient createExternalClientCommandResponse(const std::string &sessionId,
 																				ExternalProtocol::CommandResponse::Type type,
 																				u_int32_t messageCounter);
-
-	/**
-	 * @brief Get the id string from struct device_identification in format <module number>/<device type>/<device role>/<device name>
-	 *
-	 * @param device struct which generates id
-	 * @return std::string
-	 */
-	static std::string getId(const ::device_identification &device);
 
 };
 }

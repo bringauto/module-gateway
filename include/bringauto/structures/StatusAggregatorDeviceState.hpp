@@ -2,6 +2,7 @@
 
 #include <bringauto/structures/GlobalContext.hpp>
 #include <bringauto/structures/ThreadTimer.hpp>
+#include <bringauto/structures/DeviceIdentification.hpp>
 #include <fleet_protocol/common_headers/device_management.h>
 
 #include <queue>
@@ -20,8 +21,8 @@ public:
 	StatusAggregatorDeviceState() = default;
 
 	StatusAggregatorDeviceState(std::shared_ptr<bringauto::structures::GlobalContext> &context,
-								std::function<int(const struct ::device_identification)> fun,
-								const device_identification &deviceId, const buffer command, const buffer status, std::function<void(struct buffer *)> dealloc);
+								std::function<int(const structures::DeviceIdentification&)> fun,
+								const structures::DeviceIdentification &deviceId, const buffer command, const buffer status, std::function<void(struct buffer *)> dealloc);
 
 	/**
 	 * @brief Deallocate and replace status buffer

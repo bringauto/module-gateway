@@ -50,21 +50,22 @@ void SentMessagesHandler::clearAll() {
 	notAckedStatuses_.clear();
 }
 
-void SentMessagesHandler::addDeviceAsConnected(const std::string &device) {
+void SentMessagesHandler::addDeviceAsConnected(const structures::DeviceIdentification &device) {
 	connectedDevices_.push_back(device);
 }
 
-void SentMessagesHandler::deleteConnectedDevice(const std::string &device) {
+void SentMessagesHandler::deleteConnectedDevice(const structures::DeviceIdentification &device) {
 	for(auto i = 0; i < connectedDevices_.size(); ++i) {
 		if(device == connectedDevices_[i]) {
+			//TODO WUT? It works? Critical bug!
 			connectedDevices_.erase(connectedDevices_.begin() + i);
 			return;
 		}
 	}
-	logging::Logger::logError("Trying to delete not connected device id: {}", device);
+	logging::Logger::logError("Trying to delete not connected device id: {}", device.convertToString());
 }
 
-bool SentMessagesHandler::isDeviceConnected(const std::string &device) {
+bool SentMessagesHandler::isDeviceConnected(const structures::DeviceIdentification &device) {
 	return std::any_of(connectedDevices_.begin(), connectedDevices_.end(), [&](const auto &connectedDevice) {
 		return device == connectedDevice;
 	});

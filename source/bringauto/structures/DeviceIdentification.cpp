@@ -59,8 +59,7 @@ DeviceIdentification& DeviceIdentification::operator=(const InternalProtocol::De
 bool DeviceIdentification::operator==(const DeviceIdentification &deviceId) const {
 	return module_ == deviceId.getModule() &&
 		   deviceType_ == deviceId.getDeviceType() &&
-		   deviceRole_ == deviceId.getDeviceRole() &&
-		   deviceName_ == deviceId.getDeviceName();
+		   deviceRole_ == deviceId.getDeviceRole();
 }
 
 device_identification DeviceIdentification::convertToCStruct() const {
