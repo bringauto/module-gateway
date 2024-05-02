@@ -206,7 +206,7 @@ private:
 	const std::shared_ptr<ModuleManagerLibraryHandler> module_ {};
 
 	/**
-	 * @brief Map of devices states, key is device identification converted to string
+	 * @brief Map of devices states, key is device identification
 	 */
 	std::unordered_map<structures::DeviceIdentification, structures::StatusAggregatorDeviceState> devices {};
 

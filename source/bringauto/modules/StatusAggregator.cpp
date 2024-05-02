@@ -170,6 +170,7 @@ int StatusAggregator::get_unique_devices(struct ::buffer *unique_devices_buffer)
 		devicesPointer[i].device_type = key.getDeviceType();
 		common_utils::MemoryUtils::initBuffer(devicesPointer[i].device_role, key.getDeviceRole());
 		common_utils::MemoryUtils::initBuffer(devicesPointer[i].device_name, key.getDeviceName());
+        devicesPointer[i].priority = key.getPriority();
 		i++;
 	}
 

@@ -158,7 +158,7 @@ TEST_F(StatusAggregatorTests, get_unique_devices_one){
 TEST_F(StatusAggregatorTests, get_unique_devices_two){
 	add_status_to_aggregator();
 	struct buffer status_buffer = init_status_buffer();
-    auto deviceId2 = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE_2, DEVICE_NAME_2, 10);
+    auto deviceId2 = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE_2, DEVICE_NAME_2, 0);
     int ret = statusAggregator->add_status_to_aggregator(status_buffer, deviceId2);
 	EXPECT_TRUE(ret == 1);
 	struct buffer unique_devices{};
@@ -169,20 +169,34 @@ TEST_F(StatusAggregatorTests, get_unique_devices_two){
 		.module = devicesPointer[0].module,
 		.device_type = devicesPointer[0].device_type,
 		.device_role = devicesPointer[0].device_role,
-		.device_name = devicesPointer[0].device_name
+		.device_name = devicesPointer[0].device_name,
+        .priority = devicesPointer[0].priority
 	};
-	ASSERT_EQ(MODULE, deviceId.module);
-	ASSERT_EQ(SUPPORTED_DEVICE_TYPE, deviceId.device_type);
+    ASSERT_EQ(MODULE, deviceId.module);
+    ASSERT_EQ(SUPPORTED_DEVICE_TYPE, deviceId.device_type);
+    auto deviceName = std::string((const char*)deviceId.device_name.data, deviceId.device_name.size_in_bytes);
+    auto deviceRole = std::string((const char*)deviceId.device_role.data, deviceId.device_role.size_in_bytes);
+    ASSERT_STREQ(DEVICE_ROLE_2, deviceRole.c_str());
+    ASSERT_STREQ(DEVICE_NAME_2, deviceName.c_str());
+    ASSERT_EQ(0, deviceId.priority);
 	deallocate(&deviceId.device_role);
 	deallocate(&deviceId.device_name);
+    // TODO will the order of devices be always the same?
+
 	deviceId = {
 		.module = devicesPointer[1].module,
 		.device_type = devicesPointer[1].device_type,
 		.device_role = devicesPointer[1].device_role,
-		.device_name = devicesPointer[1].device_name
+		.device_name = devicesPointer[1].device_name,
+        .priority = devicesPointer[1].priority
 	};
-	ASSERT_EQ(MODULE, deviceId.module);
-	ASSERT_EQ(SUPPORTED_DEVICE_TYPE, deviceId.device_type);
+    ASSERT_EQ(MODULE, deviceId.module);
+    ASSERT_EQ(SUPPORTED_DEVICE_TYPE, deviceId.device_type);
+    deviceName = std::string((const char*)deviceId.device_name.data, deviceId.device_name.size_in_bytes);
+    deviceRole = std::string((const char*)deviceId.device_role.data, deviceId.device_role.size_in_bytes);
+    ASSERT_STREQ(DEVICE_ROLE, deviceRole.c_str());
+    ASSERT_STREQ(DEVICE_NAME, deviceName.c_str());
+    ASSERT_EQ(10, deviceId.priority);
 	deallocate(&deviceId.device_role);
 	deallocate(&deviceId.device_name);
 	deallocate(&status_buffer);
