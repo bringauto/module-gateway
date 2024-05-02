@@ -40,8 +40,12 @@ protected:
 
 	std::unique_ptr <bringauto::modules::StatusAggregator> statusAggregator;
 
-	static constexpr const char* PATH_TO_MODULE { "./test/lib/example-module/libexample-module-gateway-sharedd.so" };
-	const std::string WRONG_PATH_TO_MODULE { "./bad_path.so" };
+#ifdef DEBUG
+    static constexpr const char* PATH_TO_MODULE { "./test/lib/example-module/libexample-module-gateway-sharedd.so" };
+#else
+    static constexpr const char* PATH_TO_MODULE { "./test/lib/example-module/libexample-module-gateway-shared.so" };
+#endif
+    const std::string WRONG_PATH_TO_MODULE { "./bad_path.so" };
     const unsigned int MODULE = 1000;
 	const unsigned int SUPPORTED_DEVICE_TYPE = 0;
 	const unsigned int UNSUPPORTED_DEVICE_TYPE = 1000;
