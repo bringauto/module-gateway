@@ -56,7 +56,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 	}
 	std::memcpy(commandBuffer.data, commandData.c_str(), commandBuffer.size_in_bytes);
 
-	auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
+	auto deviceId = structures::DeviceIdentification(device);
 	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);
 	if(ret != OK) {
 		moduleLibraryHandler->deallocate(&commandBuffer);

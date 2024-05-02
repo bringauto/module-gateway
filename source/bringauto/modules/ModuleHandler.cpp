@@ -169,7 +169,7 @@ void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
 		return;
 	}
 
-	auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
+	auto deviceId = structures::DeviceIdentification(device);
 	if(statusAggregator->is_device_valid(deviceId) == OK) {
 		log::logInfo("Device {} is replaced by device with higher priority", deviceName);
 	}
@@ -205,7 +205,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	}
 	std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
-	const auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
+	const auto deviceId = structures::DeviceIdentification(device);
 
 	struct ::buffer commandBuffer {};
 	int getCommandRc = statusAggregator->get_command(statusBuffer, deviceId, &commandBuffer);

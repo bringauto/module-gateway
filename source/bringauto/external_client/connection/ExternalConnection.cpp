@@ -59,7 +59,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 		return;
 	}
 	auto &errorAggregator = errorAggregators.at(deviceModule);
-	auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
+	auto deviceId = structures::DeviceIdentification(device);
 
 	struct buffer lastStatus{};
 	auto isRegistered = errorAggregator.get_last_status(&lastStatus, deviceId);
@@ -305,7 +305,7 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command &commandMe
 	serverMessageCounter_ = messageCounter;
 
 	ExternalProtocol::CommandResponse::Type responseType;
-	auto deviceId = common_utils::ProtobufUtils::parseDevice(commandMessage.devicecommand().device());
+	auto deviceId = structures::DeviceIdentification(commandMessage.devicecommand().device());
 	const auto &moduleNumber = deviceId.getModule();
 
 	if (not errorAggregators.contains(moduleNumber)){
@@ -384,7 +384,7 @@ void ExternalConnection::fillErrorAggregatorWithNotAckedStatuses() {
 		}
 		std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
-		auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
+		auto deviceId = structures::DeviceIdentification(device);
 		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer, deviceId);
 		deallocate(&statusBuffer);
 	}
@@ -407,7 +407,7 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 		}
 		std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
 
-		auto deviceId = common_utils::ProtobufUtils::parseDevice(deviceStatus.device());
+		auto deviceId = structures::DeviceIdentification(deviceStatus.device());
 		auto &errorAggregator = errorAggregators.at(moduleNum);
 		errorAggregator.add_status_to_error_aggregator(statusBuffer, deviceId);
 		deallocate(&statusBuffer);

@@ -58,14 +58,6 @@ public:
 															 const buffer &status);
 
 	/**
-	 * @brief Create device identification from protobuf Device
-	 *
-	 * @param device protobuf
-	 * @return device_identification
-	 */
-	static structures::DeviceIdentification parseDevice(const InternalProtocol::Device &device);
-
-	/**
 	 * @brief Create a External Client Connect message
 	 *
 	 * @param sessionId session identification

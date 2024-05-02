@@ -50,11 +50,6 @@ InternalProtocol::DeviceStatus ProtobufUtils::createDeviceStatus(const structure
 	return deviceStatus;
 }
 
-///TODO complatly remote this func.
-structures::DeviceIdentification ProtobufUtils::parseDevice(const InternalProtocol::Device &device) {
-	return structures::DeviceIdentification(device);
-}
-
 ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientConnect(const std::string &sessionId,
 																			const std::string &company,
 																			const std::string &vehicleName,
