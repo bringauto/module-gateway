@@ -25,13 +25,12 @@ protected:
 		bringauto::logging::Logger::init(settings);
 	}
 
-    const struct device_identification init_device_id(unsigned int type, const char* deviceRole, const char* deviceName);
-
 	struct buffer init_status_buffer();
 
     bringauto::external_client::ErrorAggregator errorAggregator;
 
-	static constexpr const char* PATH_TO_MODULE { "./test/lib/example-module/libexample-module-gateway-shared.so" };
+	static constexpr const char* PATH_TO_MODULE { "./test/lib/example-module/libexample-module-gateway-sharedd.so" };
+    static constexpr const int MODULE = 1000;
     const unsigned int SUPPORTED_DEVICE_TYPE = 0;
 	const unsigned int UNSUPPORTED_DEVICE_TYPE = 1000;
     const char *BUTTON_UNPRESSED = "{\"pressed\": false}";

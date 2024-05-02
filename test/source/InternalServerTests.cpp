@@ -1,7 +1,6 @@
 #include <InternalServerTests.hpp>
 
 
-
 namespace common_utils = bringauto::common_utils;
 
 InternalProtocol::Device

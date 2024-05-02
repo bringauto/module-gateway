@@ -1,28 +1,7 @@
 #include <StatusAggregatorTests.hpp>
+#include <testing_utils/DeviceIdentificationHelper.h>
 #include <bringauto/common_utils/MemoryUtils.hpp>
 
-
-
-const struct device_identification StatusAggregatorTests::init_device_id(unsigned int type, const char* deviceRole, const char* deviceName){
-	size_t deviceRoleSize = strlen(deviceRole);
-	struct buffer deviceRoleBuff{};
-	allocate(&deviceRoleBuff, deviceRoleSize);
-	std::memcpy(deviceRoleBuff.data, deviceRole, deviceRoleSize);
-
-	size_t deviceNameSize = strlen(deviceName);
-	struct buffer deviceNameBuff{};
-	allocate(&deviceNameBuff, deviceNameSize);
-	std::memcpy(deviceNameBuff.data, deviceName, deviceNameSize);
-
-	const struct ::device_identification device_id {
-		.module=2,
-		.device_type=type,
-		.device_role=deviceRoleBuff,
-		.device_name=deviceNameBuff,
-		.priority=10
-	};
-	return device_id;
-}
 
 struct buffer StatusAggregatorTests::init_status_buffer(){
 	struct buffer buffer{};
@@ -42,15 +21,14 @@ struct buffer StatusAggregatorTests::init_command_buffer(){
 
 void StatusAggregatorTests::add_status_to_aggregator(){
 	struct buffer status_buffer = init_status_buffer();
-	auto deviceId = init_device_id(SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->add_status_to_aggregator(status_buffer, deviceId);
 	EXPECT_TRUE(ret == 1);
 	deallocate(&status_buffer);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 }
 
 void StatusAggregatorTests::remove_device_from_status_aggregator(){
-	auto deviceId = init_device_id(SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->remove_device(deviceId);
 	EXPECT_TRUE(ret == OK);
 }
@@ -98,11 +76,10 @@ TEST_F(StatusAggregatorTests, is_device_type_supported_not_ok){
 }
 
 TEST_F(StatusAggregatorTests, add_status_to_aggregator_device_type_not_supported){
-	auto deviceId = init_device_id(UNSUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, UNSUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	struct buffer status_buffer{};
 	int ret = statusAggregator->add_status_to_aggregator(status_buffer, deviceId);
 	EXPECT_TRUE(ret == DEVICE_NOT_SUPPORTED);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 }
 
 TEST_F(StatusAggregatorTests, add_status_to_aggregator_status_register_device){
@@ -116,43 +93,39 @@ TEST_F(StatusAggregatorTests, add_status_to_aggregator_without_aggregation){
 	size_t size = strlen(BUTTON_PRESSED) + 1;
 	allocate(&status_buffer, size);
 	strcpy(static_cast<char *>(status_buffer.data), BUTTON_PRESSED);
-	auto deviceId = init_device_id(SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->add_status_to_aggregator(status_buffer, deviceId);
 	EXPECT_TRUE(ret == 2);
 	ret = statusAggregator->add_status_to_aggregator(init_status_buffer(), deviceId);
 	EXPECT_TRUE(ret == 3);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	remove_device_from_status_aggregator();
 }
 
 TEST_F(StatusAggregatorTests, add_status_to_aggregator_with_aggregation){
 	add_status_to_aggregator();
 	struct buffer status_buffer = init_status_buffer();
-	auto deviceId = init_device_id(SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->add_status_to_aggregator(status_buffer, deviceId);
 	EXPECT_TRUE(ret == 1);
 	ret = statusAggregator->add_status_to_aggregator(status_buffer, deviceId);
 	EXPECT_TRUE(ret == 1);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	remove_device_from_status_aggregator();
 }
 
 TEST_F(StatusAggregatorTests, get_aggregated_status_device_not_registered){
 	struct buffer status_buffer{};
-	auto deviceId = init_device_id(SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->get_aggregated_status(&status_buffer, deviceId);
 	EXPECT_TRUE(ret == DEVICE_NOT_REGISTERED);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 }
 
 TEST_F(StatusAggregatorTests, get_aggregated_status_no_message){
 	add_status_to_aggregator();
 	struct buffer status_buffer{};
-	auto deviceId = init_device_id(SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	statusAggregator->get_aggregated_status(&status_buffer, deviceId);
 	int ret = statusAggregator->get_aggregated_status(&status_buffer, deviceId);
 	EXPECT_TRUE(ret == NO_MESSAGE_AVAILABLE);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	remove_device_from_status_aggregator();
 }
 
@@ -174,8 +147,8 @@ TEST_F(StatusAggregatorTests, get_unique_devices_one){
 		.device_role = devicesPointer[0].device_role,
 		.device_name = devicesPointer[0].device_name
 	};
-	ASSERT_EQ(2, deviceId.module);
-	ASSERT_EQ(0, deviceId.device_type);
+	ASSERT_EQ(MODULE, deviceId.module);
+	ASSERT_EQ(SUPPORTED_DEVICE_TYPE, deviceId.device_type);
 	deallocate(&deviceId.device_role);
 	deallocate(&deviceId.device_name);
 	deallocate(&unique_devices);
@@ -185,8 +158,8 @@ TEST_F(StatusAggregatorTests, get_unique_devices_one){
 TEST_F(StatusAggregatorTests, get_unique_devices_two){
 	add_status_to_aggregator();
 	struct buffer status_buffer = init_status_buffer();
-	auto deviceId2 = init_device_id(SUPPORTED_DEVICE_TYPE, DEVICE_ROLE_2, DEVICE_NAME_2);
-	int ret = statusAggregator->add_status_to_aggregator(status_buffer, deviceId2);
+    auto deviceId2 = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE_2, DEVICE_NAME_2, 10);
+    int ret = statusAggregator->add_status_to_aggregator(status_buffer, deviceId2);
 	EXPECT_TRUE(ret == 1);
 	struct buffer unique_devices{};
 	ret = statusAggregator->get_unique_devices(&unique_devices);
@@ -198,8 +171,8 @@ TEST_F(StatusAggregatorTests, get_unique_devices_two){
 		.device_role = devicesPointer[0].device_role,
 		.device_name = devicesPointer[0].device_name
 	};
-	ASSERT_EQ(2, deviceId.module);
-	ASSERT_EQ(0, deviceId.device_type);
+	ASSERT_EQ(MODULE, deviceId.module);
+	ASSERT_EQ(SUPPORTED_DEVICE_TYPE, deviceId.device_type);
 	deallocate(&deviceId.device_role);
 	deallocate(&deviceId.device_name);
 	deviceId = {
@@ -208,102 +181,91 @@ TEST_F(StatusAggregatorTests, get_unique_devices_two){
 		.device_role = devicesPointer[1].device_role,
 		.device_name = devicesPointer[1].device_name
 	};
-	ASSERT_EQ(2, deviceId.module);
-	ASSERT_EQ(0, deviceId.device_type);
+	ASSERT_EQ(MODULE, deviceId.module);
+	ASSERT_EQ(SUPPORTED_DEVICE_TYPE, deviceId.device_type);
 	deallocate(&deviceId.device_role);
 	deallocate(&deviceId.device_name);
 	deallocate(&status_buffer);
 	deallocate(&unique_devices);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId2);
 	remove_device_from_status_aggregator();
 }
 
 TEST_F(StatusAggregatorTests, force_aggregation_on_device_not_registered){
-	auto deviceId = init_device_id(SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->force_aggregation_on_device(deviceId);
 	EXPECT_TRUE(ret == DEVICE_NOT_REGISTERED);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 }
 
 TEST_F(StatusAggregatorTests, is_device_valid_not){
-	auto deviceId = init_device_id(SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->is_device_valid(deviceId);
 	EXPECT_TRUE(ret == NOT_OK);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 }
 
 TEST_F(StatusAggregatorTests, is_device_valid_ok){
 	add_status_to_aggregator();
-	auto deviceId = init_device_id(SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->is_device_valid(deviceId);
 	EXPECT_TRUE(ret == OK);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	remove_device_from_status_aggregator();
 }
 
 TEST_F(StatusAggregatorTests, update_command_device_not_supported){
 	struct buffer command_buffer{};
-	auto deviceId = init_device_id(UNSUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, UNSUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->update_command(command_buffer, deviceId);
 	EXPECT_TRUE(ret == DEVICE_NOT_SUPPORTED);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 }
 
 TEST_F(StatusAggregatorTests, update_command_device_not_registered){
 	struct buffer command_buffer{};
-	auto deviceId = init_device_id(SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->update_command(command_buffer, deviceId);
 	EXPECT_TRUE(ret == DEVICE_NOT_REGISTERED);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 }
 
 TEST_F(StatusAggregatorTests, update_command_device_command_invalid){
 	add_status_to_aggregator();
 	struct buffer command_buffer{};
-	auto deviceId = init_device_id(SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->update_command(command_buffer, deviceId);
 	EXPECT_TRUE(ret == COMMAND_INVALID);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	remove_device_from_status_aggregator();
 }
 
 TEST_F(StatusAggregatorTests, update_command_device_ok){
 	add_status_to_aggregator();
 	struct buffer command_buffer = init_command_buffer();
-	auto deviceId = init_device_id(SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->update_command(command_buffer, deviceId);
 	EXPECT_TRUE(ret == OK);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	remove_device_from_status_aggregator();
 }
 
 TEST_F(StatusAggregatorTests, get_command_device_not_supported){
 	struct buffer command_buffer{};
 	struct buffer status_buffer{};
-	auto deviceId = init_device_id(UNSUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, UNSUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->get_command(status_buffer, deviceId, &command_buffer);
 	EXPECT_TRUE(ret == DEVICE_NOT_SUPPORTED);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 }
 
 TEST_F(StatusAggregatorTests, get_command_device_status_invalid){
 	struct buffer command_buffer{};
 	struct buffer status_buffer{};
-	auto deviceId = init_device_id(SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->get_command(status_buffer, deviceId, &command_buffer);
 	EXPECT_TRUE(ret == STATUS_INVALID);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 }
 
 TEST_F(StatusAggregatorTests, get_command_ok){
 	struct buffer status_buffer = init_status_buffer();
 	struct buffer command_buffer{};
-	auto deviceId = init_device_id(SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME);
+    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->get_command(status_buffer, deviceId, &command_buffer);
 	EXPECT_TRUE(ret == OK);
 	std::string command {static_cast<char *>(command_buffer.data), command_buffer.size_in_bytes};
 	ASSERT_STREQ(LIT_DOWN, command.c_str());
 	deallocate(&command_buffer);
 	deallocate(&status_buffer);
-	bringauto::common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 }
