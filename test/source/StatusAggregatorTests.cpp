@@ -96,8 +96,11 @@ TEST_F(StatusAggregatorTests, add_status_to_aggregator_without_aggregation){
     auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator->add_status_to_aggregator(status_buffer, deviceId);
 	EXPECT_TRUE(ret == 2);
-	ret = statusAggregator->add_status_to_aggregator(init_status_buffer(), deviceId);
+    deallocate(&status_buffer);
+    status_buffer = init_status_buffer();
+	ret = statusAggregator->add_status_to_aggregator(status_buffer, deviceId);
 	EXPECT_TRUE(ret == 3);
+    deallocate(&status_buffer);
 	remove_device_from_status_aggregator();
 }
 
@@ -109,6 +112,7 @@ TEST_F(StatusAggregatorTests, add_status_to_aggregator_with_aggregation){
 	EXPECT_TRUE(ret == 1);
 	ret = statusAggregator->add_status_to_aggregator(status_buffer, deviceId);
 	EXPECT_TRUE(ret == 1);
+    deallocate(&status_buffer);
 	remove_device_from_status_aggregator();
 }
 
@@ -145,7 +149,8 @@ TEST_F(StatusAggregatorTests, get_unique_devices_one){
 		.module = devicesPointer[0].module,
 		.device_type = devicesPointer[0].device_type,
 		.device_role = devicesPointer[0].device_role,
-		.device_name = devicesPointer[0].device_name
+		.device_name = devicesPointer[0].device_name,
+        .priority = devicesPointer[0].priority
 	};
 	ASSERT_EQ(MODULE, deviceId.module);
 	ASSERT_EQ(SUPPORTED_DEVICE_TYPE, deviceId.device_type);
@@ -280,6 +285,6 @@ TEST_F(StatusAggregatorTests, get_command_ok){
 	EXPECT_TRUE(ret == OK);
 	std::string command {static_cast<char *>(command_buffer.data), command_buffer.size_in_bytes};
 	ASSERT_STREQ(LIT_DOWN, command.c_str());
-	deallocate(&command_buffer);
+	statusAggregator->moduleDeallocate(&command_buffer);
 	deallocate(&status_buffer);
 }

@@ -42,6 +42,7 @@ TEST_F(ErrorAggregatorTests, add_status_to_error_aggregator_device_not_supported
     auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, UNSUPPORTED_DEVICE_TYPE, "button", "name", 10);
     int ret = errorAggregator.add_status_to_error_aggregator(status, deviceId);
     EXPECT_EQ(ret, DEVICE_NOT_SUPPORTED);
+    deallocate(&status);
 }
 
 TEST_F(ErrorAggregatorTests, add_status_to_error_aggregator_ok) {
@@ -49,6 +50,8 @@ TEST_F(ErrorAggregatorTests, add_status_to_error_aggregator_ok) {
     auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, "button", "name", 10);
     int ret = errorAggregator.add_status_to_error_aggregator(status, deviceId);
     EXPECT_EQ(ret, OK);
+    deallocate(&status);
+
 }
 
 TEST_F(ErrorAggregatorTests, get_last_status_device_not_registered) {
@@ -63,9 +66,10 @@ TEST_F(ErrorAggregatorTests, get_last_status_device_ok) {
     auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, "button", "name", 10);
     int ret = errorAggregator.add_status_to_error_aggregator(status, deviceId);
     EXPECT_EQ(ret, OK);
-    struct buffer buffer;
+    struct buffer buffer {};
     ret = errorAggregator.get_last_status(&buffer, deviceId);
     EXPECT_EQ(ret, OK);
+    deallocate(&status);
 }
 
 TEST_F(ErrorAggregatorTests, get_module_number) {

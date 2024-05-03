@@ -16,10 +16,6 @@ namespace testing_utils {
 const std::chrono::seconds queue_timeout_length { 3 };
 
 class ModuleHandlerForTesting {
-	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>> fromInternalQueue_;
-	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage>> toInternalQueue_;
-	std::shared_ptr<bringauto::structures::GlobalContext> context;
-	size_t expectedMessageNumber;
 public:
 	ModuleHandlerForTesting(
 		const std::shared_ptr<bringauto::structures::GlobalContext> &context_,
@@ -32,6 +28,12 @@ public:
 	void start();
 
 	void startWithTimeout(bool onConnect, size_t timeoutNumber);
+
+private:
+    std::shared_ptr<bringauto::structures::GlobalContext> context;
+    std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>> fromInternalQueue_;
+    std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage>> toInternalQueue_;
+    size_t expectedMessageNumber;
 };
 
 }
