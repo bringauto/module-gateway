@@ -14,7 +14,7 @@ struct buffer StatusAggregatorTests::init_status_buffer(){
 struct buffer StatusAggregatorTests::init_command_buffer(){
 	struct buffer buffer{};
 	size_t size = strlen(LIT_DOWN);
-	allocate(&buffer, size);
+	statusAggregator->moduleAllocate(&buffer, size);
 	std::memcpy(buffer.data, LIT_DOWN, buffer.size_in_bytes);
 	return buffer;
 }
