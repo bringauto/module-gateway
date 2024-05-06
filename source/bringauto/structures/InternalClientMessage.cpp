@@ -16,4 +16,4 @@ const DeviceIdentification &InternalClientMessage::getDeviceId() const {
 	return deviceId_;
 }
 
-};
+}

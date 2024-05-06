@@ -16,4 +16,4 @@ const DeviceIdentification & ModuleHandlerMessage::getDeviceId() const {
 	return deviceId_;
 }
 
-};
+}

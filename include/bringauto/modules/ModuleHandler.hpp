@@ -61,7 +61,7 @@ private:
 	 *
 	 * @param device device identification
 	 */
-	void handleDisconnect(structures::DeviceIdentification deviceId);
+	void handleDisconnect(const structures::DeviceIdentification& deviceId);
 
 	/**
 	 * @brief Send aggregated status to external server

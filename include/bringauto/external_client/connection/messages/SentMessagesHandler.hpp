@@ -87,14 +87,14 @@ private:
 	 * @param status
 	 * @return counter
 	 */
-	[[nodiscard]] u_int32_t getStatusCounter(const ExternalProtocol::Status &status);
+	[[nodiscard]] static u_int32_t getStatusCounter(const ExternalProtocol::Status &status);
 
 	/**
 	 * @brief returns message counter of status_response
 	 * @param status
 	 * @return counter
 	 */
-	[[nodiscard]] u_int32_t getStatusResponseCounter(const ExternalProtocol::StatusResponse &statusResponse);
+	[[nodiscard]] static u_int32_t getStatusResponseCounter(const ExternalProtocol::StatusResponse &statusResponse);
 
 	/// Vector of statuses not acknowledged by the external server
 	std::vector <std::shared_ptr<NotAckedStatus>> notAckedStatuses_;

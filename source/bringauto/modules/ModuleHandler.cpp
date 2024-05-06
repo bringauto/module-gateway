@@ -18,7 +18,6 @@ void ModuleHandler::destroy() {
 		auto &message = fromInternalQueue_->front();
 		if(message.disconnected()) {
 			auto deviceId = message.getDeviceId();
-//			common_utils::MemoryUtils::deallocateDeviceId(deviceId); // TODO remove??
 		}
 		fromInternalQueue_->pop();
 	}
@@ -99,8 +98,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 	}
 }
 
-///TODO can structures::DeviceIdentification be used here?
-void ModuleHandler::handleDisconnect(structures::DeviceIdentification deviceId) {
+void ModuleHandler::handleDisconnect(const structures::DeviceIdentification& deviceId) {
 	const auto &moduleNumber = deviceId.getModule();
 	const std::string& deviceName { deviceId.getDeviceName() };
 	auto &statusAggregators = moduleLibrary_.statusAggregators;

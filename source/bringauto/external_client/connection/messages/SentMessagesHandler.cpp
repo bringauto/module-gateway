@@ -4,8 +4,6 @@
 #include <fleet_protocol/common_headers/general_error_codes.h>
 #include <google/protobuf/util/message_differencer.h>
 
-#include <utility>
-
 
 
 namespace bringauto::external_client::connection::messages {
@@ -55,14 +53,12 @@ void SentMessagesHandler::addDeviceAsConnected(const structures::DeviceIdentific
 }
 
 void SentMessagesHandler::deleteConnectedDevice(const structures::DeviceIdentification &device) {
-	for(auto i = 0; i < connectedDevices_.size(); ++i) {
-		if(device == connectedDevices_[i]) {
-			//TODO WUT? It works? Critical bug!
-			connectedDevices_.erase(connectedDevices_.begin() + i);
-			return;
-		}
+	auto it = std::find(connectedDevices_.begin(), connectedDevices_.end(), device);
+	if(it != connectedDevices_.end()) {
+		connectedDevices_.erase(it);
+	} else {
+		logging::Logger::logError("Trying to delete not connected device id: {}", device.convertToString());
 	}
-	logging::Logger::logError("Trying to delete not connected device id: {}", device.convertToString());
 }
 
 bool SentMessagesHandler::isDeviceConnected(const structures::DeviceIdentification &device) {
@@ -73,7 +69,7 @@ bool SentMessagesHandler::isDeviceConnected(const structures::DeviceIdentificati
 
 bool SentMessagesHandler::isAnyDeviceConnected() const {
 	return not connectedDevices_.empty();
-};
+}
 
 void SentMessagesHandler::clearAllTimers() {
 	for(auto &notAckedStatus: notAckedStatuses_) {

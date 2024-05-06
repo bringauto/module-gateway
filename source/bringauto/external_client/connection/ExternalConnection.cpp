@@ -1,7 +1,6 @@
 #include <bringauto/external_client/connection/ExternalConnection.hpp>
 #include <bringauto/external_client/connection/communication/MqttCommunication.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
-#include <bringauto/common_utils/StringUtils.hpp>
 #include <bringauto/common_utils/MemoryUtils.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
 
@@ -106,8 +105,10 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 	if(not communicationChannel_->sendMessage(&externalMessage)){
 		endConnection(false);
     }
-	log::logDebug("Sending status with messageCounter '{}' with aggregated errorMessage: {}", clientMessageCounter_,
-				  errorMessage.size_in_bytes > 0 ? errorMessage.data : "");
+
+	std::string errorString((char*)errorMessage.data, errorMessage.size_in_bytes);
+	log::logDebug("Sending status with messageCounter '{}' with aggregated errorMessage: {}",
+				  clientMessageCounter_,errorString);
 }
 
 int ExternalConnection::initializeConnection(const std::vector<structures::DeviceIdentification>& connectedDevices) {

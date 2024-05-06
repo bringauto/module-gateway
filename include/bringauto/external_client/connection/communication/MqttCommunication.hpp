@@ -37,7 +37,7 @@ private:
 	 * @param vehicleName name of the vehicle
 	 * @return std::string
 	 */
-	std::string createClientId(const std::string &company, const std::string &vehicleName);
+	static std::string createClientId(const std::string &company, const std::string &vehicleName);
 
 	/**
 	 * @brief Create a publish topic from company name and vehicle name
@@ -46,7 +46,7 @@ private:
 	 * @param vehicleName name of the vehicle
 	 * @return std::string
 	 */
-	std::string createPublishTopic(const std::string &company, const std::string &vehicleName);
+	static std::string createPublishTopic(const std::string &company, const std::string &vehicleName);
 
 	/**
 	 * @brief Create a subscribe topic from company name and vehicle name
@@ -55,7 +55,7 @@ private:
 	 * @param vehicleName name of the vehicle
 	 * @return std::string
 	 */
-	std::string createSubscribeTopic(const std::string &company, const std::string &vehicleName);
+	static std::string createSubscribeTopic(const std::string &company, const std::string &vehicleName);
 
 	/// MQTT client handling the connection
 	std::unique_ptr<mqtt::async_client> client_ { nullptr };

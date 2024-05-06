@@ -23,7 +23,7 @@ ExternalClient::ExternalClient(std::shared_ptr<structures::GlobalContext> &conte
 	reconnectQueue_ =
 			std::make_shared<structures::AtomicQueue<structures::ReconnectQueueItem >>();
 	fromExternalClientThread_ = std::jthread(&ExternalClient::handleCommands, this);
-};
+}
 
 void ExternalClient::handleCommands() {
 	while(not context_->ioContext.stopped()) {

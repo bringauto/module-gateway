@@ -118,7 +118,7 @@ private:
 	 * @brief Disconnects device and removes it from the active connections.
 	 * @param deviceId unique device identification
 	 */
-	void handleDisconnect(structures::DeviceIdentification deviceId);
+	void handleDisconnect(const structures::DeviceIdentification& deviceId);
 
 	/**
 	 * @brief Inserts connection into map of all active connections, sends message to module Handler.

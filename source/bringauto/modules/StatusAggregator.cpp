@@ -2,8 +2,6 @@
 #include <bringauto/logging/Logger.hpp>
 #include <bringauto/common_utils/MemoryUtils.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
-#include <bringauto/common_utils/StringUtils.hpp>
-
 
 
 namespace bringauto::modules {
@@ -140,7 +138,7 @@ int StatusAggregator::get_aggregated_status(struct ::buffer *generated_status,
 	}
 
 	auto &aggregatedMessages = devices.at(device).getAggregatedMessages();
-	if(aggregatedMessages.size() == 0) {
+	if(aggregatedMessages.empty()) {
 		return NO_MESSAGE_AVAILABLE;
 	}
 
@@ -165,8 +163,7 @@ int StatusAggregator::get_unique_devices(struct ::buffer *unique_devices_buffer)
 	auto *devicesPointer = static_cast<device_identification *>(unique_devices_buffer->data);
 	int i = 0;
 	for(auto const &[key, value]: devices) {
-		//auto tokenVec = common_utils::StringUtils::splitString(key, '/');
-		devicesPointer[i].module = static_cast<int>(key.getModule()); // TODO use correct type instead of cast
+		devicesPointer[i].module = key.getModule();
 		devicesPointer[i].device_type = key.getDeviceType();
 		common_utils::MemoryUtils::initBuffer(devicesPointer[i].device_role, key.getDeviceRole());
 		common_utils::MemoryUtils::initBuffer(devicesPointer[i].device_name, key.getDeviceName());
@@ -255,7 +252,7 @@ int StatusAggregator::get_command(const struct ::buffer status, const structures
 							 device_type);
 	deviceState.setCommand(generatedCommandBuffer);
 
-	int currCommandSize = currCommand.size_in_bytes;
+	auto currCommandSize = currCommand.size_in_bytes;
 	if(moduleAllocate(command, currCommandSize) == NOT_OK) {
 		log::logError("Could not allocate memory for command message");
 		return NOT_OK;

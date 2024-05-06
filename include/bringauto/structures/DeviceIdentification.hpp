@@ -99,7 +99,7 @@ public:
 
 private:
 	/// Module number
-	uint32_t module_ {};
+	int module_ {};
 	/// Device type
 	uint32_t deviceType_ {};
 	/// Role of the device
