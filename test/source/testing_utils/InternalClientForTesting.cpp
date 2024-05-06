@@ -50,7 +50,7 @@ void ClientForTesting::receiveMessage(InternalProtocol::InternalServer &message)
 		disconnectSocket();
 		ASSERT_TRUE(false);
 	});
-	std::array<uint8_t, bufferLength> buffer;
+	std::array<uint8_t, bufferLength> buffer {};
 	size_t bytesTransferred = socket->read_some(boost::asio::buffer(buffer), er);
 	if(er) {
 		readFinished = true;
