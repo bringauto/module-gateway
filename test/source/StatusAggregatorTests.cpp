@@ -186,7 +186,7 @@ TEST_F(StatusAggregatorTests, get_unique_devices_two){
     ASSERT_EQ(0, deviceId.priority);
 	deallocate(&deviceId.device_role);
 	deallocate(&deviceId.device_name);
-    // TODO will the order of devices be always the same?
+    // TODO will the order of devices be always the same? NO - redo
 
 	deviceId = {
 		.module = devicesPointer[1].module,

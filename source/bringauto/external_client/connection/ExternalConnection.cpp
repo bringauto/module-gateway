@@ -106,9 +106,8 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 	if(not communicationChannel_->sendMessage(&externalMessage)){
 		endConnection(false);
     }
-	///TODO sole it better
-	//log::logDebug("Sending status with messageCounter '{}' with aggregated errorMessage: {}", clientMessageCounter_,
-	//			  errorMessage.size_in_bytes > 0 ? errorMessage.data : static_cast<void*>("")); //TODO wut? Why?
+	log::logDebug("Sending status with messageCounter '{}' with aggregated errorMessage: {}", clientMessageCounter_,
+				  errorMessage.size_in_bytes > 0 ? errorMessage.data : "");
 }
 
 int ExternalConnection::initializeConnection(const std::vector<structures::DeviceIdentification>& connectedDevices) {

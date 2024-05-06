@@ -1,5 +1,7 @@
 #pragma once
 
+#include <bringauto/structures/DeviceIdentification.hpp>
+
 #include <fleet_protocol/common_headers/device_management.h>
 #include <InternalProtocol.pb.h>
 
@@ -13,7 +15,7 @@ namespace bringauto::structures {
 class ModuleHandlerMessage {
 
 public:
-	explicit ModuleHandlerMessage(const device_identification &deviceId):
+	explicit ModuleHandlerMessage(const DeviceIdentification &deviceId):
 		disconnect_ { true },
 		deviceId_ { deviceId }
 	{}
@@ -42,7 +44,7 @@ public:
 	 *
 	 * @return const device_identification&
 	 */
-	const device_identification &getDeviceId() const;
+	const DeviceIdentification & getDeviceId() const;
 
 private:
 	/// Internal server message
@@ -50,7 +52,7 @@ private:
 	/// True if device is to be disconnected otherwise false
 	bool disconnect_;
 	/// Device identification struct
-	device_identification deviceId_ {};
+	DeviceIdentification deviceId_ {};
 };
 
 }

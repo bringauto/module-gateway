@@ -83,13 +83,6 @@ public:
 	bool operator==(const DeviceIdentification &deviceId) const;
 
 	/**
-	 * @brief Create device_identification struct from this object
-	 *
-	 * @return device_identification
-	 */
-	[[nodiscard]] device_identification convertToCStruct() const;
-
-	/**
 	 * @brief Create a Internal protocol protobuf device object
 	 *
 	 * @return InternalProtocol::Device
@@ -101,7 +94,7 @@ public:
 	 * @return
 	 */
 	[[nodiscard]] std::string convertToString() const {
-		return module_ + "/" + std::to_string(deviceType_) + "/" + deviceRole_ + "/" + deviceName_;
+		return std::to_string(module_) + "/" + std::to_string(deviceType_) + "/" + deviceRole_ + "/" + deviceName_;
 	}
 
 private:

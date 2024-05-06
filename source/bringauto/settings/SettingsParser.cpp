@@ -226,6 +226,9 @@ std::string SettingsParser::serializeToJson() {
 			case structures::ProtocolType::MQTT:
 				settingsName = std::string(Constants::MQTT_SETTINGS);
 				break;
+			case structures::ProtocolType::INVALID:
+				settingsName = "INVALID";
+				break;
 		}
 		for(const auto &[key, val]: endpoint.protocolSettings) {
 			endpointAsJson[settingsName][key] = nlohmann::json::parse(val);

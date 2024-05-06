@@ -18,7 +18,7 @@ void ModuleHandler::destroy() {
 		auto &message = fromInternalQueue_->front();
 		if(message.disconnected()) {
 			auto deviceId = message.getDeviceId();
-			common_utils::MemoryUtils::deallocateDeviceId(deviceId);
+//			common_utils::MemoryUtils::deallocateDeviceId(deviceId); // TODO remove??
 		}
 		fromInternalQueue_->pop();
 	}
@@ -88,7 +88,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 				//const std::string id = common_utils::ProtobufUtils::getId(devicesPointer[i]);
 				if(statusAggregator->getDeviceTimeoutCount(device) >= settings::status_aggregation_timeout_max_count){
 					log::logWarning("Device {} not sending statuses for too long, disconnecting it", device.convertToString());
-					toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(device.convertToCStruct()));
+					toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(device));
 				}
 				deallocate(&devicesPointer[i].device_role);
 				deallocate(&devicesPointer[i].device_name);
@@ -100,30 +100,25 @@ void ModuleHandler::checkTimeoutedMessages(){
 }
 
 ///TODO can structures::DeviceIdentification be used here?
-void ModuleHandler::handleDisconnect(device_identification deviceIdRaw) {
-	structures::DeviceIdentification deviceId { deviceIdRaw };
-
+void ModuleHandler::handleDisconnect(structures::DeviceIdentification deviceId) {
 	const auto &moduleNumber = deviceId.getModule();
 	const std::string& deviceName { deviceId.getDeviceName() };
 	auto &statusAggregators = moduleLibrary_.statusAggregators;
 
 	if(not statusAggregators.contains(moduleNumber)) {
 		log::logWarning("Module number: {} is not supported", moduleNumber);
-		common_utils::MemoryUtils::deallocateDeviceId(deviceIdRaw);
 		return;
 	}
 
 	auto &statusAggregator = statusAggregators.at(moduleNumber);
 	if(statusAggregator->is_device_valid(deviceId) == NOT_OK) {
 		log::logWarning("Trying to disconnect invalid device");
-		common_utils::MemoryUtils::deallocateDeviceId(deviceIdRaw);
 		return;
 	}
 
 	int ret = statusAggregator->force_aggregation_on_device(deviceId);
 	if(ret < 1) {
 		log::logWarning("Force aggregation failed on device: {} with error code: {}", deviceName, ret);
-		common_utils::MemoryUtils::deallocateDeviceId(deviceIdRaw);
 		return;
 	}
 	auto device = structures::DeviceIdentification(deviceId);
@@ -133,7 +128,6 @@ void ModuleHandler::handleDisconnect(device_identification deviceIdRaw) {
 	statusAggregator->remove_device(deviceId);
 
 	log::logInfo("Device {} disconnects", deviceName);
-	common_utils::MemoryUtils::deallocateDeviceId(deviceIdRaw);
 }
 
 void ModuleHandler::sendAggregatedStatus(const structures::DeviceIdentification &deviceId, const ip::Device &device,

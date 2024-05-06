@@ -26,7 +26,6 @@ TEST_F(ErrorAggregatorTests, init_error_aggregator_ok) {
     auto libHandler = std::make_shared<bringauto::modules::ModuleManagerLibraryHandler>();
 	int ret = errorAggregatorTest.init_error_aggregator(libHandler);
 	EXPECT_EQ(ret, OK);
-	errorAggregatorTest.destroy_error_aggregator();
 }
 
 TEST_F(ErrorAggregatorTests, destroy_error_aggregator_ok) {
@@ -55,7 +54,7 @@ TEST_F(ErrorAggregatorTests, add_status_to_error_aggregator_ok) {
 }
 
 TEST_F(ErrorAggregatorTests, get_last_status_device_not_registered) {
-    struct buffer buffer;
+    struct buffer buffer {};
     auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, UNSUPPORTED_DEVICE_TYPE, "button", "name", 10);
     int ret = errorAggregator.get_last_status(&buffer, deviceId);
     EXPECT_EQ(ret, DEVICE_NOT_REGISTERED);

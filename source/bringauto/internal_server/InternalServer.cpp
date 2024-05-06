@@ -255,11 +255,11 @@ bool InternalServer::handleConnection(const std::shared_ptr<structures::Connecti
 	return true;
 }
 
-void InternalServer::handleDisconnect(device_identification deviceId) {
-	const structures::DeviceIdentification deviceIdCopy { deviceId };
-	auto connection = findConnection(deviceIdCopy);
+void InternalServer::handleDisconnect(structures::DeviceIdentification deviceId) {
+//	const structures::DeviceIdentification deviceIdCopy { deviceId }; TODO can remove?
+	auto connection = findConnection(deviceId);
 	removeConnFromMap(connection);
-	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
+//	common_utils::MemoryUtils::deallocateDeviceId(deviceId); TODO remove
 }
 
 void InternalServer::connectNewDevice(const std::shared_ptr<structures::Connection> &connection,
@@ -412,7 +412,7 @@ void InternalServer::removeConnFromMap(const std::shared_ptr<structures::Connect
 				" has been closed and erased", connection->deviceId->getModule(),
 				connection->deviceId->getDeviceType(), connection->deviceId->getDeviceRole(),
 				connection->deviceId->getDeviceName(), connection->deviceId->getPriority());
-		fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(connection->deviceId->convertToCStruct()));
+		fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(*connection->deviceId.get())); // TODO fix
 	}
 
 }

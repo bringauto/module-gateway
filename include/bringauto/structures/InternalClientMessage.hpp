@@ -1,5 +1,7 @@
 #pragma once
 
+#include <bringauto/structures/DeviceIdentification.hpp>
+
 #include <fleet_protocol/common_headers/device_management.h>
 #include <InternalProtocol.pb.h>
 
@@ -13,7 +15,7 @@ namespace bringauto::structures {
 class InternalClientMessage {
 
 public:
-	explicit InternalClientMessage(const device_identification &deviceId):
+	explicit InternalClientMessage(const DeviceIdentification &deviceId):
 		disconnect_ { true },
 		deviceId_ { deviceId }
 	{}
@@ -40,9 +42,9 @@ public:
 	/**
 	 * @brief Get device identification struct
 	 *
-	 * @return const device_identification&
+	 * @return const DeviceIdentification&
 	 */
-	const device_identification &getDeviceId() const;
+	const DeviceIdentification &getDeviceId() const;
 
 private:
 	/// Internal client message
@@ -50,7 +52,7 @@ private:
 	/// True if device is disconnected otherwise false
 	bool disconnect_;
 	/// Device identification struct
-	device_identification deviceId_ {};
+	DeviceIdentification deviceId_ {};
 };
 
 }

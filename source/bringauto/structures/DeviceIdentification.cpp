@@ -62,22 +62,6 @@ bool DeviceIdentification::operator==(const DeviceIdentification &deviceId) cons
 		   deviceRole_ == deviceId.getDeviceRole();
 }
 
-device_identification DeviceIdentification::convertToCStruct() const {
-	struct buffer deviceRoleBuff {};
-	common_utils::MemoryUtils::initBuffer(deviceRoleBuff, deviceRole_);
-
-	struct buffer deviceNameBuff {};
-	common_utils::MemoryUtils::initBuffer(deviceNameBuff, deviceName_);
-
-	return device_identification {
-			.module = static_cast<int>(module_),
-			.device_type = deviceType_,
-			.device_role = deviceRoleBuff,
-			.device_name = deviceNameBuff,
-			.priority = priority_
-	};
-}
-
 InternalProtocol::Device DeviceIdentification::convertToIPDevice() const {
 	InternalProtocol::Device device;
 	device.set_module(static_cast<InternalProtocol::Device::Module>(module_));
