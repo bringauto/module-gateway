@@ -9,6 +9,10 @@ IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
     ADD_DEFINITIONS(-DDEBUG)
 ENDIF()
 
+IF(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    message(WARNING "The only tested working compiler is clang++-17. The current compiler is ${CMAKE_CXX_COMPILER_ID} version ${CMAKE_CXX_COMPILER_VERSION}. Consider change.")
+ENDIF()
+
 FIND_PACKAGE(GTest REQUIRED)
 FILE(GLOB_RECURSE source_test_files "${CMAKE_CURRENT_LIST_DIR}/source/*" "${CMAKE_CURRENT_LIST_DIR}/source/testing_utils/*")
 ADD_EXECUTABLE(modulegateway_tests ${source_test_files} ${CMAKE_CURRENT_LIST_DIR}/mainTests.cpp)
