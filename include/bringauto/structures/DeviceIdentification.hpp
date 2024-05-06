@@ -2,6 +2,7 @@
 
 #include <InternalProtocol.pb.h>
 #include <fleet_protocol/common_headers/device_management.h>
+#include <boost/functional/hash.hpp>
 
 #include <string>
 
@@ -36,7 +37,7 @@ public:
 	 * @brief get value of module_
 	 * @return value of module_
 	 */
-	[[nodiscard]] uint32_t getModule() const;
+	[[nodiscard]] int getModule() const;
 
 	/**
 	 * @brief get value of deviceType_
@@ -90,7 +91,7 @@ public:
 	[[nodiscard]] InternalProtocol::Device convertToIPDevice() const;
 
 	/**
-	 * TODO
+	 * Create a string containing DeviceIdentification values separated by '/'
 	 * @return
 	 */
 	[[nodiscard]] std::string convertToString() const {
@@ -118,14 +119,10 @@ struct std::hash<::bringauto::structures::DeviceIdentification>
 {
 	std::size_t operator()(const ::bringauto::structures::DeviceIdentification& k) const
 	{
-		using std::size_t;
-		using std::hash;
-		using std::string;
-
-		//TODO is the hash ok?
-		//copy from https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
-		return ((hash<int>()(k.getModule())
-				 ^ (hash<int>()(k.getDeviceType()) << 1)) >> 1)
-				 ^ (hash<std::string>()(k.getDeviceRole()) << 1);
+		std::size_t seed = 0;
+		boost::hash_combine(seed, std::hash<int>()(k.getModule()));
+		boost::hash_combine(seed, std::hash<uint32_t>()(k.getDeviceType()));
+		boost::hash_combine(seed, std::hash<std::string>()(k.getDeviceRole()));
+		return seed;
 	}
 };

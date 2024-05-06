@@ -24,7 +24,7 @@ uint32_t DeviceIdentification::getPriority() const {
 	return priority_;
 }
 
-uint32_t DeviceIdentification::getModule() const {
+int DeviceIdentification::getModule() const {
 	return module_;
 }
 
