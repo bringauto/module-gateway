@@ -1,5 +1,11 @@
 # Module Gateway - TESTS
 
+!!! NOTICE !!!
+Tests must be compiled with different compiler then **gcc**
+Otherwise, the build or run will fail with error: `AddressSanitizer:DEADLYSIGNAL`
+
+The only tested working compiler is **clang++-17**
+
 Google Tests
 
 ### InternalServerTests suite:
@@ -38,7 +44,7 @@ Tests can be split into 5 different groups:
 ## Build
 ```
 mkdir -p _build_tests && cd _build_tests
-cmake ../ -DCMLIB_DIR=<absolute path cmakelib> -DBRINGAUTO_TESTS=ON
+cmake ../ -DCMLIB_DIR=<absolute path cmakelib> -DBRINGAUTO_TESTS=ON -DCMAKE_CXX_COMPILER=clang++-17
 make
 ```
 

@@ -2,6 +2,7 @@
 
 #include <bringauto/external_client/connection/messages/NotAckedStatus.hpp>
 #include <bringauto/structures/GlobalContext.hpp>
+#include <bringauto/structures/DeviceIdentification.hpp>
 #include <utility>
 
 #include <ExternalProtocol.pb.h>
@@ -50,14 +51,14 @@ public:
 	 *
 	 * @param device connected device id
 	 */
-	void addDeviceAsConnected(const std::string &device);
+	void addDeviceAsConnected(const structures::DeviceIdentification& device);
 
 	/**
 	 * @brief Delete connected device
 	 *
 	 * @param device connected device id
 	 */
-	void deleteConnectedDevice(const std::string &device);
+	void deleteConnectedDevice(const structures::DeviceIdentification& device);
 
 	/**
 	 * @brief Check if device is connected
@@ -65,7 +66,7 @@ public:
 	 * @param device connected device id
 	 * @return true if given device is connected otherwise false
 	 */
-	bool isDeviceConnected(const std::string &device);
+	bool isDeviceConnected(const structures::DeviceIdentification &device);
 
 	/**
 	 * @brief Check if any device is connected
@@ -86,19 +87,19 @@ private:
 	 * @param status
 	 * @return counter
 	 */
-	[[nodiscard]] u_int32_t getStatusCounter(const ExternalProtocol::Status &status);
+	[[nodiscard]] static u_int32_t getStatusCounter(const ExternalProtocol::Status &status);
 
 	/**
 	 * @brief returns message counter of status_response
 	 * @param status
 	 * @return counter
 	 */
-	[[nodiscard]] u_int32_t getStatusResponseCounter(const ExternalProtocol::StatusResponse &statusResponse);
+	[[nodiscard]] static u_int32_t getStatusResponseCounter(const ExternalProtocol::StatusResponse &statusResponse);
 
 	/// Vector of statuses not acknowledged by the external server
 	std::vector <std::shared_ptr<NotAckedStatus>> notAckedStatuses_;
 	/// Vector of connected devices, the value is device id - @see ProtobufUtils::getId()
-	std::vector <std::string> connectedDevices_;
+	std::vector <structures::DeviceIdentification> connectedDevices_;
 	/// Global context of module gateway
 	std::shared_ptr <structures::GlobalContext> context_;
 	/// Callback called by timer when status does not get response, registered by constructor

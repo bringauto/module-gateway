@@ -11,7 +11,6 @@ namespace bringauto::structures {
 
 ThreadTimer::~ThreadTimer() {
 	stop();
-	common_utils::MemoryUtils::deallocateDeviceId(deviceId_);
 }
 
 void ThreadTimer::tick(const boost::system::error_code &errorCode) {
@@ -19,7 +18,7 @@ void ThreadTimer::tick(const boost::system::error_code &errorCode) {
 		return;
 	}
 	fun_(deviceId_);
-	std::string name(static_cast<char *>(deviceId_.device_name.data), deviceId_.device_name.size_in_bytes);
+	const std::string& name = deviceId_.getDeviceName();
 	logging::Logger::logDebug("Timer expired and force aggregation was invoked on device: {}, {}", name, errorCode.value());
 	timer_.expires_from_now(interval_);
 	timer_.async_wait([this](const boost::system::error_code &errorCode) {

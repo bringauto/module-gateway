@@ -4,8 +4,6 @@
 #include <fleet_protocol/common_headers/general_error_codes.h>
 #include <google/protobuf/util/message_differencer.h>
 
-#include <utility>
-
 
 
 namespace bringauto::external_client::connection::messages {
@@ -50,21 +48,20 @@ void SentMessagesHandler::clearAll() {
 	notAckedStatuses_.clear();
 }
 
-void SentMessagesHandler::addDeviceAsConnected(const std::string &device) {
+void SentMessagesHandler::addDeviceAsConnected(const structures::DeviceIdentification &device) {
 	connectedDevices_.push_back(device);
 }
 
-void SentMessagesHandler::deleteConnectedDevice(const std::string &device) {
-	for(auto i = 0; i < connectedDevices_.size(); ++i) {
-		if(device == connectedDevices_[i]) {
-			connectedDevices_.erase(connectedDevices_.begin() + i);
-			return;
-		}
+void SentMessagesHandler::deleteConnectedDevice(const structures::DeviceIdentification &device) {
+	auto it = std::find(connectedDevices_.begin(), connectedDevices_.end(), device);
+	if(it != connectedDevices_.end()) {
+		connectedDevices_.erase(it);
+	} else {
+		logging::Logger::logError("Trying to delete not connected device id: {}", device.convertToString());
 	}
-	logging::Logger::logError("Trying to delete not connected device id: {}", device);
 }
 
-bool SentMessagesHandler::isDeviceConnected(const std::string &device) {
+bool SentMessagesHandler::isDeviceConnected(const structures::DeviceIdentification &device) {
 	return std::any_of(connectedDevices_.begin(), connectedDevices_.end(), [&](const auto &connectedDevice) {
 		return device == connectedDevice;
 	});
@@ -72,7 +69,7 @@ bool SentMessagesHandler::isDeviceConnected(const std::string &device) {
 
 bool SentMessagesHandler::isAnyDeviceConnected() const {
 	return not connectedDevices_.empty();
-};
+}
 
 void SentMessagesHandler::clearAllTimers() {
 	for(auto &notAckedStatus: notAckedStatuses_) {

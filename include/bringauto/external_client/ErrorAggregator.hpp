@@ -5,9 +5,11 @@
 #include <fleet_protocol/common_headers/memory_management.h>
 #include <fleet_protocol/common_headers/device_management.h>
 
+#include <bringauto/structures/DeviceIdentification.hpp>
+
 #include <functional>
 #include <filesystem>
-#include <map>
+#include <unordered_map>
 
 
 
@@ -52,7 +54,7 @@ public:
 	 * @return DEVICE_NOT_REGISTERED if device is not registered
 	 * @return NOT_OK for other error
 	 */
-	int add_status_to_error_aggregator(const struct buffer status, const struct device_identification device);
+	int add_status_to_error_aggregator(const struct buffer status, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get status from error aggregator for a specific device.
@@ -67,7 +69,7 @@ public:
 	 * @return DEVICE_NOT_REGISTERED if device was not registered
 	 * @return NOT_OK for other errors
 	 */
-	int get_last_status(struct buffer *status, const struct device_identification device);
+	int get_last_status(struct buffer *status, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get error message from error aggregator for a specific device.
@@ -82,7 +84,7 @@ public:
 	 * @return DEVICE_NOT_REGISTERED if device was no registered
 	 * @return NOT_OK for other errors
 	 */
-	int get_error(struct buffer *error, const struct device_identification device);
+	int get_error(struct buffer *error, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Clear error aggregator
@@ -126,7 +128,7 @@ private:
 	/**
 	 * @brief Map of devices states, key is device identification converted to string
 	 */
-	std::map <std::string, DeviceState> devices_ {};
+	std::unordered_map <structures::DeviceIdentification, DeviceState> devices_;
 };
 
 }

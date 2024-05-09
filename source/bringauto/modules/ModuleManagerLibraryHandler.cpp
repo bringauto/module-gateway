@@ -1,7 +1,6 @@
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
 
 #include <bringauto/logging/Logger.hpp>
-#include <fleet_protocol/common_headers/general_error_codes.h>
 
 #include <stdexcept>
 #include <dlfcn.h>

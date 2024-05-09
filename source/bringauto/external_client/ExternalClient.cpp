@@ -23,7 +23,7 @@ ExternalClient::ExternalClient(std::shared_ptr<structures::GlobalContext> &conte
 	reconnectQueue_ =
 			std::make_shared<structures::AtomicQueue<structures::ReconnectQueueItem >>();
 	fromExternalClientThread_ = std::jthread(&ExternalClient::handleCommands, this);
-};
+}
 
 void ExternalClient::handleCommands() {
 	while(not context_->ioContext.stopped()) {
@@ -56,9 +56,8 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 	}
 	std::memcpy(commandBuffer.data, commandData.c_str(), commandBuffer.size_in_bytes);
 
-	auto deviceId = common_utils::ProtobufUtils::parseDevice(device);
+	auto deviceId = structures::DeviceIdentification(device);
 	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);
-	common_utils::MemoryUtils::deallocateDeviceId(deviceId);
 	if(ret != OK) {
 		moduleLibraryHandler->deallocate(&commandBuffer);
 		log::logError("Update command failed with error code: {}", ret);

@@ -1,5 +1,4 @@
 #include <bringauto/structures/DeviceIdentification.hpp>
-#include <bringauto/common_utils/StringUtils.hpp>
 #include <bringauto/common_utils/MemoryUtils.hpp>
 
 
@@ -25,7 +24,7 @@ uint32_t DeviceIdentification::getPriority() const {
 	return priority_;
 }
 
-uint32_t DeviceIdentification::getModule() const {
+int DeviceIdentification::getModule() const {
 	return module_;
 }
 
@@ -59,24 +58,7 @@ DeviceIdentification& DeviceIdentification::operator=(const InternalProtocol::De
 bool DeviceIdentification::operator==(const DeviceIdentification &deviceId) const {
 	return module_ == deviceId.getModule() &&
 		   deviceType_ == deviceId.getDeviceType() &&
-		   deviceRole_ == deviceId.getDeviceRole() &&
-		   deviceName_ == deviceId.getDeviceName();
-}
-
-device_identification DeviceIdentification::convertToCStruct() const {
-	struct buffer deviceRoleBuff {};
-	common_utils::MemoryUtils::initBuffer(deviceRoleBuff, deviceRole_);
-
-	struct buffer deviceNameBuff {};
-	common_utils::MemoryUtils::initBuffer(deviceNameBuff, deviceName_);
-
-	return device_identification {
-			.module = static_cast<int>(module_),
-			.device_type = deviceType_,
-			.device_role = deviceRoleBuff,
-			.device_name = deviceNameBuff,
-			.priority = priority_
-	};
+		   deviceRole_ == deviceId.getDeviceRole();
 }
 
 InternalProtocol::Device DeviceIdentification::convertToIPDevice() const {

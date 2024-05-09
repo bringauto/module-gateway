@@ -12,8 +12,8 @@ bool InternalClientMessage::disconnected() const {
 	return disconnect_;
 }
 
-const device_identification &InternalClientMessage::getDeviceId() const {
+const DeviceIdentification &InternalClientMessage::getDeviceId() const {
 	return deviceId_;
 }
 
-};
+}

@@ -2,6 +2,9 @@
 
 #include <InternalProtocol.pb.h>
 #include <fleet_protocol/common_headers/device_management.h>
+#include <boost/functional/hash.hpp>
+
+#include <string>
 
 
 
@@ -18,13 +21,23 @@ public:
 	 * @brief Construct object and fill params with values given in device
 	 * @param device object holding values to be assigned to corresponding params
 	 */
-	explicit DeviceIdentification(const device_identification &device);
+	explicit DeviceIdentification(const ::device_identification &device);
+
+	DeviceIdentification(const DeviceIdentification& device) {
+		module_ = device.module_;
+		deviceType_ = device.deviceType_;
+		priority_ = device.priority_;
+		deviceRole_ = device.deviceRole_;
+		deviceName_ = device.deviceName_;
+	}
+
+	DeviceIdentification() = default;
 
 	/**
 	 * @brief get value of module_
 	 * @return value of module_
 	 */
-	[[nodiscard]] uint32_t getModule() const;
+	[[nodiscard]] int getModule() const;
 
 	/**
 	 * @brief get value of deviceType_
@@ -71,29 +84,45 @@ public:
 	bool operator==(const DeviceIdentification &deviceId) const;
 
 	/**
-	 * @brief Create device_identification struct from this object
-	 *
-	 * @return device_identification
-	 */
-	[[nodiscard]] device_identification convertToCStruct() const;
-
-	/**
 	 * @brief Create a Internal protocol protobuf device object
 	 *
 	 * @return InternalProtocol::Device
 	 */
 	[[nodiscard]] InternalProtocol::Device convertToIPDevice() const;
 
+	/**
+	 * Create a string containing DeviceIdentification values separated by '/'
+	 * @return
+	 */
+	[[nodiscard]] std::string convertToString() const {
+		return std::to_string(module_) + "/" + std::to_string(deviceType_) + "/" + deviceRole_ + "/" + deviceName_;
+	}
+
 private:
 	/// Module number
-	uint32_t module_;
+	int module_ {};
 	/// Device type
-	uint32_t deviceType_;
+	uint32_t deviceType_ {};
 	/// Role of the device
-	std::string deviceRole_;
+	std::string deviceRole_ {};
 	/// Name of the device
-	std::string deviceName_;
+	std::string deviceName_ {};
 	/// Priority of the device
-	uint32_t priority_;
+	uint32_t priority_ {};
 };
+
+
 }
+
+template <>
+struct std::hash<::bringauto::structures::DeviceIdentification>
+{
+	std::size_t operator()(const ::bringauto::structures::DeviceIdentification& k) const
+	{
+		std::size_t seed = 0;
+		boost::hash_combine(seed, std::hash<int>()(k.getModule()));
+		boost::hash_combine(seed, std::hash<uint32_t>()(k.getDeviceType()));
+		boost::hash_combine(seed, std::hash<std::string>()(k.getDeviceRole()));
+		return seed;
+	}
+};

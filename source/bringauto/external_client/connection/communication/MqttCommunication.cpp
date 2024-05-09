@@ -19,7 +19,7 @@ MqttCommunication::MqttCommunication(const structures::ExternalConnectionSetting
 							 "max_inflight: {}, receive_message_timeout: {}", settings::MqttConstants::keepalive,
 							 settings::MqttConstants::automatic_reconnect, settings::MqttConstants::connect_timeout,
 							 settings::MqttConstants::max_inflight, settings::receive_message_timeout.count());
-};
+}
 
 MqttCommunication::~MqttCommunication() {
 	closeConnection();
