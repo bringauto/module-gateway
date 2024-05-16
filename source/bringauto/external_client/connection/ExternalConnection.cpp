@@ -269,7 +269,7 @@ u_int32_t ExternalConnection::getNextStatusCounter() {
 }
 
 void ExternalConnection::endConnection(bool completeDisconnect = false) {
-	state_.exchange(ConnectionState::NOT_CONNECTED);
+	state_.exchange(ConnectionState::NOT_INITIALIZED);
 	clientMessageCounter_ = 0;
 	serverMessageCounter_ = 0;
 	sentMessagesHandler_->clearAllTimers();
