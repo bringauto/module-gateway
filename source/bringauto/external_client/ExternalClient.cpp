@@ -68,7 +68,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 
 void ExternalClient::destroy() {
 	for(auto &externalConnection: externalConnectionsList_) {
-		externalConnection.endConnection(true);
+		externalConnection.deinitializeConnection(true);
 	}
 	fromExternalClientThread_.join();
 	log::logInfo("External client stopped");
@@ -100,7 +100,7 @@ void ExternalClient::handleAggregatedMessages() {
 		if(not reconnectQueue_->empty()) {
 			auto &reconnectItem = reconnectQueue_->front();
 			auto &connection = reconnectItem.connection_.get();
-			connection.endConnection(false);
+			connection.deinitializeConnection(false);
 			if(reconnectItem.reconnect) {
 				startExternalConnectSequence(connection);
 			} else {

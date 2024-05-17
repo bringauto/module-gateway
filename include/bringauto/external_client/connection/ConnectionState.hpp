@@ -8,7 +8,7 @@ enum class ConnectionState {
 	 */
 	NOT_INITIALIZED,
 	/**
-	 * NOT_CONNECTED - Client is not connected to the External server
+	 * NOT_CONNECTED - Client failed to connect to the External server
 	 */
 	NOT_CONNECTED,
 	/**

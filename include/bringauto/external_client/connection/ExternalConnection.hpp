@@ -58,7 +58,7 @@ public:
 	 *
 	 * @param completeDisconnect
 	 */
-	void endConnection(bool completeDisconnect);
+	void deinitializeConnection(bool completeDisconnect);
 
 	/**
 	 * @brief Send status message to the external server
