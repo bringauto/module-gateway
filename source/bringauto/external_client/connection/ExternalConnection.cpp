@@ -103,7 +103,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 	sentMessagesHandler_->addNotAckedStatus(externalMessage.status());
 
 	if(not communicationChannel_->sendMessage(&externalMessage)){
-		endConnection(false);
+		deinitializeConnection(false);
     }
 
 	std::string errorString((char*)errorMessage.data, errorMessage.size_in_bytes);
@@ -268,8 +268,8 @@ u_int32_t ExternalConnection::getNextStatusCounter() {
 	return ++clientMessageCounter_;
 }
 
-void ExternalConnection::endConnection(bool completeDisconnect = false) {
-	state_.exchange(ConnectionState::NOT_CONNECTED);
+void ExternalConnection::deinitializeConnection(bool completeDisconnect = false) {
+	state_.exchange(ConnectionState::NOT_INITIALIZED);
 	clientMessageCounter_ = 0;
 	serverMessageCounter_ = 0;
 	sentMessagesHandler_->clearAllTimers();
