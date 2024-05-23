@@ -218,6 +218,7 @@ bool InternalServer::handleStatus(const std::shared_ptr<structures::Connection> 
 								  connection->socket.remote_endpoint().address().to_string());
 		return false;
 	}
+	std::lock_guard<std::mutex> lk(connection->connectionMutex);
 	fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(false, client));
 	connection->ready = false;
 	return true;
