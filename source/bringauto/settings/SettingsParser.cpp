@@ -38,7 +38,7 @@ void SettingsParser::parseCmdArguments(int argc, char **argv) {
 				   ("l, " + std::string(Constants::LOG_PATH), "Path to logs", cxxopts::value<std::string>())
 				   ("v, " + std::string(Constants::VERBOSE), "Print log messages into terminal");
 	options.add_options("Internal Server")(std::string(Constants::PORT), "Port on which Server listens",
-										   cxxopts::value<unsigned short>());
+										   cxxopts::value<int>());
 	options.add_options("Module Handler")(std::string(Constants::MODULE_PATHS), "Paths to shared module libraries",
 										  cxxopts::value<std::vector<std::string >>());
 
@@ -146,7 +146,7 @@ void SettingsParser::fillGeneralSettings(const nlohmann::json &file) {
 
 void SettingsParser::fillInternalServerSettings(const nlohmann::json &file) {
 	if(cmdArguments_.count(std::string(Constants::PORT))) {
-		settings_->port = cmdArguments_[std::string(Constants::PORT)].as<uint32_t>();
+		settings_->port = cmdArguments_[std::string(Constants::PORT)].as<int>();
 	} else {
 		settings_->port = file[std::string(Constants::INTERNAL_SERVER_SETTINGS)][std::string(Constants::PORT)];
 	}
