@@ -1,9 +1,7 @@
 .vscode/
-_build/
 build/
 .idea/
 cmake-build-*
-_tmp/
 .clang-format
 .scannerwork
 bw-output
@@ -14,3 +12,4 @@ docker-compose.yml
 Dockerfile
 LICENSE
 **/README.md
+_*/
