@@ -34,7 +34,7 @@ COPY resources/config/for_docker.json /home/bringauto/config/for_docker.json
 
 # Install module-gateway
 RUN mkdir -p /home/bringauto/module-gateway/tmp/build && \
-    mkdir /home/bringauto/module-gateway/tmp/cmlib_cache && \
+    mkdir -p /home/bringauto/module-gateway/tmp/cmlib_cache && \
     mkdir /home/bringauto/log && \
     export CMLIB_REQUIRED_ENV_TMP_PATH=/home/bringauto/module-gateway/tmp/cmlib_cache && \
     cd /home/bringauto/module-gateway/tmp/build && \
