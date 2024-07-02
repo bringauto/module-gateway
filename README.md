@@ -98,3 +98,7 @@ make
 It is possible, that valgrind will show you, that there are still reachable memory leaks. It is caused by dlopen function.
 We are not sure, if bug is in dlopen or in valgrind, but we cannot do anything with that.
 The bug is already [reported](https://bugs.kde.org/show_bug.cgi?id=358980).
+
+## Dockerfile
+
+Port 1636 is exposed in the dockerfile.
