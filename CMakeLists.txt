@@ -17,6 +17,7 @@ OPTION(BRINGAUTO_PACKAGE "Package creation" OFF)
 OPTION(BRINGAUTO_INSTALL "Disable install" OFF)
 OPTION(BRINGAUTO_SYSTEM_DEP "Enable system dependencies" OFF)
 OPTION(BRINGAUTO_SAMPLES "Enable build of sample app, not used in project" OFF)
+OPTION(BRINGAUTO_GET_PACKAGES_ONLY "Only download packages for this project" OFF)
 
 IF (BRINGAUTO_PACKAGE)
     IF (NOT BRINGAUTO_INSTALL)
@@ -32,6 +33,9 @@ FIND_PACKAGE(CMLIB
 
 IF (NOT BRINGAUTO_SYSTEM_DEP)
     INCLUDE(cmake/Dependencies.cmake)
+    IF (BRINGAUTO_GET_PACKAGES_ONLY)
+        RETURN()
+    ENDIF ()
 ENDIF ()
 
 SET(Protobuf_USE_STATIC_LIBS ON)
