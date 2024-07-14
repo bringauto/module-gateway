@@ -50,11 +50,25 @@ public:
 
 	int commandDataValid(const struct buffer command, unsigned int device_type);
 
+	Buffer constructBufferByAllocate(std::size_t size) {
+		Buffer buff {};
+		buff.size_in_bytes = size;
+		if(allocate(&buff, buff.size_in_bytes) != OK) {
+			ERROR;
+		}
+		return buff;
+	}
+
+	Buffer constructBufferByTakeOwnership(struct ::buffer& buffer) {
+		return Buffer { buffer, deallocate };
+	}
+
+
+private:
+
 	int allocate(struct buffer *buffer_pointer, size_t size_in_bytes);
 
 	void deallocate(struct buffer *buffer);
-
-private:
 
 	void *checkFunction(const char *functionName);
 

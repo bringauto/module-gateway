@@ -139,13 +139,18 @@ public:
 	 * @param size_in_bytes
 	 * @return 0 if success, otherwise -1
 	 */
-	int moduleAllocate(struct buffer *buffer, size_t size_in_bytes);
+	// the function is not needed at all.
+	// remove it pls.
+	//void moduleDeallocate(struct buffer *buffer);
+	//int moduleAllocate(struct buffer *buffer, size_t size_in_bytes);
 
 	/**
 	 * @brief Deallocates struct buffer in loaded module
 	 *
 	 */
-	void moduleDeallocate(struct buffer *buffer);
+	// the function is not needed at all.
+	// remove it pls.
+	//void moduleDeallocate(struct buffer *buffer);
 
 	/**
 	 * @brief Unset timeouted message ready

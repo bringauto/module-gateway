@@ -16,7 +16,7 @@ int StatusAggregator::clear_device(const structures::DeviceIdentification &key) 
 		return NOT_OK;
 	}
 	auto &deviceState = devices.at(key);
-	auto &aggregatedMessages = deviceState.getAggregatedMessages();
+	auto &aggregatedMessages = deviceState.aggregatedMessages();
 	while(not aggregatedMessages.empty()) {
 		auto message = aggregatedMessages.front();
 		if(message.data != nullptr) {
@@ -56,7 +56,7 @@ StatusAggregator::aggregateSetSendStatus(structures::StatusAggregatorDeviceState
 	moduleAllocate(&statusToSendBuff, currStatus.size_in_bytes);
 	std::memcpy(statusToSendBuff.data, currStatus.data, currStatus.size_in_bytes);
 
-	auto &aggregatedMessages = deviceState.getAggregatedMessages();
+	auto &aggregatedMessages = deviceState.aggregatedMessages();
 	aggregatedMessages.push(statusToSendBuff);
 }
 
@@ -109,7 +109,7 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 					deviceTimeouts_[device]++;
 					return force_aggregation_on_device(deviceId);
 		};
-		std::function<void(struct buffer *)> dealloc = [&](
+		std::function<void(struct buffer *)> dealloc = [this](
 				struct buffer *ptr) { moduleDeallocate(ptr); };
 		devices.insert(
 				{ device, structures::StatusAggregatorDeviceState(context_, timeouted_force_aggregation, device, commandBuffer, statusBuffer, dealloc) });
@@ -120,7 +120,7 @@ int StatusAggregator::add_status_to_aggregator(const struct ::buffer status,
 
 	auto &deviceState = devices.at(device);
 	auto &currStatus = deviceState.getStatus();
-	auto &aggregatedMessages = deviceState.getAggregatedMessages();
+	auto &aggregatedMessages = deviceState.aggregatedMessages();
 	if(module_->sendStatusCondition(currStatus, status, device_type) == OK) {
 		aggregateSetSendStatus(deviceState, status, device_type);
 	} else {
@@ -137,7 +137,7 @@ int StatusAggregator::get_aggregated_status(struct ::buffer *generated_status,
 		return DEVICE_NOT_REGISTERED;
 	}
 
-	auto &aggregatedMessages = devices.at(device).getAggregatedMessages();
+	auto &aggregatedMessages = devices.at(device).aggregatedMessages();
 	if(aggregatedMessages.empty()) {
 		return NO_MESSAGE_AVAILABLE;
 	}
@@ -188,7 +188,7 @@ int StatusAggregator::force_aggregation_on_device(const structures::DeviceIdenti
 	}
 
 	std::memcpy(forcedStatusBuffer.data, statusBuffer.data, statusBuffer.size_in_bytes);
-	auto &aggregatedMessages = devices.at(device).getAggregatedMessages();
+	auto &aggregatedMessages = devices.at(device).aggregatedMessages();
 	aggregatedMessages.push(forcedStatusBuffer);
 
 	return aggregatedMessages.size();

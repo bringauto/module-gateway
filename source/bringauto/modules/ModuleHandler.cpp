@@ -46,7 +46,6 @@ void ModuleHandler::handleMessages() {
 		} else if(message.getMessage().has_devicestatus()) {
 			handleStatus(message.getMessage().devicestatus());
 		}
-
 		fromInternalQueue_->pop();
 	}
 }

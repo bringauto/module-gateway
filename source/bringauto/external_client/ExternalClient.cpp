@@ -1,8 +1,10 @@
+
 #include <bringauto/external_client/ExternalClient.hpp>
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 #include <bringauto/common_utils/MemoryUtils.hpp>
 #include <bringauto/external_client/connection/ConnectionState.hpp>
+
 #include <bringauto/logging/Logger.hpp>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -54,7 +56,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 		log::logError("Could not allocate memory for command message");
 		return;
 	}
-	std::memcpy(commandBuffer.data, commandData.c_str(), commandBuffer.size_in_bytes);
+	std::memcpy(commandBuffer.data, commandData.c_str(), commandData.size());
 
 	auto deviceId = structures::DeviceIdentification(device);
 	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);

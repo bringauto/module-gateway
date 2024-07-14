@@ -74,7 +74,7 @@ public:
 	 *
 	 * @return std::queue<struct buffer>&
 	 */
-	[[nodiscard]] std::queue<struct buffer> &getAggregatedMessages();
+	[[nodiscard]] std::queue<struct buffer> &aggregatedMessages();
 
 private:
 	std::unique_ptr<bringauto::structures::ThreadTimer> timer_ {};
@@ -83,9 +83,9 @@ private:
 
 	std::function<void(struct buffer *)> deallocateFun_;
 
-	struct buffer status_;
+	struct buffer status_ {};
 
-	struct buffer command_;
+	struct buffer command_ {};
 };
 
 }
