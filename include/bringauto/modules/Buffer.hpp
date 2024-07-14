@@ -19,14 +19,14 @@ struct Buffer final {
 
   friend class ModuleManagerLibraryHandler;
 
-  Buffer() = default;
+  Buffer() = delete;
   ~Buffer() = default;
 
-  struct ::buffer getStructBuffer() const { return *buffer_; }
+  inline struct ::buffer getStructBuffer() const { return *buffer_; }
 
 private:
 
-    void initByTakeOwnership(struct ::buffer buff, std::function<> deallocate) {
+    Buffer(const struct ::buffer& buff, std::function<> deallocate) {
       buffer_ = std::shared_ptr<struct ::buffer>({}, deallocate);
       *buffer_ = buff;
     }

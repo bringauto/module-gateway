@@ -51,18 +51,17 @@ public:
 	int commandDataValid(const struct buffer command, unsigned int device_type);
 
 	Buffer constructBufferByAllocate(std::size_t size) {
-		Buffer buff {};
+		struct ::buffer buff;
 		buff.size_in_bytes = size;
-		if(allocate(&buff, buff.size_in_bytes) != OK) {
-			ERROR;
+		if(allocate(&buff, size) != OK) {
+			throw ERROR;
 		}
-		return buff;
+		return { buff, deallocate_ };
 	}
 
 	Buffer constructBufferByTakeOwnership(struct ::buffer& buffer) {
-		return Buffer { buffer, deallocate };
+		return { buffer, deallocate_ };
 	}
-
 
 private:
 
