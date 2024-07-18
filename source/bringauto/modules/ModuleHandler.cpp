@@ -53,13 +53,13 @@ void ModuleHandler::handleMessages() {
 void ModuleHandler::checkTimeoutedMessages(){
 	for (const auto& [key, statusAggregator] : moduleLibrary_.statusAggregators) {
 		if(statusAggregator->getTimeoutedMessageReady()){
-			struct buffer unique_devices {};
+			bringauto::modules::Buffer unique_devices {};
 			int ret = statusAggregator->get_unique_devices(&unique_devices);
 			if (ret == NOT_OK) {
 				log::logError("Could not get unique devices in checkTimeoutedMessages");
 				return;
 			}
-			device_identification *devicesPointer = static_cast<device_identification *>(unique_devices.data);
+			device_identification *devicesPointer = static_cast<device_identification *>(unique_devices.getStructBuffer().data);
 			for (int i = 0; i < ret; i++){
 				struct device_identification deviceId {
 					.module = devicesPointer[i].module,
@@ -69,7 +69,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 				};
 				const auto device = structures::DeviceIdentification(deviceId);
 				while(true) {
-					struct ::buffer aggregatedStatusBuffer {};
+					bringauto::modules::Buffer aggregatedStatusBuffer {};
 					int remainingMessages = statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, device);
 					if(remainingMessages == NO_MESSAGE_AVAILABLE) {
 						break;
@@ -80,7 +80,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 					toExternalQueue_->pushAndNotify(structures::InternalClientMessage(false, statusMessage));
 					log::logDebug("Module handler pushed timeouted aggregated status, number of aggregated statuses in queue {}",
 								  toExternalQueue_->size());
-					statusAggregator->moduleDeallocate(&aggregatedStatusBuffer);
+					// statusAggregator->moduleDeallocate(&aggregatedStatusBuffer);
 				}
 
 				//const std::string id = common_utils::ProtobufUtils::getId(devicesPointer[i]);
@@ -91,7 +91,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 				deallocate(&devicesPointer[i].device_role);
 				deallocate(&devicesPointer[i].device_name);
 			}
-			deallocate(&unique_devices);
+			// deallocate(&unique_devices);
 			statusAggregator->unsetTimeoutedMessageReady();
 		}
 	}
@@ -130,14 +130,14 @@ void ModuleHandler::handleDisconnect(const structures::DeviceIdentification& dev
 void ModuleHandler::sendAggregatedStatus(const structures::DeviceIdentification &deviceId, const ip::Device &device,
 										 bool disconnected) {
 	auto &statusAggregator = moduleLibrary_.statusAggregators.at(deviceId.getModule());
-	struct ::buffer aggregatedStatusBuffer {};
+	bringauto::modules::Buffer aggregatedStatusBuffer {};
 	statusAggregator->get_aggregated_status(&aggregatedStatusBuffer, deviceId);
 	auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device,
 																						aggregatedStatusBuffer);
 	toExternalQueue_->pushAndNotify(structures::InternalClientMessage(disconnected, statusMessage));
 	log::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}",
 				  toExternalQueue_->size());
-	statusAggregator->moduleDeallocate(&aggregatedStatusBuffer);
+	// statusAggregator->moduleDeallocate(&aggregatedStatusBuffer);
 }
 
 void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
@@ -188,34 +188,35 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	}
 	auto &statusAggregator = statusAggregators[moduleNumber];
 
-	struct ::buffer statusBuffer {};
+	bringauto::modules::Buffer statusBuffer {};
 	const auto &statusData = status.statusdata();
-	if(statusAggregator->moduleAllocate(&statusBuffer, statusData.size()) == NOT_OK) {
-		log::logError("Could not allocate memory for status message");
-		return;
-	}
-	std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
+	// if(statusAggregator->moduleAllocate(&statusBuffer, statusData.size()) == NOT_OK) {
+	// 	log::logError("Could not allocate memory for status message");
+	// 	return;
+	// }
+	// std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
+	statusBuffer.setStructBuffer((void*)statusData.c_str(), statusData.size());
 
 	const auto deviceId = structures::DeviceIdentification(device);
 
-	struct ::buffer commandBuffer {};
+	bringauto::modules::Buffer commandBuffer {};
 	int getCommandRc = statusAggregator->get_command(statusBuffer, deviceId, &commandBuffer);
 	if(getCommandRc == OK) {
 		auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device,
 																									commandBuffer);
 		toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false, deviceCommandMessage));
 		log::logDebug("Module handler succesfully retrieved command and sent it to device: {}", deviceName);
-		statusAggregator->moduleDeallocate(&commandBuffer);
+		// statusAggregator->moduleDeallocate(&commandBuffer);
 	} else {
 		log::logWarning("Retrieving command failed with return code: {}", getCommandRc);
-		statusAggregator->moduleDeallocate(&statusBuffer);
+		// statusAggregator->moduleDeallocate(&statusBuffer);
 		return;
 	}
 
 	int addStatusToAggregatorRc = statusAggregator->add_status_to_aggregator(statusBuffer, deviceId);
 	if(addStatusToAggregatorRc < 0) {
 		log::logWarning("Add status to aggregator failed with return code: {}", addStatusToAggregatorRc);
-		statusAggregator->moduleDeallocate(&statusBuffer);
+		// statusAggregator->moduleDeallocate(&statusBuffer);
 		return;
 	}
 
@@ -224,7 +225,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 		addStatusToAggregatorRc--;
 	}
 
-	statusAggregator->moduleDeallocate(&statusBuffer);
+	// statusAggregator->moduleDeallocate(&statusBuffer);
 }
 
 }

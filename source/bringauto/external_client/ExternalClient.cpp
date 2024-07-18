@@ -49,22 +49,23 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 		return;
 	}
 
-	struct ::buffer commandBuffer {};
+	bringauto::modules::Buffer commandBuffer {};
 	const auto &commandData = deviceCommand.commanddata();
 	auto &moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
-	if(moduleLibraryHandler->allocate(&commandBuffer, commandData.size()) == NOT_OK) {
-		log::logError("Could not allocate memory for command message");
-		return;
-	}
-	std::memcpy(commandBuffer.data, commandData.c_str(), commandData.size());
+	// if(moduleLibraryHandler->allocate(&commandBuffer, commandData.size()) == NOT_OK) {
+	// 	log::logError("Could not allocate memory for command message");
+	// 	return;
+	// }
+	// std::memcpy(commandBuffer.data, commandData.c_str(), commandData.size());
+	commandBuffer.setStructBuffer((void*)commandData.c_str(), commandData.size());
 
 	auto deviceId = structures::DeviceIdentification(device);
 	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);
-	if(ret != OK) {
-		moduleLibraryHandler->deallocate(&commandBuffer);
-		log::logError("Update command failed with error code: {}", ret);
-		return;
-	}
+	// if(ret != OK) {
+	// 	moduleLibraryHandler->deallocate(&commandBuffer);
+	// 	log::logError("Update command failed with error code: {}", ret);
+	// 	return;
+	// }
 	log::logInfo("Command on device {} was successfully updated", device.devicename());
 }
 

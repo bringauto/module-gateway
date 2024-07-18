@@ -6,6 +6,7 @@
 
 #include <bringauto/logging/Logger.hpp>
 
+#include <new>
 #include <random>
 
 
@@ -47,7 +48,7 @@ void ExternalConnection::init(const std::string &company, const std::string &veh
 
 void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status,
 									ExternalProtocol::Status::DeviceState deviceState,
-									const buffer &errorMessage) {
+									const bringauto::modules::Buffer &errorMessage) {
 	const auto &device = status.device();
 	const auto &deviceModule = device.module();
 
@@ -60,20 +61,21 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 	auto &errorAggregator = errorAggregators.at(deviceModule);
 	auto deviceId = structures::DeviceIdentification(device);
 
-	struct buffer lastStatus{};
+	bringauto::modules::Buffer lastStatus {};
 	auto isRegistered = errorAggregator.get_last_status(&lastStatus, deviceId);
 	if (isRegistered == DEVICE_NOT_REGISTERED){
 		deviceState = ExternalProtocol::Status_DeviceState_CONNECTING;
 
-		struct ::buffer statusBuffer {};
+		bringauto::modules::Buffer statusBuffer {};
 		const auto &statusData = status.statusdata();
-		if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
-			log::logError("Could not allocate memory for status message");
-			return;
-		}
-		std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
+		// if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
+		// 	log::logError("Could not allocate memory for status message");
+		// 	return;
+		// }
+		// std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
+		statusBuffer.setStructBuffer((void*)statusData.c_str(), statusData.size());
 		errorAggregator.add_status_to_error_aggregator(statusBuffer, deviceId);
-		deallocate(&statusBuffer);
+		// deallocate(&statusBuffer);
 	}
 
 	switch(deviceState) {
@@ -106,7 +108,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 		deinitializeConnection(false);
     }
 
-	std::string errorString((char*)errorMessage.data, errorMessage.size_in_bytes);
+	std::string errorString((char*)errorMessage.getStructBuffer().data, errorMessage.getStructBuffer().size_in_bytes);
 	log::logDebug("Sending status with messageCounter '{}' with aggregated errorMessage: {}",
 				  clientMessageCounter_,errorString);
 }
@@ -186,8 +188,8 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 	for(const auto &deviceIdentification: devices) {
 
 		const int &deviceModule = deviceIdentification.getModule();
-		struct buffer errorBuffer {};
-		struct buffer statusBuffer {};
+		bringauto::modules::Buffer errorBuffer {};
+		bringauto::modules::Buffer statusBuffer {};
 
 		const auto &lastErrorStatusRc = errorAggregators[deviceModule].get_error(&errorBuffer, deviceIdentification);
 		if(lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
@@ -376,17 +378,18 @@ void ExternalConnection::fillErrorAggregatorWithNotAckedStatuses() {
 	for(const auto &notAckedStatus: sentMessagesHandler_->getNotAckedStatuses()) {
 		const auto &device = notAckedStatus->getDevice();
 
-		struct ::buffer statusBuffer {};
+		bringauto::modules::Buffer statusBuffer {};
 		const auto &statusData = notAckedStatus->getStatus().devicestatus().statusdata();
-		if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
-			log::logError("Could not allocate memory for status message");
-			return;
-		}
-		std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
+		// if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
+		// 	log::logError("Could not allocate memory for status message");
+		// 	return;
+		// }
+		// std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
+		statusBuffer.setStructBuffer((void*)statusData.c_str(), statusData.size());
 
 		auto deviceId = structures::DeviceIdentification(device);
 		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer, deviceId);
-		deallocate(&statusBuffer);
+		// deallocate(&statusBuffer);
 	}
 	sentMessagesHandler_->clearAll();
 }
@@ -399,18 +402,19 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 	}
 	fillErrorAggregatorWithNotAckedStatuses();
 	if(errorAggregators.find(moduleNum) != errorAggregators.end()) {
-		struct ::buffer statusBuffer {};
+		bringauto::modules::Buffer statusBuffer {};
 		const auto &statusData = deviceStatus.statusdata();
-		if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
-			log::logError("Could not allocate memory for status message");
-			return;
-		}
-		std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
+		// if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
+		// 	log::logError("Could not allocate memory for status message");
+		// 	return;
+		// }
+		// std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
+		statusBuffer.setStructBuffer((void*)statusData.c_str(), statusData.size());
 
 		auto deviceId = structures::DeviceIdentification(deviceStatus.device());
 		auto &errorAggregator = errorAggregators.at(moduleNum);
 		errorAggregator.add_status_to_error_aggregator(statusBuffer, deviceId);
-		deallocate(&statusBuffer);
+		// deallocate(&statusBuffer);
 	} else {
 		log::logError("Device status with unsupported module was passed to fillErrorAggregator()");
 	}
@@ -419,7 +423,7 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 std::vector<structures::DeviceIdentification> ExternalConnection::forceAggregationOnAllDevices(std::vector<structures::DeviceIdentification> connectedDevices) {
 	std::vector<structures::DeviceIdentification> forcedDevices{};
 	for(const auto &device: connectedDevices) {
-		struct buffer last_status{};
+		bringauto::modules::Buffer last_status{};
 		if (errorAggregators.at(device.getModule()).get_last_status(&last_status, device) == OK){
 			continue;
 		}
@@ -432,14 +436,14 @@ std::vector<structures::DeviceIdentification> ExternalConnection::forceAggregati
 std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnectedDevices() {
 	std::vector<structures::DeviceIdentification> devices {};
 	for(const auto &moduleNumber: settings_.modules) {
-		struct buffer unique_devices {};
+		bringauto::modules::Buffer unique_devices {};
 		int ret = moduleLibrary_.statusAggregators.at(moduleNumber)->get_unique_devices(&unique_devices);
 		if(ret <= 0) {
 			log::logWarning("Module {} does not have any connected devices", moduleNumber);
 			continue;
 		}
 
-		auto *devicesPointer = static_cast<device_identification *>(unique_devices.data);
+		auto *devicesPointer = static_cast<device_identification *>(unique_devices.getStructBuffer().data);
 		for (int i = 0; i < ret; i++){
 			struct device_identification deviceId {
 				.module = devicesPointer[i].module,
@@ -451,7 +455,7 @@ std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnecte
 			deallocate(&devicesPointer[i].device_role);
 			deallocate(&devicesPointer[i].device_name);
 		}
-		deallocate(&unique_devices);
+		// deallocate(&unique_devices);
 	}
 
 	return devices;

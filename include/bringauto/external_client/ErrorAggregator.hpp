@@ -54,7 +54,7 @@ public:
 	 * @return DEVICE_NOT_REGISTERED if device is not registered
 	 * @return NOT_OK for other error
 	 */
-	int add_status_to_error_aggregator(const struct buffer status, const structures::DeviceIdentification& device);
+	int add_status_to_error_aggregator(const bringauto::modules::Buffer status, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get status from error aggregator for a specific device.
@@ -69,7 +69,7 @@ public:
 	 * @return DEVICE_NOT_REGISTERED if device was not registered
 	 * @return NOT_OK for other errors
 	 */
-	int get_last_status(struct buffer *status, const structures::DeviceIdentification& device);
+	int get_last_status(bringauto::modules::Buffer *status, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get error message from error aggregator for a specific device.
@@ -84,7 +84,7 @@ public:
 	 * @return DEVICE_NOT_REGISTERED if device was no registered
 	 * @return NOT_OK for other errors
 	 */
-	int get_error(struct buffer *error, const structures::DeviceIdentification& device);
+	int get_error(bringauto::modules::Buffer *error, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Clear error aggregator
@@ -112,14 +112,12 @@ public:
 
 private:
 	struct DeviceState {
-		struct buffer errorMessage {};
-		struct buffer lastStatus {};
+		bringauto::modules::Buffer errorMessage;
+		bringauto::modules::Buffer lastStatus;
 
 		DeviceState() {
-			errorMessage.data = nullptr;
-			errorMessage.size_in_bytes = 0;
-			lastStatus.data = nullptr;
-			lastStatus.size_in_bytes = 0;
+			errorMessage.setStructBuffer(nullptr, 0);
+			lastStatus.setStructBuffer(nullptr, 0);
 		};
 	};
 

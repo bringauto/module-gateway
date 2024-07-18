@@ -22,10 +22,10 @@ ProtobufUtils::createInternalServerConnectResponseMessage(const InternalProtocol
 
 InternalProtocol::InternalServer
 ProtobufUtils::createInternalServerCommandMessage(const InternalProtocol::Device &device,
-												  const buffer &command) {
+												  const bringauto::modules::Buffer &command) {
 	InternalProtocol::InternalServer message;
 	auto deviceCommand = message.mutable_devicecommand();
-	deviceCommand->set_commanddata(command.data, command.size_in_bytes);
+	deviceCommand->set_commanddata(command.getStructBuffer().data, command.getStructBuffer().size_in_bytes);
 	auto device_ = deviceCommand->mutable_device();
 	device_->CopyFrom(device);
 	return message;
@@ -33,20 +33,20 @@ ProtobufUtils::createInternalServerCommandMessage(const InternalProtocol::Device
 
 InternalProtocol::InternalClient
 ProtobufUtils::createInternalClientStatusMessage(const InternalProtocol::Device &device,
-												 const buffer &status) {
+												 const bringauto::modules::Buffer &status) {
 	InternalProtocol::InternalClient message;
 	auto deviceStatus = message.mutable_devicestatus();
-	deviceStatus->set_statusdata(status.data, status.size_in_bytes);
+	deviceStatus->set_statusdata(status.getStructBuffer().data, status.getStructBuffer().size_in_bytes);
 	auto device_ = deviceStatus->mutable_device();
 	device_->CopyFrom(device);
 	return message;
 }
 
 InternalProtocol::DeviceStatus ProtobufUtils::createDeviceStatus(const structures::DeviceIdentification &deviceId,
-																 const buffer &status) {
+																 const bringauto::modules::Buffer &status) {
 	InternalProtocol::DeviceStatus deviceStatus;
 	deviceStatus.mutable_device()->CopyFrom(deviceId.convertToIPDevice());
-	deviceStatus.set_statusdata(status.data, status.size_in_bytes);
+	deviceStatus.set_statusdata(status.getStructBuffer().data, status.getStructBuffer().size_in_bytes);
 	return deviceStatus;
 }
 
@@ -73,15 +73,15 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientStatus(const
 																		   ExternalProtocol::Status_DeviceState deviceState,
 																		   u_int32_t messageCounter,
 																		   const InternalProtocol::DeviceStatus &deviceStatus,
-																		   const buffer &errorMessage) {
+																		   const bringauto::modules::Buffer &errorMessage) {
 	ExternalProtocol::ExternalClient externalMessage;
 	ExternalProtocol::Status *status = externalMessage.mutable_status();
 	status->mutable_devicestatus()->CopyFrom(deviceStatus);
 	status->set_sessionid(sessionId);
 	status->set_devicestate(deviceState);
 	status->set_messagecounter(messageCounter);
-	if(errorMessage.size_in_bytes > 0 && errorMessage.data != nullptr) {
-		status->set_errormessage(errorMessage.data, errorMessage.size_in_bytes);
+	if(errorMessage.getStructBuffer().size_in_bytes > 0 && errorMessage.getStructBuffer().data != nullptr) {
+		status->set_errormessage(errorMessage.getStructBuffer().data, errorMessage.getStructBuffer().size_in_bytes);
 	}
 	return externalMessage;
 }

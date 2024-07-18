@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bringauto/structures/DeviceIdentification.hpp>
+#include <bringauto/modules/Buffer.hpp>
 
 #include <InternalProtocol.pb.h>
 #include <ExternalProtocol.pb.h>
@@ -35,7 +36,7 @@ public:
 	 * @return InternalProtocol::InternalServer
 	 */
 	static InternalProtocol::InternalServer createInternalServerCommandMessage(const InternalProtocol::Device &device,
-																			   const buffer &command);
+																			   const bringauto::modules::Buffer &command);
 
 	/**
 	 * @brief Create a Internal Client Status message
@@ -45,7 +46,7 @@ public:
 	 * @return InternalProtocol::InternalClient
 	 */
 	static InternalProtocol::InternalClient createInternalClientStatusMessage(const InternalProtocol::Device &device,
-																			  const buffer &status);
+																			  const bringauto::modules::Buffer &status);
 
 	/**
 	 * @brief Create a Device Status message
@@ -55,7 +56,7 @@ public:
 	 * @return InternalProtocol::DeviceStatus
 	 */
 	static InternalProtocol::DeviceStatus createDeviceStatus(const structures::DeviceIdentification &deviceId,
-															 const buffer &status);
+															 const bringauto::modules::Buffer &status);
 
 	/**
 	 * @brief Create a External Client Connect message
@@ -85,7 +86,7 @@ public:
 																	   ExternalProtocol::Status_DeviceState deviceState,
 																	   u_int32_t messageCounter,
 																	   const InternalProtocol::DeviceStatus &deviceStatus,
-																	   const buffer &errorMessage);
+																	   const bringauto::modules::Buffer &errorMessage);
 
 	/**
 	 * @brief Create a External Client Command Response object

@@ -72,37 +72,41 @@ int ModuleManagerLibraryHandler::isDeviceTypeSupported(unsigned int device_type)
 	return isDeviceTypeSupported_(device_type);
 }
 
-int ModuleManagerLibraryHandler::sendStatusCondition(const struct buffer current_status, const struct buffer new_status,
+int ModuleManagerLibraryHandler::sendStatusCondition(const bringauto::modules::Buffer current_status, const bringauto::modules::Buffer new_status,
 													 unsigned int device_type) {
-	return sendStatusCondition_(current_status, new_status, device_type);
+	return sendStatusCondition_(current_status.getStructBuffer(), new_status.getStructBuffer(), device_type);
 }
 
-int ModuleManagerLibraryHandler::generateCommand(struct buffer *generated_command, const struct buffer new_status,
-												 const struct buffer current_status,
-												 const struct buffer current_command, unsigned int device_type) {
-	return generateCommand_(generated_command, new_status, current_status, current_command, device_type);
+int ModuleManagerLibraryHandler::generateCommand(bringauto::modules::Buffer *generated_command, const bringauto::modules::Buffer new_status,
+												 const bringauto::modules::Buffer current_status,
+												 const bringauto::modules::Buffer current_command, unsigned int device_type) {
+	auto generated_command_struct = generated_command->getStructBuffer();
+	return generateCommand_(&generated_command_struct, new_status.getStructBuffer(), current_status.getStructBuffer(), current_command.getStructBuffer(), device_type);
 }
 
-int ModuleManagerLibraryHandler::aggregateStatus(struct buffer *aggregated_status, const struct buffer current_status,
-												 const struct buffer new_status, unsigned int device_type) {
-	return aggregateStatus_(aggregated_status, current_status, new_status, device_type);
+int ModuleManagerLibraryHandler::aggregateStatus(bringauto::modules::Buffer *aggregated_status, const bringauto::modules::Buffer current_status,
+												 const bringauto::modules::Buffer new_status, unsigned int device_type) {
+	auto aggregated_status_struct = aggregated_status->getStructBuffer();
+	return aggregateStatus_(&aggregated_status_struct, current_status.getStructBuffer(), new_status.getStructBuffer(), device_type);
 }
 
-int ModuleManagerLibraryHandler::aggregateError(struct buffer *error_message, const struct buffer current_error_message,
-												const struct buffer status, unsigned int device_type) {
-	return aggregateError_(error_message, current_error_message, status, device_type);
+int ModuleManagerLibraryHandler::aggregateError(bringauto::modules::Buffer *error_message, const bringauto::modules::Buffer current_error_message,
+												const bringauto::modules::Buffer status, unsigned int device_type) {
+	auto error_message_struct = error_message->getStructBuffer();
+	return aggregateError_(&error_message_struct, current_error_message.getStructBuffer(), status.getStructBuffer(), device_type);
 }
 
-int ModuleManagerLibraryHandler::generateFirstCommand(struct buffer *default_command, unsigned int device_type) {
-	return generateFirstCommand_(default_command, device_type);
+int ModuleManagerLibraryHandler::generateFirstCommand(bringauto::modules::Buffer *default_command, unsigned int device_type) {
+	auto default_command_struct = default_command->getStructBuffer();
+	return generateFirstCommand_(&default_command_struct, device_type);
 }
 
-int ModuleManagerLibraryHandler::statusDataValid(const struct buffer status, unsigned int device_type) {
-	return statusDataValid_(status, device_type);
+int ModuleManagerLibraryHandler::statusDataValid(const bringauto::modules::Buffer status, unsigned int device_type) {
+	return statusDataValid_(status.getStructBuffer(), device_type);
 }
 
-int ModuleManagerLibraryHandler::commandDataValid(const struct buffer command, unsigned int device_type) {
-	return commandDataValid_(command, device_type);
+int ModuleManagerLibraryHandler::commandDataValid(const bringauto::modules::Buffer command, unsigned int device_type) {
+	return commandDataValid_(command.getStructBuffer(), device_type);
 }
 
 int ModuleManagerLibraryHandler::allocate(struct buffer *buffer_pointer, size_t size_in_bytes){

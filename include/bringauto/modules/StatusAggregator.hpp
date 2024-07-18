@@ -73,21 +73,21 @@ public:
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int add_status_to_aggregator(const struct ::buffer status, const structures::DeviceIdentification& device);
+	int add_status_to_aggregator(const bringauto::modules::Buffer status, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get the oldest aggregated protobuf status message that is aggregated
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int get_aggregated_status(struct ::buffer *generated_status, const structures::DeviceIdentification& device);
+	int get_aggregated_status(bringauto::modules::Buffer *generated_status, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get all devices registered to aggregator
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int get_unique_devices(struct ::buffer *unique_devices_buffer);
+	int get_unique_devices(bringauto::modules::Buffer *unique_devices_buffer);
 
 	/**
 	 * @short Force status message aggregation on given device.
@@ -108,15 +108,15 @@ public:
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/command_manager.h
 	 */
-	int update_command(const struct ::buffer command, const structures::DeviceIdentification& device);
+	int update_command(const bringauto::modules::Buffer command, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get command message.
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/command_manager.h
 	 */
-	int get_command(const struct ::buffer status, const structures::DeviceIdentification& device,
-					struct ::buffer *command);
+	int get_command(const bringauto::modules::Buffer status, const structures::DeviceIdentification& device,
+					bringauto::modules::Buffer *command);
 
 	/**
 	 * @short Get number of the module
@@ -183,7 +183,7 @@ private:
 	 * @param device_type device type
 	 * @return struct buffer with aggregated status message
 	 */
-	struct buffer aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
+	bringauto::modules::Buffer aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const bringauto::modules::Buffer &status,
 								  const unsigned int &device_type);
 
 	/**
@@ -193,7 +193,7 @@ private:
 	 * @param status status message
 	 * @param device_type device type
 	 */
-	void aggregateSetStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
+	void aggregateSetStatus(structures::StatusAggregatorDeviceState &deviceState, const bringauto::modules::Buffer &status,
 							const unsigned int &device_type);
 
 	/**
@@ -203,7 +203,7 @@ private:
 	 * @param status status message
 	 * @param device_type device type
 	 */
-	void aggregateSetSendStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
+	void aggregateSetSendStatus(structures::StatusAggregatorDeviceState &deviceState, const bringauto::modules::Buffer &status,
 								const unsigned int &device_type);
 
 	std::shared_ptr<structures::GlobalContext> context_;

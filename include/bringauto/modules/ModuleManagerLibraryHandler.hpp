@@ -1,7 +1,10 @@
 #pragma once
 
+#include <bringauto/modules/Buffer.hpp>
+
 #include <fleet_protocol/common_headers/memory_management.h>
 #include <fleet_protocol/common_headers/device_management.h>
+#include <fleet_protocol/common_headers/general_error_codes.h>
 
 #include <functional>
 #include <filesystem>
@@ -31,37 +34,37 @@ public:
 	int isDeviceTypeSupported(unsigned int device_type);
 
 	int
-	sendStatusCondition(const struct buffer current_status, const struct buffer new_status, unsigned int device_type);
+	sendStatusCondition(const bringauto::modules::Buffer current_status, const bringauto::modules::Buffer new_status, unsigned int device_type);
 
-	int generateCommand(struct buffer *generated_command, const struct buffer new_status,
-						const struct buffer current_status, const struct buffer current_command,
+	int generateCommand(bringauto::modules::Buffer *generated_command, const bringauto::modules::Buffer new_status,
+						const bringauto::modules::Buffer current_status, const bringauto::modules::Buffer current_command,
 						unsigned int device_type);
 
-	int aggregateStatus(struct buffer *aggregated_status, const struct buffer current_status,
-						const struct buffer new_status, unsigned int device_type);
+	int aggregateStatus(bringauto::modules::Buffer *aggregated_status, const bringauto::modules::Buffer current_status,
+						const bringauto::modules::Buffer new_status, unsigned int device_type);
 
 	int
-	aggregateError(struct buffer *error_message, const struct buffer current_error_message, const struct buffer status,
+	aggregateError(bringauto::modules::Buffer *error_message, const bringauto::modules::Buffer current_error_message, const bringauto::modules::Buffer status,
 				   unsigned int device_type);
 
-	int generateFirstCommand(struct buffer *default_command, unsigned int device_type);
+	int generateFirstCommand(bringauto::modules::Buffer *default_command, unsigned int device_type);
 
-	int statusDataValid(const struct buffer status, unsigned int device_type);
+	int statusDataValid(const bringauto::modules::Buffer status, unsigned int device_type);
 
-	int commandDataValid(const struct buffer command, unsigned int device_type);
+	int commandDataValid(const bringauto::modules::Buffer command, unsigned int device_type);
 
-	Buffer constructBufferByAllocate(std::size_t size) {
-		struct ::buffer buff;
-		buff.size_in_bytes = size;
-		if(allocate(&buff, size) != OK) {
-			throw ERROR;
-		}
-		return { buff, deallocate_ };
-	}
+	// bringauto::modules::Buffer constructBufferByAllocate(std::size_t size) {
+	// 	struct ::buffer buff;
+	// 	buff.size_in_bytes = size;
+	// 	if(allocate(&buff, size) != OK) {
+	// 		throw std::runtime_error("Could not allocate memory for buffer");
+	// 	}
+	// 	return { buff, deallocate_ };
+	// }
 
-	Buffer constructBufferByTakeOwnership(struct ::buffer& buffer) {
-		return { buffer, deallocate_ };
-	}
+	// bringauto::modules::Buffer constructBufferByTakeOwnership(struct ::buffer& buffer) {
+	// 	return { buffer, deallocate_ };
+	// }
 
 private:
 
