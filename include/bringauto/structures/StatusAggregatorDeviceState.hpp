@@ -24,8 +24,7 @@ public:
 	StatusAggregatorDeviceState(std::shared_ptr<bringauto::structures::GlobalContext> &context,
 								std::function<int(const structures::DeviceIdentification&)> fun,
 								const structures::DeviceIdentification &deviceId,
-								const bringauto::modules::Buffer command, const bringauto::modules::Buffer status);
-								// std::function<void(struct buffer *)> dealloc);
+								const bringauto::modules::Buffer& command, const bringauto::modules::Buffer& status);
 
 	/**
 	 * @brief Deallocate and replace status buffer
@@ -40,11 +39,6 @@ public:
 	 * @return const struct buffer&
 	 */
 	[[nodiscard]] const bringauto::modules::Buffer &getStatus() const;
-
-	/**
-	 * @brief Deallocate status buffer
-	 */
-	// void deallocateStatus();
 
 	/**
 	 * @brief Deallocate, replace data buffer and restart no aggregation timer
@@ -68,11 +62,6 @@ public:
 	[[nodiscard]] const bringauto::modules::Buffer &getCommand() const;
 
 	/**
-	 * @brief Deallocate command buffer
-	 */
-	// void deallocateCommand();
-
-	/**
 	 * @brief Get aggregated messages queue
 	 *
 	 * @return std::queue<struct buffer>&
@@ -82,13 +71,11 @@ public:
 private:
 	std::unique_ptr<bringauto::structures::ThreadTimer> timer_ {};
 
-	std::queue<bringauto::modules::Buffer> aggregatedMessages_;
+	std::queue<bringauto::modules::Buffer> aggregatedMessages_ {};
 
-	// std::function<void(struct buffer *)> deallocateFun_;
+	bringauto::modules::Buffer status_ {};
 
-	bringauto::modules::Buffer status_;
-
-	bringauto::modules::Buffer command_;
+	bringauto::modules::Buffer command_ {};
 };
 
 }

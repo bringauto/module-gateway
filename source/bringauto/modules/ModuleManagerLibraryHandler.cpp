@@ -72,33 +72,36 @@ int ModuleManagerLibraryHandler::isDeviceTypeSupported(unsigned int device_type)
 	return isDeviceTypeSupported_(device_type);
 }
 
-int ModuleManagerLibraryHandler::sendStatusCondition(const bringauto::modules::Buffer current_status, const bringauto::modules::Buffer new_status,
+int ModuleManagerLibraryHandler::sendStatusCondition(const bringauto::modules::Buffer current_status,
+													 const bringauto::modules::Buffer new_status,
 													 unsigned int device_type) {
 	return sendStatusCondition_(current_status.getStructBuffer(), new_status.getStructBuffer(), device_type);
 }
 
-int ModuleManagerLibraryHandler::generateCommand(bringauto::modules::Buffer *generated_command, const bringauto::modules::Buffer new_status,
+int ModuleManagerLibraryHandler::generateCommand(bringauto::modules::Buffer &generated_command,
+												 const bringauto::modules::Buffer new_status,
 												 const bringauto::modules::Buffer current_status,
 												 const bringauto::modules::Buffer current_command, unsigned int device_type) {
-	auto generated_command_struct = generated_command->getStructBuffer();
-	return generateCommand_(&generated_command_struct, new_status.getStructBuffer(), current_status.getStructBuffer(), current_command.getStructBuffer(), device_type);
+	return generateCommand_(generated_command.buffer_.get(), new_status.getStructBuffer(),
+		current_status.getStructBuffer(), current_command.getStructBuffer(), device_type);
 }
 
-int ModuleManagerLibraryHandler::aggregateStatus(bringauto::modules::Buffer *aggregated_status, const bringauto::modules::Buffer current_status,
+int ModuleManagerLibraryHandler::aggregateStatus(bringauto::modules::Buffer &aggregated_status,
+												 const bringauto::modules::Buffer current_status,
 												 const bringauto::modules::Buffer new_status, unsigned int device_type) {
-	auto aggregated_status_struct = aggregated_status->getStructBuffer();
-	return aggregateStatus_(&aggregated_status_struct, current_status.getStructBuffer(), new_status.getStructBuffer(), device_type);
+	return aggregateStatus_(aggregated_status.buffer_.get(), current_status.getStructBuffer(),
+		new_status.getStructBuffer(), device_type);
 }
 
-int ModuleManagerLibraryHandler::aggregateError(bringauto::modules::Buffer *error_message, const bringauto::modules::Buffer current_error_message,
+int ModuleManagerLibraryHandler::aggregateError(bringauto::modules::Buffer &error_message,
+												const bringauto::modules::Buffer current_error_message,
 												const bringauto::modules::Buffer status, unsigned int device_type) {
-	auto error_message_struct = error_message->getStructBuffer();
-	return aggregateError_(&error_message_struct, current_error_message.getStructBuffer(), status.getStructBuffer(), device_type);
+	return aggregateError_(error_message.buffer_.get(), current_error_message.getStructBuffer(),
+		status.getStructBuffer(), device_type);
 }
 
-int ModuleManagerLibraryHandler::generateFirstCommand(bringauto::modules::Buffer *default_command, unsigned int device_type) {
-	auto default_command_struct = default_command->getStructBuffer();
-	return generateFirstCommand_(&default_command_struct, device_type);
+int ModuleManagerLibraryHandler::generateFirstCommand(bringauto::modules::Buffer &default_command, unsigned int device_type) {
+	return generateFirstCommand_(default_command.buffer_.get(), device_type);
 }
 
 int ModuleManagerLibraryHandler::statusDataValid(const bringauto::modules::Buffer status, unsigned int device_type) {

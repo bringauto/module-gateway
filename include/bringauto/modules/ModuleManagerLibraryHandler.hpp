@@ -36,35 +36,35 @@ public:
 	int
 	sendStatusCondition(const bringauto::modules::Buffer current_status, const bringauto::modules::Buffer new_status, unsigned int device_type);
 
-	int generateCommand(bringauto::modules::Buffer *generated_command, const bringauto::modules::Buffer new_status,
+	int generateCommand(bringauto::modules::Buffer &generated_command, const bringauto::modules::Buffer new_status,
 						const bringauto::modules::Buffer current_status, const bringauto::modules::Buffer current_command,
 						unsigned int device_type);
 
-	int aggregateStatus(bringauto::modules::Buffer *aggregated_status, const bringauto::modules::Buffer current_status,
+	int aggregateStatus(bringauto::modules::Buffer &aggregated_status, const bringauto::modules::Buffer current_status,
 						const bringauto::modules::Buffer new_status, unsigned int device_type);
 
 	int
-	aggregateError(bringauto::modules::Buffer *error_message, const bringauto::modules::Buffer current_error_message, const bringauto::modules::Buffer status,
+	aggregateError(bringauto::modules::Buffer &error_message, const bringauto::modules::Buffer current_error_message, const bringauto::modules::Buffer status,
 				   unsigned int device_type);
 
-	int generateFirstCommand(bringauto::modules::Buffer *default_command, unsigned int device_type);
+	int generateFirstCommand(bringauto::modules::Buffer &default_command, unsigned int device_type);
 
 	int statusDataValid(const bringauto::modules::Buffer status, unsigned int device_type);
 
 	int commandDataValid(const bringauto::modules::Buffer command, unsigned int device_type);
 
-	// bringauto::modules::Buffer constructBufferByAllocate(std::size_t size) {
-	// 	struct ::buffer buff;
-	// 	buff.size_in_bytes = size;
-	// 	if(allocate(&buff, size) != OK) {
-	// 		throw std::runtime_error("Could not allocate memory for buffer");
-	// 	}
-	// 	return { buff, deallocate_ };
-	// }
+	bringauto::modules::Buffer constructBufferByAllocate(std::size_t size) {
+		struct ::buffer buff;
+		buff.size_in_bytes = size;
+		if(allocate(&buff, size) != OK) {
+			throw std::runtime_error("Could not allocate memory for buffer");
+		}
+		return { buff, deallocate_ };
+	}
 
-	// bringauto::modules::Buffer constructBufferByTakeOwnership(struct ::buffer& buffer) {
-	// 	return { buffer, deallocate_ };
-	// }
+	bringauto::modules::Buffer constructBufferByTakeOwnership(struct ::buffer& buffer) {
+		return { buffer, deallocate_ };
+	}
 
 private:
 

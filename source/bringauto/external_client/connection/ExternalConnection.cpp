@@ -62,20 +62,16 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 	auto deviceId = structures::DeviceIdentification(device);
 
 	bringauto::modules::Buffer lastStatus {};
-	auto isRegistered = errorAggregator.get_last_status(&lastStatus, deviceId);
+	auto isRegistered = errorAggregator.get_last_status(lastStatus, deviceId);
 	if (isRegistered == DEVICE_NOT_REGISTERED){
 		deviceState = ExternalProtocol::Status_DeviceState_CONNECTING;
 
-		bringauto::modules::Buffer statusBuffer {};
 		const auto &statusData = status.statusdata();
-		// if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
-		// 	log::logError("Could not allocate memory for status message");
-		// 	return;
-		// }
-		// std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
-		statusBuffer.setStructBuffer((void*)statusData.c_str(), statusData.size());
+		bringauto::modules::Buffer statusBuffer = moduleLibrary_.moduleLibraryHandlers.at(deviceModule)->constructBufferByAllocate(
+			statusData.size());
+		const char* statusDataPtr = statusData.c_str();
+		std::memcpy(statusBuffer.getStructBuffer().data, statusDataPtr, statusData.size());
 		errorAggregator.add_status_to_error_aggregator(statusBuffer, deviceId);
-		// deallocate(&statusBuffer);
 	}
 
 	switch(deviceState) {
@@ -191,7 +187,7 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 		bringauto::modules::Buffer errorBuffer {};
 		bringauto::modules::Buffer statusBuffer {};
 
-		const auto &lastErrorStatusRc = errorAggregators[deviceModule].get_error(&errorBuffer, deviceIdentification);
+		const auto &lastErrorStatusRc = errorAggregators[deviceModule].get_error(errorBuffer, deviceIdentification);
 		if(lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
 			logging::Logger::logError("Device is not registered in error aggregator: {} {}",
 				deviceIdentification.getDeviceRole(),
@@ -199,7 +195,7 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 			return -1;
 		}
 
-		int lastStatusRc = errorAggregators[deviceModule].get_last_status(&statusBuffer, deviceIdentification);
+		int lastStatusRc = errorAggregators[deviceModule].get_last_status(statusBuffer, deviceIdentification);
 		if(lastStatusRc != OK) {
 			logging::Logger::logError("Cannot obtain status for device: {} {}",
 				deviceIdentification.getDeviceRole(),
@@ -378,18 +374,14 @@ void ExternalConnection::fillErrorAggregatorWithNotAckedStatuses() {
 	for(const auto &notAckedStatus: sentMessagesHandler_->getNotAckedStatuses()) {
 		const auto &device = notAckedStatus->getDevice();
 
-		bringauto::modules::Buffer statusBuffer {};
 		const auto &statusData = notAckedStatus->getStatus().devicestatus().statusdata();
-		// if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
-		// 	log::logError("Could not allocate memory for status message");
-		// 	return;
-		// }
-		// std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
-		statusBuffer.setStructBuffer((void*)statusData.c_str(), statusData.size());
+		bringauto::modules::Buffer statusBuffer = moduleLibrary_.moduleLibraryHandlers.at(device.module())->constructBufferByAllocate(
+			statusData.size());
+		const char* statusDataPtr = statusData.c_str();
+		std::memcpy(statusBuffer.getStructBuffer().data, statusDataPtr, statusData.size());
 
 		auto deviceId = structures::DeviceIdentification(device);
 		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer, deviceId);
-		// deallocate(&statusBuffer);
 	}
 	sentMessagesHandler_->clearAll();
 }
@@ -402,19 +394,15 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 	}
 	fillErrorAggregatorWithNotAckedStatuses();
 	if(errorAggregators.find(moduleNum) != errorAggregators.end()) {
-		bringauto::modules::Buffer statusBuffer {};
 		const auto &statusData = deviceStatus.statusdata();
-		// if(allocate(&statusBuffer, statusData.size()) == NOT_OK) {
-		// 	log::logError("Could not allocate memory for status message");
-		// 	return;
-		// }
-		// std::memcpy(statusBuffer.data, statusData.c_str(), statusData.size());
-		statusBuffer.setStructBuffer((void*)statusData.c_str(), statusData.size());
+		bringauto::modules::Buffer statusBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNum)->constructBufferByAllocate(
+			statusData.size());
+		const char* statusDataPtr = statusData.c_str();
+		std::memcpy(statusBuffer.getStructBuffer().data, statusDataPtr, statusData.size());
 
 		auto deviceId = structures::DeviceIdentification(deviceStatus.device());
 		auto &errorAggregator = errorAggregators.at(moduleNum);
 		errorAggregator.add_status_to_error_aggregator(statusBuffer, deviceId);
-		// deallocate(&statusBuffer);
 	} else {
 		log::logError("Device status with unsupported module was passed to fillErrorAggregator()");
 	}
@@ -424,7 +412,7 @@ std::vector<structures::DeviceIdentification> ExternalConnection::forceAggregati
 	std::vector<structures::DeviceIdentification> forcedDevices{};
 	for(const auto &device: connectedDevices) {
 		bringauto::modules::Buffer last_status{};
-		if (errorAggregators.at(device.getModule()).get_last_status(&last_status, device) == OK){
+		if (errorAggregators.at(device.getModule()).get_last_status(last_status, device) == OK){
 			continue;
 		}
 		moduleLibrary_.statusAggregators.at(device.getModule())->force_aggregation_on_device(device);
@@ -437,7 +425,7 @@ std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnecte
 	std::vector<structures::DeviceIdentification> devices {};
 	for(const auto &moduleNumber: settings_.modules) {
 		bringauto::modules::Buffer unique_devices {};
-		int ret = moduleLibrary_.statusAggregators.at(moduleNumber)->get_unique_devices(&unique_devices);
+		int ret = moduleLibrary_.statusAggregators.at(moduleNumber)->get_unique_devices(unique_devices);
 		if(ret <= 0) {
 			log::logWarning("Module {} does not have any connected devices", moduleNumber);
 			continue;
@@ -455,7 +443,6 @@ std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnecte
 			deallocate(&devicesPointer[i].device_role);
 			deallocate(&devicesPointer[i].device_name);
 		}
-		// deallocate(&unique_devices);
 	}
 
 	return devices;

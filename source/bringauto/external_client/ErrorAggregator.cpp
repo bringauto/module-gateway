@@ -22,7 +22,7 @@ int ErrorAggregator::destroy_error_aggregator() {
 }
 
 int
-ErrorAggregator::add_status_to_error_aggregator(const bringauto::modules::Buffer status, const structures::DeviceIdentification& device) {
+ErrorAggregator::add_status_to_error_aggregator(const bringauto::modules::Buffer& status, const structures::DeviceIdentification& device) {
 	const auto &device_type = device.getDeviceType();
 	if(is_device_type_supported(device_type) == NOT_OK) {
 		return DEVICE_NOT_SUPPORTED;
@@ -38,32 +38,21 @@ ErrorAggregator::add_status_to_error_aggregator(const bringauto::modules::Buffer
 	}
 
 	auto &lastStatus = devices_[device].lastStatus;
-	// if(lastStatus.data != nullptr && lastStatus.size_in_bytes > 0) { // status.size_in_bytes > lastStatus.size_in_bytes
-	// 	module_->deallocate(&lastStatus);
-	// }
-	// if(module_->allocate(&lastStatus, status.size_in_bytes) == NOT_OK) {
-	// 	log::logError("Could not allocate memory for status buffer in function add_status_to_error_aggregator");
-	// 	return NOT_OK;
-	// }
-	// std::memcpy(lastStatus.data, status.data, status.size_in_bytes);
 	lastStatus = status;
 
-	bringauto::modules::Buffer errorMessageBuffer {};
+	bringauto::modules::Buffer errorMessageBuffer = module_->constructBufferByAllocate(0);
 	auto &currentError = devices_[device].errorMessage;
 
-	auto retCode = module_->aggregateError(&errorMessageBuffer, currentError, status, device_type);
+	auto retCode = module_->aggregateError(errorMessageBuffer, currentError, status, device_type);
 	if(retCode != OK) {
 		log::logWarning("Error occurred in Error aggregator for device: {}", device.convertToString());
 		return NOT_OK;
 	}
-	// if(currentError.data != nullptr) {
-	// 	module_->deallocate(&currentError);
-	// }
 	currentError = errorMessageBuffer;
 	return OK;
 }
 
-int ErrorAggregator::get_last_status(bringauto::modules::Buffer *status, const structures::DeviceIdentification& device) {
+int ErrorAggregator::get_last_status(bringauto::modules::Buffer &status, const structures::DeviceIdentification& device) {
 	if(not devices_.contains(device)) {
 		return DEVICE_NOT_REGISTERED;
 	}
@@ -73,11 +62,11 @@ int ErrorAggregator::get_last_status(bringauto::modules::Buffer *status, const s
 	if(lastStatus.getStructBuffer().data == nullptr || lastStatus.getStructBuffer().size_in_bytes == 0) {
 		return NO_MESSAGE_AVAILABLE;
 	}
-	status->setStructBuffer(lastStatus.getStructBuffer().data, lastStatus.getStructBuffer().size_in_bytes);
+	status = lastStatus;
 	return OK;
 }
 
-int ErrorAggregator::get_error(bringauto::modules::Buffer *error, const structures::DeviceIdentification& device) {
+int ErrorAggregator::get_error(bringauto::modules::Buffer &error, const structures::DeviceIdentification& device) {
 	if(not devices_.contains(device)) {
 		return DEVICE_NOT_REGISTERED;
 	}
@@ -87,19 +76,11 @@ int ErrorAggregator::get_error(bringauto::modules::Buffer *error, const structur
 	if(currentError.getStructBuffer().data == nullptr || currentError.getStructBuffer().size_in_bytes == 0) {
 		return NO_MESSAGE_AVAILABLE;
 	}
-	error->setStructBuffer(currentError.getStructBuffer().data, currentError.getStructBuffer().size_in_bytes);
+	error = currentError;
 	return OK;
 }
 
 int ErrorAggregator::clear_error_aggregator() {
-	// for(auto &[key, device]: devices_) {
-	// 	if(device.lastStatus.data != nullptr && device.lastStatus.size_in_bytes > 0) {
-	// 		module_->deallocate(&device.lastStatus);
-	// 	}
-	// 	if(device.errorMessage.data != nullptr && device.errorMessage.size_in_bytes > 0) {
-	// 		module_->deallocate(&device.errorMessage);
-	// 	}
-	// }
 	return OK;
 }
 

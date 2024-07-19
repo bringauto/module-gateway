@@ -1,7 +1,5 @@
 #pragma once
 
-// #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
-
 #include <fleet_protocol/common_headers/device_management.h>
 #include <fleet_protocol/common_headers/general_error_codes.h>
 
@@ -18,28 +16,20 @@ namespace bringauto::modules {
 */
 struct Buffer final {
 
-  // friend class ModuleManagerLibraryHandler;
+  friend class ModuleManagerLibraryHandler;
 
   Buffer() = default;
+  Buffer(const Buffer& buff) = default;
   ~Buffer() = default;
 
-  inline struct ::buffer getStructBuffer() const { return *buffer_; }
-  void setStructBuffer(void* data, std::size_t size) {
-    struct ::buffer buff;
-		if(allocate(&buff, size) != OK) {
-			throw std::runtime_error("Could not allocate memory for buffer");
-		}
+  Buffer& operator=(const Buffer& buff) = default;
 
-    std::memcpy(buff.data, data, size);
-    //deallocate(buffer_.get());
-    buffer_ = std::shared_ptr<struct ::buffer>(&buff, deallocate);
-    //buffer_->size_in_bytes = size;
-  }
+  inline struct ::buffer getStructBuffer() const { return *buffer_; }
 
 private:
 
     Buffer(const struct ::buffer& buff, std::function<void(struct ::buffer*)> deallocate) {
-      buffer_ = std::shared_ptr<struct ::buffer>({}, deallocate);
+      buffer_ = std::shared_ptr<struct ::buffer>(new struct ::buffer, [deallocate](struct ::buffer *buff){ deallocate(buff); delete buff; });
       *buffer_ = buff;
     }
 

@@ -49,23 +49,14 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 		return;
 	}
 
-	bringauto::modules::Buffer commandBuffer {};
 	const auto &commandData = deviceCommand.commanddata();
 	auto &moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
-	// if(moduleLibraryHandler->allocate(&commandBuffer, commandData.size()) == NOT_OK) {
-	// 	log::logError("Could not allocate memory for command message");
-	// 	return;
-	// }
-	// std::memcpy(commandBuffer.data, commandData.c_str(), commandData.size());
-	commandBuffer.setStructBuffer((void*)commandData.c_str(), commandData.size());
+	bringauto::modules::Buffer commandBuffer = moduleLibraryHandler->constructBufferByAllocate(commandData.size());
+	const char* commandDataPtr = commandData.c_str();
+	std::memcpy(commandBuffer.getStructBuffer().data, commandDataPtr, commandData.size());
 
 	auto deviceId = structures::DeviceIdentification(device);
 	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);
-	// if(ret != OK) {
-	// 	moduleLibraryHandler->deallocate(&commandBuffer);
-	// 	log::logError("Update command failed with error code: {}", ret);
-	// 	return;
-	// }
 	log::logInfo("Command on device {} was successfully updated", device.devicename());
 }
 

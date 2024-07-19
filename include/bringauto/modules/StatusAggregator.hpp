@@ -73,21 +73,21 @@ public:
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int add_status_to_aggregator(const bringauto::modules::Buffer status, const structures::DeviceIdentification& device);
+	int add_status_to_aggregator(const bringauto::modules::Buffer& status, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get the oldest aggregated protobuf status message that is aggregated
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int get_aggregated_status(bringauto::modules::Buffer *generated_status, const structures::DeviceIdentification& device);
+	int get_aggregated_status(bringauto::modules::Buffer &generated_status, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get all devices registered to aggregator
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int get_unique_devices(bringauto::modules::Buffer *unique_devices_buffer);
+	int get_unique_devices(bringauto::modules::Buffer &unique_devices_buffer);
 
 	/**
 	 * @short Force status message aggregation on given device.
@@ -108,15 +108,15 @@ public:
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/command_manager.h
 	 */
-	int update_command(const bringauto::modules::Buffer command, const structures::DeviceIdentification& device);
+	int update_command(const bringauto::modules::Buffer& command, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get command message.
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/command_manager.h
 	 */
-	int get_command(const bringauto::modules::Buffer status, const structures::DeviceIdentification& device,
-					bringauto::modules::Buffer *command);
+	int get_command(const bringauto::modules::Buffer& status, const structures::DeviceIdentification& device,
+					bringauto::modules::Buffer &command);
 
 	/**
 	 * @short Get number of the module
@@ -131,26 +131,6 @@ public:
 	 * @see fleet-protocol/lib/common_headers/include/device_management.h
 	 */
 	int is_device_type_supported(unsigned int device_type);
-
-	/**
-	 * @brief Allocates struct buffer with size
-	 *
-	 * @param buffer pointer to struct
-	 * @param size_in_bytes
-	 * @return 0 if success, otherwise -1
-	 */
-	// the function is not needed at all.
-	// remove it pls.
-	//void moduleDeallocate(struct buffer *buffer);
-	//int moduleAllocate(struct buffer *buffer, size_t size_in_bytes);
-
-	/**
-	 * @brief Deallocates struct buffer in loaded module
-	 *
-	 */
-	// the function is not needed at all.
-	// remove it pls.
-	//void moduleDeallocate(struct buffer *buffer);
 
 	/**
 	 * @brief Unset timeouted message ready
