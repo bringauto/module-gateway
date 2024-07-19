@@ -54,7 +54,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 	for (const auto& [key, statusAggregator] : moduleLibrary_.statusAggregators) {
 		auto moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(key);
 		if(statusAggregator->getTimeoutedMessageReady()){
-			bringauto::modules::Buffer unique_devices = moduleLibraryHandler->constructBufferByAllocate(0);
+			bringauto::modules::Buffer unique_devices = moduleLibraryHandler->constructBufferByAllocate();
 			int ret = statusAggregator->get_unique_devices(unique_devices);
 			if (ret == NOT_OK) {
 				log::logError("Could not get unique devices in checkTimeoutedMessages");
@@ -70,7 +70,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 				};
 				const auto device = structures::DeviceIdentification(deviceId);
 				while(true) {
-					bringauto::modules::Buffer aggregatedStatusBuffer = moduleLibraryHandler->constructBufferByAllocate(0);
+					bringauto::modules::Buffer aggregatedStatusBuffer = moduleLibraryHandler->constructBufferByAllocate();
 					int remainingMessages = statusAggregator->get_aggregated_status(aggregatedStatusBuffer, device);
 					if(remainingMessages == NO_MESSAGE_AVAILABLE) {
 						break;
@@ -128,7 +128,7 @@ void ModuleHandler::handleDisconnect(const structures::DeviceIdentification& dev
 void ModuleHandler::sendAggregatedStatus(const structures::DeviceIdentification &deviceId, const ip::Device &device,
 										 bool disconnected) {
 	auto &statusAggregator = moduleLibrary_.statusAggregators.at(deviceId.getModule());
-	bringauto::modules::Buffer aggregatedStatusBuffer = moduleLibrary_.moduleLibraryHandlers.at(deviceId.getModule())->constructBufferByAllocate(0);
+	bringauto::modules::Buffer aggregatedStatusBuffer = moduleLibrary_.moduleLibraryHandlers.at(deviceId.getModule())->constructBufferByAllocate();
 	statusAggregator->get_aggregated_status(aggregatedStatusBuffer, deviceId);
 	auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device,
 																						aggregatedStatusBuffer);
@@ -193,7 +193,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 
 	const auto deviceId = structures::DeviceIdentification(device);
 
-	bringauto::modules::Buffer commandBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBufferByAllocate(0);
+	bringauto::modules::Buffer commandBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBufferByAllocate();
 	int getCommandRc = statusAggregator->get_command(statusBuffer, deviceId, commandBuffer);
 	if(getCommandRc == OK) {
 		auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device,

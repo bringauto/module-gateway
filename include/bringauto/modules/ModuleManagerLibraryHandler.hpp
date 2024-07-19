@@ -53,7 +53,7 @@ public:
 
 	int commandDataValid(const bringauto::modules::Buffer command, unsigned int device_type);
 
-	bringauto::modules::Buffer constructBufferByAllocate(std::size_t size) {
+	bringauto::modules::Buffer constructBufferByAllocate(std::size_t size = 0) {
 		struct ::buffer buff;
 		buff.size_in_bytes = size;
 		if(allocate(&buff, size) != OK) {

@@ -68,8 +68,8 @@ public:
 	 * @param errorMessage error message
 	 */
 	void sendStatus(const InternalProtocol::DeviceStatus &status,
-					ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING,
-					const bringauto::modules::Buffer &errorMessage = {});
+					const bringauto::modules::Buffer &errorMessage,
+					ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING);
 
 	/**
 	 * @brief Check if any device is connected to the external connection
