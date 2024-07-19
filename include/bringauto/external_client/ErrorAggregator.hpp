@@ -114,11 +114,6 @@ private:
 	struct DeviceState {
 		bringauto::modules::Buffer errorMessage {};
 		bringauto::modules::Buffer lastStatus {};
-
-		// DeviceState() {
-		// 	errorMessage.setStructBuffer(nullptr, 0);
-		// 	lastStatus.setStructBuffer(nullptr, 0);
-		// };
 	};
 
 	std::shared_ptr <modules::ModuleManagerLibraryHandler> module_ {};

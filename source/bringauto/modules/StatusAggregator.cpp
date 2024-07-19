@@ -27,7 +27,7 @@ bringauto::modules::Buffer
 StatusAggregator::aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const bringauto::modules::Buffer &status,
 								  const unsigned int &device_type) {
 	auto &currStatus = deviceState.getStatus();
-	bringauto::modules::Buffer aggregatedStatusBuff {};
+	bringauto::modules::Buffer aggregatedStatusBuff = module_->constructBufferByAllocate(0);
 	module_->aggregateStatus(aggregatedStatusBuff, currStatus, status, device_type);
 	return aggregatedStatusBuff;
 }
@@ -45,7 +45,7 @@ StatusAggregator::aggregateSetSendStatus(structures::StatusAggregatorDeviceState
 	deviceState.setStatusAndResetTimer(aggregatedStatusBuff);
 
 	auto &currStatus = deviceState.getStatus();
-	bringauto::modules::Buffer statusToSendBuff {};
+	bringauto::modules::Buffer statusToSendBuff = module_->constructBufferByAllocate(0);
 	statusToSendBuff = currStatus;
 
 	auto &aggregatedMessages = deviceState.aggregatedMessages();
@@ -89,9 +89,9 @@ int StatusAggregator::add_status_to_aggregator(const bringauto::modules::Buffer&
 
 	deviceTimeouts_[device] = 0;
 	if(not devices.contains(device)) {
-		bringauto::modules::Buffer commandBuffer {};
+		bringauto::modules::Buffer commandBuffer = module_->constructBufferByAllocate(0);
 		module_->generateFirstCommand(commandBuffer, device_type);
-		bringauto::modules::Buffer statusBuffer {};
+		bringauto::modules::Buffer statusBuffer = module_->constructBufferByAllocate(0);
 		statusBuffer = status;
 
 		std::function<int(const structures::DeviceIdentification&)> timeouted_force_aggregation = [device, this](
@@ -164,7 +164,7 @@ int StatusAggregator::force_aggregation_on_device(const structures::DeviceIdenti
 	}
 
 	const auto &statusBuffer = devices.at(device).getStatus();
-	bringauto::modules::Buffer forcedStatusBuffer {};
+	bringauto::modules::Buffer forcedStatusBuffer = module_->constructBufferByAllocate(0);
 	forcedStatusBuffer = statusBuffer;
 	auto &aggregatedMessages = devices.at(device).aggregatedMessages();
 	aggregatedMessages.push(forcedStatusBuffer);
@@ -222,7 +222,7 @@ int StatusAggregator::get_command(const bringauto::modules::Buffer& status, cons
 	}
 
 	auto &deviceState = devices.at(device);
-	bringauto::modules::Buffer generatedCommandBuffer {};
+	bringauto::modules::Buffer generatedCommandBuffer = module_->constructBufferByAllocate(0);
 	std::lock_guard<std::mutex> lock(mutex_);
 	auto &currCommand = devices.at(device).getCommand();
 	module_->generateCommand(generatedCommandBuffer, status, deviceState.getStatus(), deviceState.getCommand(),

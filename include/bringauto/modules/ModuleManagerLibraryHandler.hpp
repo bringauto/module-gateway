@@ -57,7 +57,7 @@ public:
 		struct ::buffer buff;
 		buff.size_in_bytes = size;
 		if(allocate(&buff, size) != OK) {
-			throw std::runtime_error("Could not allocate memory for buffer");
+			throw std::bad_alloc();
 		}
 		return { buff, deallocate_ };
 	}
