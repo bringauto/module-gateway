@@ -33,12 +33,25 @@ void StatusAggregatorDeviceState::setCommand(const bringauto::modules::Buffer &c
 	command_ = commandBuffer;
 }
 
-const bringauto::modules::Buffer &StatusAggregatorDeviceState::getCommand() const {
+const bringauto::modules::Buffer &StatusAggregatorDeviceState::getCommand() {
+	if (!externalCommandQueue_.empty()) {
+		command_ = externalCommandQueue_.front();
+		externalCommandQueue_.pop();
+	}
 	return command_;
 }
 
 std::queue<struct bringauto::modules::Buffer> &StatusAggregatorDeviceState::aggregatedMessages() {
 	return aggregatedMessages_;
+}
+
+int StatusAggregatorDeviceState::addExternalCommand(const bringauto::modules::Buffer &command) {
+	externalCommandQueue_.push(command);
+	if (externalCommandQueue_.size() > 3) { //TODO add to constants
+		externalCommandQueue_.pop();
+		return NOT_OK;
+	}
+	return OK;
 }
 
 }

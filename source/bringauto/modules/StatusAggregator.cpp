@@ -143,6 +143,8 @@ int StatusAggregator::get_unique_devices(bringauto::modules::Buffer &unique_devi
 		return 0;
 	}
 
+	unique_devices_buffer = module_->constructBufferByAllocate(devicesSize * sizeof(struct device_identification));
+
 	auto *devicesPointer = static_cast<device_identification *>(unique_devices_buffer.getStructBuffer().data);
 	int i = 0;
 	for(auto const &[key, value]: devices) {
@@ -198,8 +200,10 @@ int StatusAggregator::update_command(const bringauto::modules::Buffer& command, 
 		return COMMAND_INVALID;
 	}
 
-	std::lock_guard<std::mutex> lock(mutex_);
-	devices.at(device).setCommand(command);
+	std::lock_guard<std::mutex> lock(mutex_); //TODO check if needed
+	if (devices.at(device).addExternalCommand(command) == NOT_OK) {
+		log::logError("External command queue is full for device: {} deleting oldest command", device.convertToString());
+	}
 	return OK;
 }
 
@@ -216,19 +220,19 @@ int StatusAggregator::get_command(const bringauto::modules::Buffer& status, cons
 		return STATUS_INVALID;
 	}
 
-	if(is_device_valid(device) == NOT_OK) {
-		module_->generateFirstCommand(command, device_type);
-		return OK;
-	}
+	// if(is_device_valid(device) == NOT_OK) {
+	// 	module_->generateFirstCommand(command, device_type);
+	// 	return OK;
+	// }
 
 	auto &deviceState = devices.at(device);
 	bringauto::modules::Buffer generatedCommandBuffer = module_->constructBufferByAllocate();
-	std::lock_guard<std::mutex> lock(mutex_);
+	//std::lock_guard<std::mutex> lock(mutex_); //TODO check if needed
 	auto &currCommand = devices.at(device).getCommand();
-	module_->generateCommand(generatedCommandBuffer, status, deviceState.getStatus(), deviceState.getCommand(),
+	module_->generateCommand(generatedCommandBuffer, status, deviceState.getStatus(), currCommand,
 							 device_type);
 	deviceState.setCommand(generatedCommandBuffer);
-	command = currCommand;
+	command = generatedCommandBuffer;
 	return OK;
 }
 

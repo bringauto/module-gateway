@@ -59,7 +59,7 @@ public:
 	 *
 	 * @return const struct buffer&
 	 */
-	[[nodiscard]] const bringauto::modules::Buffer &getCommand() const;
+	[[nodiscard]] const bringauto::modules::Buffer &getCommand();
 
 	/**
 	 * @brief Get aggregated messages queue
@@ -67,6 +67,13 @@ public:
 	 * @return std::queue<struct buffer>&
 	 */
 	[[nodiscard]] std::queue<bringauto::modules::Buffer> &aggregatedMessages();
+
+	/**
+	 * @brief Add a command to the external command queue
+	 *
+	 * @param commandBuffer command buffer
+	 */
+	int addExternalCommand(const bringauto::modules::Buffer &commandBuffer);
 
 private:
 	std::unique_ptr<bringauto::structures::ThreadTimer> timer_ {};
@@ -76,6 +83,8 @@ private:
 	bringauto::modules::Buffer status_ {};
 
 	bringauto::modules::Buffer command_ {};
+
+	std::queue<bringauto::modules::Buffer> externalCommandQueue_ {};
 };
 
 }
