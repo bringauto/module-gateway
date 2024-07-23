@@ -5,7 +5,7 @@
 #include <bringauto/structures/DeviceIdentification.hpp>
 
 #include <fleet_protocol/module_gateway/command_manager.h>
-#include <fleet_protocol/module_maintainer/module_gateway//module_manager.h>
+#include <fleet_protocol/module_maintainer/module_gateway/module_manager.h>
 
 #include <functional>
 #include <unordered_map>
