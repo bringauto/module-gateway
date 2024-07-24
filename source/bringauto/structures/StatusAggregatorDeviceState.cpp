@@ -47,7 +47,7 @@ std::queue<struct bringauto::modules::Buffer> &StatusAggregatorDeviceState::aggr
 
 int StatusAggregatorDeviceState::addExternalCommand(const bringauto::modules::Buffer &command) {
 	externalCommandQueue_.push(command);
-	if (externalCommandQueue_.size() > 3) { //TODO add to constants
+	if (externalCommandQueue_.size() > bringauto::settings::max_external_commands) {
 		externalCommandQueue_.pop();
 		return NOT_OK;
 	}

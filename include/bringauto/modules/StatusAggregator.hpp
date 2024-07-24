@@ -11,7 +11,6 @@
 #include <unordered_map>
 #include <string>
 #include <filesystem>
-#include <mutex>
 
 
 
@@ -163,8 +162,9 @@ private:
 	 * @param device_type device type
 	 * @return struct buffer with aggregated status message
 	 */
-	bringauto::modules::Buffer aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const bringauto::modules::Buffer &status,
-								  const unsigned int &device_type);
+	bringauto::modules::Buffer aggregateStatus(structures::StatusAggregatorDeviceState &deviceState,
+											   const bringauto::modules::Buffer &status,
+								  			   const unsigned int &device_type);
 
 	/**
 	 * @brief Aggregate and set status message
@@ -199,8 +199,6 @@ private:
 	 * @brief Map of devices timeouts, key is device identification converted to string
 	 */
 	std::unordered_map<structures::DeviceIdentification, int> deviceTimeouts_ {};
-
-	std::mutex mutex_ {};
 
 	std::atomic_bool timeoutedMessageReady_ { false };
 };

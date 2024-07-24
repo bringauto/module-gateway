@@ -29,49 +29,49 @@ public:
 	/**
 	 * @brief Deallocate and replace status buffer
 	 *
-	 * @param statusBuffer status data buffer
+	 * @param statusBuffer status data Buffer
 	 */
 	void setStatus(const bringauto::modules::Buffer &statusBuffer);
 
 	/**
 	 * @brief Get status buffer
 	 *
-	 * @return const struct buffer&
+	 * @return const Buffer&
 	 */
 	[[nodiscard]] const bringauto::modules::Buffer &getStatus() const;
 
 	/**
 	 * @brief Deallocate, replace data buffer and restart no aggregation timer
 	 *
-	 * @param statusBuffer status data buffer
+	 * @param statusBuffer status data Buffer
 	 */
 	void setStatusAndResetTimer(const bringauto::modules::Buffer &statusBuffer);
 
 	/**
 	 * @brief Deallocate and replace command buffer
 	 *
-	 * @param commandBuffer command buffer
+	 * @param commandBuffer command Buffer
 	 */
 	void setCommand(const bringauto::modules::Buffer &commandBuffer);
 
 	/**
 	 * @brief Get command buffer
 	 *
-	 * @return const struct buffer&
+	 * @return const Buffer&
 	 */
 	[[nodiscard]] const bringauto::modules::Buffer &getCommand();
 
 	/**
 	 * @brief Get aggregated messages queue
 	 *
-	 * @return std::queue<struct buffer>&
+	 * @return std::queue<bringauto::modules::Buffer>&
 	 */
 	[[nodiscard]] std::queue<bringauto::modules::Buffer> &aggregatedMessages();
 
 	/**
 	 * @brief Add a command to the external command queue
 	 *
-	 * @param commandBuffer command buffer
+	 * @param commandBuffer command Buffer
 	 */
 	int addExternalCommand(const bringauto::modules::Buffer &commandBuffer);
 

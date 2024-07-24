@@ -211,12 +211,6 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 		return;
 	}
 
-	// int addStatusToAggregatorRc = statusAggregator->add_status_to_aggregator(statusBuffer, deviceId);
-	// if(addStatusToAggregatorRc < 0) {
-	// 	log::logWarning("Add status to aggregator failed with return code: {}", addStatusToAggregatorRc);
-	// 	return;
-	// }
-
 	while(addStatusToAggregatorRc > 0) {
 		sendAggregatedStatus(deviceId, device, false);
 		addStatusToAggregatorRc--;

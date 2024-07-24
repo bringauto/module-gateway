@@ -6,7 +6,6 @@
 
 #include <bringauto/logging/Logger.hpp>
 
-#include <new>
 #include <random>
 
 
