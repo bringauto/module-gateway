@@ -28,17 +28,21 @@ protected:
 	}
 
 
-	struct buffer init_status_buffer();
+	bringauto::modules::Buffer init_status_buffer();
 
-	struct buffer init_command_buffer();
+	bringauto::modules::Buffer init_command_buffer();
+
+	bringauto::modules::Buffer init_empty_buffer();
 
 	void add_status_to_aggregator();
 
 	void remove_device_from_status_aggregator();
 
-	std::shared_ptr<bringauto::structures::GlobalContext> context;
+	std::shared_ptr<bringauto::structures::GlobalContext> context_;
 
-	std::unique_ptr <bringauto::modules::StatusAggregator> statusAggregator;
+	std::unique_ptr <bringauto::modules::StatusAggregator> statusAggregator_;
+
+	std::shared_ptr<bringauto::modules::ModuleManagerLibraryHandler> libHandler_;
 
 #ifdef DEBUG
     static constexpr const char* PATH_TO_MODULE { "./test/lib/example-module/libexample-module-gateway-sharedd.so" };

@@ -188,8 +188,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	const auto &statusData = status.statusdata();
 	bringauto::modules::Buffer statusBuffer =moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBufferByAllocate(
 		statusData.size());
-	const char* statusDataPtr = statusData.c_str();
-	std::memcpy(statusBuffer.getStructBuffer().data, statusDataPtr, statusData.size());
+	bringauto::common_utils::ProtobufUtils::copyStatusToBuffer(status, statusBuffer);
 
 	const auto deviceId = structures::DeviceIdentification(device);
 

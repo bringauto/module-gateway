@@ -97,4 +97,12 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientCommandRespo
 	return externalMessage;
 }
 
+void ProtobufUtils::copyStatusToBuffer(const InternalProtocol::DeviceStatus &status, bringauto::modules::Buffer &buffer) {
+	std::memcpy(buffer.getStructBuffer().data, status.statusdata().c_str(), status.statusdata().size());
+}
+
+void ProtobufUtils::copyCommandToBuffer(const InternalProtocol::DeviceCommand &command, bringauto::modules::Buffer &buffer) {
+	std::memcpy(buffer.getStructBuffer().data, command.commanddata().c_str(), command.commanddata().size());
+}
+
 }

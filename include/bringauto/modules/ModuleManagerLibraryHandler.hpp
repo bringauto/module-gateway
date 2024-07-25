@@ -53,18 +53,9 @@ public:
 
 	int commandDataValid(const bringauto::modules::Buffer command, unsigned int device_type);
 
-	bringauto::modules::Buffer constructBufferByAllocate(std::size_t size = 0) {
-		struct ::buffer buff;
-		buff.size_in_bytes = size;
-		if(allocate(&buff, size) != OK) {
-			throw std::bad_alloc();
-		}
-		return { buff, deallocate_ };
-	}
+	bringauto::modules::Buffer constructBufferByAllocate(std::size_t size = 0);
 
-	bringauto::modules::Buffer constructBufferByTakeOwnership(struct ::buffer& buffer) {
-		return { buffer, deallocate_ };
-	}
+	bringauto::modules::Buffer constructBufferByTakeOwnership(struct ::buffer& buffer);
 
 private:
 

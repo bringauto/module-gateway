@@ -1,7 +1,7 @@
 # Module Gateway - TESTS
 
 !!! NOTICE !!!
-Tests must be compiled with different compiler then **gcc**
+Tests must be compiled with different compiler than **gcc**
 Otherwise, the build or run will fail with error: `AddressSanitizer:DEADLYSIGNAL`
 
 The only tested working compiler is **clang++-17**

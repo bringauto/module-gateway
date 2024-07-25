@@ -120,4 +120,17 @@ void ModuleManagerLibraryHandler::deallocate(struct buffer *buffer){
 	deallocate_(buffer);
 }
 
+bringauto::modules::Buffer ModuleManagerLibraryHandler::constructBufferByAllocate(std::size_t size) {
+	struct ::buffer buff;
+	buff.size_in_bytes = size;
+	if(allocate(&buff, size) != OK) {
+		throw std::bad_alloc();
+	}
+	return { buff, deallocate_ };
+}
+
+bringauto::modules::Buffer ModuleManagerLibraryHandler::constructBufferByTakeOwnership(struct ::buffer &buffer) {
+	return { buffer, deallocate_ };
+}
+
 }

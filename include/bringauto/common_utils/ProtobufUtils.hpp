@@ -12,7 +12,7 @@
 
 namespace bringauto::common_utils {
 /**
- * @brief Class of methods to create protobuf messages defined in fleet protocol
+ * @brief Class of methods to create protobuf messages defined in fleet protocol and for copying protobuf data to buffers
  */
 class ProtobufUtils {
 public:
@@ -99,6 +99,22 @@ public:
 	static ExternalProtocol::ExternalClient createExternalClientCommandResponse(const std::string &sessionId,
 																				ExternalProtocol::CommandResponse::Type type,
 																				u_int32_t messageCounter);
+
+	/**
+	 * @brief Copy status data from DeviceStatus to a Buffer
+	 * 
+	 * @param status status to be copied 
+	 * @param buffer buffer to copy to
+	 */
+	static void copyStatusToBuffer(const InternalProtocol::DeviceStatus &status, bringauto::modules::Buffer &buffer);
+
+	/**
+	 * @brief Copy command data from DeviceCommand to a Buffer
+	 * 
+	 * @param command command to be copied 
+	 * @param buffer buffer to copy to
+	 */
+	static void copyCommandToBuffer(const InternalProtocol::DeviceCommand &command, bringauto::modules::Buffer &buffer);
 
 };
 }

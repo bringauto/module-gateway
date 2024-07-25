@@ -51,8 +51,8 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 	const auto &commandData = deviceCommand.commanddata();
 	auto &moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
 	bringauto::modules::Buffer commandBuffer = moduleLibraryHandler->constructBufferByAllocate(commandData.size());
-	const char* commandDataPtr = commandData.c_str();
-	std::memcpy(commandBuffer.getStructBuffer().data, commandDataPtr, commandData.size());
+	bringauto::common_utils::ProtobufUtils::copyCommandToBuffer(deviceCommand, commandBuffer);
+
 
 	auto deviceId = structures::DeviceIdentification(device);
 	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);

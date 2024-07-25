@@ -68,8 +68,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 
 		const auto &statusData = status.statusdata();
 		bringauto::modules::Buffer statusBuffer = moduleLibraryHanlder->constructBufferByAllocate(statusData.size());
-		const char* statusDataPtr = statusData.c_str();
-		std::memcpy(statusBuffer.getStructBuffer().data, statusDataPtr, statusData.size());
+		bringauto::common_utils::ProtobufUtils::copyStatusToBuffer(status, statusBuffer);
 		errorAggregator.add_status_to_error_aggregator(statusBuffer, deviceId);
 	}
 
@@ -377,8 +376,7 @@ void ExternalConnection::fillErrorAggregatorWithNotAckedStatuses() {
 		const auto &statusData = notAckedStatus->getStatus().devicestatus().statusdata();
 		bringauto::modules::Buffer statusBuffer = moduleLibrary_.moduleLibraryHandlers.at(device.module())->constructBufferByAllocate(
 			statusData.size());
-		const char* statusDataPtr = statusData.c_str();
-		std::memcpy(statusBuffer.getStructBuffer().data, statusDataPtr, statusData.size());
+		bringauto::common_utils::ProtobufUtils::copyStatusToBuffer(notAckedStatus->getStatus().devicestatus(), statusBuffer);
 
 		auto deviceId = structures::DeviceIdentification(device);
 		errorAggregators[device.module()].add_status_to_error_aggregator(statusBuffer, deviceId);
@@ -397,8 +395,7 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 		const auto &statusData = deviceStatus.statusdata();
 		bringauto::modules::Buffer statusBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNum)->constructBufferByAllocate(
 			statusData.size());
-		const char* statusDataPtr = statusData.c_str();
-		std::memcpy(statusBuffer.getStructBuffer().data, statusDataPtr, statusData.size());
+		bringauto::common_utils::ProtobufUtils::copyStatusToBuffer(deviceStatus, statusBuffer);
 
 		auto deviceId = structures::DeviceIdentification(deviceStatus.device());
 		auto &errorAggregator = errorAggregators.at(moduleNum);
