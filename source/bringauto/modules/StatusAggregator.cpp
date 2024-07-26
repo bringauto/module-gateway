@@ -137,23 +137,14 @@ int StatusAggregator::get_aggregated_status(bringauto::modules::Buffer &generate
 	return OK;
 }
 
-int StatusAggregator::get_unique_devices(bringauto::modules::Buffer &unique_devices_buffer) {
+int StatusAggregator::get_unique_devices(std::list<structures::DeviceIdentification> &unique_devices_list) {
 	const auto devicesSize = devices.size();
 	if (devicesSize == 0) {
 		return 0;
 	}
 
-	unique_devices_buffer = module_->constructBufferByAllocate(devicesSize * sizeof(struct device_identification));
-
-	auto *devicesPointer = static_cast<device_identification *>(unique_devices_buffer.getStructBuffer().data);
-	int i = 0;
-	for(auto const &[key, value]: devices) {
-		devicesPointer[i].module = key.getModule();
-		devicesPointer[i].device_type = key.getDeviceType();
-		common_utils::MemoryUtils::initBuffer(devicesPointer[i].device_role, key.getDeviceRole());
-		common_utils::MemoryUtils::initBuffer(devicesPointer[i].device_name, key.getDeviceName());
-        devicesPointer[i].priority = key.getPriority();
-		i++;
+	for(auto &device: devices) {
+		unique_devices_list.push_back(device.first);
 	}
 
 	return devicesSize;

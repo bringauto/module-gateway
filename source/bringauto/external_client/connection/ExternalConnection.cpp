@@ -421,24 +421,15 @@ std::vector<structures::DeviceIdentification> ExternalConnection::forceAggregati
 std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnectedDevices() {
 	std::vector<structures::DeviceIdentification> devices {};
 	for(const auto &moduleNumber: settings_.modules) {
-		bringauto::modules::Buffer unique_devices = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBufferByAllocate();
+		std::list<structures::DeviceIdentification> unique_devices;
 		int ret = moduleLibrary_.statusAggregators.at(moduleNumber)->get_unique_devices(unique_devices);
 		if(ret <= 0) {
 			log::logWarning("Module {} does not have any connected devices", moduleNumber);
 			continue;
 		}
 
-		auto *devicesPointer = static_cast<device_identification *>(unique_devices.getStructBuffer().data);
-		for (int i = 0; i < ret; i++){
-			struct device_identification deviceId {
-				.module = devicesPointer[i].module,
-				.device_type = devicesPointer[i].device_type,
-				.device_role = devicesPointer[i].device_role,
-				.device_name = devicesPointer[i].device_name
-			};
-			devices.emplace_back(deviceId);
-			deallocate(&devicesPointer[i].device_role);
-			deallocate(&devicesPointer[i].device_name);
+		for (auto &device: unique_devices){
+			devices.emplace_back(device);
 		}
 	}
 

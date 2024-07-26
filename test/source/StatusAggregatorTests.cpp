@@ -134,28 +134,19 @@ TEST_F(StatusAggregatorTests, get_aggregated_status_no_message){
 }
 
 TEST_F(StatusAggregatorTests, get_unique_devices_empty){
-	bringauto::modules::Buffer unique_devices = init_empty_buffer();
+	std::list<bringauto::structures::DeviceIdentification> unique_devices;
 	int ret = statusAggregator_->get_unique_devices(unique_devices);
 	EXPECT_TRUE(ret == 0);
 }
 
 TEST_F(StatusAggregatorTests, get_unique_devices_one){
 	add_status_to_aggregator();
-	bringauto::modules::Buffer unique_devices = init_empty_buffer();
+	std::list<bringauto::structures::DeviceIdentification> unique_devices;
 	int ret = statusAggregator_->get_unique_devices(unique_devices);
 	EXPECT_TRUE(ret == 1);
-	device_identification *devicesPointer = static_cast<device_identification *>(unique_devices.getStructBuffer().data);
-	struct device_identification deviceId {
-		.module = devicesPointer[0].module,
-		.device_type = devicesPointer[0].device_type,
-		.device_role = devicesPointer[0].device_role,
-		.device_name = devicesPointer[0].device_name,
-        .priority = devicesPointer[0].priority
-	};
-	ASSERT_EQ(MODULE, deviceId.module);
-	ASSERT_EQ(SUPPORTED_DEVICE_TYPE, deviceId.device_type);
-	deallocate(&deviceId.device_role);
-	deallocate(&deviceId.device_name);
+	auto deviceId = unique_devices.front();
+	ASSERT_EQ(MODULE, deviceId.getModule());
+	ASSERT_EQ(SUPPORTED_DEVICE_TYPE, deviceId.getDeviceType());
 	remove_device_from_status_aggregator();
 }
 
@@ -166,20 +157,18 @@ TEST_F(StatusAggregatorTests, get_unique_devices_two){
     auto deviceId2 = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE_2, DEVICE_NAME_2, 0);
     int ret = statusAggregator_->add_status_to_aggregator(status_buffer, deviceId2);
 	EXPECT_TRUE(ret == 1);
-	bringauto::modules::Buffer unique_devices = init_empty_buffer();
+	std::list<bringauto::structures::DeviceIdentification> unique_devices;
 	ret = statusAggregator_->get_unique_devices(unique_devices);
 	EXPECT_TRUE(ret == 2);
-	device_identification *devicesPointer = static_cast<device_identification *>(unique_devices.getStructBuffer().data);
-
+	
 	bool deviceId1Found = false;
 	bool deviceId2Found = false;
-	for(int i = 0; i < 2; ++i) {
-		bringauto::structures::DeviceIdentification currDeviceId(devicesPointer[i]);
-		if(currDeviceId.getPriority() == 10) {
-			ASSERT_EQ(currDeviceId, deviceId1);
+	for(auto &device: unique_devices) {
+		if(device.getPriority() == 10) {
+			ASSERT_EQ(device, deviceId1);
 			deviceId1Found = true;
-		} else if(currDeviceId.getPriority() == 0) {
-			ASSERT_EQ(currDeviceId, deviceId2);
+		} else if(device.getPriority() == 0) {
+			ASSERT_EQ(device, deviceId2);
 			deviceId2Found = true;
 		} else {
 			FAIL(); // None of the devices should have a priority different from 10 or 0
@@ -187,11 +176,6 @@ TEST_F(StatusAggregatorTests, get_unique_devices_two){
 	}
 	ASSERT_TRUE(deviceId1Found);
 	ASSERT_TRUE(deviceId2Found);
-
-	deallocate(&devicesPointer[0].device_role);
-	deallocate(&devicesPointer[0].device_name);
-	deallocate(&devicesPointer[1].device_role);
-	deallocate(&devicesPointer[1].device_name);
 	remove_device_from_status_aggregator();
 }
 

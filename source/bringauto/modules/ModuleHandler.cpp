@@ -54,21 +54,14 @@ void ModuleHandler::checkTimeoutedMessages(){
 	for (const auto& [key, statusAggregator] : moduleLibrary_.statusAggregators) {
 		auto moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(key);
 		if(statusAggregator->getTimeoutedMessageReady()){
-			bringauto::modules::Buffer unique_devices = moduleLibraryHandler->constructBufferByAllocate();
+			std::list<structures::DeviceIdentification> unique_devices;
 			int ret = statusAggregator->get_unique_devices(unique_devices);
 			if (ret == NOT_OK) {
 				log::logError("Could not get unique devices in checkTimeoutedMessages");
 				return;
 			}
-			device_identification *devicesPointer = static_cast<device_identification *>(unique_devices.getStructBuffer().data);
-			for (int i = 0; i < ret; i++){
-				struct device_identification deviceId {
-					.module = devicesPointer[i].module,
-					.device_type = devicesPointer[i].device_type,
-					.device_role = devicesPointer[i].device_role,
-					.device_name = devicesPointer[i].device_name
-				};
-				const auto device = structures::DeviceIdentification(deviceId);
+			
+			for (auto &device: unique_devices) {
 				while(true) {
 					bringauto::modules::Buffer aggregatedStatusBuffer = moduleLibraryHandler->constructBufferByAllocate();
 					int remainingMessages = statusAggregator->get_aggregated_status(aggregatedStatusBuffer, device);
@@ -87,8 +80,6 @@ void ModuleHandler::checkTimeoutedMessages(){
 					log::logWarning("Device {} not sending statuses for too long, disconnecting it", device.convertToString());
 					toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(device));
 				}
-				deallocate(&devicesPointer[i].device_role);
-				deallocate(&devicesPointer[i].device_name);
 			}
 			statusAggregator->unsetTimeoutedMessageReady();
 		}
