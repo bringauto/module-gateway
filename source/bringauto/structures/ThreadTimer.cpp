@@ -1,7 +1,6 @@
 #include <bringauto/structures/ThreadTimer.hpp>
 
 #include <bringauto/logging/Logger.hpp>
-#include <bringauto/common_utils/MemoryUtils.hpp>
 
 #include <iostream>
 

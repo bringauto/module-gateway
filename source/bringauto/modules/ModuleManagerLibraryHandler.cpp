@@ -120,7 +120,7 @@ void ModuleManagerLibraryHandler::deallocate(struct buffer *buffer){
 	deallocate_(buffer);
 }
 
-bringauto::modules::Buffer ModuleManagerLibraryHandler::constructBufferByAllocate(std::size_t size) {
+bringauto::modules::Buffer ModuleManagerLibraryHandler::constructBuffer(std::size_t size) {
 	struct ::buffer buff;
 	buff.size_in_bytes = size;
 	if(allocate(&buff, size) != OK) {

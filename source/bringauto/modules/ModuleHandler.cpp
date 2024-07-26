@@ -2,7 +2,6 @@
 #include <bringauto/logging/Logger.hpp>
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
-#include <bringauto/common_utils/MemoryUtils.hpp>
 
 #include <fleet_protocol/common_headers/memory_management.h>
 
@@ -63,7 +62,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 			
 			for (auto &device: unique_devices) {
 				while(true) {
-					bringauto::modules::Buffer aggregatedStatusBuffer = moduleLibraryHandler->constructBufferByAllocate();
+					bringauto::modules::Buffer aggregatedStatusBuffer = moduleLibraryHandler->constructBuffer();
 					int remainingMessages = statusAggregator->get_aggregated_status(aggregatedStatusBuffer, device);
 					if(remainingMessages == NO_MESSAGE_AVAILABLE) {
 						break;
@@ -119,7 +118,7 @@ void ModuleHandler::handleDisconnect(const structures::DeviceIdentification& dev
 void ModuleHandler::sendAggregatedStatus(const structures::DeviceIdentification &deviceId, const ip::Device &device,
 										 bool disconnected) {
 	auto &statusAggregator = moduleLibrary_.statusAggregators.at(deviceId.getModule());
-	bringauto::modules::Buffer aggregatedStatusBuffer = moduleLibrary_.moduleLibraryHandlers.at(deviceId.getModule())->constructBufferByAllocate();
+	bringauto::modules::Buffer aggregatedStatusBuffer = moduleLibrary_.moduleLibraryHandlers.at(deviceId.getModule())->constructBuffer();
 	statusAggregator->get_aggregated_status(aggregatedStatusBuffer, deviceId);
 	auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device,
 																						aggregatedStatusBuffer);
@@ -177,7 +176,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	auto &statusAggregator = statusAggregators[moduleNumber];
 
 	const auto &statusData = status.statusdata();
-	bringauto::modules::Buffer statusBuffer =moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBufferByAllocate(
+	bringauto::modules::Buffer statusBuffer =moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBuffer(
 		statusData.size());
 	bringauto::common_utils::ProtobufUtils::copyStatusToBuffer(status, statusBuffer);
 
@@ -189,7 +188,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 		return;
 	}
 	
-	bringauto::modules::Buffer commandBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBufferByAllocate();
+	bringauto::modules::Buffer commandBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBuffer();
 	int getCommandRc = statusAggregator->get_command(statusBuffer, deviceId, commandBuffer);
 	if(getCommandRc == OK) {
 		auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device,

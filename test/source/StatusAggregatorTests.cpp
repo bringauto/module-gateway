@@ -1,24 +1,23 @@
 #include <StatusAggregatorTests.hpp>
 #include <testing_utils/DeviceIdentificationHelper.h>
-#include <bringauto/common_utils/MemoryUtils.hpp>
 
 
 bringauto::modules::Buffer StatusAggregatorTests::init_status_buffer(){
 	size_t size = strlen(BUTTON_UNPRESSED);
-	bringauto::modules::Buffer buffer = libHandler_->constructBufferByAllocate(size);
+	bringauto::modules::Buffer buffer = libHandler_->constructBuffer(size);
 	std::memcpy(buffer.getStructBuffer().data, BUTTON_UNPRESSED, size);
 	return buffer;
 }
 
 bringauto::modules::Buffer StatusAggregatorTests::init_command_buffer(){
 	size_t size = strlen(LIT_DOWN);
-	bringauto::modules::Buffer buffer = libHandler_->constructBufferByAllocate(size);
+	bringauto::modules::Buffer buffer = libHandler_->constructBuffer(size);
 	std::memcpy(buffer.getStructBuffer().data, LIT_DOWN, size);
 	return buffer;
 }
 
 bringauto::modules::Buffer StatusAggregatorTests::init_empty_buffer(){
-	bringauto::modules::Buffer buffer = libHandler_->constructBufferByAllocate();
+	bringauto::modules::Buffer buffer = libHandler_->constructBuffer();
 	return buffer;
 }
 
@@ -94,7 +93,7 @@ TEST_F(StatusAggregatorTests, add_status_to_aggregator_without_aggregation){
 	libHandler->loadLibrary(PATH_TO_MODULE);
 	add_status_to_aggregator();
 	size_t size = strlen(BUTTON_PRESSED) + 1;
-	bringauto::modules::Buffer status_buffer = libHandler->constructBufferByAllocate(size);
+	bringauto::modules::Buffer status_buffer = libHandler->constructBuffer(size);
 	strcpy(static_cast<char *>(status_buffer.getStructBuffer().data), BUTTON_PRESSED);
     auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator_->add_status_to_aggregator(status_buffer, deviceId);
