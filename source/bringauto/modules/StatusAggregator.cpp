@@ -22,29 +22,29 @@ int StatusAggregator::clear_device(const structures::DeviceIdentification &key) 
 	return OK;
 }
 
-bringauto::modules::Buffer
-StatusAggregator::aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const bringauto::modules::Buffer &status,
+Buffer
+StatusAggregator::aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
 								  const unsigned int &device_type) {
 	auto &currStatus = deviceState.getStatus();
-	bringauto::modules::Buffer aggregatedStatusBuff = module_->constructBuffer();
+	Buffer aggregatedStatusBuff = module_->constructBuffer();
 	module_->aggregateStatus(aggregatedStatusBuff, currStatus, status, device_type);
 	return aggregatedStatusBuff;
 }
 
-void StatusAggregator::aggregateSetStatus(structures::StatusAggregatorDeviceState &deviceState, const bringauto::modules::Buffer &status,
+void StatusAggregator::aggregateSetStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
 										  const unsigned int &device_type) {
 	auto aggregatedStatusBuff = aggregateStatus(deviceState, status, device_type);
 	deviceState.setStatus(aggregatedStatusBuff);
 }
 
 void
-StatusAggregator::aggregateSetSendStatus(structures::StatusAggregatorDeviceState &deviceState, const bringauto::modules::Buffer &status,
+StatusAggregator::aggregateSetSendStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
 										 const unsigned int &device_type) {
 	auto aggregatedStatusBuff = aggregateStatus(deviceState, status, device_type);
 	deviceState.setStatusAndResetTimer(aggregatedStatusBuff);
 
 	auto &currStatus = deviceState.getStatus();
-	bringauto::modules::Buffer statusToSendBuff = module_->constructBuffer();
+	Buffer statusToSendBuff = module_->constructBuffer();
 	statusToSendBuff = currStatus;
 
 	auto &aggregatedMessages = deviceState.aggregatedMessages();
@@ -78,7 +78,7 @@ int StatusAggregator::remove_device(const structures::DeviceIdentification& devi
 	return OK;
 }
 
-int StatusAggregator::add_status_to_aggregator(const bringauto::modules::Buffer& status,
+int StatusAggregator::add_status_to_aggregator(const Buffer& status,
 											   const structures::DeviceIdentification& device) {
 	const auto &device_type = device.getDeviceType();
 	if(is_device_type_supported(device_type) == NOT_OK) {
@@ -88,9 +88,9 @@ int StatusAggregator::add_status_to_aggregator(const bringauto::modules::Buffer&
 
 	deviceTimeouts_[device] = 0;
 	if(not devices.contains(device)) {
-		bringauto::modules::Buffer commandBuffer = module_->constructBuffer();
+		Buffer commandBuffer = module_->constructBuffer();
 		module_->generateFirstCommand(commandBuffer, device_type);
-		bringauto::modules::Buffer statusBuffer = module_->constructBuffer();
+		Buffer statusBuffer = module_->constructBuffer();
 		statusBuffer = status;
 
 		std::function<int(const structures::DeviceIdentification&)> timeouted_force_aggregation = [device, this](
@@ -118,7 +118,7 @@ int StatusAggregator::add_status_to_aggregator(const bringauto::modules::Buffer&
 	return aggregatedMessages.size();
 }
 
-int StatusAggregator::get_aggregated_status(bringauto::modules::Buffer &generated_status,
+int StatusAggregator::get_aggregated_status(Buffer &generated_status,
 											const structures::DeviceIdentification& device) {
 	if(is_device_valid(device) == NOT_OK) {
 		log::logError("Trying to get aggregated status from unregistered device");
@@ -156,7 +156,7 @@ int StatusAggregator::force_aggregation_on_device(const structures::DeviceIdenti
 	}
 
 	const auto &statusBuffer = devices.at(device).getStatus();
-	bringauto::modules::Buffer forcedStatusBuffer = module_->constructBuffer();
+	Buffer forcedStatusBuffer = module_->constructBuffer();
 	forcedStatusBuffer = statusBuffer;
 	auto &aggregatedMessages = devices.at(device).aggregatedMessages();
 	aggregatedMessages.push(forcedStatusBuffer);
@@ -173,7 +173,7 @@ int StatusAggregator::is_device_valid(const structures::DeviceIdentification& de
 
 int StatusAggregator::get_module_number() { return module_->getModuleNumber(); }
 
-int StatusAggregator::update_command(const bringauto::modules::Buffer& command, const structures::DeviceIdentification& device) {
+int StatusAggregator::update_command(const Buffer& command, const structures::DeviceIdentification& device) {
 	const auto &device_type = device.getDeviceType();
 	if(is_device_type_supported(device_type) == NOT_OK) {
 		log::logError("Device type {} is not supported", device_type);
@@ -196,21 +196,16 @@ int StatusAggregator::update_command(const bringauto::modules::Buffer& command, 
 	return OK;
 }
 
-int StatusAggregator::get_command(const bringauto::modules::Buffer& status, const structures::DeviceIdentification& device,
-								  bringauto::modules::Buffer& command) {
+int StatusAggregator::get_command(const Buffer& status, const structures::DeviceIdentification& device,
+								  Buffer& command) {
 	const auto &device_type = device.getDeviceType();
 	if(is_device_type_supported(device_type) == NOT_OK) {
 		log::logError("Device type {} is not supported", device_type);
 		return DEVICE_NOT_SUPPORTED;
 	}
 
-	if(status.getStructBuffer().size_in_bytes == 0 || module_->statusDataValid(status, device_type) == NOT_OK) {
-		log::logWarning("Invalid status data on device id: {}", device.convertToString());
-		return STATUS_INVALID;
-	}
-
 	auto &deviceState = devices.at(device);
-	bringauto::modules::Buffer generatedCommandBuffer = module_->constructBuffer();
+	Buffer generatedCommandBuffer = module_->constructBuffer();
 	auto &currCommand = deviceState.getCommand();
 	module_->generateCommand(generatedCommandBuffer, status, deviceState.getStatus(), currCommand,
 							 device_type);

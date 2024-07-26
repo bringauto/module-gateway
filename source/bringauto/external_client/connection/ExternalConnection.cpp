@@ -420,7 +420,7 @@ std::vector<structures::DeviceIdentification> ExternalConnection::forceAggregati
 std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnectedDevices() {
 	std::vector<structures::DeviceIdentification> devices {};
 	for(const auto &moduleNumber: settings_.modules) {
-		std::list<structures::DeviceIdentification> unique_devices;
+		std::list<structures::DeviceIdentification> unique_devices {};
 		int ret = moduleLibrary_.statusAggregators.at(moduleNumber)->get_unique_devices(unique_devices);
 		if(ret <= 0) {
 			log::logWarning("Module {} does not have any connected devices", moduleNumber);

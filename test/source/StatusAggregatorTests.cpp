@@ -133,14 +133,14 @@ TEST_F(StatusAggregatorTests, get_aggregated_status_no_message){
 }
 
 TEST_F(StatusAggregatorTests, get_unique_devices_empty){
-	std::list<bringauto::structures::DeviceIdentification> unique_devices;
+	std::list<bringauto::structures::DeviceIdentification> unique_devices {};
 	int ret = statusAggregator_->get_unique_devices(unique_devices);
 	EXPECT_TRUE(ret == 0);
 }
 
 TEST_F(StatusAggregatorTests, get_unique_devices_one){
 	add_status_to_aggregator();
-	std::list<bringauto::structures::DeviceIdentification> unique_devices;
+	std::list<bringauto::structures::DeviceIdentification> unique_devices {};
 	int ret = statusAggregator_->get_unique_devices(unique_devices);
 	EXPECT_TRUE(ret == 1);
 	auto deviceId = unique_devices.front();
@@ -156,7 +156,7 @@ TEST_F(StatusAggregatorTests, get_unique_devices_two){
     auto deviceId2 = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE_2, DEVICE_NAME_2, 0);
     int ret = statusAggregator_->add_status_to_aggregator(status_buffer, deviceId2);
 	EXPECT_TRUE(ret == 1);
-	std::list<bringauto::structures::DeviceIdentification> unique_devices;
+	std::list<bringauto::structures::DeviceIdentification> unique_devices {};
 	ret = statusAggregator_->get_unique_devices(unique_devices);
 	EXPECT_TRUE(ret == 2);
 	

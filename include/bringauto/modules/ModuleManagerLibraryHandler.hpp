@@ -34,28 +34,28 @@ public:
 	int isDeviceTypeSupported(unsigned int device_type);
 
 	int
-	sendStatusCondition(const bringauto::modules::Buffer current_status, const bringauto::modules::Buffer new_status, unsigned int device_type);
+	sendStatusCondition(const Buffer current_status, const Buffer new_status, unsigned int device_type);
 
-	int generateCommand(bringauto::modules::Buffer &generated_command, const bringauto::modules::Buffer new_status,
-						const bringauto::modules::Buffer current_status, const bringauto::modules::Buffer current_command,
+	int generateCommand(Buffer &generated_command, const Buffer new_status,
+						const Buffer current_status, const Buffer current_command,
 						unsigned int device_type);
 
-	int aggregateStatus(bringauto::modules::Buffer &aggregated_status, const bringauto::modules::Buffer current_status,
-						const bringauto::modules::Buffer new_status, unsigned int device_type);
+	int aggregateStatus(Buffer &aggregated_status, const Buffer current_status,
+						const Buffer new_status, unsigned int device_type);
 
 	int
-	aggregateError(bringauto::modules::Buffer &error_message, const bringauto::modules::Buffer current_error_message, const bringauto::modules::Buffer status,
+	aggregateError(Buffer &error_message, const Buffer current_error_message, const Buffer status,
 				   unsigned int device_type);
 
-	int generateFirstCommand(bringauto::modules::Buffer &default_command, unsigned int device_type);
+	int generateFirstCommand(Buffer &default_command, unsigned int device_type);
 
-	int statusDataValid(const bringauto::modules::Buffer status, unsigned int device_type);
+	int statusDataValid(const Buffer status, unsigned int device_type);
 
-	int commandDataValid(const bringauto::modules::Buffer command, unsigned int device_type);
+	int commandDataValid(const Buffer command, unsigned int device_type);
 
-	bringauto::modules::Buffer constructBuffer(std::size_t size = 0);
+	Buffer constructBuffer(std::size_t size = 0);
 
-	bringauto::modules::Buffer constructBufferByTakeOwnership(struct ::buffer& buffer);
+	Buffer constructBufferByTakeOwnership(struct ::buffer& buffer);
 
 private:
 
