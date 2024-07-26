@@ -70,7 +70,7 @@ private:
 	}
 
 	/**
-	 * Underlyig data type used to hold information n shared_ptr.
+	 * Underlyig data type used to hold information by shared_ptr.
 	 * Data type in ::buffer struct is a type void*. It is not viable
 	 * to use void* in C++ --> use 1-byte data type.
 	 */
