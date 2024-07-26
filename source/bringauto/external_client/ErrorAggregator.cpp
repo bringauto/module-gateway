@@ -35,14 +35,14 @@ ErrorAggregator::add_status_to_error_aggregator(const bringauto::modules::Buffer
 
 	if(not devices_.contains(device)) {
 		devices_.insert({ device, {}});
-		devices_[device].lastStatus = module_->constructBufferByAllocate();
-		devices_[device].errorMessage = module_->constructBufferByAllocate();
+		devices_[device].lastStatus = module_->constructBuffer();
+		devices_[device].errorMessage = module_->constructBuffer();
 	}
 
 	auto &lastStatus = devices_[device].lastStatus;
 	lastStatus = status;
 
-	bringauto::modules::Buffer errorMessageBuffer = module_->constructBufferByAllocate();
+	bringauto::modules::Buffer errorMessageBuffer = module_->constructBuffer();
 	auto &currentError = devices_[device].errorMessage;
 
 	auto retCode = module_->aggregateError(errorMessageBuffer, currentError, status, device_type);

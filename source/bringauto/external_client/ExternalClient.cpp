@@ -1,7 +1,6 @@
 #include <bringauto/external_client/ExternalClient.hpp>
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
-#include <bringauto/common_utils/MemoryUtils.hpp>
 #include <bringauto/external_client/connection/ConnectionState.hpp>
 
 #include <bringauto/logging/Logger.hpp>
@@ -50,7 +49,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 
 	const auto &commandData = deviceCommand.commanddata();
 	auto &moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
-	bringauto::modules::Buffer commandBuffer = moduleLibraryHandler->constructBufferByAllocate(commandData.size());
+	bringauto::modules::Buffer commandBuffer = moduleLibraryHandler->constructBuffer(commandData.size());
 	bringauto::common_utils::ProtobufUtils::copyCommandToBuffer(deviceCommand, commandBuffer);
 
 
@@ -137,7 +136,7 @@ bool ExternalClient::sendStatus(const structures::InternalClientMessage &interna
 			startExternalConnectSequence(connection);
 		}
 	} else {
-		bringauto::modules::Buffer errorBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBufferByAllocate();
+		bringauto::modules::Buffer errorBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBuffer();
 		bool ret = true;
 		if(internalMessage.disconnected()) {
 			connection.sendStatus(deviceStatus, errorBuffer, ExternalProtocol::Status_DeviceState_DISCONNECT);

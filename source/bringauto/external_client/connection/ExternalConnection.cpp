@@ -1,7 +1,6 @@
 #include <bringauto/external_client/connection/ExternalConnection.hpp>
 #include <bringauto/external_client/connection/communication/MqttCommunication.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
-#include <bringauto/common_utils/MemoryUtils.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
 
 #include <bringauto/logging/Logger.hpp>
@@ -61,13 +60,13 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 	auto deviceId = structures::DeviceIdentification(device);
 	auto moduleLibraryHanlder = moduleLibrary_.moduleLibraryHandlers.at(deviceModule);
 
-	bringauto::modules::Buffer lastStatus = moduleLibraryHanlder->constructBufferByAllocate();
+	bringauto::modules::Buffer lastStatus = moduleLibraryHanlder->constructBuffer();
 	auto isRegistered = errorAggregator.get_last_status(lastStatus, deviceId);
 	if (isRegistered == DEVICE_NOT_REGISTERED){
 		deviceState = ExternalProtocol::Status_DeviceState_CONNECTING;
 
 		const auto &statusData = status.statusdata();
-		bringauto::modules::Buffer statusBuffer = moduleLibraryHanlder->constructBufferByAllocate(statusData.size());
+		bringauto::modules::Buffer statusBuffer = moduleLibraryHanlder->constructBuffer(statusData.size());
 		bringauto::common_utils::ProtobufUtils::copyStatusToBuffer(status, statusBuffer);
 		errorAggregator.add_status_to_error_aggregator(statusBuffer, deviceId);
 	}
@@ -183,8 +182,8 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 
 		const int &deviceModule = deviceIdentification.getModule();
 		auto moduleLibraryHanlder = moduleLibrary_.moduleLibraryHandlers.at(deviceModule);
-		bringauto::modules::Buffer errorBuffer = moduleLibraryHanlder->constructBufferByAllocate();
-		bringauto::modules::Buffer statusBuffer = moduleLibraryHanlder->constructBufferByAllocate();
+		bringauto::modules::Buffer errorBuffer = moduleLibraryHanlder->constructBuffer();
+		bringauto::modules::Buffer statusBuffer = moduleLibraryHanlder->constructBuffer();
 
 		const auto &lastErrorStatusRc = errorAggregators[deviceModule].get_error(errorBuffer, deviceIdentification);
 		if(lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
@@ -374,7 +373,7 @@ void ExternalConnection::fillErrorAggregatorWithNotAckedStatuses() {
 		const auto &device = notAckedStatus->getDevice();
 
 		const auto &statusData = notAckedStatus->getStatus().devicestatus().statusdata();
-		bringauto::modules::Buffer statusBuffer = moduleLibrary_.moduleLibraryHandlers.at(device.module())->constructBufferByAllocate(
+		bringauto::modules::Buffer statusBuffer = moduleLibrary_.moduleLibraryHandlers.at(device.module())->constructBuffer(
 			statusData.size());
 		bringauto::common_utils::ProtobufUtils::copyStatusToBuffer(notAckedStatus->getStatus().devicestatus(), statusBuffer);
 
@@ -393,7 +392,7 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 	fillErrorAggregatorWithNotAckedStatuses();
 	if(errorAggregators.find(moduleNum) != errorAggregators.end()) {
 		const auto &statusData = deviceStatus.statusdata();
-		bringauto::modules::Buffer statusBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNum)->constructBufferByAllocate(
+		bringauto::modules::Buffer statusBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNum)->constructBuffer(
 			statusData.size());
 		bringauto::common_utils::ProtobufUtils::copyStatusToBuffer(deviceStatus, statusBuffer);
 
@@ -408,7 +407,7 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 std::vector<structures::DeviceIdentification> ExternalConnection::forceAggregationOnAllDevices(std::vector<structures::DeviceIdentification> connectedDevices) {
 	std::vector<structures::DeviceIdentification> forcedDevices{};
 	for(const auto &device: connectedDevices) {
-		bringauto::modules::Buffer last_status = moduleLibrary_.moduleLibraryHandlers.at(device.getModule())->constructBufferByAllocate();
+		bringauto::modules::Buffer last_status = moduleLibrary_.moduleLibraryHandlers.at(device.getModule())->constructBuffer();
 		if (errorAggregators.at(device.getModule()).get_last_status(last_status, device) == OK){
 			continue;
 		}
@@ -421,24 +420,15 @@ std::vector<structures::DeviceIdentification> ExternalConnection::forceAggregati
 std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnectedDevices() {
 	std::vector<structures::DeviceIdentification> devices {};
 	for(const auto &moduleNumber: settings_.modules) {
-		bringauto::modules::Buffer unique_devices = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBufferByAllocate();
+		std::list<structures::DeviceIdentification> unique_devices;
 		int ret = moduleLibrary_.statusAggregators.at(moduleNumber)->get_unique_devices(unique_devices);
 		if(ret <= 0) {
 			log::logWarning("Module {} does not have any connected devices", moduleNumber);
 			continue;
 		}
 
-		auto *devicesPointer = static_cast<device_identification *>(unique_devices.getStructBuffer().data);
-		for (int i = 0; i < ret; i++){
-			struct device_identification deviceId {
-				.module = devicesPointer[i].module,
-				.device_type = devicesPointer[i].device_type,
-				.device_role = devicesPointer[i].device_role,
-				.device_name = devicesPointer[i].device_name
-			};
-			devices.emplace_back(deviceId);
-			deallocate(&devicesPointer[i].device_role);
-			deallocate(&devicesPointer[i].device_name);
+		for (auto &device: unique_devices){
+			devices.emplace_back(device);
 		}
 	}
 

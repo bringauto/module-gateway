@@ -2,7 +2,6 @@
 #include <bringauto/logging/Logger.hpp>
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
-#include <bringauto/common_utils/MemoryUtils.hpp>
 
 #include <fleet_protocol/common_headers/memory_management.h>
 
@@ -54,23 +53,16 @@ void ModuleHandler::checkTimeoutedMessages(){
 	for (const auto& [key, statusAggregator] : moduleLibrary_.statusAggregators) {
 		auto moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(key);
 		if(statusAggregator->getTimeoutedMessageReady()){
-			bringauto::modules::Buffer unique_devices = moduleLibraryHandler->constructBufferByAllocate();
+			std::list<structures::DeviceIdentification> unique_devices;
 			int ret = statusAggregator->get_unique_devices(unique_devices);
 			if (ret == NOT_OK) {
 				log::logError("Could not get unique devices in checkTimeoutedMessages");
 				return;
 			}
-			device_identification *devicesPointer = static_cast<device_identification *>(unique_devices.getStructBuffer().data);
-			for (int i = 0; i < ret; i++){
-				struct device_identification deviceId {
-					.module = devicesPointer[i].module,
-					.device_type = devicesPointer[i].device_type,
-					.device_role = devicesPointer[i].device_role,
-					.device_name = devicesPointer[i].device_name
-				};
-				const auto device = structures::DeviceIdentification(deviceId);
+			
+			for (auto &device: unique_devices) {
 				while(true) {
-					bringauto::modules::Buffer aggregatedStatusBuffer = moduleLibraryHandler->constructBufferByAllocate();
+					bringauto::modules::Buffer aggregatedStatusBuffer = moduleLibraryHandler->constructBuffer();
 					int remainingMessages = statusAggregator->get_aggregated_status(aggregatedStatusBuffer, device);
 					if(remainingMessages == NO_MESSAGE_AVAILABLE) {
 						break;
@@ -87,8 +79,6 @@ void ModuleHandler::checkTimeoutedMessages(){
 					log::logWarning("Device {} not sending statuses for too long, disconnecting it", device.convertToString());
 					toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(device));
 				}
-				deallocate(&devicesPointer[i].device_role);
-				deallocate(&devicesPointer[i].device_name);
 			}
 			statusAggregator->unsetTimeoutedMessageReady();
 		}
@@ -128,7 +118,7 @@ void ModuleHandler::handleDisconnect(const structures::DeviceIdentification& dev
 void ModuleHandler::sendAggregatedStatus(const structures::DeviceIdentification &deviceId, const ip::Device &device,
 										 bool disconnected) {
 	auto &statusAggregator = moduleLibrary_.statusAggregators.at(deviceId.getModule());
-	bringauto::modules::Buffer aggregatedStatusBuffer = moduleLibrary_.moduleLibraryHandlers.at(deviceId.getModule())->constructBufferByAllocate();
+	bringauto::modules::Buffer aggregatedStatusBuffer = moduleLibrary_.moduleLibraryHandlers.at(deviceId.getModule())->constructBuffer();
 	statusAggregator->get_aggregated_status(aggregatedStatusBuffer, deviceId);
 	auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device,
 																						aggregatedStatusBuffer);
@@ -186,7 +176,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	auto &statusAggregator = statusAggregators[moduleNumber];
 
 	const auto &statusData = status.statusdata();
-	bringauto::modules::Buffer statusBuffer =moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBufferByAllocate(
+	bringauto::modules::Buffer statusBuffer =moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBuffer(
 		statusData.size());
 	bringauto::common_utils::ProtobufUtils::copyStatusToBuffer(status, statusBuffer);
 
@@ -198,7 +188,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 		return;
 	}
 	
-	bringauto::modules::Buffer commandBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBufferByAllocate();
+	bringauto::modules::Buffer commandBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBuffer();
 	int getCommandRc = statusAggregator->get_command(statusBuffer, deviceId, commandBuffer);
 	if(getCommandRc == OK) {
 		auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device,

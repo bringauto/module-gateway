@@ -1,11 +1,10 @@
 #include <ErrorAggregatorTests.hpp>
 #include <testing_utils/DeviceIdentificationHelper.h>
-#include <bringauto/common_utils/MemoryUtils.hpp>
 #include <fleet_protocol/module_gateway/error_codes.h>
 
 bringauto::modules::Buffer ErrorAggregatorTests::init_status_buffer() {
     size_t size = strlen(BUTTON_UNPRESSED);
-    bringauto::modules::Buffer buffer = libHandler_->constructBufferByAllocate(size);
+    bringauto::modules::Buffer buffer = libHandler_->constructBuffer(size);
 	std::memcpy(buffer.getStructBuffer().data, BUTTON_UNPRESSED, size);
 	return buffer;
 }
@@ -52,7 +51,7 @@ TEST_F(ErrorAggregatorTests, add_status_to_error_aggregator_ok) {
 TEST_F(ErrorAggregatorTests, get_last_status_device_not_registered) {
     auto libHandler = std::make_shared<bringauto::modules::ModuleManagerLibraryHandler>();
 	libHandler->loadLibrary(PATH_TO_MODULE);
-    bringauto::modules::Buffer buffer = libHandler->constructBufferByAllocate();
+    bringauto::modules::Buffer buffer = libHandler->constructBuffer();
     auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, UNSUPPORTED_DEVICE_TYPE, "button", "name", 10);
     int ret = errorAggregator_.get_last_status(buffer, deviceId);
     EXPECT_EQ(ret, DEVICE_NOT_REGISTERED);
@@ -65,7 +64,7 @@ TEST_F(ErrorAggregatorTests, get_last_status_device_ok) {
     EXPECT_EQ(ret, OK);
     auto libHandler = std::make_shared<bringauto::modules::ModuleManagerLibraryHandler>();
 	libHandler->loadLibrary(PATH_TO_MODULE);
-    bringauto::modules::Buffer buffer = libHandler->constructBufferByAllocate();
+    bringauto::modules::Buffer buffer = libHandler->constructBuffer();
     ret = errorAggregator_.get_last_status(buffer, deviceId);
     EXPECT_EQ(ret, OK);
 }

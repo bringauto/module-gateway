@@ -86,7 +86,7 @@ public:
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int get_unique_devices(bringauto::modules::Buffer &unique_devices_buffer);
+	int get_unique_devices(std::list<structures::DeviceIdentification> &unique_devices_list);
 
 	/**
 	 * @short Force status message aggregation on given device.

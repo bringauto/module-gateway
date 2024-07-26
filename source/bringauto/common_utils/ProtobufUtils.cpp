@@ -1,5 +1,4 @@
 #include <bringauto/common_utils/ProtobufUtils.hpp>
-#include <bringauto/common_utils/MemoryUtils.hpp>
 
 #include <fleet_protocol/common_headers/general_error_codes.h>
 
