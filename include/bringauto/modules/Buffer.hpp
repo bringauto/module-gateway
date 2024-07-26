@@ -33,12 +33,16 @@ struct Buffer final {
 	 */
 	[[nodiscard]] inline struct ::buffer getStructBuffer() const {
 		if(buffer_ == nullptr) [[unlikely]] {
-			throw std::runtime_error { "Buffer not allocated - it cannot be used as raw C struct" };
+			throw BufferNotAllocated { "Buffer not allocated - it cannot be used as raw C struct" };
 		}
 		return raw_buffer_;
 	}
 
 private:
+
+	struct BufferNotAllocated: public std::runtime_error {
+		using std::runtime_error::runtime_error;
+	};
 
 	/**
 	 * @brief Construct Buffer object with given buffer and deallocate function.
