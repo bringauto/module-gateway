@@ -82,26 +82,26 @@ int ModuleManagerLibraryHandler::generateCommand(bringauto::modules::Buffer &gen
 												 const bringauto::modules::Buffer new_status,
 												 const bringauto::modules::Buffer current_status,
 												 const bringauto::modules::Buffer current_command, unsigned int device_type) {
-	return generateCommand_(generated_command.buffer_.get(), new_status.getStructBuffer(),
+	return generateCommand_(&generated_command.raw_buffer_, new_status.getStructBuffer(),
 		current_status.getStructBuffer(), current_command.getStructBuffer(), device_type);
 }
 
 int ModuleManagerLibraryHandler::aggregateStatus(bringauto::modules::Buffer &aggregated_status,
 												 const bringauto::modules::Buffer current_status,
 												 const bringauto::modules::Buffer new_status, unsigned int device_type) {
-	return aggregateStatus_(aggregated_status.buffer_.get(), current_status.getStructBuffer(),
+	return aggregateStatus_(&aggregated_status.raw_buffer_, current_status.getStructBuffer(),
 		new_status.getStructBuffer(), device_type);
 }
 
 int ModuleManagerLibraryHandler::aggregateError(bringauto::modules::Buffer &error_message,
 												const bringauto::modules::Buffer current_error_message,
 												const bringauto::modules::Buffer status, unsigned int device_type) {
-	return aggregateError_(error_message.buffer_.get(), current_error_message.getStructBuffer(),
+	return aggregateError_(&error_message.raw_buffer_, current_error_message.getStructBuffer(),
 		status.getStructBuffer(), device_type);
 }
 
 int ModuleManagerLibraryHandler::generateFirstCommand(bringauto::modules::Buffer &default_command, unsigned int device_type) {
-	return generateFirstCommand_(default_command.buffer_.get(), device_type);
+	return generateFirstCommand_(&default_command.raw_buffer_, device_type);
 }
 
 int ModuleManagerLibraryHandler::statusDataValid(const bringauto::modules::Buffer status, unsigned int device_type) {
