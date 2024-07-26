@@ -31,9 +31,9 @@ struct Buffer final {
 	 *
 	 * @return pointer to a buffer
 	 */
-	inline struct ::buffer getStructBuffer() const {
+	[[nodiscard]] inline struct ::buffer getStructBuffer() const {
 		if(buffer_ == nullptr) [[unlikely]] {
-			throw std::bad_function_call {};
+			throw std::runtime_error { "Buffer not allocated - it cannot be used as raw C struct" };
 		}
 		return raw_buffer_;
 	}
