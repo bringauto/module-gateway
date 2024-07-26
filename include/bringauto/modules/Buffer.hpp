@@ -40,6 +40,10 @@ struct Buffer final {
 
 private:
 
+	/**
+	 * Explicit excetion for not allocated buffer.
+	 * Mainly because of SAST.
+	 */
 	struct BufferNotAllocated: public std::runtime_error {
 		using std::runtime_error::runtime_error;
 	};
