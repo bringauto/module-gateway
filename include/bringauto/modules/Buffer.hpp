@@ -58,17 +58,26 @@ private:
 		raw_buffer_ { buff }
 	{
 		const auto size = buff.size_in_bytes;
-		buffer_ = std::shared_ptr<void>(raw_buffer_.data, [deallocate, size](void *data){
-			struct ::buffer buff {
-				.data = data,
-				.size_in_bytes = size
-			};
-			deallocate(&buff);
-		});
+		buffer_ = std::shared_ptr<underlying_data_type>(static_cast<underlying_data_type*>(raw_buffer_.data),
+			[deallocate, size](underlying_data_type *data) {
+				struct ::buffer buff {
+					.data = data,
+					.size_in_bytes = size
+				};
+				deallocate(&buff);
+			}
+		);
 	}
 
+	/**
+	 * Underlyig data type used to hold information n shared_ptr.
+	 * Data type in ::buffer struct is a type void*. It is not viable
+	 * to use void* in C++ --> use 1-byte data type.
+	 */
+	using underlying_data_type = unsigned char;
+
 	struct ::buffer raw_buffer_ {};
-	std::shared_ptr<void> buffer_ {nullptr};
+	std::shared_ptr<underlying_data_type> buffer_ {nullptr};
 };
 
 }
