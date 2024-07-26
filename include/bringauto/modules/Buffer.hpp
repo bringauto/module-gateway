@@ -27,9 +27,9 @@ struct Buffer final {
 	Buffer& operator=(Buffer&& buff) = default;
 
 	/**
-	 * @brief Get a raw pointer to the buffer.
+	 * @brief Get a valid, allocated ::buffer instance
 	 *
-	 * @return pointer to a buffer
+	 * @return allocated ::buffer instance
 	 */
 	[[nodiscard]] inline struct ::buffer getStructBuffer() const {
 		if(buffer_ == nullptr) [[unlikely]] {
