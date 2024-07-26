@@ -20,16 +20,23 @@ struct Buffer final {
 
 	Buffer() = default;
 	Buffer(const Buffer& buff) = default;
+	Buffer(Buffer&& buff) = default;
 	~Buffer() = default;
 
 	Buffer& operator=(const Buffer& buff) = default;
+	Buffer& operator=(Buffer&& buff) = default;
 
 	/**
 	 * @brief Get a raw pointer to the buffer.
 	 *
 	 * @return pointer to a buffer
 	 */
-	inline struct ::buffer getStructBuffer() const { return *buffer_; }
+	inline struct ::buffer getStructBuffer() const {
+		if(buffer_ == nullptr) [[unlikely]] {
+			throw std::bad_function_call {};
+		}
+		return raw_buffer_;
+	}
 
 private:
 
@@ -39,15 +46,21 @@ private:
 	 * @param buff buffer to be assigned to buffer_
 	 * @param deallocate function to be called when buffer_ is destroyed
 	 */
-	Buffer(const struct ::buffer& buff, std::function<void(struct ::buffer*)> deallocate) {
-		buffer_ = std::shared_ptr<struct ::buffer>(new struct ::buffer, [deallocate](struct ::buffer *buff){
-			deallocate(buff);
-			delete buff;
+	Buffer(const struct ::buffer& buff, std::function<void(struct ::buffer*)> deallocate):
+		raw_buffer_ { buff }
+	{
+		const auto size = buff.size_in_bytes;
+		buffer_ = std::shared_ptr<void>(raw_buffer_.data, [deallocate, size](void *data){
+			struct ::buffer buff {
+				.data = data,
+				.size_in_bytes = size
+			};
+			deallocate(&buff);
 		});
-		*buffer_ = buff;
 	}
 
-	std::shared_ptr<struct ::buffer> buffer_ {};
+	struct ::buffer raw_buffer_ {};
+	std::shared_ptr<void> buffer_ {nullptr};
 };
 
 }
