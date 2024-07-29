@@ -130,6 +130,9 @@ Buffer ModuleManagerLibraryHandler::constructBuffer(std::size_t size) {
 }
 
 Buffer ModuleManagerLibraryHandler::constructBufferByTakeOwnership(struct ::buffer &buffer) {
+	if (buffer.data == nullptr) {
+		throw Buffer::BufferNotAllocated { "Buffer not allocated - cannot take ownership" };
+	}
 	return { buffer, deallocate_ };
 }
 
