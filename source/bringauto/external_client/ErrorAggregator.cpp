@@ -61,7 +61,7 @@ int ErrorAggregator::get_last_status(modules::Buffer &status, const structures::
 
 	auto &lastStatus = devices_[device].lastStatus;
 
-	if(lastStatus.getStructBuffer().data == nullptr || lastStatus.getStructBuffer().size_in_bytes == 0) {
+	if(!lastStatus.isAllocated()) {
 		return NO_MESSAGE_AVAILABLE;
 	}
 	status = lastStatus;
@@ -75,7 +75,7 @@ int ErrorAggregator::get_error(modules::Buffer &error, const structures::DeviceI
 
 	auto &currentError = devices_[device].errorMessage;
 
-	if(currentError.getStructBuffer().data == nullptr || currentError.getStructBuffer().size_in_bytes == 0) {
+	if(!currentError.isAllocated()) {
 		return NO_MESSAGE_AVAILABLE;
 	}
 	error = currentError;

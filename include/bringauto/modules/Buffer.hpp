@@ -38,6 +38,15 @@ struct Buffer final {
 		return raw_buffer_;
 	}
 
+	/**
+	 * @brief Determine if buffer is allocated.
+	 * 
+	 * @return true if buffer is allocated, false otherwise
+	 */
+	[[nodiscard]] bool isAllocated() const {
+		return raw_buffer_.data != nullptr && raw_buffer_.size_in_bytes > 0;
+	}
+
 private:
 
 	/**
