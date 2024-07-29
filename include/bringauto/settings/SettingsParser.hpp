@@ -30,7 +30,7 @@ public:
 	 * @brief Can be used after calling parseSettings(...) to get settings
 	 * @return shared ptr to settings
 	 */
-	std::shared_ptr<bringauto::settings::Settings> getSettings();
+	std::shared_ptr<Settings> getSettings();
 
 	/**
 	 * @brief Serializes settings to json
@@ -40,7 +40,7 @@ public:
 
 private:
 	cxxopts::ParseResult cmdArguments_;
-	std::shared_ptr<bringauto::settings::Settings> settings_;
+	std::shared_ptr<Settings> settings_;
 
 	void parseCmdArguments(int argc, char **argv);
 

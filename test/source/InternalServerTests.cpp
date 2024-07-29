@@ -1,8 +1,6 @@
 #include <InternalServerTests.hpp>
 
 
-namespace common_utils = bringauto::common_utils;
-
 InternalProtocol::Device
 createDevice(int module, unsigned int type, const std::string &role, const std::string &name,
 		unsigned int priority) {

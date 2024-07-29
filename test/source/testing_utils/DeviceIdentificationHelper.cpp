@@ -1,11 +1,15 @@
 #include <testing_utils/DeviceIdentificationHelper.h>
 
 namespace testing_utils {
-bringauto::structures::DeviceIdentification
+
+namespace structures = bringauto::structures;
+
+
+structures::DeviceIdentification
 DeviceIdentificationHelper::createDeviceIdentification(unsigned int module, unsigned int type, const char *deviceRole,
                                                        const char *deviceName, int priority) {
     auto device = createProtobufDevice(module, type, deviceRole, deviceName, priority);
-    return bringauto::structures::DeviceIdentification(device);
+    return structures::DeviceIdentification(device);
 }
 
 InternalProtocol::Device

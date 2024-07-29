@@ -22,7 +22,7 @@ int ErrorAggregator::destroy_error_aggregator() {
 }
 
 int
-ErrorAggregator::add_status_to_error_aggregator(const bringauto::modules::Buffer& status, const structures::DeviceIdentification& device) {
+ErrorAggregator::add_status_to_error_aggregator(const modules::Buffer& status, const structures::DeviceIdentification& device) {
 	const auto &device_type = device.getDeviceType();
 	if(is_device_type_supported(device_type) == NOT_OK) {
 		return DEVICE_NOT_SUPPORTED;
@@ -42,7 +42,7 @@ ErrorAggregator::add_status_to_error_aggregator(const bringauto::modules::Buffer
 	auto &lastStatus = devices_[device].lastStatus;
 	lastStatus = status;
 
-	bringauto::modules::Buffer errorMessageBuffer = module_->constructBuffer();
+	modules::Buffer errorMessageBuffer = module_->constructBuffer();
 	auto &currentError = devices_[device].errorMessage;
 
 	auto retCode = module_->aggregateError(errorMessageBuffer, currentError, status, device_type);
@@ -54,7 +54,7 @@ ErrorAggregator::add_status_to_error_aggregator(const bringauto::modules::Buffer
 	return OK;
 }
 
-int ErrorAggregator::get_last_status(bringauto::modules::Buffer &status, const structures::DeviceIdentification& device) {
+int ErrorAggregator::get_last_status(modules::Buffer &status, const structures::DeviceIdentification& device) {
 	if(not devices_.contains(device)) {
 		return DEVICE_NOT_REGISTERED;
 	}
@@ -68,7 +68,7 @@ int ErrorAggregator::get_last_status(bringauto::modules::Buffer &status, const s
 	return OK;
 }
 
-int ErrorAggregator::get_error(bringauto::modules::Buffer &error, const structures::DeviceIdentification& device) {
+int ErrorAggregator::get_error(modules::Buffer &error, const structures::DeviceIdentification& device) {
 	if(not devices_.contains(device)) {
 		return DEVICE_NOT_REGISTERED;
 	}

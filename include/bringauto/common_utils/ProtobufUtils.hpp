@@ -36,7 +36,7 @@ public:
 	 * @return InternalProtocol::InternalServer
 	 */
 	static InternalProtocol::InternalServer createInternalServerCommandMessage(const InternalProtocol::Device &device,
-																			   const bringauto::modules::Buffer &command);
+																			   const modules::Buffer &command);
 
 	/**
 	 * @brief Create a Internal Client Status message
@@ -46,7 +46,7 @@ public:
 	 * @return InternalProtocol::InternalClient
 	 */
 	static InternalProtocol::InternalClient createInternalClientStatusMessage(const InternalProtocol::Device &device,
-																			  const bringauto::modules::Buffer &status);
+																			  const modules::Buffer &status);
 
 	/**
 	 * @brief Create a Device Status message
@@ -56,7 +56,7 @@ public:
 	 * @return InternalProtocol::DeviceStatus
 	 */
 	static InternalProtocol::DeviceStatus createDeviceStatus(const structures::DeviceIdentification &deviceId,
-															 const bringauto::modules::Buffer &status);
+															 const modules::Buffer &status);
 
 	/**
 	 * @brief Create a External Client Connect message
@@ -86,7 +86,7 @@ public:
 																	   ExternalProtocol::Status_DeviceState deviceState,
 																	   u_int32_t messageCounter,
 																	   const InternalProtocol::DeviceStatus &deviceStatus,
-																	   const bringauto::modules::Buffer &errorMessage);
+																	   const modules::Buffer &errorMessage);
 
 	/**
 	 * @brief Create a External Client Command Response object
@@ -106,7 +106,7 @@ public:
 	 * @param status status to be copied 
 	 * @param buffer buffer to copy to
 	 */
-	static void copyStatusToBuffer(const InternalProtocol::DeviceStatus &status, bringauto::modules::Buffer &buffer);
+	static void copyStatusToBuffer(const InternalProtocol::DeviceStatus &status, modules::Buffer &buffer);
 
 	/**
 	 * @brief Copy command data from DeviceCommand to a Buffer
@@ -114,7 +114,7 @@ public:
 	 * @param command command to be copied 
 	 * @param buffer buffer to copy to
 	 */
-	static void copyCommandToBuffer(const InternalProtocol::DeviceCommand &command, bringauto::modules::Buffer &buffer);
+	static void copyCommandToBuffer(const InternalProtocol::DeviceCommand &command, modules::Buffer &buffer);
 
 };
 }

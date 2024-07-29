@@ -25,7 +25,7 @@ void ModuleLibrary::loadLibraries(const std::map<int, std::string> &libPaths) {
 	}
 }
 
-void ModuleLibrary::initStatusAggregators(std::shared_ptr<structures::GlobalContext> &context) {
+void ModuleLibrary::initStatusAggregators(std::shared_ptr<GlobalContext> &context) {
 	for(auto const &[key, libraryHandler]: moduleLibraryHandlers) {
 		auto statusAggregator = std::make_shared<modules::StatusAggregator>(context, libraryHandler);
 		statusAggregator->init_status_aggregator();

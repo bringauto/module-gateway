@@ -18,8 +18,8 @@ TestHandler::TestHandler(const std::vector <InternalProtocol::Device> &devices, 
 	settings = std::make_shared<settings::Settings>();
 	settings->port = port;
 
-	toInternalQueue = std::make_shared < structures::AtomicQueue < bringauto::structures::ModuleHandlerMessage >> ();
-	fromInternalQueue = std::make_shared < structures::AtomicQueue < bringauto::structures::InternalClientMessage >> ();
+	toInternalQueue = std::make_shared < structures::AtomicQueue < structures::ModuleHandlerMessage >> ();
+	fromInternalQueue = std::make_shared < structures::AtomicQueue < structures::InternalClientMessage >> ();
 	for(size_t i = 0; i < devices.size(); ++i) {
 		connects.push_back(ProtobufUtils::CreateClientMessage(devices[i]));
 		statuses.push_back(ProtobufUtils::CreateClientMessage(devices[i], data[i]));
@@ -52,8 +52,8 @@ TestHandler::TestHandler(
 	settings = std::make_shared<settings::Settings>();
 	settings->port = port;
 
-	toInternalQueue = std::make_shared < structures::AtomicQueue < bringauto::structures::ModuleHandlerMessage >> ();
-	fromInternalQueue = std::make_shared < structures::AtomicQueue < bringauto::structures::InternalClientMessage >> ();
+	toInternalQueue = std::make_shared < structures::AtomicQueue < structures::ModuleHandlerMessage >> ();
+	fromInternalQueue = std::make_shared < structures::AtomicQueue < structures::InternalClientMessage >> ();
 	for(size_t i = 0; i < devices.size(); ++i) {
 		connects.push_back(ProtobufUtils::CreateClientMessage(devices[i]));
 		statuses.push_back(ProtobufUtils::CreateClientMessage(devices[i], data[i]));

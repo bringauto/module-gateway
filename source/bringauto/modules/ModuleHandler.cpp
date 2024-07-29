@@ -179,7 +179,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	const auto &statusData = status.statusdata();
 	Buffer statusBuffer = moduleHandler->constructBuffer(
 		statusData.size());
-	bringauto::common_utils::ProtobufUtils::copyStatusToBuffer(status, statusBuffer);
+	common_utils::ProtobufUtils::copyStatusToBuffer(status, statusBuffer);
 
 	const auto deviceId = structures::DeviceIdentification(device);
 

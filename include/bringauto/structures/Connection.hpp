@@ -36,7 +36,7 @@ struct Connection {
 		/**
 		 * @brief buffer for receive handler
 		 */
-		std::array<uint8_t, bringauto::settings::buffer_length> buffer;
+		std::array<uint8_t, settings::buffer_length> buffer;
 		/**
 		 * @brief complete size of one message
 		 */

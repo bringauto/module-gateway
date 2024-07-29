@@ -4,6 +4,9 @@
 
 namespace testing_utils {
 
+namespace structures = bringauto::structures;
+
+
 void ModuleHandlerForTesting::start() {
 	size_t messageCounter { 0 };
 	while(!context->ioContext.stopped()) {
@@ -19,7 +22,7 @@ void ModuleHandlerForTesting::start() {
 					message.deviceconnect().device(),
 					InternalProtocol::DeviceConnectResponse_ResponseType_OK
 				);
-				auto resModuleHandlerMessage = bringauto::structures::ModuleHandlerMessage(false, res);
+				auto resModuleHandlerMessage = structures::ModuleHandlerMessage(false, res);
 				toInternalQueue_->pushAndNotify(resModuleHandlerMessage);
 			}
 			if(message.has_devicestatus()) {
@@ -27,7 +30,7 @@ void ModuleHandlerForTesting::start() {
 					message.devicestatus().device(),
 					message.devicestatus().statusdata()
 				);
-				auto comModuleHandlerMessage = bringauto::structures::ModuleHandlerMessage(false, com);
+				auto comModuleHandlerMessage = structures::ModuleHandlerMessage(false, com);
 				toInternalQueue_->pushAndNotify(comModuleHandlerMessage);
 			}
 			++messageCounter;
@@ -55,7 +58,7 @@ void ModuleHandlerForTesting::startWithTimeout(bool onConnect, size_t timeoutNum
 					message.deviceconnect().device(),
 					InternalProtocol::DeviceConnectResponse_ResponseType_OK
 				);
-				auto resModuleHandlerMessage = bringauto::structures::ModuleHandlerMessage(false, res);
+				auto resModuleHandlerMessage = structures::ModuleHandlerMessage(false, res);
 				toInternalQueue_->pushAndNotify(resModuleHandlerMessage);
 			}
 			if(message.has_devicestatus()) {
@@ -67,7 +70,7 @@ void ModuleHandlerForTesting::startWithTimeout(bool onConnect, size_t timeoutNum
 					message.devicestatus().device(),
 					message.devicestatus().statusdata()
 				);
-				auto comModuleHandlerMessage = bringauto::structures::ModuleHandlerMessage(false, com);
+				auto comModuleHandlerMessage = structures::ModuleHandlerMessage(false, com);
 				toInternalQueue_->pushAndNotify(comModuleHandlerMessage);
 			}
 			++messageCounter;

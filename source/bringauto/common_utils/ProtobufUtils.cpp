@@ -21,7 +21,7 @@ ProtobufUtils::createInternalServerConnectResponseMessage(const InternalProtocol
 
 InternalProtocol::InternalServer
 ProtobufUtils::createInternalServerCommandMessage(const InternalProtocol::Device &device,
-												  const bringauto::modules::Buffer &command) {
+												  const modules::Buffer &command) {
 	InternalProtocol::InternalServer message;
 	auto deviceCommand = message.mutable_devicecommand();
 	deviceCommand->set_commanddata(command.getStructBuffer().data, command.getStructBuffer().size_in_bytes);
@@ -32,7 +32,7 @@ ProtobufUtils::createInternalServerCommandMessage(const InternalProtocol::Device
 
 InternalProtocol::InternalClient
 ProtobufUtils::createInternalClientStatusMessage(const InternalProtocol::Device &device,
-												 const bringauto::modules::Buffer &status) {
+												 const modules::Buffer &status) {
 	InternalProtocol::InternalClient message;
 	auto deviceStatus = message.mutable_devicestatus();
 	deviceStatus->set_statusdata(status.getStructBuffer().data, status.getStructBuffer().size_in_bytes);
@@ -42,7 +42,7 @@ ProtobufUtils::createInternalClientStatusMessage(const InternalProtocol::Device 
 }
 
 InternalProtocol::DeviceStatus ProtobufUtils::createDeviceStatus(const structures::DeviceIdentification &deviceId,
-																 const bringauto::modules::Buffer &status) {
+																 const modules::Buffer &status) {
 	InternalProtocol::DeviceStatus deviceStatus;
 	deviceStatus.mutable_device()->CopyFrom(deviceId.convertToIPDevice());
 	deviceStatus.set_statusdata(status.getStructBuffer().data, status.getStructBuffer().size_in_bytes);
@@ -72,7 +72,7 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientStatus(const
 																		   ExternalProtocol::Status_DeviceState deviceState,
 																		   u_int32_t messageCounter,
 																		   const InternalProtocol::DeviceStatus &deviceStatus,
-																		   const bringauto::modules::Buffer &errorMessage) {
+																		   const modules::Buffer &errorMessage) {
 	ExternalProtocol::ExternalClient externalMessage;
 	ExternalProtocol::Status *status = externalMessage.mutable_status();
 	status->mutable_devicestatus()->CopyFrom(deviceStatus);
@@ -96,11 +96,11 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientCommandRespo
 	return externalMessage;
 }
 
-void ProtobufUtils::copyStatusToBuffer(const InternalProtocol::DeviceStatus &status, bringauto::modules::Buffer &buffer) {
+void ProtobufUtils::copyStatusToBuffer(const InternalProtocol::DeviceStatus &status, modules::Buffer &buffer) {
 	std::memcpy(buffer.getStructBuffer().data, status.statusdata().c_str(), status.statusdata().size());
 }
 
-void ProtobufUtils::copyCommandToBuffer(const InternalProtocol::DeviceCommand &command, bringauto::modules::Buffer &buffer) {
+void ProtobufUtils::copyCommandToBuffer(const InternalProtocol::DeviceCommand &command, modules::Buffer &buffer) {
 	std::memcpy(buffer.getStructBuffer().data, command.commanddata().c_str(), command.commanddata().size());
 }
 

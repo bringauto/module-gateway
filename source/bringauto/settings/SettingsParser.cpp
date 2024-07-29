@@ -113,12 +113,12 @@ bool SettingsParser::areSettingsCorrect() {
 	return isCorrect;
 }
 
-std::shared_ptr<bringauto::settings::Settings> SettingsParser::getSettings() {
+std::shared_ptr<Settings> SettingsParser::getSettings() {
 	return settings_;
 }
 
 void SettingsParser::fillSettings() {
-	settings_ = std::make_shared<bringauto::settings::Settings>();
+	settings_ = std::make_shared<Settings>();
 
 	const auto configPath = cmdArguments_[std::string(Constants::CONFIG_PATH)].as<std::string>();
 	std::ifstream inputFile(configPath);

@@ -49,8 +49,8 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 
 	const auto &commandData = deviceCommand.commanddata();
 	auto &moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
-	bringauto::modules::Buffer commandBuffer = moduleLibraryHandler->constructBuffer(commandData.size());
-	bringauto::common_utils::ProtobufUtils::copyCommandToBuffer(deviceCommand, commandBuffer);
+	modules::Buffer commandBuffer = moduleLibraryHandler->constructBuffer(commandData.size());
+	common_utils::ProtobufUtils::copyCommandToBuffer(deviceCommand, commandBuffer);
 
 
 	auto deviceId = structures::DeviceIdentification(device);
@@ -136,7 +136,7 @@ bool ExternalClient::sendStatus(const structures::InternalClientMessage &interna
 			startExternalConnectSequence(connection);
 		}
 	} else {
-		bringauto::modules::Buffer errorBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBuffer();
+		modules::Buffer errorBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBuffer();
 		bool ret = true;
 		if(internalMessage.disconnected()) {
 			connection.sendStatus(deviceStatus, errorBuffer, ExternalProtocol::Status_DeviceState_DISCONNECT);

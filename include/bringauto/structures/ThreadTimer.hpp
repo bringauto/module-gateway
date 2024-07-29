@@ -32,11 +32,11 @@ public:
 	 * @param interval	Interval of time in which function will be executed
 	 *					(in seconds)
 	 */
-	explicit ThreadTimer(std::shared_ptr<bringauto::structures::GlobalContext> &context,
-						 std::function<int(const structures::DeviceIdentification&)> &function,
-						 const structures::DeviceIdentification& deviceId): timer_ { context->ioContext },
-																 fun_ { function },
-																 deviceId_ { deviceId } {}
+	explicit ThreadTimer(std::shared_ptr<GlobalContext> &context,
+						 std::function<int(const DeviceIdentification&)> &function,
+						 const DeviceIdentification& deviceId): timer_ { context->ioContext },
+																fun_ { function },
+																deviceId_ { deviceId } {}
 
 	~ThreadTimer();
 
@@ -69,9 +69,9 @@ private:
 	/**
 	 * @brief Function which should be executed if timer expires
 	 */
-	std::function<int(const structures::DeviceIdentification&)> fun_;
+	std::function<int(const DeviceIdentification&)> fun_;
 	/// Device identification struct
-	structures::DeviceIdentification deviceId_;
+	DeviceIdentification deviceId_;
 	/// Interval of time in which timer time out
 	boost::posix_time::seconds interval_ { settings::status_aggregation_timeout.count() };
 };

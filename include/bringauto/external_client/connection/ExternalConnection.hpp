@@ -68,7 +68,7 @@ public:
 	 * @param errorMessage error message
 	 */
 	void sendStatus(const InternalProtocol::DeviceStatus &status,
-					const bringauto::modules::Buffer &errorMessage,
+					const modules::Buffer &errorMessage,
 					ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING);
 
 	/**

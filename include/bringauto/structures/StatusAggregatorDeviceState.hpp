@@ -21,70 +21,70 @@ public:
 
 	StatusAggregatorDeviceState() = default;
 
-	StatusAggregatorDeviceState(std::shared_ptr<bringauto::structures::GlobalContext> &context,
-								std::function<int(const structures::DeviceIdentification&)> fun,
-								const structures::DeviceIdentification &deviceId,
-								const bringauto::modules::Buffer& command, const bringauto::modules::Buffer& status);
+	StatusAggregatorDeviceState(std::shared_ptr<GlobalContext> &context,
+								std::function<int(const DeviceIdentification&)> fun,
+								const DeviceIdentification &deviceId,
+								const modules::Buffer& command, const modules::Buffer& status);
 
 	/**
 	 * @brief Deallocate and replace status buffer
 	 *
 	 * @param statusBuffer status data Buffer
 	 */
-	void setStatus(const bringauto::modules::Buffer &statusBuffer);
+	void setStatus(const modules::Buffer &statusBuffer);
 
 	/**
 	 * @brief Get status buffer
 	 *
 	 * @return const Buffer&
 	 */
-	[[nodiscard]] const bringauto::modules::Buffer &getStatus() const;
+	[[nodiscard]] const modules::Buffer &getStatus() const;
 
 	/**
 	 * @brief Deallocate, replace data buffer and restart no aggregation timer
 	 *
 	 * @param statusBuffer status data Buffer
 	 */
-	void setStatusAndResetTimer(const bringauto::modules::Buffer &statusBuffer);
+	void setStatusAndResetTimer(const modules::Buffer &statusBuffer);
 
 	/**
 	 * @brief Deallocate and replace command buffer
 	 *
 	 * @param commandBuffer command Buffer
 	 */
-	void setCommand(const bringauto::modules::Buffer &commandBuffer);
+	void setCommand(const modules::Buffer &commandBuffer);
 
 	/**
 	 * @brief Get command buffer
 	 *
 	 * @return const Buffer&
 	 */
-	[[nodiscard]] const bringauto::modules::Buffer &getCommand();
+	[[nodiscard]] const modules::Buffer &getCommand();
 
 	/**
 	 * @brief Get aggregated messages queue
 	 *
-	 * @return std::queue<bringauto::modules::Buffer>&
+	 * @return std::queue<modules::Buffer>&
 	 */
-	[[nodiscard]] std::queue<bringauto::modules::Buffer> &aggregatedMessages();
+	[[nodiscard]] std::queue<modules::Buffer> &aggregatedMessages();
 
 	/**
 	 * @brief Add a command to the external command queue
 	 *
 	 * @param commandBuffer command Buffer
 	 */
-	int addExternalCommand(const bringauto::modules::Buffer &commandBuffer);
+	int addExternalCommand(const modules::Buffer &commandBuffer);
 
 private:
-	std::unique_ptr<bringauto::structures::ThreadTimer> timer_ {};
+	std::unique_ptr<ThreadTimer> timer_ {};
 
-	std::queue<bringauto::modules::Buffer> aggregatedMessages_ {};
+	std::queue<modules::Buffer> aggregatedMessages_ {};
 
-	bringauto::modules::Buffer status_ {};
+	modules::Buffer status_ {};
 
-	bringauto::modules::Buffer command_ {};
+	modules::Buffer command_ {};
 
-	std::queue<bringauto::modules::Buffer> externalCommandQueue_ {};
+	std::queue<modules::Buffer> externalCommandQueue_ {};
 };
 
 }
