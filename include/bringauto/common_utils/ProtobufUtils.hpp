@@ -18,6 +18,14 @@ class ProtobufUtils {
 public:
 	ProtobufUtils() = delete;
 
+	struct BufferNotAllocated: public std::runtime_error {
+		using std::runtime_error::runtime_error;
+	};
+
+	struct BufferTooSmall: public std::runtime_error {
+		using std::runtime_error::runtime_error;
+	};
+
 	/**
 	 * @brief Creates InternalServer message with the "one of" being DeviceConnectResponse.
 	 * @param device Protobuf message Device

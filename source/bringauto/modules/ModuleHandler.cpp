@@ -64,7 +64,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 				while(true) {
 					auto aggregatedStatusBuffer = moduleLibraryHandler->constructBuffer();
 					int remainingMessages = statusAggregator->get_aggregated_status(aggregatedStatusBuffer, device);
-					if(remainingMessages == NO_MESSAGE_AVAILABLE) {
+					if(remainingMessages < 0) {
 						break;
 					}
 					auto internalProtocolDevice = device.convertToIPDevice();

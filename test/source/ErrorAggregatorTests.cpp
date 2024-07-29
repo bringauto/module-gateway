@@ -8,7 +8,7 @@ namespace external_client = bringauto::external_client;
 
 
 bam::Buffer ErrorAggregatorTests::init_status_buffer() {
-    auto size = strlen(BUTTON_UNPRESSED);
+    auto size = std::string(BUTTON_UNPRESSED).size();
     auto buffer = libHandler_->constructBuffer(size);
 	std::memcpy(buffer.getStructBuffer().data, BUTTON_UNPRESSED, size);
 	return buffer;

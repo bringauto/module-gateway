@@ -7,14 +7,14 @@ namespace structures = bringauto::structures;
 
 
 modules::Buffer StatusAggregatorTests::init_status_buffer(){
-	auto size = strlen(BUTTON_UNPRESSED);
+	auto size = std::string(BUTTON_UNPRESSED).size();
 	auto buffer = libHandler_->constructBuffer(size);
 	std::memcpy(buffer.getStructBuffer().data, BUTTON_UNPRESSED, size);
 	return buffer;
 }
 
 modules::Buffer StatusAggregatorTests::init_command_buffer(){
-	auto size = strlen(LIT_DOWN);
+	auto size = std::string(LIT_DOWN).size();
 	auto buffer = libHandler_->constructBuffer(size);
 	std::memcpy(buffer.getStructBuffer().data, LIT_DOWN, size);
 	return buffer;
@@ -96,7 +96,7 @@ TEST_F(StatusAggregatorTests, add_status_to_aggregator_without_aggregation){
 	auto libHandler = std::make_shared<modules::ModuleManagerLibraryHandler>();
 	libHandler->loadLibrary(PATH_TO_MODULE);
 	add_status_to_aggregator();
-	auto size = strlen(BUTTON_PRESSED);
+	auto size = std::string(BUTTON_PRESSED).size();
 	auto status_buffer = libHandler->constructBuffer(size);
 	strcpy(static_cast<char *>(status_buffer.getStructBuffer().data), BUTTON_PRESSED);
     auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);

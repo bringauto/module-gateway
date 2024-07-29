@@ -98,20 +98,20 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientCommandRespo
 
 void ProtobufUtils::copyStatusToBuffer(const InternalProtocol::DeviceStatus &status, modules::Buffer &buffer) {
 	if (!buffer.isAllocated()) {
-		throw std::runtime_error { "Buffer is not allocated" };
+		throw BufferNotAllocated { "Buffer is not allocated" };
 	}
 	if (status.statusdata().size() > buffer.getStructBuffer().size_in_bytes) {
-		throw std::runtime_error { "Buffer does not have enough space allocated for status" };
+		throw BufferTooSmall { "Buffer does not have enough space allocated for status" };
 	}
 	std::memcpy(buffer.getStructBuffer().data, status.statusdata().c_str(), status.statusdata().size());
 }
 
 void ProtobufUtils::copyCommandToBuffer(const InternalProtocol::DeviceCommand &command, modules::Buffer &buffer) {
 	if (!buffer.isAllocated()) {
-		throw std::runtime_error { "Buffer is not allocated" };
+		throw BufferNotAllocated { "Buffer is not allocated" };
 	}
 	if (command.commanddata().size() > buffer.getStructBuffer().size_in_bytes) {
-		throw std::runtime_error { "Buffer does not have enough space allocated for command" };
+		throw BufferTooSmall { "Buffer does not have enough space allocated for command" };
 	}
 	std::memcpy(buffer.getStructBuffer().data, command.commanddata().c_str(), command.commanddata().size());
 }
