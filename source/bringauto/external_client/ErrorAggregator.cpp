@@ -42,7 +42,7 @@ ErrorAggregator::add_status_to_error_aggregator(const modules::Buffer& status, c
 	auto &lastStatus = devices_[device].lastStatus;
 	lastStatus = status;
 
-	modules::Buffer errorMessageBuffer = module_->constructBuffer();
+	auto errorMessageBuffer = module_->constructBuffer();
 	auto &currentError = devices_[device].errorMessage;
 
 	auto retCode = module_->aggregateError(errorMessageBuffer, currentError, status, device_type);

@@ -169,25 +169,25 @@ private:
 	/// Communication channel to the external server
 	std::unique_ptr <communication::ICommunicationChannel> communicationChannel_ {};
 	/// Thread for receiving loop
-	std::jthread listeningThread;
+	std::jthread listeningThread {};
 
 	/// State of the external connection - thread safe
 	std::atomic <ConnectionState> state_ { ConnectionState::NOT_INITIALIZED };
 
-	std::shared_ptr <structures::GlobalContext> context_;
+	std::shared_ptr <structures::GlobalContext> context_ {};
 
 	structures::ModuleLibrary &moduleLibrary_;
 
-	const structures::ExternalConnectionSettings &settings_;
+	const structures::ExternalConnectionSettings &settings_ {};
 	/// Class handling sent messages - timers, not acknowledged statuses etc.
-	std::unique_ptr <messages::SentMessagesHandler> sentMessagesHandler_;
+	std::unique_ptr <messages::SentMessagesHandler> sentMessagesHandler_ {};
 	/// @brief Map of error aggregators, key is module number
-	std::map<unsigned int, ErrorAggregator> errorAggregators;
+	std::map<unsigned int, ErrorAggregator> errorAggregators {};
 	/// Queue of commands received from external server, commands are processed by aggregator
-	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_;
+	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_ {};
 
 	std::shared_ptr <structures::AtomicQueue<structures::ReconnectQueueItem>>
-	reconnectQueue_;
+	reconnectQueue_ {};
 	/// Unique id of the vehicle - car name + session id
 	std::string vehicleId_ {};
 	/// Name of the vehicle

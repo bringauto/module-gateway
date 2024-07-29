@@ -15,7 +15,7 @@ DeviceIdentificationHelper::createDeviceIdentification(unsigned int module, unsi
 InternalProtocol::Device
 DeviceIdentificationHelper::createProtobufDevice(unsigned int module, unsigned int type, const char *deviceRole,
                                                  const char *deviceName, int priority) {
-    InternalProtocol::Device device;
+    InternalProtocol::Device device {};
     device.set_module(InternalProtocol::Device::Module(module));
     device.set_devicetype(type);
     device.set_priority(priority);

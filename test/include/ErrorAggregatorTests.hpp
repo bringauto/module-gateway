@@ -27,8 +27,8 @@ protected:
 
 	bringauto::modules::Buffer init_status_buffer();
 
-    bringauto::external_client::ErrorAggregator errorAggregator_;
-	std::shared_ptr<bringauto::modules::ModuleManagerLibraryHandler> libHandler_;
+    bringauto::external_client::ErrorAggregator errorAggregator_ {};
+	std::shared_ptr<bringauto::modules::ModuleManagerLibraryHandler> libHandler_ {};
 #ifdef DEBUG
 	static constexpr const char* PATH_TO_MODULE { "./test/lib/example-module/libexample-module-gateway-sharedd.so" };
 #else

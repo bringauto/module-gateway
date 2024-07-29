@@ -8,8 +8,8 @@ namespace external_client = bringauto::external_client;
 
 
 bam::Buffer ErrorAggregatorTests::init_status_buffer() {
-    size_t size = strlen(BUTTON_UNPRESSED);
-    bam::Buffer buffer = libHandler_->constructBuffer(size);
+    auto size = strlen(BUTTON_UNPRESSED);
+    auto buffer = libHandler_->constructBuffer(size);
 	std::memcpy(buffer.getStructBuffer().data, BUTTON_UNPRESSED, size);
 	return buffer;
 }
@@ -25,14 +25,14 @@ void ErrorAggregatorTests::TearDown(){
 }
 
 TEST_F(ErrorAggregatorTests, init_error_aggregator_ok) {
-	external_client::ErrorAggregator errorAggregatorTest;
+	external_client::ErrorAggregator errorAggregatorTest {};
     auto libHandler = std::make_shared<bam::ModuleManagerLibraryHandler>();
 	int ret = errorAggregatorTest.init_error_aggregator(libHandler);
 	EXPECT_EQ(ret, OK);
 }
 
 TEST_F(ErrorAggregatorTests, destroy_error_aggregator_ok) {
-    external_client::ErrorAggregator errorAggregatorTest;
+    external_client::ErrorAggregator errorAggregatorTest {};
     auto libHandler = std::make_shared<bam::ModuleManagerLibraryHandler>();
     errorAggregatorTest.init_error_aggregator(libHandler);
     int ret = errorAggregatorTest.destroy_error_aggregator();
@@ -40,14 +40,14 @@ TEST_F(ErrorAggregatorTests, destroy_error_aggregator_ok) {
 }
 
 TEST_F(ErrorAggregatorTests, add_status_to_error_aggregator_device_not_supported) {
-    bam::Buffer status = init_status_buffer();
+    auto status = init_status_buffer();
     auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, UNSUPPORTED_DEVICE_TYPE, "button", "name", 10);
     int ret = errorAggregator_.add_status_to_error_aggregator(status, deviceId);
     EXPECT_EQ(ret, DEVICE_NOT_SUPPORTED);
 }
 
 TEST_F(ErrorAggregatorTests, add_status_to_error_aggregator_ok) {
-    bam::Buffer status = init_status_buffer();
+    auto status = init_status_buffer();
     auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, "button", "name", 10);
     int ret = errorAggregator_.add_status_to_error_aggregator(status, deviceId);
     EXPECT_EQ(ret, OK);
@@ -56,20 +56,20 @@ TEST_F(ErrorAggregatorTests, add_status_to_error_aggregator_ok) {
 TEST_F(ErrorAggregatorTests, get_last_status_device_not_registered) {
     auto libHandler = std::make_shared<bam::ModuleManagerLibraryHandler>();
 	libHandler->loadLibrary(PATH_TO_MODULE);
-    bam::Buffer buffer = libHandler->constructBuffer();
+    auto buffer = libHandler->constructBuffer();
     auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, UNSUPPORTED_DEVICE_TYPE, "button", "name", 10);
     int ret = errorAggregator_.get_last_status(buffer, deviceId);
     EXPECT_EQ(ret, DEVICE_NOT_REGISTERED);
 }
 
 TEST_F(ErrorAggregatorTests, get_last_status_device_ok) {
-    bam::Buffer status = init_status_buffer();
+    auto status = init_status_buffer();
     auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, "button", "name", 10);
     int ret = errorAggregator_.add_status_to_error_aggregator(status, deviceId);
     EXPECT_EQ(ret, OK);
     auto libHandler = std::make_shared<bam::ModuleManagerLibraryHandler>();
 	libHandler->loadLibrary(PATH_TO_MODULE);
-    bam::Buffer buffer = libHandler->constructBuffer();
+    auto buffer = libHandler->constructBuffer();
     ret = errorAggregator_.get_last_status(buffer, deviceId);
     EXPECT_EQ(ret, OK);
 }

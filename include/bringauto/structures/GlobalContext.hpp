@@ -18,7 +18,7 @@ struct GlobalContext {
 	/**
 	 * @brief io_context shared across Module Gateway
 	 */
-	boost::asio::io_context ioContext;
+	boost::asio::io_context ioContext {};
 
 	/**
 	 * @brief settings used in the project

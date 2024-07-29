@@ -26,7 +26,7 @@ Buffer
 StatusAggregator::aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
 								  const unsigned int &device_type) {
 	auto &currStatus = deviceState.getStatus();
-	Buffer aggregatedStatusBuff = module_->constructBuffer();
+	auto aggregatedStatusBuff = module_->constructBuffer();
 	module_->aggregateStatus(aggregatedStatusBuff, currStatus, status, device_type);
 	return aggregatedStatusBuff;
 }
@@ -44,7 +44,7 @@ StatusAggregator::aggregateSetSendStatus(structures::StatusAggregatorDeviceState
 	deviceState.setStatusAndResetTimer(aggregatedStatusBuff);
 
 	auto &currStatus = deviceState.getStatus();
-	Buffer statusToSendBuff = module_->constructBuffer();
+	auto statusToSendBuff = module_->constructBuffer();
 	statusToSendBuff = currStatus;
 
 	auto &aggregatedMessages = deviceState.aggregatedMessages();
@@ -88,9 +88,9 @@ int StatusAggregator::add_status_to_aggregator(const Buffer& status,
 
 	deviceTimeouts_[device] = 0;
 	if(not devices.contains(device)) {
-		Buffer commandBuffer = module_->constructBuffer();
+		auto commandBuffer = module_->constructBuffer();
 		module_->generateFirstCommand(commandBuffer, device_type);
-		Buffer statusBuffer = module_->constructBuffer();
+		auto statusBuffer = module_->constructBuffer();
 		statusBuffer = status;
 
 		std::function<int(const structures::DeviceIdentification&)> timeouted_force_aggregation = [device, this](
@@ -156,7 +156,7 @@ int StatusAggregator::force_aggregation_on_device(const structures::DeviceIdenti
 	}
 
 	const auto &statusBuffer = devices.at(device).getStatus();
-	Buffer forcedStatusBuffer = module_->constructBuffer();
+	auto forcedStatusBuffer = module_->constructBuffer();
 	forcedStatusBuffer = statusBuffer;
 	auto &aggregatedMessages = devices.at(device).aggregatedMessages();
 	aggregatedMessages.push(forcedStatusBuffer);
@@ -205,7 +205,7 @@ int StatusAggregator::get_command(const Buffer& status, const structures::Device
 	}
 
 	auto &deviceState = devices.at(device);
-	Buffer generatedCommandBuffer = module_->constructBuffer();
+	auto generatedCommandBuffer = module_->constructBuffer();
 	auto &currCommand = deviceState.getCommand();
 	module_->generateCommand(generatedCommandBuffer, status, deviceState.getStatus(), currCommand,
 							 device_type);

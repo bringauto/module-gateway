@@ -29,7 +29,7 @@ ModuleManagerLibraryHandler::~ModuleManagerLibraryHandler() {
 void ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path &path) {
 	module_ = dlmopen(LM_ID_NEWLM, path.c_str(), RTLD_LAZY);
 	if(module_ == nullptr) {
-		throw std::runtime_error("Unable to load library " + path.string() + dlerror());
+		throw std::runtime_error {"Unable to load library " + path.string() + dlerror()};
 	}
 	isDeviceTypeSupported_ = reinterpret_cast<FunctionTypeDeducer<decltype(isDeviceTypeSupported_)>::fncptr>(checkFunction(
 			"is_device_type_supported"));
@@ -59,7 +59,7 @@ void ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path &path)
 void *ModuleManagerLibraryHandler::checkFunction(const char *functionName) {
 	auto function = dlsym(module_, functionName);
 	if(not function) {
-		throw std::runtime_error("Function " + std::string(functionName) + " is not included in library");
+		throw std::runtime_error {"Function " + std::string(functionName) + " is not included in library"};
 	}
 	return function;
 }
@@ -121,7 +121,7 @@ void ModuleManagerLibraryHandler::deallocate(struct buffer *buffer){
 }
 
 Buffer ModuleManagerLibraryHandler::constructBuffer(std::size_t size) {
-	struct ::buffer buff;
+	struct ::buffer buff {};
 	buff.size_in_bytes = size;
 	if(allocate(&buff, size) != OK) {
 		throw std::bad_alloc {};

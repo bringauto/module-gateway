@@ -186,7 +186,7 @@ private:
 	void aggregateSetSendStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
 								const unsigned int &device_type);
 
-	std::shared_ptr<structures::GlobalContext> context_;
+	std::shared_ptr<structures::GlobalContext> context_ {};
 
 	const std::shared_ptr<ModuleManagerLibraryHandler> module_ {};
 

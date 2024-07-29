@@ -19,7 +19,7 @@ void ModuleLibrary::loadLibraries(const std::map<int, std::string> &libPaths) {
 		handler->loadLibrary(path);
 		if(handler->getModuleNumber() != key) {
 			logging::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path, key, handler->getModuleNumber());
-			throw std::runtime_error("Module numbers from config are not corresponding to binaries. Unable to continue. Fix configuration file.");
+			throw std::runtime_error {"Module numbers from config are not corresponding to binaries. Unable to continue. Fix configuration file."};
 		}
 		moduleLibraryHandlers.emplace(key, handler);
 	}

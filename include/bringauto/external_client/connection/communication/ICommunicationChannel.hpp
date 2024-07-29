@@ -58,7 +58,7 @@ public:
 
 protected:
 	/// Instance of the specific settings for the communication channel
-	structures::ExternalConnectionSettings settings_;
+	structures::ExternalConnectionSettings settings_ {};
 };
 
 }

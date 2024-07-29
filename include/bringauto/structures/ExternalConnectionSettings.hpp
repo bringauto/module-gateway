@@ -18,15 +18,15 @@ enum class ProtocolType {
 
 struct ExternalConnectionSettings {
  	/// Communication protocol
-	ProtocolType protocolType;
+	ProtocolType protocolType {};
 	/// Map of protocol specific settings, taken from config, pair of key and value
-	std::map<std::string, std::string> protocolSettings;
+	std::map<std::string, std::string> protocolSettings {};
 	/// Ip address of the external server
-	std::string serverIp;
+	std::string serverIp {};
 	/// Port of the external server
 	u_int16_t port;
 	/// Supported modules
-	std::vector<int> modules;
+	std::vector<int> modules {};
 };
 
 }

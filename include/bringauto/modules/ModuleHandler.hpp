@@ -94,15 +94,15 @@ private:
 	 */
 	void handleStatus(const InternalProtocol::DeviceStatus &status);
 
-	std::shared_ptr <structures::GlobalContext> context_;
+	std::shared_ptr <structures::GlobalContext> context_ {};
 
 	structures::ModuleLibrary &moduleLibrary_;
 	/// Queue for incoming messages from internal server to be processed
-	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> fromInternalQueue_;
+	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> fromInternalQueue_ {};
 	/// Queue for outgoing messages to internal server to be forwarded to devices
-	std::shared_ptr <structures::AtomicQueue<structures::ModuleHandlerMessage>> toInternalQueue_;
+	std::shared_ptr <structures::AtomicQueue<structures::ModuleHandlerMessage>> toInternalQueue_ {};
 	/// Queue for outgoing messages to external server to be forwarded to external server
-	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> toExternalQueue_;
+	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> toExternalQueue_ {};
 };
 
 }

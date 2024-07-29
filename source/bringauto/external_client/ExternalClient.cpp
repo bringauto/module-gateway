@@ -49,7 +49,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 
 	const auto &commandData = deviceCommand.commanddata();
 	auto &moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
-	modules::Buffer commandBuffer = moduleLibraryHandler->constructBuffer(commandData.size());
+	auto commandBuffer = moduleLibraryHandler->constructBuffer(commandData.size());
 	common_utils::ProtobufUtils::copyCommandToBuffer(deviceCommand, commandBuffer);
 
 
@@ -136,7 +136,7 @@ bool ExternalClient::sendStatus(const structures::InternalClientMessage &interna
 			startExternalConnectSequence(connection);
 		}
 	} else {
-		modules::Buffer errorBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBuffer();
+		auto errorBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBuffer();
 		bool ret = true;
 		if(internalMessage.disconnected()) {
 			connection.sendStatus(deviceStatus, errorBuffer, ExternalProtocol::Status_DeviceState_DISCONNECT);
@@ -178,7 +178,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		auto &deviceStatus = internalMessage.getMessage().devicestatus();
 		auto &device = deviceStatus.device();
 		if(connection.isModuleSupported(device.module())) {
-			structures::DeviceIdentification deviceId = structures::DeviceIdentification(device);
+			auto deviceId = structures::DeviceIdentification(device);
 			auto it = std::find(forcedDevices.cbegin(), forcedDevices.cend(), deviceId);
 			if(it == forcedDevices.cend()) {
 				log::logDebug("Cannot fill error aggregator for same device: {} {}", device.devicerole(),

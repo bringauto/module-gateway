@@ -39,8 +39,8 @@ public:
 	std::string serializeToJson();
 
 private:
-	cxxopts::ParseResult cmdArguments_;
-	std::shared_ptr<Settings> settings_;
+	cxxopts::ParseResult cmdArguments_ {};
+	std::shared_ptr<Settings> settings_ {};
 
 	void parseCmdArguments(int argc, char **argv);
 

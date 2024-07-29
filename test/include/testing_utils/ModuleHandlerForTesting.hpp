@@ -30,9 +30,9 @@ public:
 	void startWithTimeout(bool onConnect, size_t timeoutNumber);
 
 private:
-    std::shared_ptr<bringauto::structures::GlobalContext> context;
-    std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>> fromInternalQueue_;
-    std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage>> toInternalQueue_;
+    std::shared_ptr<bringauto::structures::GlobalContext> context {};
+    std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>> fromInternalQueue_ {};
+    std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage>> toInternalQueue_ {};
     size_t expectedMessageNumber;
 };
 

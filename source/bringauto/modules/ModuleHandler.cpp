@@ -62,7 +62,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 			
 			for (auto &device: unique_devices) {
 				while(true) {
-					Buffer aggregatedStatusBuffer = moduleLibraryHandler->constructBuffer();
+					auto aggregatedStatusBuffer = moduleLibraryHandler->constructBuffer();
 					int remainingMessages = statusAggregator->get_aggregated_status(aggregatedStatusBuffer, device);
 					if(remainingMessages == NO_MESSAGE_AVAILABLE) {
 						break;
@@ -118,7 +118,7 @@ void ModuleHandler::handleDisconnect(const structures::DeviceIdentification& dev
 void ModuleHandler::sendAggregatedStatus(const structures::DeviceIdentification &deviceId, const ip::Device &device,
 										 bool disconnected) {
 	auto &statusAggregator = moduleLibrary_.statusAggregators.at(deviceId.getModule());
-	Buffer aggregatedStatusBuffer = moduleLibrary_.moduleLibraryHandlers.at(deviceId.getModule())->constructBuffer();
+	auto aggregatedStatusBuffer = moduleLibrary_.moduleLibraryHandlers.at(deviceId.getModule())->constructBuffer();
 	statusAggregator->get_aggregated_status(aggregatedStatusBuffer, deviceId);
 	auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device,
 																						aggregatedStatusBuffer);
@@ -177,8 +177,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	const auto moduleHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
 
 	const auto &statusData = status.statusdata();
-	Buffer statusBuffer = moduleHandler->constructBuffer(
-		statusData.size());
+	auto statusBuffer = moduleHandler->constructBuffer(statusData.size());
 	common_utils::ProtobufUtils::copyStatusToBuffer(status, statusBuffer);
 
 	const auto deviceId = structures::DeviceIdentification(device);
@@ -195,7 +194,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 		return;
 	}
 	
-	Buffer commandBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBuffer();
+	auto commandBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBuffer();
 	int getCommandRc = statusAggregator->get_command(statusBuffer, deviceId, commandBuffer);
 	if(getCommandRc == OK) {
 		auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device,

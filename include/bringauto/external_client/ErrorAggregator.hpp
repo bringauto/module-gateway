@@ -121,7 +121,7 @@ private:
 	/**
 	 * @brief Map of devices states, key is device identification converted to string
 	 */
-	std::unordered_map <structures::DeviceIdentification, DeviceState> devices_;
+	std::unordered_map <structures::DeviceIdentification, DeviceState> devices_ {};
 };
 
 }
