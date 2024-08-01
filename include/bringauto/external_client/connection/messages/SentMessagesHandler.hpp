@@ -108,6 +108,7 @@ private:
 	std::atomic<bool> responseHandled_ { false };
 
 	std::mutex responseHandledMutex_ {};
+	std::mutex ackMutex_ {};
 };
 
 }

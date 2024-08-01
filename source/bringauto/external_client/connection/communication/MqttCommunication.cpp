@@ -113,7 +113,10 @@ std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMess
 	}
 
 	auto ptr = std::make_shared<ExternalProtocol::ExternalServer>();
-	ptr->ParseFromString(msg->get_payload_str());
+	if (!ptr->ParseFromArray(msg->get_payload_str().c_str(), static_cast<int>(msg->get_payload().size()))) {
+		logging::Logger::logError("Failed to parse protobuf message from external server");
+		return nullptr;
+	}
 	return ptr;
 }
 
