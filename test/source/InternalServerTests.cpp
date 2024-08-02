@@ -325,9 +325,9 @@ TEST_F(InternalServerTests, SameRolePriority211) {
 	testedData.runTestsSerialConnections();
 }
 /**
- * @brief tests if connection is rejected when we send less then 4 bytes of a message and other communication is not broken
+ * @brief tests if connection is rejected when we send less than 4 bytes of a message and other communication is not broken
  */
-TEST_F(InternalServerTests, RejectMessageSmallerThen4Bytes) {
+TEST_F(InternalServerTests, RejectMessageSmallerThan4Bytes) {
 	std::vector<InternalProtocol::DeviceConnectResponse_ResponseType> responseType {
 		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
 		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
@@ -378,7 +378,7 @@ TEST_F(InternalServerTests, RejectMesseageComposedOfOnlyHeaderWithNumber0) {
 /**
  * this is timeout from client side
  * test is not working and the feature is not implemented
- * should test for if connection is rejected when we send only 4 bytes of the message (as the header) defining message size larger then 0 and other communication is not broken
+ * should test for if connection is rejected when we send only 4 bytes of the message (as the header) defining message size larger than 0 and other communication is not broken
  */
 TEST_F(InternalServerTests, RejectMessageComposedOfOnlyHeader) {
 	GTEST_SKIP();
@@ -433,10 +433,10 @@ TEST_F(InternalServerTests, RejectMessageWithGarbageDataMatchingHeaderSize) {
 /**
  * this is timeout from client side
  * test is not working and the feature is not implemented
- * should tests for if connection is rejected when we send less data then header defines as size of the message and other communication is not broken
+ * should tests for if connection is rejected when we send less data than header defines as size of the message and other communication is not broken
 
  */
-TEST_F(InternalServerTests, RejectMessageWithLessDataThenHeaderSays) {
+TEST_F(InternalServerTests, RejectMessageWithLessDataThanHeaderSays) {
 	GTEST_SKIP();
 	std::vector<InternalProtocol::DeviceConnectResponse_ResponseType> responseType {
 		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
