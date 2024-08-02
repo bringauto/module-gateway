@@ -142,8 +142,8 @@ int StatusAggregator::get_unique_devices(std::list<structures::DeviceIdentificat
 		return 0;
 	}
 
-	for(auto &device: devices) {
-		unique_devices_list.push_back(device.first);
+	for(auto& [deviceId, _]: devices) {
+		unique_devices_list.push_back(deviceId);
 	}
 
 	return devicesSize;
