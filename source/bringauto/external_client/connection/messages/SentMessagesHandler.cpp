@@ -15,14 +15,14 @@ SentMessagesHandler::SentMessagesHandler(const std::shared_ptr<structures::Globa
 																								 endConnectionFunc } {}
 
 void SentMessagesHandler::addNotAckedStatus(const ExternalProtocol::Status &status) {
-	std::lock_guard<std::mutex> lock(ackMutex_);
+	std::scoped_lock lock {ackMutex_};
 	notAckedStatuses_.emplace_back(
 			std::make_shared<NotAckedStatus>(status, context_->ioContext, responseHandled_, responseHandledMutex_));
 	notAckedStatuses_.back()->startTimer(endConnectionFunc_);
 }
 
 int SentMessagesHandler::acknowledgeStatus(const ExternalProtocol::StatusResponse &statusResponse) {
-	std::lock_guard<std::mutex> lock(ackMutex_);
+	std::scoped_lock lock {ackMutex_};
 	auto responseCounter = getStatusResponseCounter(statusResponse);
 	for(auto i = 0; i < notAckedStatuses_.size(); ++i) {
 		if(getStatusCounter(notAckedStatuses_[i]->getStatus()) == responseCounter) {

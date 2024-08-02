@@ -147,7 +147,7 @@ TEST_F(StatusAggregatorTests, get_unique_devices_one){
 	std::list<structures::DeviceIdentification> unique_devices {};
 	int ret = statusAggregator_->get_unique_devices(unique_devices);
 	EXPECT_TRUE(ret == 1);
-	const auto deviceId = unique_devices.front();
+	const auto& deviceId = unique_devices.front();
 	ASSERT_EQ(MODULE, deviceId.getModule());
 	ASSERT_EQ(SUPPORTED_DEVICE_TYPE, deviceId.getDeviceType());
 	remove_device_from_status_aggregator();
