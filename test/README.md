@@ -1,8 +1,8 @@
 # Module Gateway - TESTS
 
 !!! NOTICE !!!
-Tests must be compiled with different compiler than **gcc**
-Otherwise, the build or run will fail with error: `AddressSanitizer:DEADLYSIGNAL`
+Tests should be compiled with a different compiler than **gcc-11**, which is used by default on Ubuntu 22.04.
+Otherwise, the build or run may fail with error: `AddressSanitizer:DEADLYSIGNAL`
 
 The only tested working compiler is **clang++-17**
 
