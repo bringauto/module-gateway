@@ -182,8 +182,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 
 	const auto deviceId = structures::DeviceIdentification(device);
 
-	if(statusBuffer.getStructBuffer().size_in_bytes == 0 ||
-	   moduleHandler->statusDataValid(statusBuffer, deviceId.getDeviceType()) == NOT_OK) {
+	if(!statusBuffer.isAllocated() || moduleHandler->statusDataValid(statusBuffer, deviceId.getDeviceType()) == NOT_OK) {
 		log::logWarning("Invalid status data on device id: {}", deviceId.convertToString());
 		return;
 	}
