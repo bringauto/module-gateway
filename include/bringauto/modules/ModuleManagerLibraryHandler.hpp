@@ -53,8 +53,20 @@ public:
 
 	int commandDataValid(const Buffer command, unsigned int device_type);
 
+	/**
+	 * @brief Constructs a buffer with the given size
+	 * 
+	 * @param size size of the buffer
+	 * @return a new Buffer object
+	 */
 	Buffer constructBuffer(std::size_t size = 0);
 
+	/**
+	 * @brief Constructs a buffer with the same raw c buffer as provided
+	 * 
+	 * @param buffer c buffer to be used
+	 * @return a new Buffer object
+	 */
 	Buffer constructBufferByTakeOwnership(struct ::buffer& buffer);
 
 private:
