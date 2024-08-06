@@ -29,9 +29,7 @@ public:
 					   structures::ModuleLibrary &moduleLibrary,
 					   const structures::ExternalConnectionSettings &settings,
 					   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
-					   const std::shared_ptr <structures::AtomicQueue<
-							   structures::ReconnectQueueItem>
-	>& reconnectQueue);
+					   const std::shared_ptr <structures::AtomicQueue<structures::ReconnectQueueItem>>& reconnectQueue);
 
 	/**
 	 * @brief Initialize external connection

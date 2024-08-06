@@ -43,4 +43,4 @@ InternalProtocol::InternalClient ProtobufUtils::CreateClientMessage(
 	return message;
 }
 
-}// namespace testing_utils
+}

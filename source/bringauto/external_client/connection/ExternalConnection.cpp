@@ -99,7 +99,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 
 	if(not communicationChannel_->sendMessage(&externalMessage)){
 		deinitializeConnection(false);
-    }
+	}
 
 	std::string errorString((char*)errorMessage.getStructBuffer().data, errorMessage.getStructBuffer().size_in_bytes);
 	log::logDebug("Sending status with messageCounter '{}' with aggregated errorMessage: {}",
@@ -153,9 +153,9 @@ int ExternalConnection::connectMessageHandle(const std::vector<structures::Devic
 	auto connectMessage = common_utils::ProtobufUtils::createExternalClientConnect(sessionId_, company_, vehicleName_,
 																				   devices);
 	if(not communicationChannel_->sendMessage(&connectMessage)){
-        log::logError("Communication client couldn't send any message");
-        return -1;
-    }
+		log::logError("Communication client couldn't send any message");
+		return -1;
+	}
 
 	const auto connectResponseMsg = communicationChannel_->receiveMessage();
 	if(connectResponseMsg == nullptr) {

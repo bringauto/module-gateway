@@ -165,7 +165,7 @@ private:
 	 */
 	Buffer aggregateStatus(structures::StatusAggregatorDeviceState &deviceState,
 											   const Buffer &status,
-								  			   const unsigned int &device_type);
+											   const unsigned int &device_type);
 
 	/**
 	 * @brief Aggregate and set status message

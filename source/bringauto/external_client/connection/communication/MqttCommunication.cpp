@@ -36,10 +36,10 @@ void MqttCommunication::setProperties(const std::string& company, const std::str
 	};
 
 	if (settings_.protocolSettings.contains(std::string(settings::Constants::SSL)) &&
-	    settings_.protocolSettings[std::string(settings::Constants::SSL)] == "true") {
+		settings_.protocolSettings[std::string(settings::Constants::SSL)] == "true") {
 		if (settings_.protocolSettings.contains(std::string(settings::Constants::CA_FILE))
-		    && settings_.protocolSettings.contains(std::string(settings::Constants::CLIENT_CERT))
-		    && settings_.protocolSettings.contains(std::string(settings::Constants::CLIENT_KEY))
+			&& settings_.protocolSettings.contains(std::string(settings::Constants::CLIENT_CERT))
+			&& settings_.protocolSettings.contains(std::string(settings::Constants::CLIENT_KEY))
 		) {
 			serverAddress_ = "ssl://" + serverAddress_;
 			const auto sslopts = mqtt::ssl_options_builder()
@@ -71,7 +71,7 @@ void MqttCommunication::initializeConnection() {
 
 void MqttCommunication::connect() {
 	client_ = std::make_unique<mqtt::async_client>(serverAddress_, clientId_,
-	                                               mqtt::create_options(MQTTVERSION_3_1_1, 20));
+												   mqtt::create_options(MQTTVERSION_3_1_1, 20));
 	if (client_ == nullptr) {
 		throw std::runtime_error {"Mqtt client could not be created"};
 	}

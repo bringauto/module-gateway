@@ -17,7 +17,7 @@ enum class ProtocolType {
 };
 
 struct ExternalConnectionSettings {
- 	/// Communication protocol
+	/// Communication protocol
 	ProtocolType protocolType {};
 	/// Map of protocol specific settings, taken from config, pair of key and value
 	std::map<std::string, std::string> protocolSettings {};

@@ -27,13 +27,13 @@ modules::Buffer StatusAggregatorTests::init_empty_buffer(){
 
 void StatusAggregatorTests::add_status_to_aggregator(){
 	auto status_buffer = init_status_buffer();
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator_->add_status_to_aggregator(status_buffer, deviceId);
 	EXPECT_TRUE(ret == 1);
 }
 
 void StatusAggregatorTests::remove_device_from_status_aggregator(){
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator_->remove_device(deviceId);
 	EXPECT_TRUE(ret == OK);
 }
@@ -81,7 +81,7 @@ TEST_F(StatusAggregatorTests, is_device_type_supported_not_ok){
 }
 
 TEST_F(StatusAggregatorTests, add_status_to_aggregator_device_type_not_supported){
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, UNSUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, UNSUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	auto status_buffer = init_empty_buffer();
 	int ret = statusAggregator_->add_status_to_aggregator(status_buffer, deviceId);
 	EXPECT_TRUE(ret == DEVICE_NOT_SUPPORTED);
@@ -99,10 +99,10 @@ TEST_F(StatusAggregatorTests, add_status_to_aggregator_without_aggregation){
 	auto size = std::string(BUTTON_PRESSED).size();
 	auto status_buffer = libHandler->constructBuffer(size);
 	strcpy(static_cast<char *>(status_buffer.getStructBuffer().data), BUTTON_PRESSED);
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator_->add_status_to_aggregator(status_buffer, deviceId);
 	EXPECT_TRUE(ret == 2);
-    status_buffer = init_status_buffer();
+	status_buffer = init_status_buffer();
 	ret = statusAggregator_->add_status_to_aggregator(status_buffer, deviceId);
 	EXPECT_TRUE(ret == 3);
 	remove_device_from_status_aggregator();
@@ -111,7 +111,7 @@ TEST_F(StatusAggregatorTests, add_status_to_aggregator_without_aggregation){
 TEST_F(StatusAggregatorTests, add_status_to_aggregator_with_aggregation){
 	add_status_to_aggregator();
 	auto status_buffer = init_status_buffer();
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator_->add_status_to_aggregator(status_buffer, deviceId);
 	EXPECT_TRUE(ret == 1);
 	ret = statusAggregator_->add_status_to_aggregator(status_buffer, deviceId);
@@ -121,7 +121,7 @@ TEST_F(StatusAggregatorTests, add_status_to_aggregator_with_aggregation){
 
 TEST_F(StatusAggregatorTests, get_aggregated_status_device_not_registered){
 	auto status_buffer = init_empty_buffer();
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator_->get_aggregated_status(status_buffer, deviceId);
 	EXPECT_TRUE(ret == DEVICE_NOT_REGISTERED);
 }
@@ -129,7 +129,7 @@ TEST_F(StatusAggregatorTests, get_aggregated_status_device_not_registered){
 TEST_F(StatusAggregatorTests, get_aggregated_status_no_message){
 	add_status_to_aggregator();
 	auto status_buffer = init_empty_buffer();
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	statusAggregator_->get_aggregated_status(status_buffer, deviceId);
 	int ret = statusAggregator_->get_aggregated_status(status_buffer, deviceId);
 	EXPECT_TRUE(ret == NO_MESSAGE_AVAILABLE);
@@ -157,8 +157,8 @@ TEST_F(StatusAggregatorTests, get_unique_devices_two){
 	add_status_to_aggregator();
 	auto status_buffer = init_status_buffer();
 	auto deviceId1 = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
-    auto deviceId2 = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE_2, DEVICE_NAME_2, 0);
-    int ret = statusAggregator_->add_status_to_aggregator(status_buffer, deviceId2);
+	auto deviceId2 = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE_2, DEVICE_NAME_2, 0);
+	int ret = statusAggregator_->add_status_to_aggregator(status_buffer, deviceId2);
 	EXPECT_TRUE(ret == 1);
 	std::list<structures::DeviceIdentification> unique_devices {};
 	ret = statusAggregator_->get_unique_devices(unique_devices);
@@ -183,20 +183,20 @@ TEST_F(StatusAggregatorTests, get_unique_devices_two){
 }
 
 TEST_F(StatusAggregatorTests, force_aggregation_on_device_not_registered){
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator_->force_aggregation_on_device(deviceId);
 	EXPECT_TRUE(ret == DEVICE_NOT_REGISTERED);
 }
 
 TEST_F(StatusAggregatorTests, is_device_valid_not){
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator_->is_device_valid(deviceId);
 	EXPECT_TRUE(ret == NOT_OK);
 }
 
 TEST_F(StatusAggregatorTests, is_device_valid_ok){
 	add_status_to_aggregator();
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator_->is_device_valid(deviceId);
 	EXPECT_TRUE(ret == OK);
 	remove_device_from_status_aggregator();
@@ -204,14 +204,14 @@ TEST_F(StatusAggregatorTests, is_device_valid_ok){
 
 TEST_F(StatusAggregatorTests, update_command_device_not_supported){
 	auto command_buffer = init_empty_buffer();
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, UNSUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, UNSUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator_->update_command(command_buffer, deviceId);
 	EXPECT_TRUE(ret == DEVICE_NOT_SUPPORTED);
 }
 
 TEST_F(StatusAggregatorTests, update_command_device_not_registered){
 	auto command_buffer = init_empty_buffer();
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator_->update_command(command_buffer, deviceId);
 	EXPECT_TRUE(ret == DEVICE_NOT_REGISTERED);
 }
@@ -219,7 +219,7 @@ TEST_F(StatusAggregatorTests, update_command_device_not_registered){
 TEST_F(StatusAggregatorTests, update_command_device_command_invalid){
 	add_status_to_aggregator();
 	auto command_buffer = init_empty_buffer();
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator_->update_command(command_buffer, deviceId);
 	EXPECT_TRUE(ret == COMMAND_INVALID);
 	remove_device_from_status_aggregator();
@@ -228,7 +228,7 @@ TEST_F(StatusAggregatorTests, update_command_device_command_invalid){
 TEST_F(StatusAggregatorTests, update_command_device_ok){
 	add_status_to_aggregator();
 	auto command_buffer = init_command_buffer();
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator_->update_command(command_buffer, deviceId);
 	EXPECT_TRUE(ret == OK);
 	remove_device_from_status_aggregator();
@@ -237,7 +237,7 @@ TEST_F(StatusAggregatorTests, update_command_device_ok){
 TEST_F(StatusAggregatorTests, get_command_device_not_supported){
 	auto command_buffer = init_empty_buffer();
 	auto status_buffer = init_empty_buffer();
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, UNSUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, UNSUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator_->get_command(status_buffer, deviceId, command_buffer);
 	EXPECT_TRUE(ret == DEVICE_NOT_SUPPORTED);
 }
@@ -245,7 +245,7 @@ TEST_F(StatusAggregatorTests, get_command_device_not_supported){
 TEST_F(StatusAggregatorTests, get_command_ok){
 	auto status_buffer = init_status_buffer();
 	auto command_buffer = init_empty_buffer();
-    auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
+	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	statusAggregator_->add_status_to_aggregator(status_buffer, deviceId);
 	int ret = statusAggregator_->get_command(status_buffer, deviceId, command_buffer);
 	EXPECT_TRUE(ret == OK);

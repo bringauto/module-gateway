@@ -240,4 +240,3 @@ std::string SettingsParser::serializeToJson() {
 }
 
 }
-

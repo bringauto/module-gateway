@@ -37,4 +37,3 @@ protected:
 		bringauto::logging::Logger::destroy();
 	}
 };
-
