@@ -209,7 +209,7 @@ int StatusAggregator::get_command(const Buffer& status, const structures::Device
 	auto &currCommand = deviceState.getCommand();
 	module_->generateCommand(generatedCommandBuffer, status, deviceState.getStatus(), currCommand,
 							 device_type);
-	deviceState.setCommand(generatedCommandBuffer);
+	deviceState.setDefaultCommand(generatedCommandBuffer);
 	command = generatedCommandBuffer;
 	return OK;
 }
