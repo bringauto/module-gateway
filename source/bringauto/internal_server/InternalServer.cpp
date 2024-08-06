@@ -123,7 +123,6 @@ bool InternalServer::processBufferData(
 
 		std::copy(dataBegin, dataBegin + headerSize, (uint8_t *)&size);
 		completeMessageSize = size;
-		completeMessage.reserve(completeMessageSize);
 
 		dataBegin = dataBegin + headerSize;
 
