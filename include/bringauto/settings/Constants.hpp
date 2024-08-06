@@ -62,8 +62,10 @@ constexpr size_t buffer_length { 1024 };
 
 /**
  * @brief maximal amount of external commands that can be stored in queue
+ *        value reasoning: some commands need to be buffered in a queue,
+ *        but choosing a high value could introduce a long delay until a device receives a new command
  */
-constexpr unsigned int max_external_commands { 7 };
+constexpr unsigned int max_external_commands { 3 };
 
 /**
  * @brief Constants for Mqtt communication
