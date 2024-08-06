@@ -11,7 +11,7 @@ StatusAggregatorDeviceState::StatusAggregatorDeviceState(
 		std::function<int(const DeviceIdentification&)> fun, const DeviceIdentification &deviceId,
 		const modules::Buffer& command, const modules::Buffer& status
 		): status_ { status } {
-	command_ = command;
+	defaultCommand_ = command;
 	timer_ = std::make_unique<ThreadTimer>(context, fun, deviceId);
 	timer_->start();
 }
@@ -29,16 +29,16 @@ void StatusAggregatorDeviceState::setStatusAndResetTimer(const modules::Buffer &
 	timer_->restart();
 }
 
-void StatusAggregatorDeviceState::setCommand(const modules::Buffer &commandBuffer) {
-	command_ = commandBuffer;
+void StatusAggregatorDeviceState::setDefaultCommand(const modules::Buffer &commandBuffer) {
+	defaultCommand_ = commandBuffer;
 }
 
 const modules::Buffer &StatusAggregatorDeviceState::getCommand() {
 	if (!externalCommandQueue_.empty()) {
-		command_ = externalCommandQueue_.front();
+		defaultCommand_ = externalCommandQueue_.front();
 		externalCommandQueue_.pop();
 	}
-	return command_;
+	return defaultCommand_;
 }
 
 std::queue<struct modules::Buffer> &StatusAggregatorDeviceState::aggregatedMessages() {

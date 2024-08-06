@@ -48,14 +48,17 @@ public:
 	void setStatusAndResetTimer(const modules::Buffer &statusBuffer);
 
 	/**
-	 * @brief Deallocate and replace command buffer
+	 * @brief Sets the default command buffer
 	 *
 	 * @param commandBuffer command Buffer
 	 */
-	void setCommand(const modules::Buffer &commandBuffer);
+	void setDefaultCommand(const modules::Buffer &commandBuffer);
 
 	/**
-	 * @brief Get command buffer
+	 * @brief Gets the most relevant command buffer.
+	 * If there are external commands in the queue, they will be used first.
+	 * Otherwise, the default command buffer will be used.
+	 * Commands received from the queue are removed from it.
 	 *
 	 * @return const Buffer&
 	 */
@@ -69,7 +72,9 @@ public:
 	[[nodiscard]] std::queue<modules::Buffer> &aggregatedMessages();
 
 	/**
-	 * @brief Add a command to the external command queue
+	 * @brief Add a command to the queue of received commands from the external server.
+	 * Commands are being retreived by the getCommand method, which also removes them from the queue.
+	 * If the queue is full, the oldest command will be removed.
 	 *
 	 * @param commandBuffer command Buffer
 	 */
@@ -82,7 +87,7 @@ private:
 
 	modules::Buffer status_ {};
 
-	modules::Buffer command_ {};
+	modules::Buffer defaultCommand_ {};
 
 	std::queue<modules::Buffer> externalCommandQueue_ {};
 };
