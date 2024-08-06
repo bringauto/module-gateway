@@ -104,10 +104,11 @@ private:
 	std::shared_ptr <structures::GlobalContext> context_ {};
 	/// Callback called by timer when status does not get response, registered by constructor
 	std::function<void()> endConnectionFunc_ {};
-
+	/// Returns true if status response was already handled. Used in NotAckedStatus
 	std::atomic<bool> responseHandled_ { false };
-
+	/// Used to protect responseHandled_ from concurrent access in NotAckedStatus
 	std::mutex responseHandledMutex_ {};
+	/// Used to protect notAckedStatuses_ vector from concurrent access
 	std::mutex ackMutex_ {};
 };
 
