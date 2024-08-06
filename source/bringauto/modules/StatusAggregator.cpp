@@ -26,7 +26,7 @@ Buffer
 StatusAggregator::aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
 								  const unsigned int &device_type) {
 	auto &currStatus = deviceState.getStatus();
-	auto aggregatedStatusBuff = module_->constructBuffer();
+	Buffer aggregatedStatusBuff {};
 	module_->aggregateStatus(aggregatedStatusBuff, currStatus, status, device_type);
 	return aggregatedStatusBuff;
 }
@@ -88,7 +88,7 @@ int StatusAggregator::add_status_to_aggregator(const Buffer& status,
 
 	deviceTimeouts_[device] = 0;
 	if(not devices.contains(device)) {
-		auto commandBuffer = module_->constructBuffer();
+		Buffer commandBuffer {};
 		module_->generateFirstCommand(commandBuffer, device_type);
 		auto statusBuffer = module_->constructBuffer();
 		statusBuffer = status;
@@ -205,7 +205,7 @@ int StatusAggregator::get_command(const Buffer& status, const structures::Device
 	}
 
 	auto &deviceState = devices.at(device);
-	auto generatedCommandBuffer = module_->constructBuffer();
+	Buffer generatedCommandBuffer {};
 	auto &currCommand = deviceState.getCommand();
 	module_->generateCommand(generatedCommandBuffer, status, deviceState.getStatus(), currCommand,
 							 device_type);

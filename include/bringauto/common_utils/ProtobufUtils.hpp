@@ -87,14 +87,14 @@ public:
 	 * @param deviceState state of the device
 	 * @param messageCounter
 	 * @param deviceStatus protobuf message
-	 * @param errorMessage error buffer
+	 * @param errorMessage error buffer pointer
 	 * @return ExternalProtocol::ExternalClient
 	 */
 	static ExternalProtocol::ExternalClient createExternalClientStatus(const std::string &sessionId,
 																	   ExternalProtocol::Status_DeviceState deviceState,
 																	   u_int32_t messageCounter,
 																	   const InternalProtocol::DeviceStatus &deviceStatus,
-																	   const modules::Buffer &errorMessage);
+																	   const modules::Buffer *errorMessage = nullptr);
 
 	/**
 	 * @brief Create a External Client Command Response object

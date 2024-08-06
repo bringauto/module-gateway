@@ -82,26 +82,47 @@ int ModuleManagerLibraryHandler::generateCommand(Buffer &generated_command,
 												 const Buffer new_status,
 												 const Buffer current_status,
 												 const Buffer current_command, unsigned int device_type) {
-	return generateCommand_(&generated_command.raw_buffer_, new_status.getStructBuffer(),
+	struct ::buffer raw_buffer {};
+	int ret = generateCommand_(&raw_buffer, new_status.getStructBuffer(),
 		current_status.getStructBuffer(), current_command.getStructBuffer(), device_type);
+	if (ret == OK) {
+		generated_command = constructBufferByTakeOwnership(raw_buffer);
+	}
+	return ret;
 }
 
 int ModuleManagerLibraryHandler::aggregateStatus(Buffer &aggregated_status,
 												 const Buffer current_status,
 												 const Buffer new_status, unsigned int device_type) {
-	return aggregateStatus_(&aggregated_status.raw_buffer_, current_status.getStructBuffer(),
+	struct ::buffer raw_buffer {};
+	int ret = aggregateStatus_(&raw_buffer, current_status.getStructBuffer(),
 		new_status.getStructBuffer(), device_type);
+	if (ret == OK) {
+		aggregated_status = constructBufferByTakeOwnership(raw_buffer);
+	}
+	return ret;
 }
 
 int ModuleManagerLibraryHandler::aggregateError(Buffer &error_message,
 												const Buffer current_error_message,
 												const Buffer status, unsigned int device_type) {
-	return aggregateError_(&error_message.raw_buffer_, current_error_message.getStructBuffer(),
+
+	struct ::buffer raw_buffer {};
+	int ret = aggregateError_(&raw_buffer, current_error_message.getStructBuffer(),
 		status.getStructBuffer(), device_type);
+	if (ret == OK) {
+		error_message = constructBufferByTakeOwnership(raw_buffer);
+	}
+	return ret;
 }
 
 int ModuleManagerLibraryHandler::generateFirstCommand(Buffer &default_command, unsigned int device_type) {
-	return generateFirstCommand_(&default_command.raw_buffer_, device_type);
+	struct ::buffer raw_buffer {};
+	int ret = generateFirstCommand_(&raw_buffer, device_type);
+	if (ret == OK) {
+		default_command = constructBufferByTakeOwnership(raw_buffer);
+	}
+	return ret;
 }
 
 int ModuleManagerLibraryHandler::statusDataValid(const Buffer status, unsigned int device_type) {

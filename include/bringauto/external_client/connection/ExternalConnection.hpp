@@ -63,11 +63,11 @@ public:
 	 *
 	 * @param status status message
 	 * @param deviceState state of the device
-	 * @param errorMessage error message
+	 * @param errorMessage error message pointer
 	 */
 	void sendStatus(const InternalProtocol::DeviceStatus &status,
-					const modules::Buffer &errorMessage,
-					ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING);
+					ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING,
+					const modules::Buffer *errorMessage = nullptr);
 
 	/**
 	 * @brief Check if any device is connected to the external connection

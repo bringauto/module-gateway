@@ -136,13 +136,12 @@ bool ExternalClient::sendStatus(const structures::InternalClientMessage &interna
 			startExternalConnectSequence(connection);
 		}
 	} else {
-		auto errorBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBuffer();
 		bool ret = true;
 		if(internalMessage.disconnected()) {
-			connection.sendStatus(deviceStatus, errorBuffer, ExternalProtocol::Status_DeviceState_DISCONNECT);
+			connection.sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_DISCONNECT);
 			ret = false;
 		} else {
-			connection.sendStatus(deviceStatus, errorBuffer);
+			connection.sendStatus(deviceStatus);
 		}
 		toExternalQueue_->pop();
 		return ret;

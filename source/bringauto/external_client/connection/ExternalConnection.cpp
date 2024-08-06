@@ -45,8 +45,8 @@ void ExternalConnection::init(const std::string &company, const std::string &veh
 }
 
 void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status,
-									const modules::Buffer &errorMessage,
-									ExternalProtocol::Status::DeviceState deviceState) {
+									ExternalProtocol::Status::DeviceState deviceState,
+									const modules::Buffer *errorMessage) {
 	const auto &device = status.device();
 	const auto &deviceModule = device.module();
 
@@ -101,9 +101,13 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 		deinitializeConnection(false);
 	}
 
-	std::string errorString((char*)errorMessage.getStructBuffer().data, errorMessage.getStructBuffer().size_in_bytes);
-	log::logDebug("Sending status with messageCounter '{}' with aggregated errorMessage: {}",
-				  clientMessageCounter_,errorString);
+	if (errorMessage != nullptr) {
+		std::string errorString((char*)errorMessage->getStructBuffer().data, errorMessage->getStructBuffer().size_in_bytes);
+		log::logDebug("Sending status with messageCounter '{}' with aggregated errorMessage: {}",
+					  clientMessageCounter_, errorString);
+	} else {
+		log::logDebug("Sending status with messageCounter '{}'", clientMessageCounter_);
+	}
 }
 
 int ExternalConnection::initializeConnection(const std::vector<structures::DeviceIdentification>& connectedDevices) {
@@ -182,10 +186,10 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 
 		const int &deviceModule = deviceIdentification.getModule();
 		auto moduleLibraryHanlder = moduleLibrary_.moduleLibraryHandlers.at(deviceModule);
-		auto errorBuffer = moduleLibraryHanlder->constructBuffer();
+		auto errorBuffer = std::make_unique<modules::Buffer>(moduleLibraryHanlder->constructBuffer());
 		auto statusBuffer = moduleLibraryHanlder->constructBuffer();
 
-		const auto &lastErrorStatusRc = errorAggregators[deviceModule].get_error(errorBuffer, deviceIdentification);
+		const auto &lastErrorStatusRc = errorAggregators[deviceModule].get_error(*errorBuffer, deviceIdentification);
 		if(lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
 			log::logError("Device is not registered in error aggregator: {} {}",
 				deviceIdentification.getDeviceRole(),
@@ -201,7 +205,7 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 			return -1;
 		}
 		auto deviceStatus = common_utils::ProtobufUtils::createDeviceStatus(deviceIdentification, statusBuffer);
-		sendStatus(deviceStatus, errorBuffer, ExternalProtocol::Status_DeviceState_CONNECTING);
+		sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_CONNECTING, errorBuffer.get());
 	}
 	for(int i = 0; i < devices.size(); ++i) {
 		const auto statusResponseMsg = communicationChannel_->receiveMessage();
