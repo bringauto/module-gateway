@@ -83,7 +83,10 @@ public:
 	int get_aggregated_status(Buffer &generated_status, const structures::DeviceIdentification& device);
 
 	/**
-	 * @short Get all devices registered to aggregator
+	 * @short Get all devices registered to aggregator. This specific implementation takes a list
+	 * of DeviceIdentification structures and fills it with all registered devices (as opposed to
+	 * the function declaration, which uses a buffer structure). This is equivalent to the
+	 * intended use of the function.
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */

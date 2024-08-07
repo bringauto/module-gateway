@@ -12,7 +12,11 @@
 namespace bringauto::modules {
 
 /**
- * @brief Buffer structure used to simplify buffer management.
+ * @brief Buffer structure used to simplify buffer management. The reason for this class is to provide
+ * a way to manage buffer memory in a safe way and make it easier to pass buffers between objects.
+ * All memory management is done by the library handler. A Buffer can be properly allocated
+ * by the ModuleLibraryHandler function constructBuffer or by module specific functions.
+ * Deallocating is done automatically when the Buffer object is destroyed.
  */
 struct Buffer final {
 
@@ -32,7 +36,7 @@ struct Buffer final {
 	 * @return allocated ::buffer instance
 	 */
 	[[nodiscard]] inline struct ::buffer getStructBuffer() const {
-		if(buffer_ == nullptr) [[unlikely]] {
+		if(!isAllocated()) [[unlikely]] {
 			throw BufferNotAllocated { "Buffer not allocated - it cannot be used as raw C struct" };
 		}
 		return raw_buffer_;
@@ -40,6 +44,8 @@ struct Buffer final {
 
 	/**
 	 * @brief Determine if buffer is allocated.
+	 * A buffer is considered allocated if it has a non-null data pointer in its raw c buffer struct.
+	 * Allocation is done by module specific functions or by constructBuffer of ModuleManagerLibraryHandler.
 	 * 
 	 * @return true if buffer is allocated, false otherwise
 	 */

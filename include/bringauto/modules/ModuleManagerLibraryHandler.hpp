@@ -61,14 +61,6 @@ public:
 	 */
 	Buffer constructBuffer(std::size_t size = 0);
 
-	/**
-	 * @brief Constructs a buffer with the same raw c buffer as provided
-	 * 
-	 * @param buffer c buffer to be used
-	 * @return a new Buffer object
-	 */
-	Buffer constructBufferByTakeOwnership(struct ::buffer& buffer);
-
 private:
 
 	int allocate(struct buffer *buffer_pointer, size_t size_in_bytes);
@@ -76,6 +68,14 @@ private:
 	void deallocate(struct buffer *buffer);
 
 	void *checkFunction(const char *functionName);
+
+	/**
+	 * @brief Constructs a buffer with the same raw c buffer as provided
+	 * 
+	 * @param buffer c buffer to be used
+	 * @return a new Buffer object
+	 */
+	Buffer constructBufferByTakeOwnership(struct ::buffer& buffer);
 
 	void *module_ {};
 
