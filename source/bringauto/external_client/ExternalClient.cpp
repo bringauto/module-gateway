@@ -55,7 +55,9 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 
 	auto deviceId = structures::DeviceIdentification(device);
 	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);
-	log::logInfo("Command for device {} was added to queue", device.devicename());
+	if (ret == OK) {
+		log::logInfo("Command for device {} was added to queue", device.devicename());
+	}
 }
 
 void ExternalClient::destroy() {
