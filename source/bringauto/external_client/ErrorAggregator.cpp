@@ -35,8 +35,6 @@ ErrorAggregator::add_status_to_error_aggregator(const modules::Buffer& status, c
 
 	if(not devices_.contains(device)) {
 		devices_.insert({ device, {}});
-		devices_[device].lastStatus = module_->constructBuffer();
-		devices_[device].errorMessage = module_->constructBuffer();
 	}
 
 	auto &lastStatus = devices_[device].lastStatus;
@@ -44,6 +42,10 @@ ErrorAggregator::add_status_to_error_aggregator(const modules::Buffer& status, c
 
 	modules::Buffer errorMessageBuffer {};
 	auto &currentError = devices_[device].errorMessage;
+
+	if (!currentError.isAllocated()) {
+		currentError = module_->constructBuffer();
+	}
 
 	auto retCode = module_->aggregateError(errorMessageBuffer, currentError, status, device_type);
 	if(retCode != OK) {

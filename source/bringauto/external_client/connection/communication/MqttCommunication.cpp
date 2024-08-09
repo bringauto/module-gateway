@@ -15,10 +15,11 @@ MqttCommunication::MqttCommunication(const structures::ExternalConnectionSetting
 	connopts_.set_connect_timeout(std::chrono::milliseconds(settings::MqttConstants::connect_timeout));
 	connopts_.set_max_inflight(settings::MqttConstants::max_inflight);
 
-	logging::Logger::logInfo("MQTT communication parameters: keepalive: {}, automatic_reconnect: {}, connect_timeout: {}, "
-							 "max_inflight: {}, receive_message_timeout: {}", settings::MqttConstants::keepalive,
-							 settings::MqttConstants::automatic_reconnect, settings::MqttConstants::connect_timeout,
-							 settings::MqttConstants::max_inflight, settings::receive_message_timeout.count());
+	logging::Logger::logInfo(
+		"MQTT communication parameters: keepalive: {}, automatic_reconnect: {}, connect_timeout: {}, "
+		"max_inflight: {}, receive_message_timeout: {}", settings::MqttConstants::keepalive,
+		settings::MqttConstants::automatic_reconnect, settings::MqttConstants::connect_timeout,
+		settings::MqttConstants::max_inflight, settings::receive_message_timeout.count());
 }
 
 MqttCommunication::~MqttCommunication() {
@@ -71,7 +72,7 @@ void MqttCommunication::initializeConnection() {
 
 void MqttCommunication::connect() {
 	client_ = std::make_unique<mqtt::async_client>(serverAddress_, clientId_,
-												   mqtt::create_options(MQTTVERSION_3_1_1, 20));
+		mqtt::create_options(MQTTVERSION_3_1_1, 20));
 	if (client_ == nullptr) {
 		throw std::runtime_error {"Mqtt client could not be created"};
 	}

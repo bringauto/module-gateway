@@ -31,7 +31,8 @@ RUN cmake .. -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_GET_PACKAGES_ONLY=ON
 WORKDIR /home/bringauto
 ADD --chown=bringauto:bringauto https://github.com/bringauto/mission-module.git#$MISSION_MODULE_VERSION mission-module
 WORKDIR /home/bringauto/mission-module/_build
-RUN cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREFIX=/home/bringauto/modules/mission_module/ -DFLEET_PROTOCOL_BUILD_EXTERNAL_SERVER=OFF .. && \
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREFIX=/home/bringauto/modules/mission_module/ \
+    -DFLEET_PROTOCOL_BUILD_EXTERNAL_SERVER=OFF .. && \
     make install
 
 
@@ -55,7 +56,8 @@ RUN cmake .. -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_GET_PACKAGES_ONLY=ON
 WORKDIR /home/bringauto
 ADD --chown=bringauto:bringauto https://github.com/bringauto/io-module.git#$IO_MODULE_VERSION io-module
 WORKDIR /home/bringauto/io-module/_build
-RUN cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREFIX=/home/bringauto/modules/io_module/ -DFLEET_PROTOCOL_BUILD_EXTERNAL_SERVER=OFF .. && \
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREFIX=/home/bringauto/modules/io_module/ \
+    -DFLEET_PROTOCOL_BUILD_EXTERNAL_SERVER=OFF .. && \
     make install
 
 
@@ -76,10 +78,8 @@ RUN mkdir -p /home/bringauto/module-gateway/tmp/build && \
     cd /home/bringauto/module-gateway/tmp/build && \
     cmake /home/bringauto/module-gateway/tmp -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREFIX=/home/bringauto/module-gateway && \
     make -j 8 && \
-    make install
-
-# Remove tmp library with source files
-RUN rm -rf /home/bringauto/module-gateway/tmp
+    make install && \
+    rm -rf /home/bringauto/module-gateway/tmp
 
 # Copy module libraries
 COPY --from=mission_module_builder /home/bringauto/modules /home/bringauto/modules
