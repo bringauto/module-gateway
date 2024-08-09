@@ -79,7 +79,8 @@ int main(int argc, char **argv) {
 
 	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.run(); });
 	std::jthread externalClientThread([&externalClient]() { externalClient.run(); });
-	std::jthread contextThread([&context]() { context->ioContext.run(); });
+	std::jthread contextThread2([&context]() { context->ioContext.run(); });
+	std::jthread contextThread1([&context]() { context->ioContext.run(); });
 	try {
 		internalServer.run();
 	} catch(boost::system::system_error &e) {
@@ -87,7 +88,8 @@ int main(int argc, char **argv) {
 		context->ioContext.stop();
 	}
 
-	contextThread.join();
+	contextThread1.join();
+	contextThread2.join();
 	externalClientThread.join();
 	moduleHandlerThread.join();
 

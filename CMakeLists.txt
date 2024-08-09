@@ -76,8 +76,8 @@ CMDEF_ADD_EXECUTABLE(
 TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC module-gateway-lib)
 
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    TARGET_COMPILE_OPTIONS(module-gateway-app PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address)
-    TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC -fsanitize=address)
+    TARGET_COMPILE_OPTIONS(module-gateway-app PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address  -fsanitize=undefined)
+    TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC -fsanitize=address -fsanitize=undefined)
 ENDIF()
 
 
