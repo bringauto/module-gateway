@@ -88,8 +88,8 @@ int main(int argc, char **argv) {
 		context->ioContext.stop();
 	}
 
-	contextThread1.join();
 	contextThread2.join();
+	contextThread1.join();
 	externalClientThread.join();
 	moduleHandlerThread.join();
 
