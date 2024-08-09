@@ -73,9 +73,6 @@ void MqttCommunication::initializeConnection() {
 void MqttCommunication::connect() {
 	client_ = std::make_unique<mqtt::async_client>(serverAddress_, clientId_,
 		mqtt::create_options(MQTTVERSION_3_1_1, 20));
-	if (client_ == nullptr) {
-		throw std::runtime_error {"Mqtt client could not be created"};
-	}
 
 	client_->start_consuming();
 
