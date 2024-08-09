@@ -46,7 +46,7 @@ void ExternalConnection::init(const std::string &company, const std::string &veh
 
 void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status,
 									ExternalProtocol::Status::DeviceState deviceState,
-									const modules::Buffer *errorMessage) {
+									const modules::Buffer& errorMessage) {
 	const auto &device = status.device();
 	const auto &deviceModule = device.module();
 
@@ -101,7 +101,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 		deinitializeConnection(false);
 	}
 
-	if (errorMessage != nullptr) {
+	if (errorMessage.isAllocated()) {
 		std::string errorString((char*)errorMessage->getStructBuffer().data, errorMessage->getStructBuffer().size_in_bytes);
 		log::logDebug("Sending status with messageCounter '{}' with aggregated errorMessage: {}",
 					  clientMessageCounter_, errorString);

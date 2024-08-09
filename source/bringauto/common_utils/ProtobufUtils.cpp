@@ -72,15 +72,15 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientStatus(const
 																		   ExternalProtocol::Status_DeviceState deviceState,
 																		   u_int32_t messageCounter,
 																		   const InternalProtocol::DeviceStatus &deviceStatus,
-																		   const modules::Buffer *errorMessage) {
+																		   const modules::Buffer &errorMessage) {
 	ExternalProtocol::ExternalClient externalMessage {};
 	ExternalProtocol::Status *status = externalMessage.mutable_status();
 	status->mutable_devicestatus()->CopyFrom(deviceStatus);
 	status->set_sessionid(sessionId);
 	status->set_devicestate(deviceState);
 	status->set_messagecounter(messageCounter);
-	if(errorMessage != nullptr && errorMessage->isAllocated()) {
-		status->set_errormessage(errorMessage->getStructBuffer().data, errorMessage->getStructBuffer().size_in_bytes);
+	if(errorMessage.isAllocated()) {
+		status->set_errormessage(errorMessage.getStructBuffer().data, errorMessage.getStructBuffer().size_in_bytes);
 	}
 	return externalMessage;
 }

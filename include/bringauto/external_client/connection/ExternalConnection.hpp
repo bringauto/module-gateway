@@ -67,7 +67,7 @@ public:
 	 */
 	void sendStatus(const InternalProtocol::DeviceStatus &status,
 					ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING,
-					const modules::Buffer *errorMessage = nullptr);
+					const modules::Buffer& errorMessage = modules::Buffer {});
 
 	/**
 	 * @brief Check if any device is connected to the external connection

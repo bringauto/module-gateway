@@ -94,7 +94,7 @@ public:
 																	   ExternalProtocol::Status_DeviceState deviceState,
 																	   u_int32_t messageCounter,
 																	   const InternalProtocol::DeviceStatus &deviceStatus,
-																	   const modules::Buffer *errorMessage = nullptr);
+																	   const modules::Buffer &errorMessage = modules::Buffer {});
 
 	/**
 	 * @brief Create a External Client Command Response object

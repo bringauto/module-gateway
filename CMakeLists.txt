@@ -76,7 +76,8 @@ CMDEF_ADD_EXECUTABLE(
 TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC module-gateway-lib)
 
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    TARGET_COMPILE_OPTIONS(module-gateway-app PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address  -fsanitize=undefined)
+    TARGET_COMPILE_OPTIONS(module-gateway-app PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address -fsanitize=undefined -fno-sanitize-recover)
+    TARGET_COMPILE_OPTIONS(module-gateway-lib PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address -fsanitize=undefined -fno-sanitize-recover)
     TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC -fsanitize=address -fsanitize=undefined)
 ENDIF()
 
@@ -114,7 +115,5 @@ IF (BRINGAUTO_PACKAGE)
     SET(CPACK_GENERATOR ZIP)
     SET(CPACK_PACKAGE_CONTACT "BringAuto s.r.o. <maintainers@bringauto.com>")
     SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "BringAuto s.r.o <maintainers@bringauto.com>")
-    SET(CPACK_DEBIAN_PACKAGE_GENERATE_SHLIBS ON)
-    SET(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
     INCLUDE(CPack)
 ENDIF ()
