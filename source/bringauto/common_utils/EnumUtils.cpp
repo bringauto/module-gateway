@@ -16,7 +16,7 @@ structures::ProtocolType EnumUtils::stringToProtocolType(std::string toEnum) {
 }
 
 std::string EnumUtils::protocolTypeToString(structures::ProtocolType toString) {
-	std::string result;
+	std::string result {};
 	if(toString == structures::ProtocolType::MQTT) {
 		result = settings::Constants::MQTT;
 	}

@@ -8,7 +8,7 @@
 namespace testing_utils {
 
 void ClientForTesting::connectSocket() {
-	boost::system::error_code er;
+	boost::system::error_code er {};
 	boost::asio::ip::tcp::resolver resolver(context->ioContext);
 	boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), context->settings->port);
 	socket = std::make_shared<boost::asio::ip::tcp::socket>(context->ioContext);
@@ -37,7 +37,7 @@ void ClientForTesting::sendMessage(const InternalProtocol::InternalClient &messa
 }
 
 void ClientForTesting::receiveMessage(InternalProtocol::InternalServer &message) {
-	boost::system::error_code er;
+	boost::system::error_code er {};
 	bool readFinished = false;
 	auto timeStart = std::chrono::steady_clock::now();
 	std::jthread timeoutCountThread([this, timeStart, &readFinished]() {
@@ -97,7 +97,7 @@ void ClientForTesting::sendMessage(uint32_t header, std::string data, bool recas
 }
 
 void ClientForTesting::insteadOfMessageExpectError() {
-	boost::system::error_code er;
+	boost::system::error_code er {};
 	bool readFinished = false;
 	auto timeStart = std::chrono::steady_clock::now();
 	std::jthread timeoutCountThread([this, timeStart, &readFinished]() {
@@ -110,14 +110,14 @@ void ClientForTesting::insteadOfMessageExpectError() {
 		disconnectSocket();
 		ASSERT_TRUE(false);
 	});
-	std::array<uint8_t, bufferLength> buffer;
+	std::array<uint8_t, bufferLength> buffer {};
 	socket->read_some(boost::asio::buffer(buffer), er);
 	readFinished = true;
 	ASSERT_TRUE(er);
 }
 
 void ClientForTesting::insteadOfMessageExpectTimeoutThenError() {
-	boost::system::error_code er;
+	boost::system::error_code er {};
 	bool readFinished = false;
 	auto timeStart = std::chrono::steady_clock::now();
 	std::jthread timeoutCountThread([this, timeStart, &readFinished]() {
@@ -129,7 +129,7 @@ void ClientForTesting::insteadOfMessageExpectTimeoutThenError() {
 			}
 		}
 	});
-	std::array<uint8_t, bufferLength> buffer;
+	std::array<uint8_t, bufferLength> buffer {};
 	socket->read_some(boost::asio::buffer(buffer), er);
 	readFinished = true;
 	ASSERT_TRUE(er);

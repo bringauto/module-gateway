@@ -25,14 +25,14 @@
 void initLogger(const std::string &logPath, bool verbose) {
 	using namespace bringauto::logging;
 	if(verbose) {
-		Logger::addSink<bringauto::logging::ConsoleSink>();
+		Logger::addSink<ConsoleSink>();
 	}
 	FileSink::Params paramFileSink { logPath, "ModuleGateway.log" };
 	paramFileSink.maxFileSize = 50_MiB;
 	paramFileSink.numberOfRotatedFiles = 5;
 	paramFileSink.verbosity = Logger::Verbosity::Info;
 
-	Logger::addSink<bringauto::logging::FileSink>(paramFileSink);
+	Logger::addSink<FileSink>(paramFileSink);
 	Logger::LoggerSettings params { "ModuleGateway",
 									Logger::Verbosity::Debug }; // TODO change to Info
 	Logger::init(params);
@@ -79,7 +79,8 @@ int main(int argc, char **argv) {
 
 	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.run(); });
 	std::jthread externalClientThread([&externalClient]() { externalClient.run(); });
-	std::jthread contextThread([&context]() { context->ioContext.run(); });
+	std::jthread contextThread2([&context]() { context->ioContext.run(); });
+	std::jthread contextThread1([&context]() { context->ioContext.run(); });
 	try {
 		internalServer.run();
 	} catch(boost::system::system_error &e) {
@@ -87,7 +88,8 @@ int main(int argc, char **argv) {
 		context->ioContext.stop();
 	}
 
-	contextThread.join();
+	contextThread2.join();
+	contextThread1.join();
 	externalClientThread.join();
 	moduleHandlerThread.join();
 

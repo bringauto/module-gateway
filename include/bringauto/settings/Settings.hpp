@@ -21,7 +21,7 @@ struct Settings {
 	/**
 	 * @brief path to folder, where logs will be generated
 	 */
-	std::filesystem::path logPath;
+	std::filesystem::path logPath {};
 	/**
 	 * @brief verbose switch, if true, logs will be also printed to console
 	 */
@@ -30,22 +30,22 @@ struct Settings {
 	/**
 	 * @brief company name for external connection
 	 */
-	std::string company;
+	std::string company {};
 
 	/**
 	 * @brief vehicle name used in external connection
 	 */
-	std::string vehicleName;
+	std::string vehicleName {};
 
 	/**
 	 * @brief paths to shared module libraries
 	 */
-	std::map<int, std::string> modulePaths;
+	std::map<int, std::string> modulePaths {};
 
 	/**
 	 * @brief Setting of external connection endpoints and protocols
 	 */
-	std::vector<structures::ExternalConnectionSettings> externalConnectionSettingsList;
+	std::vector<structures::ExternalConnectionSettings> externalConnectionSettingsList {};
 
 };
 }

@@ -28,7 +28,7 @@ struct Connection {
 	/**
 	 * @brief identification of connected device
 	 */
-	std::shared_ptr <DeviceIdentification> deviceId;
+	std::shared_ptr <DeviceIdentification> deviceId {};
 	/**
 	 * @brief Context for connection
 	 */
@@ -36,7 +36,7 @@ struct Connection {
 		/**
 		 * @brief buffer for receive handler
 		 */
-		std::array<uint8_t, bringauto::settings::buffer_length> buffer;
+		std::array<uint8_t, settings::buffer_length> buffer {};
 		/**
 		 * @brief complete size of one message
 		 */
@@ -45,16 +45,16 @@ struct Connection {
 		 * @brief message data
 		 */
 		std::vector<uint8_t> completeMessage {};
-	} connContext;
+	} connContext {};
 	/**
 	 * @brief condition variable used for wait - after a message was send from server to module handler.
 	 * and notify - when response to that message was received in server and resent to internal client
 	 */
-	std::condition_variable conditionVariable;
+	std::condition_variable conditionVariable {};
 	/**
 	 * @brief mutex used alongside conditionVariable
 	 */
-	std::mutex connectionMutex;
+	std::mutex connectionMutex {};
 	/**
 	 * @brief variable used to decide if connection can start reading again, after sending message to Module Handler
 	 */
@@ -62,4 +62,3 @@ struct Connection {
 };
 
 }
-

@@ -28,25 +28,29 @@ protected:
 	}
 
 
-	struct buffer init_status_buffer();
+	bringauto::modules::Buffer init_status_buffer();
 
-	struct buffer init_command_buffer();
+	bringauto::modules::Buffer init_command_buffer();
+
+	bringauto::modules::Buffer init_empty_buffer();
 
 	void add_status_to_aggregator();
 
 	void remove_device_from_status_aggregator();
 
-	std::shared_ptr<bringauto::structures::GlobalContext> context;
+	std::shared_ptr<bringauto::structures::GlobalContext> context_ {};
 
-	std::unique_ptr <bringauto::modules::StatusAggregator> statusAggregator;
+	std::unique_ptr <bringauto::modules::StatusAggregator> statusAggregator_ {};
+
+	std::shared_ptr<bringauto::modules::ModuleManagerLibraryHandler> libHandler_ {};
 
 #ifdef DEBUG
-    static constexpr const char* PATH_TO_MODULE { "./test/lib/example-module/libexample-module-gateway-sharedd.so" };
+	static constexpr const char* PATH_TO_MODULE { "./test/lib/example-module/libexample-module-gateway-sharedd.so" };
 #else
-    static constexpr const char* PATH_TO_MODULE { "./test/lib/example-module/libexample-module-gateway-shared.so" };
+	static constexpr const char* PATH_TO_MODULE { "./test/lib/example-module/libexample-module-gateway-shared.so" };
 #endif
-    const std::string WRONG_PATH_TO_MODULE { "./bad_path.so" };
-    const unsigned int MODULE = 1000;
+	const std::string WRONG_PATH_TO_MODULE { "./bad_path.so" };
+	const unsigned int MODULE = 1000;
 	const unsigned int SUPPORTED_DEVICE_TYPE = 0;
 	const unsigned int UNSUPPORTED_DEVICE_TYPE = 1000;
 	const char *UNIQUE_DEVICE { "1000/0/button/name" };

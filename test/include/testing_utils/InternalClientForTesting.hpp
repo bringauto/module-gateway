@@ -18,8 +18,8 @@ const size_t bufferLength { 1024 };
 const size_t headerSize { 4 };
 
 class ClientForTesting {
-	const std::shared_ptr<bringauto::structures::GlobalContext> context;
-	std::shared_ptr<boost::asio::ip::tcp::socket> socket;
+	const std::shared_ptr<bringauto::structures::GlobalContext> context {};
+	std::shared_ptr<boost::asio::ip::tcp::socket> socket {};
 public:
 
 	explicit ClientForTesting(const std::shared_ptr<bringauto::structures::GlobalContext> &context_)

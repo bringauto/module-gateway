@@ -15,10 +15,11 @@ MqttCommunication::MqttCommunication(const structures::ExternalConnectionSetting
 	connopts_.set_connect_timeout(std::chrono::milliseconds(settings::MqttConstants::connect_timeout));
 	connopts_.set_max_inflight(settings::MqttConstants::max_inflight);
 
-	logging::Logger::logInfo("MQTT communication parameters: keepalive: {}, automatic_reconnect: {}, connect_timeout: {}, "
-							 "max_inflight: {}, receive_message_timeout: {}", settings::MqttConstants::keepalive,
-							 settings::MqttConstants::automatic_reconnect, settings::MqttConstants::connect_timeout,
-							 settings::MqttConstants::max_inflight, settings::receive_message_timeout.count());
+	logging::Logger::logInfo(
+		"MQTT communication parameters: keepalive: {}, automatic_reconnect: {}, connect_timeout: {}, "
+		"max_inflight: {}, receive_message_timeout: {}", settings::MqttConstants::keepalive,
+		settings::MqttConstants::automatic_reconnect, settings::MqttConstants::connect_timeout,
+		settings::MqttConstants::max_inflight, settings::receive_message_timeout.count());
 }
 
 MqttCommunication::~MqttCommunication() {
@@ -36,10 +37,10 @@ void MqttCommunication::setProperties(const std::string& company, const std::str
 	};
 
 	if (settings_.protocolSettings.contains(std::string(settings::Constants::SSL)) &&
-	    settings_.protocolSettings[std::string(settings::Constants::SSL)] == "true") {
+		settings_.protocolSettings[std::string(settings::Constants::SSL)] == "true") {
 		if (settings_.protocolSettings.contains(std::string(settings::Constants::CA_FILE))
-		    && settings_.protocolSettings.contains(std::string(settings::Constants::CLIENT_CERT))
-		    && settings_.protocolSettings.contains(std::string(settings::Constants::CLIENT_KEY))
+			&& settings_.protocolSettings.contains(std::string(settings::Constants::CLIENT_CERT))
+			&& settings_.protocolSettings.contains(std::string(settings::Constants::CLIENT_KEY))
 		) {
 			serverAddress_ = "ssl://" + serverAddress_;
 			const auto sslopts = mqtt::ssl_options_builder()
@@ -71,10 +72,7 @@ void MqttCommunication::initializeConnection() {
 
 void MqttCommunication::connect() {
 	client_ = std::make_unique<mqtt::async_client>(serverAddress_, clientId_,
-	                                               mqtt::create_options(MQTTVERSION_3_1_1, 20));
-	if (client_ == nullptr) {
-		throw std::runtime_error("Mqtt client could not be created");
-	}
+		mqtt::create_options(MQTTVERSION_3_1_1, 20));
 
 	client_->start_consuming();
 
@@ -113,7 +111,10 @@ std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMess
 	}
 
 	auto ptr = std::make_shared<ExternalProtocol::ExternalServer>();
-	ptr->ParseFromString(msg->get_payload_str());
+	if (!ptr->ParseFromArray(msg->get_payload_str().c_str(), static_cast<int>(msg->get_payload_str().size()))) {
+		logging::Logger::logError("Failed to parse protobuf message from external server");
+		return nullptr;
+	}
 	return ptr;
 }
 

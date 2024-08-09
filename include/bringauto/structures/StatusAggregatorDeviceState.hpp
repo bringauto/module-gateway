@@ -3,6 +3,7 @@
 #include <bringauto/structures/GlobalContext.hpp>
 #include <bringauto/structures/ThreadTimer.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
+#include <bringauto/modules/Buffer.hpp>
 #include <fleet_protocol/common_headers/device_management.h>
 
 #include <queue>
@@ -20,72 +21,75 @@ public:
 
 	StatusAggregatorDeviceState() = default;
 
-	StatusAggregatorDeviceState(std::shared_ptr<bringauto::structures::GlobalContext> &context,
-								std::function<int(const structures::DeviceIdentification&)> fun,
-								const structures::DeviceIdentification &deviceId, const buffer command, const buffer status, std::function<void(struct buffer *)> dealloc);
+	StatusAggregatorDeviceState(std::shared_ptr<GlobalContext> &context,
+								std::function<int(const DeviceIdentification&)> fun,
+								const DeviceIdentification &deviceId,
+								const modules::Buffer& command, const modules::Buffer& status);
 
 	/**
 	 * @brief Deallocate and replace status buffer
 	 *
-	 * @param statusBuffer status data buffer
+	 * @param statusBuffer status data Buffer
 	 */
-	void setStatus(const buffer &statusBuffer);
+	void setStatus(const modules::Buffer &statusBuffer);
 
 	/**
 	 * @brief Get status buffer
 	 *
-	 * @return const struct buffer&
+	 * @return const Buffer&
 	 */
-	[[nodiscard]] const struct buffer &getStatus() const;
-
-	/**
-	 * @brief Deallocate status buffer
-	 */
-	void deallocateStatus();
+	[[nodiscard]] const modules::Buffer &getStatus() const;
 
 	/**
 	 * @brief Deallocate, replace data buffer and restart no aggregation timer
 	 *
-	 * @param statusBuffer status data buffer
+	 * @param statusBuffer status data Buffer
 	 */
-	void setStatusAndResetTimer(const buffer &statusBuffer);
+	void setStatusAndResetTimer(const modules::Buffer &statusBuffer);
 
 	/**
-	 * @brief Deallocate and replace command buffer
+	 * @brief Sets the default command buffer
 	 *
-	 * @param commandBuffer command buffer
+	 * @param commandBuffer command Buffer
 	 */
-	void setCommand(const buffer &commandBuffer);
+	void setDefaultCommand(const modules::Buffer &commandBuffer);
 
 	/**
-	 * @brief Get command buffer
+	 * @brief Gets the most relevant command buffer.
+	 * If there are external commands in the queue, they will be used first.
+	 * Otherwise, the default command buffer will be used.
+	 * Commands received from the queue are removed from it.
 	 *
-	 * @return const struct buffer&
+	 * @return const Buffer&
 	 */
-	[[nodiscard]] const struct buffer &getCommand() const;
-
-	/**
-	 * @brief Deallocate command buffer
-	 */
-	void deallocateCommand();
+	[[nodiscard]] const modules::Buffer &getCommand();
 
 	/**
 	 * @brief Get aggregated messages queue
 	 *
-	 * @return std::queue<struct buffer>&
+	 * @return std::queue<modules::Buffer>&
 	 */
-	[[nodiscard]] std::queue<struct buffer> &getAggregatedMessages();
+	[[nodiscard]] std::queue<modules::Buffer> &aggregatedMessages();
+
+	/**
+	 * @brief Add a command to the queue of received commands from the external server.
+	 * Commands are being retreived by the getCommand method, which also removes them from the queue.
+	 * If the queue is full, the oldest command will be removed.
+	 *
+	 * @param commandBuffer command Buffer
+	 */
+	int addExternalCommand(const modules::Buffer &commandBuffer);
 
 private:
-	std::unique_ptr<bringauto::structures::ThreadTimer> timer_ {};
+	std::unique_ptr<ThreadTimer> timer_ {};
 
-	std::queue<struct buffer> aggregatedMessages_;
+	std::queue<modules::Buffer> aggregatedMessages_ {};
 
-	std::function<void(struct buffer *)> deallocateFun_;
+	modules::Buffer status_ {};
 
-	struct buffer status_;
+	modules::Buffer defaultCommand_ {};
 
-	struct buffer command_;
+	std::queue<modules::Buffer> externalCommandQueue_ {};
 };
 
 }

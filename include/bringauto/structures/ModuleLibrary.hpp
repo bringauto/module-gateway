@@ -29,7 +29,7 @@ struct ModuleLibrary {
 	 *
 	 * @param context global context
 	 */
-	void initStatusAggregators(std::shared_ptr<bringauto::structures::GlobalContext> &context);
+	void initStatusAggregators(std::shared_ptr<GlobalContext> &context);
 	/// Map of module handlers, key is module id
 	std::map<unsigned int, std::shared_ptr<modules::ModuleManagerLibraryHandler>> moduleLibraryHandlers {};
 	/// Map of status aggregators, key is module id

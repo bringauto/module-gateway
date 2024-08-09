@@ -22,13 +22,13 @@ int ErrorAggregator::destroy_error_aggregator() {
 }
 
 int
-ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, const structures::DeviceIdentification& device) {
+ErrorAggregator::add_status_to_error_aggregator(const modules::Buffer& status, const structures::DeviceIdentification& device) {
 	const auto &device_type = device.getDeviceType();
 	if(is_device_type_supported(device_type) == NOT_OK) {
 		return DEVICE_NOT_SUPPORTED;
 	}
 
-	if(status.size_in_bytes == 0) {
+	if(status.getStructBuffer().size_in_bytes == 0) {
 		log::logWarning("Invalid status data for device: {}", device.convertToString());
 		return NOT_OK;
 	}
@@ -38,69 +38,53 @@ ErrorAggregator::add_status_to_error_aggregator(const struct buffer status, cons
 	}
 
 	auto &lastStatus = devices_[device].lastStatus;
-	if(lastStatus.data != nullptr && lastStatus.size_in_bytes > 0) { // status.size_in_bytes > lastStatus.size_in_bytes
-		module_->deallocate(&lastStatus);
-	}
-	if(module_->allocate(&lastStatus, status.size_in_bytes) == NOT_OK) {
-		log::logError("Could not allocate memory for status buffer in function add_status_to_error_aggregator");
-		return NOT_OK;
-	}
-	std::memcpy(lastStatus.data, status.data, status.size_in_bytes);
+	lastStatus = status;
 
-	struct buffer errorMessageBuffer {};
+	modules::Buffer errorMessageBuffer {};
 	auto &currentError = devices_[device].errorMessage;
 
-	auto retCode = module_->aggregateError(&errorMessageBuffer, currentError, status, device_type);
+	if (!currentError.isAllocated()) {
+		currentError = module_->constructBuffer();
+	}
+
+	auto retCode = module_->aggregateError(errorMessageBuffer, currentError, status, device_type);
 	if(retCode != OK) {
 		log::logWarning("Error occurred in Error aggregator for device: {}", device.convertToString());
 		return NOT_OK;
-	}
-	if(currentError.data != nullptr) {
-		module_->deallocate(&currentError);
 	}
 	currentError = errorMessageBuffer;
 	return OK;
 }
 
-int ErrorAggregator::get_last_status(struct buffer *status, const structures::DeviceIdentification& device) {
+int ErrorAggregator::get_last_status(modules::Buffer &status, const structures::DeviceIdentification& device) {
 	if(not devices_.contains(device)) {
 		return DEVICE_NOT_REGISTERED;
 	}
 
 	auto &lastStatus = devices_[device].lastStatus;
 
-	if(lastStatus.data == nullptr || lastStatus.size_in_bytes == 0) {
+	if(!lastStatus.isAllocated()) {
 		return NO_MESSAGE_AVAILABLE;
 	}
-	status->data = lastStatus.data;
-	status->size_in_bytes = lastStatus.size_in_bytes;
+	status = lastStatus;
 	return OK;
 }
 
-int ErrorAggregator::get_error(struct buffer *error, const structures::DeviceIdentification& device) {
+int ErrorAggregator::get_error(modules::Buffer &error, const structures::DeviceIdentification& device) {
 	if(not devices_.contains(device)) {
 		return DEVICE_NOT_REGISTERED;
 	}
 
 	auto &currentError = devices_[device].errorMessage;
 
-	if(currentError.data == nullptr || currentError.size_in_bytes == 0) {
+	if(!currentError.isAllocated()) {
 		return NO_MESSAGE_AVAILABLE;
 	}
-	error->data = currentError.data;
-	error->size_in_bytes = currentError.size_in_bytes;
+	error = currentError;
 	return OK;
 }
 
 int ErrorAggregator::clear_error_aggregator() {
-	for(auto &[key, device]: devices_) {
-		if(device.lastStatus.data != nullptr && device.lastStatus.size_in_bytes > 0) {
-			module_->deallocate(&device.lastStatus);
-		}
-		if(device.errorMessage.data != nullptr && device.errorMessage.size_in_bytes > 0) {
-			module_->deallocate(&device.errorMessage);
-		}
-	}
 	return OK;
 }
 

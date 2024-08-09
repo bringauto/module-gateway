@@ -29,7 +29,7 @@ ModuleManagerLibraryHandler::~ModuleManagerLibraryHandler() {
 void ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path &path) {
 	module_ = dlmopen(LM_ID_NEWLM, path.c_str(), RTLD_LAZY);
 	if(module_ == nullptr) {
-		throw std::runtime_error("Unable to load library " + path.string() + dlerror());
+		throw std::runtime_error {"Unable to load library " + path.string() + dlerror()};
 	}
 	isDeviceTypeSupported_ = reinterpret_cast<FunctionTypeDeducer<decltype(isDeviceTypeSupported_)>::fncptr>(checkFunction(
 			"is_device_type_supported"));
@@ -59,7 +59,7 @@ void ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path &path)
 void *ModuleManagerLibraryHandler::checkFunction(const char *functionName) {
 	auto function = dlsym(module_, functionName);
 	if(not function) {
-		throw std::runtime_error("Function " + std::string(functionName) + " is not included in library");
+		throw std::runtime_error {"Function " + std::string(functionName) + " is not included in library"};
 	}
 	return function;
 }
@@ -72,37 +72,65 @@ int ModuleManagerLibraryHandler::isDeviceTypeSupported(unsigned int device_type)
 	return isDeviceTypeSupported_(device_type);
 }
 
-int ModuleManagerLibraryHandler::sendStatusCondition(const struct buffer current_status, const struct buffer new_status,
+int ModuleManagerLibraryHandler::sendStatusCondition(const Buffer current_status,
+													 const Buffer new_status,
 													 unsigned int device_type) {
-	return sendStatusCondition_(current_status, new_status, device_type);
+	return sendStatusCondition_(current_status.getStructBuffer(), new_status.getStructBuffer(), device_type);
 }
 
-int ModuleManagerLibraryHandler::generateCommand(struct buffer *generated_command, const struct buffer new_status,
-												 const struct buffer current_status,
-												 const struct buffer current_command, unsigned int device_type) {
-	return generateCommand_(generated_command, new_status, current_status, current_command, device_type);
+int ModuleManagerLibraryHandler::generateCommand(Buffer &generated_command,
+												 const Buffer new_status,
+												 const Buffer current_status,
+												 const Buffer current_command, unsigned int device_type) {
+	struct ::buffer raw_buffer {};
+	int ret = generateCommand_(&raw_buffer, new_status.getStructBuffer(),
+		current_status.getStructBuffer(), current_command.getStructBuffer(), device_type);
+	if (ret == OK) {
+		generated_command = constructBufferByTakeOwnership(raw_buffer);
+	}
+	return ret;
 }
 
-int ModuleManagerLibraryHandler::aggregateStatus(struct buffer *aggregated_status, const struct buffer current_status,
-												 const struct buffer new_status, unsigned int device_type) {
-	return aggregateStatus_(aggregated_status, current_status, new_status, device_type);
+int ModuleManagerLibraryHandler::aggregateStatus(Buffer &aggregated_status,
+												 const Buffer current_status,
+												 const Buffer new_status, unsigned int device_type) {
+	struct ::buffer raw_buffer {};
+	int ret = aggregateStatus_(&raw_buffer, current_status.getStructBuffer(),
+		new_status.getStructBuffer(), device_type);
+	if (ret == OK) {
+		aggregated_status = constructBufferByTakeOwnership(raw_buffer);
+	}
+	return ret;
 }
 
-int ModuleManagerLibraryHandler::aggregateError(struct buffer *error_message, const struct buffer current_error_message,
-												const struct buffer status, unsigned int device_type) {
-	return aggregateError_(error_message, current_error_message, status, device_type);
+int ModuleManagerLibraryHandler::aggregateError(Buffer &error_message,
+												const Buffer current_error_message,
+												const Buffer status, unsigned int device_type) {
+
+	struct ::buffer raw_buffer {};
+	int ret = aggregateError_(&raw_buffer, current_error_message.getStructBuffer(),
+		status.getStructBuffer(), device_type);
+	if (ret == OK) {
+		error_message = constructBufferByTakeOwnership(raw_buffer);
+	}
+	return ret;
 }
 
-int ModuleManagerLibraryHandler::generateFirstCommand(struct buffer *default_command, unsigned int device_type) {
-	return generateFirstCommand_(default_command, device_type);
+int ModuleManagerLibraryHandler::generateFirstCommand(Buffer &default_command, unsigned int device_type) {
+	struct ::buffer raw_buffer {};
+	int ret = generateFirstCommand_(&raw_buffer, device_type);
+	if (ret == OK) {
+		default_command = constructBufferByTakeOwnership(raw_buffer);
+	}
+	return ret;
 }
 
-int ModuleManagerLibraryHandler::statusDataValid(const struct buffer status, unsigned int device_type) {
-	return statusDataValid_(status, device_type);
+int ModuleManagerLibraryHandler::statusDataValid(const Buffer status, unsigned int device_type) {
+	return statusDataValid_(status.getStructBuffer(), device_type);
 }
 
-int ModuleManagerLibraryHandler::commandDataValid(const struct buffer command, unsigned int device_type) {
-	return commandDataValid_(command, device_type);
+int ModuleManagerLibraryHandler::commandDataValid(const Buffer command, unsigned int device_type) {
+	return commandDataValid_(command.getStructBuffer(), device_type);
 }
 
 int ModuleManagerLibraryHandler::allocate(struct buffer *buffer_pointer, size_t size_in_bytes){
@@ -111,6 +139,22 @@ int ModuleManagerLibraryHandler::allocate(struct buffer *buffer_pointer, size_t 
 
 void ModuleManagerLibraryHandler::deallocate(struct buffer *buffer){
 	deallocate_(buffer);
+}
+
+Buffer ModuleManagerLibraryHandler::constructBuffer(std::size_t size) {
+	struct ::buffer buff {};
+	buff.size_in_bytes = size;
+	if(allocate(&buff, size) != OK) {
+		throw std::bad_alloc {};
+	}
+	return { buff, deallocate_ };
+}
+
+Buffer ModuleManagerLibraryHandler::constructBufferByTakeOwnership(struct ::buffer &buffer) {
+	if (buffer.data == nullptr) {
+		throw Buffer::BufferNotAllocated { "Buffer not allocated - cannot take ownership" };
+	}
+	return { buffer, deallocate_ };
 }
 
 }

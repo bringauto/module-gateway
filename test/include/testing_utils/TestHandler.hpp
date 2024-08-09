@@ -17,18 +17,18 @@ const size_t numberOfMessages { 100 };
 const unsigned short port { 8888 };
 
 class TestHandler {
-	std::shared_ptr<bringauto::settings::Settings> settings;
+	std::shared_ptr<bringauto::settings::Settings> settings {};
 
-	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage>> toInternalQueue;
-	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>> fromInternalQueue;
+	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage>> toInternalQueue {};
+	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>> fromInternalQueue {};
 
-	std::vector<InternalProtocol::InternalClient> connects;
-	std::vector<InternalProtocol::InternalClient> statuses;
-	std::vector<InternalProtocol::InternalServer> commands;
-	std::vector<InternalProtocol::InternalServer> responses;
-	std::vector<std::shared_ptr<bringauto::structures::GlobalContext>> contexts;
+	std::vector<InternalProtocol::InternalClient> connects {};
+	std::vector<InternalProtocol::InternalClient> statuses {};
+	std::vector<InternalProtocol::InternalServer> commands {};
+	std::vector<InternalProtocol::InternalServer> responses {};
+	std::vector<std::shared_ptr<bringauto::structures::GlobalContext>> contexts {};
 
-	std::vector<testing_utils::ClientForTesting> clients;
+	std::vector<testing_utils::ClientForTesting> clients {};
 	size_t expectedMessageNumber { 0 };
 
 public:

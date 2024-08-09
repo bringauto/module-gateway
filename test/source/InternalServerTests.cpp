@@ -1,12 +1,10 @@
 #include <InternalServerTests.hpp>
 
 
-namespace common_utils = bringauto::common_utils;
-
 InternalProtocol::Device
 createDevice(int module, unsigned int type, const std::string &role, const std::string &name,
 		unsigned int priority) {
-	InternalProtocol::Device device;
+	InternalProtocol::Device device {};
 	device.set_module(static_cast<InternalProtocol::Device::Module>(module));
 	device.set_devicetype(type);
 	device.set_devicerole(role);
@@ -38,7 +36,7 @@ TEST_F(InternalServerTests, OneClient) {
  */
 TEST_F(InternalServerTests, TwoClients) {
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(size_t i = 1; i <= 2; ++i) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -57,7 +55,7 @@ TEST_F(InternalServerTests, TwoClients) {
  */
 TEST_F(InternalServerTests, FiveClients) {
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(size_t i = 1; i <= 5; ++i) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -76,7 +74,7 @@ TEST_F(InternalServerTests, FiveClients) {
  */
 TEST_F(InternalServerTests, FiftyClients) {
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(size_t i = 1; i <= 50; ++i) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -103,7 +101,7 @@ TEST_F(InternalServerTests, SameRolePriority000) {
 	std::vector<size_t> priorities { 0, 0, 0 };
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(auto &priority: priorities) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -130,7 +128,7 @@ TEST_F(InternalServerTests, SameRolePriority001) {
 	std::vector<size_t> priorities { 0, 0, 1 };
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(auto &priority: priorities) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -156,7 +154,7 @@ TEST_F(InternalServerTests, SameRolePriority110) {
 	std::vector<size_t> priorities { 1, 1, 0 };
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(auto &priority: priorities) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -182,7 +180,7 @@ TEST_F(InternalServerTests, SameRolePriority121) {
 	std::vector<size_t> priorities { 1, 2, 1 };
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(auto &priority: priorities) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -208,7 +206,7 @@ TEST_F(InternalServerTests, SameRolePriority101) {
 	std::vector<size_t> priorities { 1, 0, 1 };
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(auto &priority: priorities) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -234,7 +232,7 @@ TEST_F(InternalServerTests, SameRolePriority122) {
 	std::vector<size_t> priorities { 1, 2, 2 };
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(auto &priority: priorities) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -260,7 +258,7 @@ TEST_F(InternalServerTests, SameRolePriority120) {
 	std::vector<size_t> priorities { 1, 2, 0 };
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(auto &priority: priorities) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -286,7 +284,7 @@ TEST_F(InternalServerTests, SameRolePriority210) {
 	std::vector<size_t> priorities { 2, 1, 0 };
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(auto &priority: priorities) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -312,7 +310,7 @@ TEST_F(InternalServerTests, SameRolePriority211) {
 	std::vector<size_t> priorities { 2, 1, 1 };
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(auto &priority: priorities) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -327,9 +325,9 @@ TEST_F(InternalServerTests, SameRolePriority211) {
 	testedData.runTestsSerialConnections();
 }
 /**
- * @brief tests if connection is rejected when we send less then 4 bytes of a message and other communication is not broken
+ * @brief tests if connection is rejected when we send less than 4 bytes of a message and other communication is not broken
  */
-TEST_F(InternalServerTests, RejectMessageSmallerThen4Bytes) {
+TEST_F(InternalServerTests, RejectMessageSmallerThan4Bytes) {
 	std::vector<InternalProtocol::DeviceConnectResponse_ResponseType> responseType {
 		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
 		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
@@ -337,7 +335,7 @@ TEST_F(InternalServerTests, RejectMessageSmallerThen4Bytes) {
 	};
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(size_t i = 0; i < responseType.size(); ++i) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -363,7 +361,7 @@ TEST_F(InternalServerTests, RejectMesseageComposedOfOnlyHeaderWithNumber0) {
 	};
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(size_t i = 0; i < responseType.size(); ++i) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -380,7 +378,7 @@ TEST_F(InternalServerTests, RejectMesseageComposedOfOnlyHeaderWithNumber0) {
 /**
  * this is timeout from client side
  * test is not working and the feature is not implemented
- * should test for if connection is rejected when we send only 4 bytes of the message (as the header) defining message size larger then 0 and other communication is not broken
+ * should test for if connection is rejected when we send only 4 bytes of the message (as the header) defining message size larger than 0 and other communication is not broken
  */
 TEST_F(InternalServerTests, RejectMessageComposedOfOnlyHeader) {
 	GTEST_SKIP();
@@ -391,7 +389,7 @@ TEST_F(InternalServerTests, RejectMessageComposedOfOnlyHeader) {
 	};
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(size_t i = 0; i < responseType.size(); ++i) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -417,7 +415,7 @@ TEST_F(InternalServerTests, RejectMessageWithGarbageDataMatchingHeaderSize) {
 	};
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(size_t i = 0; i < responseType.size(); ++i) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -435,10 +433,10 @@ TEST_F(InternalServerTests, RejectMessageWithGarbageDataMatchingHeaderSize) {
 /**
  * this is timeout from client side
  * test is not working and the feature is not implemented
- * should tests for if connection is rejected when we send less data then header defines as size of the message and other communication is not broken
+ * should tests for if connection is rejected when we send less data than header defines as size of the message and other communication is not broken
 
  */
-TEST_F(InternalServerTests, RejectMessageWithLessDataThenHeaderSays) {
+TEST_F(InternalServerTests, RejectMessageWithLessDataThanHeaderSays) {
 	GTEST_SKIP();
 	std::vector<InternalProtocol::DeviceConnectResponse_ResponseType> responseType {
 		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
@@ -447,7 +445,7 @@ TEST_F(InternalServerTests, RejectMessageWithLessDataThenHeaderSays) {
 	};
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(size_t i = 0; i < responseType.size(); ++i) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -474,7 +472,7 @@ TEST_F(InternalServerTests, RejectMessageWhereStatusIsSentBeforeConnection) {
 	};
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(size_t i = 0; i < responseType.size(); ++i) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -501,7 +499,7 @@ TEST_F(InternalServerTests, RejectMessageWhereConnectionIsSentAfterAlreadyBeingC
 	};
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(size_t i = 0; i < responseType.size(); ++i) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -529,7 +527,7 @@ TEST_F(InternalServerTests, TestForBehaviorWhereModuleHandlerDoesntRespondToConn
 	};
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(size_t i = 0; i < responseType.size(); ++i) {
 		devices.emplace_back(createDevice(
 			defaultModule,
@@ -555,7 +553,7 @@ TEST_F(InternalServerTests, TestForBehaviorWhereModuleHandlerDoesntRespondToStat
 	};
 
 	std::vector<InternalProtocol::Device> devices {};
-	std::vector<std::string> data;
+	std::vector<std::string> data {};
 	for(size_t i = 0; i < responseType.size(); ++i) {
 		devices.emplace_back(createDevice(
 			defaultModule,
