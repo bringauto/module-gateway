@@ -63,7 +63,7 @@ public:
 	 *
 	 * @param status status message
 	 * @param deviceState state of the device
-	 * @param errorMessage error message pointer
+	 * @param errorMessage error message
 	 */
 	void sendStatus(const InternalProtocol::DeviceStatus &status,
 					ExternalProtocol::Status::DeviceState deviceState = ExternalProtocol::Status::DeviceState::Status_DeviceState_RUNNING,

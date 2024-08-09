@@ -87,7 +87,7 @@ public:
 	 * @param deviceState state of the device
 	 * @param messageCounter
 	 * @param deviceStatus protobuf message
-	 * @param errorMessage error buffer pointer
+	 * @param errorMessage error buffer
 	 * @return ExternalProtocol::ExternalClient
 	 */
 	static ExternalProtocol::ExternalClient createExternalClientStatus(const std::string &sessionId,
