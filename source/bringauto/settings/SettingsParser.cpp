@@ -17,13 +17,13 @@ bool SettingsParser::parseSettings(int argc, char **argv) {
 	}
 
 	if(!areCmdArgumentsCorrect()) {
-		throw std::invalid_argument("Cmd arguments are not correct");
+		throw std::invalid_argument {"Cmd arguments are not correct"};
 	}
 
 	fillSettings();
 
 	if(!areSettingsCorrect()) {
-		throw std::invalid_argument("Arguments are not correct.");
+		throw std::invalid_argument {"Arguments are not correct."};
 	}
 
 	return true;
@@ -113,12 +113,12 @@ bool SettingsParser::areSettingsCorrect() {
 	return isCorrect;
 }
 
-std::shared_ptr<bringauto::settings::Settings> SettingsParser::getSettings() {
+std::shared_ptr<Settings> SettingsParser::getSettings() {
 	return settings_;
 }
 
 void SettingsParser::fillSettings() {
-	settings_ = std::make_shared<bringauto::settings::Settings>();
+	settings_ = std::make_shared<Settings>();
 
 	const auto configPath = cmdArguments_[std::string(Constants::CONFIG_PATH)].as<std::string>();
 	std::ifstream inputFile(configPath);
@@ -177,7 +177,7 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 
 	for(const auto &endpoint: file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(
 			Constants::EXTERNAL_ENDPOINTS)]) {
-		structures::ExternalConnectionSettings externalConnectionSettings;
+		structures::ExternalConnectionSettings externalConnectionSettings {};
 		externalConnectionSettings.serverIp = endpoint[std::string(Constants::SERVER_IP)];
 		externalConnectionSettings.port = endpoint[std::string(Constants::PORT)];
 		externalConnectionSettings.modules = endpoint[std::string(Constants::MODULES)].get<std::vector<int >>();
@@ -205,7 +205,7 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 }
 
 std::string SettingsParser::serializeToJson() {
-	nlohmann::json settingsAsJson;
+	nlohmann::json settingsAsJson {};
 	settingsAsJson[std::string(Constants::GENERAL_SETTINGS)][std::string(Constants::LOG_PATH)] = settings_->logPath;
 	settingsAsJson[std::string(Constants::GENERAL_SETTINGS)][std::string(Constants::VERBOSE)] = settings_->verbose;
 	settingsAsJson[std::string(Constants::INTERNAL_SERVER_SETTINGS)][std::string(Constants::PORT)] = settings_->port;
@@ -214,9 +214,9 @@ std::string SettingsParser::serializeToJson() {
 	}
 	settingsAsJson[std::string(Constants::EXTERNAL_CONNECTION)][std::string(Constants::COMPANY)] = settings_->company;
 	settingsAsJson[std::string(Constants::EXTERNAL_CONNECTION)][std::string(Constants::VEHICLE_NAME)] = settings_->vehicleName;
-	nlohmann::json::array_t endpoints;
+	nlohmann::json::array_t endpoints {};
 	for(const auto &endpoint: settings_->externalConnectionSettingsList) {
-		nlohmann::json endpointAsJson;
+		nlohmann::json endpointAsJson {};
 		endpointAsJson[std::string(Constants::SERVER_IP)] = endpoint.serverIp;
 		endpointAsJson[std::string(Constants::PORT)] = endpoint.port;
 		endpointAsJson[std::string(Constants::MODULES)] = endpoint.modules;
@@ -240,4 +240,3 @@ std::string SettingsParser::serializeToJson() {
 }
 
 }
-

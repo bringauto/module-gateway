@@ -5,13 +5,13 @@
 #include <bringauto/structures/DeviceIdentification.hpp>
 
 #include <fleet_protocol/module_gateway/command_manager.h>
-#include <fleet_protocol/module_maintainer/module_gateway//module_manager.h>
+#include <fleet_protocol/module_maintainer/module_gateway/module_manager.h>
 
 #include <functional>
 #include <unordered_map>
 #include <string>
 #include <filesystem>
-#include <mutex>
+#include <list>
 
 
 
@@ -73,21 +73,24 @@ public:
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int add_status_to_aggregator(const struct ::buffer status, const structures::DeviceIdentification& device);
+	int add_status_to_aggregator(const Buffer& status, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get the oldest aggregated protobuf status message that is aggregated
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int get_aggregated_status(struct ::buffer *generated_status, const structures::DeviceIdentification& device);
+	int get_aggregated_status(Buffer &generated_status, const structures::DeviceIdentification& device);
 
 	/**
-	 * @short Get all devices registered to aggregator
+	 * @short Get all devices registered to aggregator. This specific implementation takes a list
+	 * of DeviceIdentification structures and fills it with all registered devices (as opposed to
+	 * the function declaration, which uses a buffer structure). This is equivalent to the
+	 * intended use of the function.
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/status_aggregator.h
 	 */
-	int get_unique_devices(struct ::buffer *unique_devices_buffer);
+	int get_unique_devices(std::list<structures::DeviceIdentification> &unique_devices_list);
 
 	/**
 	 * @short Force status message aggregation on given device.
@@ -108,15 +111,15 @@ public:
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/command_manager.h
 	 */
-	int update_command(const struct ::buffer command, const structures::DeviceIdentification& device);
+	int update_command(const Buffer& command, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get command message.
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/command_manager.h
 	 */
-	int get_command(const struct ::buffer status, const structures::DeviceIdentification& device,
-					struct ::buffer *command);
+	int get_command(const Buffer& status, const structures::DeviceIdentification& device,
+					Buffer &command);
 
 	/**
 	 * @short Get number of the module
@@ -131,21 +134,6 @@ public:
 	 * @see fleet-protocol/lib/common_headers/include/device_management.h
 	 */
 	int is_device_type_supported(unsigned int device_type);
-
-	/**
-	 * @brief Allocates struct buffer with size
-	 *
-	 * @param buffer pointer to struct
-	 * @param size_in_bytes
-	 * @return 0 if success, otherwise -1
-	 */
-	int moduleAllocate(struct buffer *buffer, size_t size_in_bytes);
-
-	/**
-	 * @brief Deallocates struct buffer in loaded module
-	 *
-	 */
-	void moduleDeallocate(struct buffer *buffer);
 
 	/**
 	 * @brief Unset timeouted message ready
@@ -178,8 +166,9 @@ private:
 	 * @param device_type device type
 	 * @return struct buffer with aggregated status message
 	 */
-	struct buffer aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
-								  const unsigned int &device_type);
+	Buffer aggregateStatus(structures::StatusAggregatorDeviceState &deviceState,
+											   const Buffer &status,
+											   const unsigned int &device_type);
 
 	/**
 	 * @brief Aggregate and set status message
@@ -188,7 +177,7 @@ private:
 	 * @param status status message
 	 * @param device_type device type
 	 */
-	void aggregateSetStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
+	void aggregateSetStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
 							const unsigned int &device_type);
 
 	/**
@@ -198,10 +187,10 @@ private:
 	 * @param status status message
 	 * @param device_type device type
 	 */
-	void aggregateSetSendStatus(structures::StatusAggregatorDeviceState &deviceState, const buffer &status,
+	void aggregateSetSendStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
 								const unsigned int &device_type);
 
-	std::shared_ptr<structures::GlobalContext> context_;
+	std::shared_ptr<structures::GlobalContext> context_ {};
 
 	const std::shared_ptr<ModuleManagerLibraryHandler> module_ {};
 
@@ -214,8 +203,6 @@ private:
 	 * @brief Map of devices timeouts, key is device identification converted to string
 	 */
 	std::unordered_map<structures::DeviceIdentification, int> deviceTimeouts_ {};
-
-	std::mutex mutex_ {};
 
 	std::atomic_bool timeoutedMessageReady_ { false };
 };

@@ -2,7 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.25 FATAL_ERROR)
 PROJECT(ModuleGateway)
 INCLUDE(GNUInstallDirs)
 
-SET(BRINGAUTO_MODULE_GATEWAY_VERSION 1.1.6)
+SET(BRINGAUTO_MODULE_GATEWAY_VERSION 1.1.7)
 ADD_COMPILE_DEFINITIONS(MODULE_GATEWAY_VERSION="${BRINGAUTO_MODULE_GATEWAY_VERSION}")
 SET(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 SET(CMAKE_CXX_STANDARD 20)
@@ -49,14 +49,11 @@ FIND_PACKAGE(eclipse-paho-mqtt-c REQUIRED)
 FIND_PACKAGE(libbringauto_logger 1.2.0 REQUIRED)
 FIND_PACKAGE(fleet-protocol-interface 2.0.0 REQUIRED)
 
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/lib/memory_management)
-
 FILE(GLOB_RECURSE source_files "source/*")
 ADD_LIBRARY(module-gateway-lib STATIC "${source_files}")
 TARGET_INCLUDE_DIRECTORIES(module-gateway-lib PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         Boost::headers
-                        memory-management
                         protobuf::libprotobuf
                         fleet-protocol-interface::protobuf-cpp-interface
                         fleet-protocol-interface::common-headers-interface
@@ -79,8 +76,9 @@ CMDEF_ADD_EXECUTABLE(
 TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC module-gateway-lib)
 
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    TARGET_COMPILE_OPTIONS(module-gateway-app PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address)
-    TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC -fsanitize=address)
+    TARGET_COMPILE_OPTIONS(module-gateway-app PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address -fsanitize=undefined -fno-sanitize-recover)
+    TARGET_COMPILE_OPTIONS(module-gateway-lib PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address -fsanitize=undefined -fno-sanitize-recover)
+    TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC -fsanitize=address -fsanitize=undefined)
 ENDIF()
 
 
@@ -117,7 +115,5 @@ IF (BRINGAUTO_PACKAGE)
     SET(CPACK_GENERATOR ZIP)
     SET(CPACK_PACKAGE_CONTACT "BringAuto s.r.o. <maintainers@bringauto.com>")
     SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "BringAuto s.r.o <maintainers@bringauto.com>")
-    SET(CPACK_DEBIAN_PACKAGE_GENERATE_SHLIBS ON)
-    SET(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
     INCLUDE(CPack)
 ENDIF ()

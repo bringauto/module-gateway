@@ -7,48 +7,51 @@
 namespace bringauto::structures {
 
 StatusAggregatorDeviceState::StatusAggregatorDeviceState(
-		std::shared_ptr<bringauto::structures::GlobalContext> &context,
-		std::function<int(const structures::DeviceIdentification&)> fun, const structures::DeviceIdentification &deviceId,
-		const buffer command, const buffer status, std::function<void(struct buffer *)> deallocateFun): status_ { status } {
-	command_ = command;
-	timer_ = std::make_unique<bringauto::structures::ThreadTimer>(context, fun, deviceId);
-	deallocateFun_ = deallocateFun;
+		std::shared_ptr<GlobalContext> &context,
+		std::function<int(const DeviceIdentification&)> fun, const DeviceIdentification &deviceId,
+		const modules::Buffer& command, const modules::Buffer& status
+		): status_ { status } {
+	defaultCommand_ = command;
+	timer_ = std::make_unique<ThreadTimer>(context, fun, deviceId);
 	timer_->start();
 }
 
-void StatusAggregatorDeviceState::deallocateStatus() {
-	deallocateFun_(&status_);
-}
-
-void StatusAggregatorDeviceState::setStatus(const buffer &statusBuffer) {
-	deallocateStatus();
+void StatusAggregatorDeviceState::setStatus(const modules::Buffer &statusBuffer) {
 	status_ = statusBuffer;
 }
 
-const struct buffer &StatusAggregatorDeviceState::getStatus() const {
+const modules::Buffer &StatusAggregatorDeviceState::getStatus() const {
 	return status_;
 }
 
-void StatusAggregatorDeviceState::setStatusAndResetTimer(const buffer &statusBuffer) {
+void StatusAggregatorDeviceState::setStatusAndResetTimer(const modules::Buffer &statusBuffer) {
 	setStatus(statusBuffer);
 	timer_->restart();
 }
 
-void StatusAggregatorDeviceState::deallocateCommand() {
-	deallocateFun_(&command_);
+void StatusAggregatorDeviceState::setDefaultCommand(const modules::Buffer &commandBuffer) {
+	defaultCommand_ = commandBuffer;
 }
 
-void StatusAggregatorDeviceState::setCommand(const buffer &commandBuffer) {
-	deallocateCommand();
-	command_ = commandBuffer;
+const modules::Buffer &StatusAggregatorDeviceState::getCommand() {
+	if (!externalCommandQueue_.empty()) {
+		defaultCommand_ = externalCommandQueue_.front();
+		externalCommandQueue_.pop();
+	}
+	return defaultCommand_;
 }
 
-const struct buffer &StatusAggregatorDeviceState::getCommand() const {
-	return command_;
-}
-
-std::queue<struct buffer> &StatusAggregatorDeviceState::getAggregatedMessages() {
+std::queue<struct modules::Buffer> &StatusAggregatorDeviceState::aggregatedMessages() {
 	return aggregatedMessages_;
+}
+
+int StatusAggregatorDeviceState::addExternalCommand(const modules::Buffer &command) {
+	externalCommandQueue_.push(command);
+	if (externalCommandQueue_.size() > settings::max_external_commands) {
+		externalCommandQueue_.pop();
+		return NOT_OK;
+	}
+	return OK;
 }
 
 }

@@ -47,21 +47,21 @@ public:
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/error_aggregator.h
 	 *
-	 * @param status protobuf status message in binary form
+	 * @param status protobuf status message in Buffer structure
 	 * @param device identification of the device
 	 *
 	 * @return OK if successful
 	 * @return DEVICE_NOT_REGISTERED if device is not registered
 	 * @return NOT_OK for other error
 	 */
-	int add_status_to_error_aggregator(const struct buffer status, const structures::DeviceIdentification& device);
+	int add_status_to_error_aggregator(const modules::Buffer& status, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get status from error aggregator for a specific device.
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/error_aggregator.h
 	 *
-	 * @param status user initialized message_buffer for the error status. Look at 'memory management' section
+	 * @param status user initialized Buffer for the error status
 	 * @param device identification of the device
 	 *
 	 * @return OK if successful
@@ -69,14 +69,14 @@ public:
 	 * @return DEVICE_NOT_REGISTERED if device was not registered
 	 * @return NOT_OK for other errors
 	 */
-	int get_last_status(struct buffer *status, const structures::DeviceIdentification& device);
+	int get_last_status(modules::Buffer &status, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Get error message from error aggregator for a specific device.
 	 *
 	 * @see fleet-protocol/lib/module_gateway/include/error_aggregator.h
 	 *
-	 * @param error user initialized message_buffer for created protobuf error status. Look at 'memory management' section.
+	 * @param error user initialized Buffer for created protobuf error status
 	 * @param device identification of the device
 	 *
 	 * @return OK if successful
@@ -84,7 +84,7 @@ public:
 	 * @return DEVICE_NOT_REGISTERED if device was no registered
 	 * @return NOT_OK for other errors
 	 */
-	int get_error(struct buffer *error, const structures::DeviceIdentification& device);
+	int get_error(modules::Buffer &error, const structures::DeviceIdentification& device);
 
 	/**
 	 * @short Clear error aggregator
@@ -112,15 +112,8 @@ public:
 
 private:
 	struct DeviceState {
-		struct buffer errorMessage {};
-		struct buffer lastStatus {};
-
-		DeviceState() {
-			errorMessage.data = nullptr;
-			errorMessage.size_in_bytes = 0;
-			lastStatus.data = nullptr;
-			lastStatus.size_in_bytes = 0;
-		};
+		modules::Buffer errorMessage {};
+		modules::Buffer lastStatus {};
 	};
 
 	std::shared_ptr <modules::ModuleManagerLibraryHandler> module_ {};
@@ -128,7 +121,7 @@ private:
 	/**
 	 * @brief Map of devices states, key is device identification converted to string
 	 */
-	std::unordered_map <structures::DeviceIdentification, DeviceState> devices_;
+	std::unordered_map <structures::DeviceIdentification, DeviceState> devices_ {};
 };
 
 }

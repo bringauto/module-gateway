@@ -1,8 +1,8 @@
 #include <bringauto/external_client/ExternalClient.hpp>
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
-#include <bringauto/common_utils/MemoryUtils.hpp>
 #include <bringauto/external_client/connection/ConnectionState.hpp>
+
 #include <bringauto/logging/Logger.hpp>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -47,23 +47,17 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 		return;
 	}
 
-	struct ::buffer commandBuffer {};
 	const auto &commandData = deviceCommand.commanddata();
 	auto &moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
-	if(moduleLibraryHandler->allocate(&commandBuffer, commandData.size()) == NOT_OK) {
-		log::logError("Could not allocate memory for command message");
-		return;
-	}
-	std::memcpy(commandBuffer.data, commandData.c_str(), commandBuffer.size_in_bytes);
+	auto commandBuffer = moduleLibraryHandler->constructBuffer(commandData.size());
+	common_utils::ProtobufUtils::copyCommandToBuffer(deviceCommand, commandBuffer);
+
 
 	auto deviceId = structures::DeviceIdentification(device);
 	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);
-	if(ret != OK) {
-		moduleLibraryHandler->deallocate(&commandBuffer);
-		log::logError("Update command failed with error code: {}", ret);
-		return;
+	if (ret == OK) {
+		log::logInfo("Command for device {} was added to queue", device.devicename());
 	}
-	log::logInfo("Command on device {} was successfully updated", device.devicename());
 }
 
 void ExternalClient::destroy() {
@@ -185,7 +179,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		auto &deviceStatus = internalMessage.getMessage().devicestatus();
 		auto &device = deviceStatus.device();
 		if(connection.isModuleSupported(device.module())) {
-			structures::DeviceIdentification deviceId = structures::DeviceIdentification(device);
+			auto deviceId = structures::DeviceIdentification(device);
 			auto it = std::find(forcedDevices.cbegin(), forcedDevices.cend(), deviceId);
 			if(it == forcedDevices.cend()) {
 				log::logDebug("Cannot fill error aggregator for same device: {} {}", device.devicerole(),

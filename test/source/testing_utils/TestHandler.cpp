@@ -18,8 +18,8 @@ TestHandler::TestHandler(const std::vector <InternalProtocol::Device> &devices, 
 	settings = std::make_shared<settings::Settings>();
 	settings->port = port;
 
-	toInternalQueue = std::make_shared < structures::AtomicQueue < bringauto::structures::ModuleHandlerMessage >> ();
-	fromInternalQueue = std::make_shared < structures::AtomicQueue < bringauto::structures::InternalClientMessage >> ();
+	toInternalQueue = std::make_shared < structures::AtomicQueue < structures::ModuleHandlerMessage >> ();
+	fromInternalQueue = std::make_shared < structures::AtomicQueue < structures::InternalClientMessage >> ();
 	for(size_t i = 0; i < devices.size(); ++i) {
 		connects.push_back(ProtobufUtils::CreateClientMessage(devices[i]));
 		statuses.push_back(ProtobufUtils::CreateClientMessage(devices[i], data[i]));
@@ -52,8 +52,8 @@ TestHandler::TestHandler(
 	settings = std::make_shared<settings::Settings>();
 	settings->port = port;
 
-	toInternalQueue = std::make_shared < structures::AtomicQueue < bringauto::structures::ModuleHandlerMessage >> ();
-	fromInternalQueue = std::make_shared < structures::AtomicQueue < bringauto::structures::InternalClientMessage >> ();
+	toInternalQueue = std::make_shared < structures::AtomicQueue < structures::ModuleHandlerMessage >> ();
+	fromInternalQueue = std::make_shared < structures::AtomicQueue < structures::InternalClientMessage >> ();
 	for(size_t i = 0; i < devices.size(); ++i) {
 		connects.push_back(ProtobufUtils::CreateClientMessage(devices[i]));
 		statuses.push_back(ProtobufUtils::CreateClientMessage(devices[i], data[i]));
@@ -95,7 +95,7 @@ void TestHandler::ParallelRun(size_t index) {
 	clients[index].connectSocket();
 	clients[index].sendMessage(connects[index]);
 	++messagesSent;
-	InternalProtocol::InternalServer receivedMessage;
+	InternalProtocol::InternalServer receivedMessage {};
 	clients[index].receiveMessage(receivedMessage);
 	ASSERT_EQ(receivedMessage.SerializeAsString(), responses[index].SerializeAsString());
 	if(receivedMessage.deviceconnectresponse().responsetype() !=
@@ -125,7 +125,7 @@ void TestHandler::runTestsParallelConnections() {
 	std::jthread contextThread([&context]() { context->ioContext.run(); });
 	internalServer.run();
 
-	std::vector <std::jthread> clientThreads;
+	std::vector <std::jthread> clientThreads {};
 	for(size_t i = 0; i < responses.size(); ++i) {
 		clientThreads.emplace_back([this, i]() { (ParallelRun(i)); });
 	}
@@ -140,7 +140,7 @@ void TestHandler::runTestsParallelConnections() {
 }
 
 void TestHandler::runConnects() {
-	InternalProtocol::InternalServer receivedMessage;
+	InternalProtocol::InternalServer receivedMessage {};
 	for(size_t i = 0; i < clients.size(); ++i) {
 		clients[i].connectSocket();
 		clients[i].sendMessage(connects[i]);
@@ -164,7 +164,7 @@ void TestHandler::runConnects() {
 }
 
 void TestHandler::runStatuses() {
-	InternalProtocol::InternalServer receivedMessage;
+	InternalProtocol::InternalServer receivedMessage {};
 	for(size_t i = 0; i < clients.size()*(numberOfMessages - 1); ++i) {
 		if(clients[i%clients.size()].isOpen()) {
 			clients[i%clients.size()].sendMessage(statuses[i%clients.size()]);
@@ -210,7 +210,7 @@ void TestHandler::runTestsSerialConnections() {
 }
 
 void TestHandler::runConnects(size_t index, size_t header, std::string data, bool recastHeader) {
-	InternalProtocol::InternalServer receivedMessage;
+	InternalProtocol::InternalServer receivedMessage {};
 	for(size_t i = 0; i < clients.size(); ++i) {
 		if(index == i) {
 			clients[i].connectSocket();
@@ -241,7 +241,7 @@ void TestHandler::runConnects(size_t index, size_t header, std::string data, boo
 }
 
 void TestHandler::runStatuses(size_t index, size_t header, std::string data, bool recastHeader) {
-	InternalProtocol::InternalServer receivedMessage;
+	InternalProtocol::InternalServer receivedMessage {};
 	for(size_t i = 0; i < clients.size()*(numberOfMessages - 1); ++i) {
 		if(index == i) {
 			clients[i].sendMessage(header, data, recastHeader);
@@ -297,7 +297,7 @@ void TestHandler::runTestsWithWrongMessage(size_t index, uint32_t header, std::s
 }
 
 void TestHandler::runConnects(size_t numberOfErrors) {
-	InternalProtocol::InternalServer receivedMessage;
+	InternalProtocol::InternalServer receivedMessage {};
 	for(size_t i = 0; i < clients.size(); ++i) {
 		if(i < numberOfErrors) {
 			clients[i].connectSocket();
@@ -328,7 +328,7 @@ void TestHandler::runConnects(size_t numberOfErrors) {
 }
 
 void TestHandler::runStatuses(size_t numberOfErrors) {
-	InternalProtocol::InternalServer receivedMessage;
+	InternalProtocol::InternalServer receivedMessage {};
 	for(size_t i = 0; i < clients.size()*(numberOfMessages - 1); ++i) {
 		if(i < numberOfErrors) {
 			clients[i].sendMessage(statuses[i]);

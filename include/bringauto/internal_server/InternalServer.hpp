@@ -198,18 +198,18 @@ private:
 	 */
 	std::shared_ptr<structures::Connection> findConnection(const structures::DeviceIdentification &deviceId);
 
-	std::shared_ptr<structures::GlobalContext> context_;
+	std::shared_ptr<structures::GlobalContext> context_ {};
 	boost::asio::ip::tcp::acceptor acceptor_;
 	/// Queue for messages from Module Handler to Internal Client
-	std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> fromInternalQueue_;
+	std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> fromInternalQueue_ {};
 	/// Queue for messages from Internal Client to Module Handler
-	std::shared_ptr<structures::AtomicQueue<structures::ModuleHandlerMessage>> toInternalQueue_;
+	std::shared_ptr<structures::AtomicQueue<structures::ModuleHandlerMessage>> toInternalQueue_ {};
 
-	std::mutex serverMutex_;
+	std::mutex serverMutex_ {};
 	/// Vector of all active connections of devices
-	std::vector<std::shared_ptr<structures::Connection>> connectedDevices_;
+	std::vector<std::shared_ptr<structures::Connection>> connectedDevices_ {};
 	/// Thread that listens to queue for messages from Module Handler
-	std::jthread listeningThread;
+	std::jthread listeningThread {};
 };
 
 }

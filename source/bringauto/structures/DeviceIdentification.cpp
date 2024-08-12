@@ -1,5 +1,4 @@
 #include <bringauto/structures/DeviceIdentification.hpp>
-#include <bringauto/common_utils/MemoryUtils.hpp>
 
 
 
@@ -62,7 +61,7 @@ bool DeviceIdentification::operator==(const DeviceIdentification &deviceId) cons
 }
 
 InternalProtocol::Device DeviceIdentification::convertToIPDevice() const {
-	InternalProtocol::Device device;
+	InternalProtocol::Device device {};
 	device.set_module(static_cast<InternalProtocol::Device::Module>(module_));
 	device.set_devicetype(deviceType_);
 	device.set_devicerole(deviceRole_);

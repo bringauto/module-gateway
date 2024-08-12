@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bringauto/structures/DeviceIdentification.hpp>
+#include <bringauto/modules/Buffer.hpp>
 
 #include <InternalProtocol.pb.h>
 #include <ExternalProtocol.pb.h>
@@ -11,11 +12,19 @@
 
 namespace bringauto::common_utils {
 /**
- * @brief Class of methods to create protobuf messages defined in fleet protocol
+ * @brief Class of methods to create protobuf messages defined in fleet protocol and for copying protobuf data to buffers
  */
 class ProtobufUtils {
 public:
 	ProtobufUtils() = delete;
+
+	struct BufferNotAllocated: public std::runtime_error {
+		using std::runtime_error::runtime_error;
+	};
+
+	struct BufferTooSmall: public std::runtime_error {
+		using std::runtime_error::runtime_error;
+	};
 
 	/**
 	 * @brief Creates InternalServer message with the "one of" being DeviceConnectResponse.
@@ -35,7 +44,7 @@ public:
 	 * @return InternalProtocol::InternalServer
 	 */
 	static InternalProtocol::InternalServer createInternalServerCommandMessage(const InternalProtocol::Device &device,
-																			   const buffer &command);
+																			   const modules::Buffer &command);
 
 	/**
 	 * @brief Create a Internal Client Status message
@@ -45,7 +54,7 @@ public:
 	 * @return InternalProtocol::InternalClient
 	 */
 	static InternalProtocol::InternalClient createInternalClientStatusMessage(const InternalProtocol::Device &device,
-																			  const buffer &status);
+																			  const modules::Buffer &status);
 
 	/**
 	 * @brief Create a Device Status message
@@ -55,7 +64,7 @@ public:
 	 * @return InternalProtocol::DeviceStatus
 	 */
 	static InternalProtocol::DeviceStatus createDeviceStatus(const structures::DeviceIdentification &deviceId,
-															 const buffer &status);
+															 const modules::Buffer &status);
 
 	/**
 	 * @brief Create a External Client Connect message
@@ -85,7 +94,7 @@ public:
 																	   ExternalProtocol::Status_DeviceState deviceState,
 																	   u_int32_t messageCounter,
 																	   const InternalProtocol::DeviceStatus &deviceStatus,
-																	   const buffer &errorMessage);
+																	   const modules::Buffer &errorMessage = modules::Buffer {});
 
 	/**
 	 * @brief Create a External Client Command Response object
@@ -98,6 +107,22 @@ public:
 	static ExternalProtocol::ExternalClient createExternalClientCommandResponse(const std::string &sessionId,
 																				ExternalProtocol::CommandResponse::Type type,
 																				u_int32_t messageCounter);
+
+	/**
+	 * @brief Copy status data from DeviceStatus to a Buffer
+	 * 
+	 * @param status status to be copied 
+	 * @param buffer buffer to copy to
+	 */
+	static void copyStatusToBuffer(const InternalProtocol::DeviceStatus &status, modules::Buffer &buffer);
+
+	/**
+	 * @brief Copy command data from DeviceCommand to a Buffer
+	 * 
+	 * @param command command to be copied 
+	 * @param buffer buffer to copy to
+	 */
+	static void copyCommandToBuffer(const InternalProtocol::DeviceCommand &command, modules::Buffer &buffer);
 
 };
 }
