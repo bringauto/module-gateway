@@ -87,6 +87,8 @@ int ModuleManagerLibraryHandler::generateCommand(Buffer &generated_command,
 		current_status.getStructBuffer(), current_command.getStructBuffer(), device_type);
 	if (ret == OK) {
 		generated_command = constructBufferByTakeOwnership(raw_buffer);
+	} else {
+		generated_command = constructBuffer();
 	}
 	return ret;
 }
@@ -99,6 +101,8 @@ int ModuleManagerLibraryHandler::aggregateStatus(Buffer &aggregated_status,
 		new_status.getStructBuffer(), device_type);
 	if (ret == OK) {
 		aggregated_status = constructBufferByTakeOwnership(raw_buffer);
+	} else {
+		aggregated_status = constructBuffer();
 	}
 	return ret;
 }
@@ -112,6 +116,8 @@ int ModuleManagerLibraryHandler::aggregateError(Buffer &error_message,
 		status.getStructBuffer(), device_type);
 	if (ret == OK) {
 		error_message = constructBufferByTakeOwnership(raw_buffer);
+	} else {
+		error_message = constructBuffer();
 	}
 	return ret;
 }
@@ -121,6 +127,8 @@ int ModuleManagerLibraryHandler::generateFirstCommand(Buffer &default_command, u
 	int ret = generateFirstCommand_(&raw_buffer, device_type);
 	if (ret == OK) {
 		default_command = constructBufferByTakeOwnership(raw_buffer);
+	} else {
+		default_command = constructBuffer();
 	}
 	return ret;
 }

@@ -29,7 +29,6 @@ StatusAggregator::aggregateStatus(structures::StatusAggregatorDeviceState &devic
 	Buffer aggregatedStatusBuff {};
 	if (module_->aggregateStatus(aggregatedStatusBuff, currStatus, status, device_type) != OK) {
 		log::logWarning("Error occurred while aggregating status, returning empty buffer");
-		aggregatedStatusBuff = module_->constructBuffer();
 	}
 	return aggregatedStatusBuff;
 }
