@@ -47,8 +47,7 @@ ErrorAggregator::add_status_to_error_aggregator(const modules::Buffer& status, c
 		currentError = module_->constructBuffer();
 	}
 
-	auto retCode = module_->aggregateError(errorMessageBuffer, currentError, status, device_type);
-	if(retCode != OK) {
+	if(module_->aggregateError(errorMessageBuffer, currentError, status, device_type) != OK) {
 		log::logWarning("Error occurred in Error aggregator for device: {}", device.convertToString());
 		return NOT_OK;
 	}

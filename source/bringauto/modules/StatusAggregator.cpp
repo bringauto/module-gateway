@@ -27,7 +27,10 @@ StatusAggregator::aggregateStatus(structures::StatusAggregatorDeviceState &devic
 								  const unsigned int &device_type) {
 	auto &currStatus = deviceState.getStatus();
 	Buffer aggregatedStatusBuff {};
-	module_->aggregateStatus(aggregatedStatusBuff, currStatus, status, device_type);
+	if (module_->aggregateStatus(aggregatedStatusBuff, currStatus, status, device_type) != OK) {
+		log::logWarning("Error occurred while aggregating status, returning empty buffer");
+		aggregatedStatusBuff = module_->constructBuffer();
+	}
 	return aggregatedStatusBuff;
 }
 
@@ -89,9 +92,10 @@ int StatusAggregator::add_status_to_aggregator(const Buffer& status,
 	deviceTimeouts_[device] = 0;
 	if(not devices.contains(device)) {
 		Buffer commandBuffer {};
-		module_->generateFirstCommand(commandBuffer, device_type);
-		auto statusBuffer = module_->constructBuffer();
-		statusBuffer = status;
+		if (module_->generateFirstCommand(commandBuffer, device_type) != OK) {
+			log::logError("Failed to generate first command for device: {}", device.convertToString());
+			return COMMAND_INVALID;
+		}
 
 		std::function<int(const structures::DeviceIdentification&)> timeouted_force_aggregation = [device, this](
 				const structures::DeviceIdentification& deviceId) {
@@ -100,7 +104,7 @@ int StatusAggregator::add_status_to_aggregator(const Buffer& status,
 					return force_aggregation_on_device(deviceId);
 		};
 		devices.insert(
-				{ device, structures::StatusAggregatorDeviceState(context_, timeouted_force_aggregation, device, commandBuffer, statusBuffer) });
+				{ device, structures::StatusAggregatorDeviceState(context_, timeouted_force_aggregation, device, commandBuffer, status) });
 
 		force_aggregation_on_device(device);
 		return 1;
@@ -207,8 +211,12 @@ int StatusAggregator::get_command(const Buffer& status, const structures::Device
 	auto &deviceState = devices.at(device);
 	Buffer generatedCommandBuffer {};
 	auto &currCommand = deviceState.getCommand();
-	module_->generateCommand(generatedCommandBuffer, status, deviceState.getStatus(), currCommand,
-							 device_type);
+
+	if (module_->generateCommand(generatedCommandBuffer, status, deviceState.getStatus(), currCommand, device_type) != OK) {
+		log::logError("Error occured while generating command for device: {}", device.convertToString());
+		return COMMAND_INVALID;
+	}
+
 	deviceState.setDefaultCommand(generatedCommandBuffer);
 	command = generatedCommandBuffer;
 	return OK;
