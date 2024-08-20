@@ -39,7 +39,7 @@ RUN cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREF
 
 FROM bringauto/cpp-build-environment:latest AS io_module_builder
 
-ARG IO_MODULE_VERSION=v1.2.8
+ARG IO_MODULE_VERSION=v1.3.0
 
 # Install io module dependencies
 WORKDIR /home/bringauto/modules
