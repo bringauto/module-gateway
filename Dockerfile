@@ -29,7 +29,9 @@ RUN cmake .. -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_GET_PACKAGES_ONLY=ON
 
 # Build mission module
 WORKDIR /home/bringauto
-ADD --chown=bringauto:bringauto https://github.com/bringauto/mission-module.git#$MISSION_MODULE_VERSION mission-module
+RUN git clone --branch $MISSION_MODULE_VERSION https://github.com/bringauto/mission-module.git mission-module && \
+    chown -R bringauto:bringauto mission-module
+
 WORKDIR /home/bringauto/mission-module/_build
 RUN cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREFIX=/home/bringauto/modules/mission_module/ \
     -DFLEET_PROTOCOL_BUILD_EXTERNAL_SERVER=OFF .. && \
@@ -54,7 +56,9 @@ RUN cmake .. -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_GET_PACKAGES_ONLY=ON
 
 # Build io module
 WORKDIR /home/bringauto
-ADD --chown=bringauto:bringauto https://github.com/bringauto/io-module.git#$IO_MODULE_VERSION io-module
+RUN git clone --branch $IO_MODULE_VERSION https://github.com/bringauto/io-module.git io-module && \
+    chown -R bringauto:bringauto io-module
+
 WORKDIR /home/bringauto/io-module/_build
 RUN cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREFIX=/home/bringauto/modules/io_module/ \
     -DFLEET_PROTOCOL_BUILD_EXTERNAL_SERVER=OFF .. && \
