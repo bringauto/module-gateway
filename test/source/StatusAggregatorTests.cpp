@@ -21,7 +21,7 @@ modules::Buffer StatusAggregatorTests::init_command_buffer(){
 }
 
 modules::Buffer StatusAggregatorTests::init_empty_buffer(){
-	auto buffer = libHandler_->constructBuffer();
+	modules::Buffer buffer {};
 	return buffer;
 }
 

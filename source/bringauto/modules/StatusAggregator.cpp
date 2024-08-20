@@ -28,29 +28,25 @@ StatusAggregator::aggregateStatus(structures::StatusAggregatorDeviceState &devic
 	auto &currStatus = deviceState.getStatus();
 	Buffer aggregatedStatusBuff {};
 	if (module_->aggregateStatus(aggregatedStatusBuff, currStatus, status, device_type) != OK) {
-		log::logWarning("Error occurred while aggregating status, returning empty buffer");
+		log::logWarning("Error occurred while aggregating status, returning current status buffer");
 	}
 	return aggregatedStatusBuff;
 }
 
 void StatusAggregator::aggregateSetStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
 										  const unsigned int &device_type) {
-	auto aggregatedStatusBuff = aggregateStatus(deviceState, status, device_type);
+	const auto aggregatedStatusBuff = aggregateStatus(deviceState, status, device_type);
 	deviceState.setStatus(aggregatedStatusBuff);
 }
 
 void
 StatusAggregator::aggregateSetSendStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
 										 const unsigned int &device_type) {
-	auto aggregatedStatusBuff = aggregateStatus(deviceState, status, device_type);
+	const auto aggregatedStatusBuff = aggregateStatus(deviceState, status, device_type);
 	deviceState.setStatusAndResetTimer(aggregatedStatusBuff);
 
-	auto &currStatus = deviceState.getStatus();
-	auto statusToSendBuff = module_->constructBuffer();
-	statusToSendBuff = currStatus;
-
 	auto &aggregatedMessages = deviceState.aggregatedMessages();
-	aggregatedMessages.push(statusToSendBuff);
+	aggregatedMessages.push(aggregatedStatusBuff);
 }
 
 int StatusAggregator::init_status_aggregator() {
@@ -133,8 +129,7 @@ int StatusAggregator::get_aggregated_status(Buffer &generated_status,
 		return NO_MESSAGE_AVAILABLE;
 	}
 
-	auto &status = aggregatedMessages.front();
-	generated_status = status;
+	generated_status = aggregatedMessages.front();
 	aggregatedMessages.pop();
 	return OK;
 }
@@ -159,10 +154,8 @@ int StatusAggregator::force_aggregation_on_device(const structures::DeviceIdenti
 	}
 
 	const auto &statusBuffer = devices.at(device).getStatus();
-	auto forcedStatusBuffer = module_->constructBuffer();
-	forcedStatusBuffer = statusBuffer;
 	auto &aggregatedMessages = devices.at(device).aggregatedMessages();
-	aggregatedMessages.push(forcedStatusBuffer);
+	aggregatedMessages.push(statusBuffer);
 	return aggregatedMessages.size();
 }
 
@@ -188,7 +181,7 @@ int StatusAggregator::update_command(const Buffer& command, const structures::De
 		return DEVICE_NOT_REGISTERED;
 	}
 
-	if(module_->commandDataValid(command, device_type) == NOT_OK) {
+	if(!command.isAllocated() || module_->commandDataValid(command, device_type) == NOT_OK) {
 		log::logWarning("Invalid command data on device: {}", device.convertToString());
 		return COMMAND_INVALID;
 	}
@@ -208,16 +201,12 @@ int StatusAggregator::get_command(const Buffer& status, const structures::Device
 	}
 
 	auto &deviceState = devices.at(device);
-	Buffer generatedCommandBuffer {};
-	auto &currCommand = deviceState.getCommand();
-
-	if (module_->generateCommand(generatedCommandBuffer, status, deviceState.getStatus(), currCommand, device_type) != OK) {
-		log::logError("Error occured while generating command for device: {}", device.convertToString());
+	if (module_->generateCommand(command, status, deviceState.getStatus(), deviceState.getCommand(), device_type) != OK) {
+		log::logError("Error occurred while generating command for device: {}", device.convertToString());
 		return COMMAND_INVALID;
 	}
 
-	deviceState.setDefaultCommand(generatedCommandBuffer);
-	command = generatedCommandBuffer;
+	deviceState.setDefaultCommand(command);
 	return OK;
 }
 

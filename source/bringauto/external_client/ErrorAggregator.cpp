@@ -28,7 +28,7 @@ ErrorAggregator::add_status_to_error_aggregator(const modules::Buffer& status, c
 		return DEVICE_NOT_SUPPORTED;
 	}
 
-	if(status.getStructBuffer().size_in_bytes == 0) {
+	if(!status.isAllocated()) {
 		log::logWarning("Invalid status data for device: {}", device.convertToString());
 		return NOT_OK;
 	}
@@ -42,10 +42,6 @@ ErrorAggregator::add_status_to_error_aggregator(const modules::Buffer& status, c
 
 	modules::Buffer errorMessageBuffer {};
 	auto &currentError = devices_[device].errorMessage;
-
-	if (!currentError.isAllocated()) {
-		currentError = module_->constructBuffer();
-	}
 
 	if(module_->aggregateError(errorMessageBuffer, currentError, status, device_type) != OK) {
 		log::logWarning("Error occurred in Error aggregator for device: {}", device.convertToString());
