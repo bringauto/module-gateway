@@ -29,7 +29,7 @@ RUN cmake .. -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_GET_PACKAGES_ONLY=ON
 
 # Build mission module
 WORKDIR /home/bringauto
-RUN git clone --branch $MISSION_MODULE_VERSION https://github.com/bringauto/mission-module.git mission-module && \
+RUN git clone --branch "$MISSION_MODULE_VERSION" https://github.com/bringauto/mission-module.git mission-module && \
     chown -R bringauto:bringauto mission-module
 
 WORKDIR /home/bringauto/mission-module/_build
@@ -56,7 +56,7 @@ RUN cmake .. -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_GET_PACKAGES_ONLY=ON
 
 # Build io module
 WORKDIR /home/bringauto
-RUN git clone --branch $IO_MODULE_VERSION https://github.com/bringauto/io-module.git io-module && \
+RUN git clone --branch "$IO_MODULE_VERSION" https://github.com/bringauto/io-module.git io-module && \
     chown -R bringauto:bringauto io-module
 
 WORKDIR /home/bringauto/io-module/_build
