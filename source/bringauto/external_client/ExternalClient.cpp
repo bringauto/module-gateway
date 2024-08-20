@@ -48,6 +48,10 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 	}
 
 	const auto &commandData = deviceCommand.commanddata();
+	if (commandData.empty()) {
+		log::logWarning("Received empty command for device: {} {}", device.devicerole(), device.devicename());
+		return;
+	}
 	auto &moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
 	auto commandBuffer = moduleLibraryHandler->constructBuffer(commandData.size());
 	common_utils::ProtobufUtils::copyCommandToBuffer(deviceCommand, commandBuffer);
