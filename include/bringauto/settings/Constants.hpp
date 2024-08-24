@@ -33,7 +33,7 @@ constexpr int status_aggregation_timeout_max_count { 2 };
  * @brief timeout that defines how much time can be status without status response
  * if timeout expired, it evokes connection disconnect
  */
-constexpr int status_response_timeout { 30 };
+constexpr std::chrono::seconds status_response_timeout { 30 };
 
 /**
  * @brief time between checks of atomic queue used for one-way communication from Module Handler to Internal Server
@@ -90,7 +90,7 @@ struct MqttConstants {
 	 *        value reasoning: keepalive is half of the default timeout in Fleet protocol
 	 *        The value is chosen based on empiric measurement.
 	*/
-	static constexpr uint8_t keepalive { status_response_timeout/2 };
+	static constexpr std::chrono::seconds keepalive { status_response_timeout / 2U };
 
 	/**
 	 * @brief automatic reconnection of mqtt client option
@@ -102,7 +102,7 @@ struct MqttConstants {
 	 *        value reasoning: TCP timeout for retransmission when TCP packet is dropped is 200ms,
 	 *        this value is multiple of three of this value
 	*/
-	static constexpr size_t connect_timeout { 600 };
+	static constexpr std::chrono::milliseconds connect_timeout { 600 };
 
 	/**
 	 * @brief max messages that can be in the process of transmission simultaneously;

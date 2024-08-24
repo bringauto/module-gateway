@@ -25,6 +25,14 @@ public:
 		disconnect_ { disconnect }
 	{}
 
+	InternalClientMessage(InternalClientMessage&& move) noexcept:
+		message_ { std::move(move.message_) },
+		disconnect_ { move.disconnect_ },
+		deviceId_ { move.deviceId_ }
+	{}
+
+	InternalClientMessage(const InternalClientMessage& copy) = default;
+
 	/**
 	 * @brief Get internal client message
 	 *

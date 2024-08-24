@@ -76,9 +76,11 @@ CMDEF_ADD_EXECUTABLE(
 TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC module-gateway-lib)
 
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    TARGET_COMPILE_OPTIONS(module-gateway-app PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address -fsanitize=undefined -fno-sanitize-recover)
-    TARGET_COMPILE_OPTIONS(module-gateway-lib PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address -fsanitize=undefined -fno-sanitize-recover)
-    TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC -fsanitize=address -fsanitize=undefined)
+    TARGET_COMPILE_OPTIONS(module-gateway-app PRIVATE -Wall -Wextra -Wpedantic
+            -fsanitize=address,undefined,leak -fno-sanitize-recover )
+    TARGET_COMPILE_OPTIONS(module-gateway-lib PRIVATE -Wall -Wextra -Wpedantic
+            -fsanitize=address,undefined,leak -fno-sanitize-recover)
+    TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC -fsanitize=undefined,leak,address)
 ENDIF()
 
 

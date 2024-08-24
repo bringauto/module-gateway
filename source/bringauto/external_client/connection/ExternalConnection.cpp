@@ -203,7 +203,9 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 		auto deviceStatus = common_utils::ProtobufUtils::createDeviceStatus(deviceIdentification, statusBuffer);
 		sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_CONNECTING, errorBuffer);
 	}
-	for(int i = 0; i < devices.size(); ++i) {
+
+	const auto size = devices.size();
+	for(unsigned int i = 0; i < size; ++i) {
 		const auto statusResponseMsg = communicationChannel_->receiveMessage();
 		if(statusResponseMsg == nullptr) {
 			log::logError("Communication client couldn't receive any message");
@@ -227,7 +229,8 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 }
 
 int ExternalConnection::commandMessageHandle(const std::vector<structures::DeviceIdentification> &devices) {
-	for(int i = 0; i < devices.size(); ++i) {
+	const auto size = devices.size();
+	for(unsigned int i = 0; i < size; ++i) {
 		const auto commandMsg = communicationChannel_->receiveMessage();
 		if(commandMsg == nullptr) {
 			log::logError("Communication client couldn't receive any message");
