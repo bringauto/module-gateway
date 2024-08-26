@@ -166,7 +166,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	while(not toExternalQueue_->empty()) {
 		auto internalMessage = std::move(toExternalQueue_->front());
 		toExternalQueue_->pop();
-		auto &deviceStatus = internalMessage.getMessage().devicestatus();
+		const auto &deviceStatus = internalMessage.getMessage().devicestatus();
 		if(connection.isModuleSupported(deviceStatus.device().module())) {
 			connection.fillErrorAggregator(deviceStatus);
 		} else {
@@ -183,19 +183,18 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
-		auto internalMessage = std::move(toExternalQueue_->front());
+		const auto internalMessage = std::move(toExternalQueue_->front());
 		toExternalQueue_->pop();
 
-		auto &deviceStatus = internalMessage.getMessage().devicestatus();
-		auto &device = deviceStatus.device();
+		const auto &deviceStatus = internalMessage.getMessage().devicestatus();
+		const auto &device = deviceStatus.device();
 		if(connection.isModuleSupported(device.module())) {
 			auto deviceId = structures::DeviceIdentification(device);
-			auto it = std::find(forcedDevices.cbegin(), forcedDevices.cend(), deviceId);
+			auto it = std::ranges::find(std::as_const(forcedDevices), deviceId);
 			if(it == forcedDevices.cend()) {
 				log::logDebug("Cannot fill error aggregator for same device: {} {}", device.devicerole(),
 							  device.devicename());
-				auto &message = toExternalQueue_->front();
-				toExternalQueue_->pushAndNotify(message);
+				toExternalQueue_->pushAndNotify(internalMessage);
 			} else {
 				log::logDebug("Filling error aggregator of device: {} {}", device.devicerole(), device.devicename());
 				connection.fillErrorAggregator(deviceStatus);
