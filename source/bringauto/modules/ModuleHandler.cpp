@@ -62,7 +62,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 			
 			for (auto &device: unique_devices) {
 				while(true) {
-					auto aggregatedStatusBuffer = moduleLibraryHandler->constructBuffer();
+					Buffer aggregatedStatusBuffer {};
 					int remainingMessages = statusAggregator->get_aggregated_status(aggregatedStatusBuffer, device);
 					if(remainingMessages < 0) {
 						break;
@@ -71,7 +71,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 					auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(internalProtocolDevice,
 																										aggregatedStatusBuffer);
 					toExternalQueue_->pushAndNotify(structures::InternalClientMessage(false, statusMessage));
-					log::logDebug("Module handler pushed timeouted aggregated status, number of aggregated statuses in queue {}",
+					log::logDebug("Module handler pushed a timed out aggregated status, number of aggregated statuses in queue {}",
 								  toExternalQueue_->size());
 				}
 
@@ -117,11 +117,10 @@ void ModuleHandler::handleDisconnect(const structures::DeviceIdentification& dev
 
 void ModuleHandler::sendAggregatedStatus(const structures::DeviceIdentification &deviceId, const ip::Device &device,
 										 bool disconnected) {
-	auto &statusAggregator = moduleLibrary_.statusAggregators.at(deviceId.getModule());
-	auto aggregatedStatusBuffer = moduleLibrary_.moduleLibraryHandlers.at(deviceId.getModule())->constructBuffer();
+	const auto &statusAggregator = moduleLibrary_.statusAggregators.at(deviceId.getModule());
+	Buffer aggregatedStatusBuffer {};
 	statusAggregator->get_aggregated_status(aggregatedStatusBuffer, deviceId);
-	auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device,
-																						aggregatedStatusBuffer);
+	const auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device, aggregatedStatusBuffer);
 	toExternalQueue_->pushAndNotify(structures::InternalClientMessage(disconnected, statusMessage));
 	log::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}",
 				  toExternalQueue_->size());
@@ -193,13 +192,13 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 		return;
 	}
 	
-	auto commandBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber)->constructBuffer();
+	Buffer commandBuffer {};
 	int getCommandRc = statusAggregator->get_command(statusBuffer, deviceId, commandBuffer);
 	if(getCommandRc == OK) {
 		auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device,
 																									commandBuffer);
 		toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false, deviceCommandMessage));
-		log::logDebug("Module handler succesfully retrieved command and sent it to device: {}", deviceName);
+		log::logDebug("Module handler successfully retrieved command and sent it to device: {}", deviceName);
 	} else {
 		log::logWarning("Retrieving command failed with return code: {}", getCommandRc);
 		return;

@@ -60,7 +60,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 	auto deviceId = structures::DeviceIdentification(device);
 	auto moduleLibraryHanlder = moduleLibrary_.moduleLibraryHandlers.at(deviceModule);
 
-	auto lastStatus = moduleLibraryHanlder->constructBuffer();
+	modules::Buffer lastStatus {};
 	auto isRegistered = errorAggregator.get_last_status(lastStatus, deviceId);
 	if (isRegistered == DEVICE_NOT_REGISTERED){
 		deviceState = ExternalProtocol::Status_DeviceState_CONNECTING;
@@ -102,9 +102,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 	}
 
 	if (errorMessage.isAllocated()) {
-		std::string errorString((char*)errorMessage.getStructBuffer().data, errorMessage.getStructBuffer().size_in_bytes);
-		log::logDebug("Sending status with messageCounter '{}' with aggregated errorMessage: {}",
-					  clientMessageCounter_, errorString);
+		log::logDebug("Sending status with messageCounter '{}' with an aggregated errorMessage", clientMessageCounter_);
 	} else {
 		log::logDebug("Sending status with messageCounter '{}'", clientMessageCounter_);
 	}
@@ -183,11 +181,9 @@ int ExternalConnection::connectMessageHandle(const std::vector<structures::Devic
 
 int ExternalConnection::statusMessageHandle(const std::vector<structures::DeviceIdentification> &devices) {
 	for(const auto &deviceIdentification: devices) {
-
 		const int &deviceModule = deviceIdentification.getModule();
-		auto moduleLibraryHanlder = moduleLibrary_.moduleLibraryHandlers.at(deviceModule);
-		auto errorBuffer = moduleLibraryHanlder->constructBuffer();
-		auto statusBuffer = moduleLibraryHanlder->constructBuffer();
+		modules::Buffer errorBuffer {};
+		modules::Buffer statusBuffer {};
 
 		const auto &lastErrorStatusRc = errorAggregators[deviceModule].get_error(errorBuffer, deviceIdentification);
 		if(lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
@@ -207,7 +203,9 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 		auto deviceStatus = common_utils::ProtobufUtils::createDeviceStatus(deviceIdentification, statusBuffer);
 		sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_CONNECTING, errorBuffer);
 	}
-	for(int i = 0; i < devices.size(); ++i) {
+
+	const auto size = devices.size();
+	for(unsigned int i = 0; i < size; ++i) {
 		const auto statusResponseMsg = communicationChannel_->receiveMessage();
 		if(statusResponseMsg == nullptr) {
 			log::logError("Communication client couldn't receive any message");
@@ -231,7 +229,8 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 }
 
 int ExternalConnection::commandMessageHandle(const std::vector<structures::DeviceIdentification> &devices) {
-	for(int i = 0; i < devices.size(); ++i) {
+	const auto size = devices.size();
+	for(unsigned int i = 0; i < size; ++i) {
 		const auto commandMsg = communicationChannel_->receiveMessage();
 		if(commandMsg == nullptr) {
 			log::logError("Communication client couldn't receive any message");
@@ -411,7 +410,7 @@ void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatu
 std::vector<structures::DeviceIdentification> ExternalConnection::forceAggregationOnAllDevices(std::vector<structures::DeviceIdentification> connectedDevices) {
 	std::vector<structures::DeviceIdentification> forcedDevices {};
 	for(const auto &device: connectedDevices) {
-		auto last_status = moduleLibrary_.moduleLibraryHandlers.at(device.getModule())->constructBuffer();
+		modules::Buffer last_status {};
 		if (errorAggregators.at(device.getModule()).get_last_status(last_status, device) == OK){
 			continue;
 		}

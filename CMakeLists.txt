@@ -2,7 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.25 FATAL_ERROR)
 PROJECT(ModuleGateway)
 INCLUDE(GNUInstallDirs)
 
-SET(BRINGAUTO_MODULE_GATEWAY_VERSION 1.1.7)
+SET(BRINGAUTO_MODULE_GATEWAY_VERSION 1.1.12)
 ADD_COMPILE_DEFINITIONS(MODULE_GATEWAY_VERSION="${BRINGAUTO_MODULE_GATEWAY_VERSION}")
 SET(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 SET(CMAKE_CXX_STANDARD 20)
@@ -40,7 +40,7 @@ ENDIF ()
 
 SET(Protobuf_USE_STATIC_LIBS ON)
 
-FIND_PACKAGE(Boost 1.74 REQUIRED)
+FIND_PACKAGE(Boost 1.74 REQUIRED CONFIG)
 FIND_PACKAGE(Protobuf 3.21.12 REQUIRED)
 FIND_PACKAGE(cxxopts 3.0.0 REQUIRED)
 FIND_PACKAGE(nlohmann_json 3.2.0 REQUIRED)
@@ -76,9 +76,11 @@ CMDEF_ADD_EXECUTABLE(
 TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC module-gateway-lib)
 
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    TARGET_COMPILE_OPTIONS(module-gateway-app PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address -fsanitize=undefined -fno-sanitize-recover)
-    TARGET_COMPILE_OPTIONS(module-gateway-lib PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address -fsanitize=undefined -fno-sanitize-recover)
-    TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC -fsanitize=address -fsanitize=undefined)
+    TARGET_COMPILE_OPTIONS(module-gateway-app PRIVATE -Wall -Wextra -Wpedantic
+            -fsanitize=address,undefined,leak -fno-sanitize-recover )
+    TARGET_COMPILE_OPTIONS(module-gateway-lib PRIVATE -Wall -Wextra -Wpedantic
+            -fsanitize=address,undefined,leak -fno-sanitize-recover)
+    TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC -fsanitize=undefined,leak,address)
 ENDIF()
 
 

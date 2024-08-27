@@ -21,7 +21,7 @@ namespace bringauto::structures {
  *  Create asynchronous timer which execute specified
  *  function in set time interval
  */
-class ThreadTimer {
+class ThreadTimer final {
 
 public:
 	/**

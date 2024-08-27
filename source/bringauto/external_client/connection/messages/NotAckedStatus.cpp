@@ -12,7 +12,7 @@
 namespace bringauto::external_client::connection::messages {
 
 void NotAckedStatus::startTimer(const std::function<void()> &endConnectionFunc) {
-	timer_.expires_from_now(boost::posix_time::seconds(settings::status_response_timeout));
+	timer_.expires_from_now(boost::posix_time::seconds(settings::status_response_timeout.count()));
 
 	timer_.async_wait([this, endConnectionFunc](const boost::system::error_code &errorCode) {
 		if(errorCode != boost::asio::error::operation_aborted) {

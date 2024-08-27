@@ -53,7 +53,7 @@ void ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path &path)
 			"allocate"));
 	deallocate_ = reinterpret_cast<FunctionTypeDeducer<decltype(deallocate_)>::fncptr>(checkFunction(
 			"deallocate"));
-	log::logDebug("Library " + path.string() + " was succesfully loaded");
+	log::logDebug("Library " + path.string() + " was successfully loaded");
 }
 
 void *ModuleManagerLibraryHandler::checkFunction(const char *functionName) {
@@ -83,10 +83,18 @@ int ModuleManagerLibraryHandler::generateCommand(Buffer &generated_command,
 												 const Buffer current_status,
 												 const Buffer current_command, unsigned int device_type) {
 	struct ::buffer raw_buffer {};
+	struct ::buffer current_status_raw_buffer {};
+
+	if (current_status.isAllocated()) {
+		current_status_raw_buffer = current_status.getStructBuffer();
+	}
+
 	int ret = generateCommand_(&raw_buffer, new_status.getStructBuffer(),
-		current_status.getStructBuffer(), current_command.getStructBuffer(), device_type);
+		current_status_raw_buffer, current_command.getStructBuffer(), device_type);
 	if (ret == OK) {
 		generated_command = constructBufferByTakeOwnership(raw_buffer);
+	} else {
+		generated_command = constructBuffer();
 	}
 	return ret;
 }
@@ -95,10 +103,17 @@ int ModuleManagerLibraryHandler::aggregateStatus(Buffer &aggregated_status,
 												 const Buffer current_status,
 												 const Buffer new_status, unsigned int device_type) {
 	struct ::buffer raw_buffer {};
-	int ret = aggregateStatus_(&raw_buffer, current_status.getStructBuffer(),
-		new_status.getStructBuffer(), device_type);
+	struct ::buffer current_status_raw_buffer {};
+
+	if (current_status.isAllocated()) {
+		current_status_raw_buffer = current_status.getStructBuffer();
+	}
+
+	int ret = aggregateStatus_(&raw_buffer, current_status_raw_buffer, new_status.getStructBuffer(), device_type);
 	if (ret == OK) {
 		aggregated_status = constructBufferByTakeOwnership(raw_buffer);
+	} else {
+		aggregated_status = current_status;
 	}
 	return ret;
 }
@@ -108,10 +123,17 @@ int ModuleManagerLibraryHandler::aggregateError(Buffer &error_message,
 												const Buffer status, unsigned int device_type) {
 
 	struct ::buffer raw_buffer {};
-	int ret = aggregateError_(&raw_buffer, current_error_message.getStructBuffer(),
-		status.getStructBuffer(), device_type);
+	struct ::buffer current_error_raw_buffer {};
+
+	if (current_error_message.isAllocated()) {
+		current_error_raw_buffer = current_error_message.getStructBuffer();
+	}
+
+	int ret = aggregateError_(&raw_buffer, current_error_raw_buffer, status.getStructBuffer(), device_type);
 	if (ret == OK) {
 		error_message = constructBufferByTakeOwnership(raw_buffer);
+	} else {
+		error_message = constructBuffer();
 	}
 	return ret;
 }
@@ -121,6 +143,8 @@ int ModuleManagerLibraryHandler::generateFirstCommand(Buffer &default_command, u
 	int ret = generateFirstCommand_(&raw_buffer, device_type);
 	if (ret == OK) {
 		default_command = constructBufferByTakeOwnership(raw_buffer);
+	} else {
+		default_command = constructBuffer();
 	}
 	return ret;
 }
@@ -142,6 +166,9 @@ void ModuleManagerLibraryHandler::deallocate(struct buffer *buffer){
 }
 
 Buffer ModuleManagerLibraryHandler::constructBuffer(std::size_t size) {
+	if (size == 0) {
+		return Buffer {};
+	}
 	struct ::buffer buff {};
 	buff.size_in_bytes = size;
 	if(allocate(&buff, size) != OK) {
