@@ -134,7 +134,6 @@ bool ExternalClient::sendStatus(const structures::InternalClientMessage &interna
 	auto &connection = it->second.get();
 	if(connection.getState() != connection::ConnectionState::CONNECTED) {
 		connection.fillErrorAggregator(deviceStatus);
-		//toExternalQueue_->pop();
 
 		if(connection.getState() == connection::ConnectionState::NOT_INITIALIZED) {
 			if(insideConnectSequence_) {
@@ -152,7 +151,6 @@ bool ExternalClient::sendStatus(const structures::InternalClientMessage &interna
 		} else {
 			connection.sendStatus(deviceStatus);
 		}
-		//toExternalQueue_->pop();
 		return ret;
 	}
 
