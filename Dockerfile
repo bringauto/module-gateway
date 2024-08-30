@@ -14,7 +14,7 @@ RUN cmake .. -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_GET_PACKAGES_ONLY=ON
 
 FROM bringauto/cpp-build-environment:latest AS mission_module_builder
 
-ARG MISSION_MODULE_VERSION=v1.2.8
+ARG MISSION_MODULE_VERSION=v1.2.9
 
 # Install mission module dependencies
 WORKDIR /home/bringauto/modules/
@@ -29,8 +29,7 @@ RUN cmake .. -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_GET_PACKAGES_ONLY=ON
 
 # Build mission module
 WORKDIR /home/bringauto
-RUN git clone --branch "$MISSION_MODULE_VERSION" https://github.com/bringauto/mission-module.git mission-module && \
-    chown -R bringauto:bringauto mission-module
+ADD --chown=bringauto:bringauto https://github.com/bringauto/mission-module.git#$MISSION_MODULE_VERSION mission-module
 
 WORKDIR /home/bringauto/mission-module/_build
 RUN cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREFIX=/home/bringauto/modules/mission_module/ \
@@ -56,8 +55,7 @@ RUN cmake .. -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_GET_PACKAGES_ONLY=ON
 
 # Build io module
 WORKDIR /home/bringauto
-RUN git clone --branch "$IO_MODULE_VERSION" https://github.com/bringauto/io-module.git io-module && \
-    chown -R bringauto:bringauto io-module
+ADD --chown=bringauto:bringauto https://github.com/bringauto/io-module.git#$IO_MODULE_VERSION io-module
 
 WORKDIR /home/bringauto/io-module/_build
 RUN cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREFIX=/home/bringauto/modules/io_module/ \
