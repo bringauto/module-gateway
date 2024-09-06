@@ -1,5 +1,5 @@
 #include <bringauto/external_client/connection/messages/NotAckedStatus.hpp>
-#include <bringauto/logging/Logger.hpp>
+#include <bringauto/settings/LoggerId.hpp>
 #include <bringauto/settings/Constants.hpp>
 
 #include <boost/asio.hpp>
@@ -29,11 +29,11 @@ void NotAckedStatus::timeoutHandler(const std::function<void()> &endConnectionFu
 	std::string loggingStr("Status response Timeout (" + std::to_string(status_.messagecounter()) + "):");
 	std::unique_lock<std::mutex> lock(responseHandledMutex_);
 	if(responseHandled_.load()) {
-		logging::Logger::logError("{} already handled, skipping.", loggingStr);
+		settings::Logger::logError("{} already handled, skipping.", loggingStr);
 		return;
 	}
 	responseHandled_.store(true);    // Is changed back to false in endConnection -> cancelAllTimers
-	logging::Logger::logError("{} putting reconnect event onto queue.", loggingStr);
+	settings::Logger::logError("{} putting reconnect event onto queue.", loggingStr);
 
 	endConnectionFunc();
 }

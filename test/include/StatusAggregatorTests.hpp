@@ -1,8 +1,9 @@
 #pragma once
 
 #include <bringauto/modules/StatusAggregator.hpp>
-#include <bringauto/logging/Logger.hpp>
-#include <bringauto/logging/ConsoleSink.hpp>
+#include <bringauto/settings/LoggerId.hpp>
+#include <libbringauto_logger/bringauto/logging/Logger.hpp>
+#include <libbringauto_logger/bringauto/logging/ConsoleSink.hpp>
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
 
 #include <gtest/gtest.h>
@@ -18,13 +19,13 @@ protected:
 	void TearDown() override;
 
 	static void SetUpTestSuite() {
-		bringauto::logging::Logger::destroy();
-		bringauto::logging::Logger::addSink<bringauto::logging::ConsoleSink>();
-		bringauto::logging::Logger::LoggerSettings settings {
+		bringauto::settings::Logger::destroy();
+		bringauto::settings::Logger::addSink<bringauto::logging::ConsoleSink>();
+		bringauto::logging::LoggerSettings settings {
 			"StatusAggregatorTests",
-			bringauto::logging::Logger::Verbosity::Critical
+			bringauto::logging::LoggerVerbosity::Critical
 		};
-		bringauto::logging::Logger::init(settings);
+		bringauto::settings::Logger::init(settings);
 	}
 
 

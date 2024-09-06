@@ -1,6 +1,6 @@
 #include <bringauto/structures/ThreadTimer.hpp>
 
-#include <bringauto/logging/Logger.hpp>
+#include <bringauto/settings/LoggerId.hpp>
 
 #include <iostream>
 
@@ -18,7 +18,7 @@ void ThreadTimer::tick(const boost::system::error_code &errorCode) {
 	}
 	fun_(deviceId_);
 	const std::string& name = deviceId_.getDeviceName();
-	logging::Logger::logDebug("Timer expired and force aggregation was invoked on device: {}, {}", name, errorCode.value());
+	settings::Logger::logDebug("Timer expired and force aggregation was invoked on device: {}, {}", name, errorCode.value());
 	timer_.expires_from_now(interval_);
 	timer_.async_wait([this](const boost::system::error_code &errorCode) {
 		tick(errorCode);

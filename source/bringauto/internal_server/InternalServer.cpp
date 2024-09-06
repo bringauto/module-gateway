@@ -1,5 +1,5 @@
 #include <bringauto/internal_server/InternalServer.hpp>
-#include <bringauto/logging/Logger.hpp>
+#include <bringauto/settings/LoggerId.hpp>
 
 #include <algorithm>
 
@@ -7,7 +7,7 @@
 
 namespace bringauto::internal_server {
 
-using log = bringauto::logging::Logger;
+using log = bringauto::settings::Logger;
 
 
 void InternalServer::run() {

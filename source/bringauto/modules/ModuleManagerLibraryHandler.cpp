@@ -1,6 +1,6 @@
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
 
-#include <bringauto/logging/Logger.hpp>
+#include <bringauto/settings/LoggerId.hpp>
 
 #include <stdexcept>
 #include <dlfcn.h>
@@ -17,7 +17,7 @@ struct FunctionTypeDeducer<std::function<R(Args...)>> {
 	using fncptr = R (*)(Args...);
 };
 
-using log = bringauto::logging::Logger;
+using log = bringauto::settings::Logger;
 
 ModuleManagerLibraryHandler::~ModuleManagerLibraryHandler() {
 	if(module_ != nullptr) {
