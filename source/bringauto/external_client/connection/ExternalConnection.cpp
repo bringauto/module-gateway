@@ -58,7 +58,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 	}
 	auto &errorAggregator = errorAggregators.at(deviceModule);
 	auto deviceId = structures::DeviceIdentification(device);
-	auto moduleLibraryHanlder = moduleLibrary_.moduleLibraryHandlers.at(deviceModule);
+	auto moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(deviceModule);
 
 	modules::Buffer lastStatus {};
 	auto isRegistered = errorAggregator.get_last_status(lastStatus, deviceId);
@@ -66,7 +66,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 		deviceState = ExternalProtocol::Status_DeviceState_CONNECTING;
 
 		const auto &statusData = status.statusdata();
-		auto statusBuffer = moduleLibraryHanlder->constructBuffer(statusData.size());
+		auto statusBuffer = moduleLibraryHandler->constructBuffer(statusData.size());
 		common_utils::ProtobufUtils::copyStatusToBuffer(status, statusBuffer);
 		errorAggregator.add_status_to_error_aggregator(statusBuffer, deviceId);
 	}

@@ -9,8 +9,6 @@
 
 namespace bringauto::external_client {
 
-//using log = bringauto::settings::Logger;
-
 int ErrorAggregator::init_error_aggregator(const std::shared_ptr<modules::ModuleManagerLibraryHandler> &library) {
 	module_ = library;
 	return OK;

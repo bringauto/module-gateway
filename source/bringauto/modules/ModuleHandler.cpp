@@ -10,7 +10,6 @@
 namespace bringauto::modules {
 
 namespace ip = InternalProtocol;
-//using log = bringauto::settings::Logger;
 
 void ModuleHandler::destroy() {
 	while(not fromInternalQueue_->empty()) {
@@ -20,11 +19,11 @@ void ModuleHandler::destroy() {
 		}
 		fromInternalQueue_->pop();
 	}
-	bringauto::settings::Logger::logInfo("Module handler stopped");
+	settings::Logger::logInfo("Module handler stopped");
 }
 
 void ModuleHandler::run() {
-	bringauto::settings::Logger::logInfo("Module handler started, constants used: queue_timeout_length: {}, status_aggregation_timeout: {}",
+	settings::Logger::logInfo("Module handler started, constants used: queue_timeout_length: {}, status_aggregation_timeout: {}",
 				 settings::queue_timeout_length.count(), settings::status_aggregation_timeout.count());
 	handleMessages();
 }
@@ -56,7 +55,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 			std::list<structures::DeviceIdentification> unique_devices {};
 			int ret = statusAggregator->get_unique_devices(unique_devices);
 			if (ret == NOT_OK) {
-				bringauto::settings::Logger::logError("Could not get unique devices in checkTimeoutedMessages");
+				settings::Logger::logError("Could not get unique devices in checkTimeoutedMessages");
 				return;
 			}
 			
@@ -71,12 +70,12 @@ void ModuleHandler::checkTimeoutedMessages(){
 					auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(internalProtocolDevice,
 																										aggregatedStatusBuffer);
 					toExternalQueue_->pushAndNotify(structures::InternalClientMessage(false, statusMessage));
-					bringauto::settings::Logger::logDebug("Module handler pushed a timed out aggregated status, number of aggregated statuses in queue {}",
+					settings::Logger::logDebug("Module handler pushed a timed out aggregated status, number of aggregated statuses in queue {}",
 								  toExternalQueue_->size());
 				}
 
 				if(statusAggregator->getDeviceTimeoutCount(device) >= settings::status_aggregation_timeout_max_count){
-					bringauto::settings::Logger::logWarning("Device {} not sending statuses for too long, disconnecting it", device.convertToString());
+					settings::Logger::logWarning("Device {} not sending statuses for too long, disconnecting it", device.convertToString());
 					toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(device));
 				}
 			}
@@ -91,19 +90,19 @@ void ModuleHandler::handleDisconnect(const structures::DeviceIdentification& dev
 	auto &statusAggregators = moduleLibrary_.statusAggregators;
 
 	if(not statusAggregators.contains(moduleNumber)) {
-		bringauto::settings::Logger::logWarning("Module number: {} is not supported", moduleNumber);
+		settings::Logger::logWarning("Module number: {} is not supported", moduleNumber);
 		return;
 	}
 
 	auto &statusAggregator = statusAggregators.at(moduleNumber);
 	if(statusAggregator->is_device_valid(deviceId) == NOT_OK) {
-		bringauto::settings::Logger::logWarning("Trying to disconnect invalid device");
+		settings::Logger::logWarning("Trying to disconnect invalid device");
 		return;
 	}
 
 	int ret = statusAggregator->force_aggregation_on_device(deviceId);
 	if(ret < 1) {
-		bringauto::settings::Logger::logWarning("Force aggregation failed on device: {} with error code: {}", deviceName, ret);
+		settings::Logger::logWarning("Force aggregation failed on device: {} with error code: {}", deviceName, ret);
 		return;
 	}
 	auto device = structures::DeviceIdentification(deviceId);
@@ -112,7 +111,7 @@ void ModuleHandler::handleDisconnect(const structures::DeviceIdentification& dev
 
 	statusAggregator->remove_device(deviceId);
 
-	bringauto::settings::Logger::logInfo("Device {} disconnects", deviceName);
+	settings::Logger::logInfo("Device {} disconnects", deviceName);
 }
 
 void ModuleHandler::sendAggregatedStatus(const structures::DeviceIdentification &deviceId, const ip::Device &device,
@@ -122,7 +121,7 @@ void ModuleHandler::sendAggregatedStatus(const structures::DeviceIdentification 
 	statusAggregator->get_aggregated_status(aggregatedStatusBuffer, deviceId);
 	const auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device, aggregatedStatusBuffer);
 	toExternalQueue_->pushAndNotify(structures::InternalClientMessage(disconnected, statusMessage));
-	bringauto::settings::Logger::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}",
+	settings::Logger::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}",
 				  toExternalQueue_->size());
 }
 
@@ -131,7 +130,7 @@ void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
 	const auto &moduleNumber = device.module();
 	const auto &deviceName = device.devicename();
 	auto &statusAggregators = moduleLibrary_.statusAggregators;
-	bringauto::settings::Logger::logInfo("Module handler received Connect message from device: {}", deviceName);
+	settings::Logger::logInfo("Module handler received Connect message from device: {}", deviceName);
 
 	if(not statusAggregators.contains(moduleNumber)) {
 		sendConnectResponse(device,
@@ -148,7 +147,7 @@ void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
 
 	auto deviceId = structures::DeviceIdentification(device);
 	if(statusAggregator->is_device_valid(deviceId) == OK) {
-		bringauto::settings::Logger::logInfo("Device {} is replaced by device with higher priority", deviceName);
+		settings::Logger::logInfo("Device {} is replaced by device with higher priority", deviceName);
 	}
 
 	sendConnectResponse(device, ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_OK);
@@ -158,7 +157,7 @@ void
 ModuleHandler::sendConnectResponse(const ip::Device &device, ip::DeviceConnectResponse_ResponseType response_type) {
 	auto response = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(device, response_type);
 	toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false,response));
-	bringauto::settings::Logger::logInfo("New device {} is trying to connect, sending response {}", device.devicename(), static_cast<int>(response_type));
+	settings::Logger::logInfo("New device {} is trying to connect, sending response {}", device.devicename(), static_cast<int>(response_type));
 }
 
 void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
@@ -166,10 +165,10 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	const auto &moduleNumber = device.module();
 	const auto &deviceName = device.devicename();
 	auto &statusAggregators = moduleLibrary_.statusAggregators;
-	bringauto::settings::Logger::logDebug("Module handler received status from device: {}", deviceName);
+	settings::Logger::logDebug("Module handler received status from device: {}", deviceName);
 
 	if(not statusAggregators.contains(moduleNumber)) {
-		bringauto::settings::Logger::logWarning("Module number: {} is not supported", static_cast<int>(moduleNumber));
+		settings::Logger::logWarning("Module number: {} is not supported", static_cast<int>(moduleNumber));
 		return;
 	}
 	auto statusAggregator = statusAggregators[moduleNumber];
@@ -182,13 +181,13 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	const auto deviceId = structures::DeviceIdentification(device);
 
 	if(!statusBuffer.isAllocated() || moduleHandler->statusDataValid(statusBuffer, deviceId.getDeviceType()) == NOT_OK) {
-		bringauto::settings::Logger::logWarning("Invalid status data on device id: {}", deviceId.convertToString());
+		settings::Logger::logWarning("Invalid status data on device id: {}", deviceId.convertToString());
 		return;
 	}
 
 	int addStatusToAggregatorRc = statusAggregator->add_status_to_aggregator(statusBuffer, deviceId);
 	if(addStatusToAggregatorRc < 0) {
-		bringauto::settings::Logger::logWarning("Add status to aggregator failed with return code: {}", addStatusToAggregatorRc);
+		settings::Logger::logWarning("Add status to aggregator failed with return code: {}", addStatusToAggregatorRc);
 		return;
 	}
 	
@@ -198,9 +197,9 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 		auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device,
 																									commandBuffer);
 		toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false, deviceCommandMessage));
-		bringauto::settings::Logger::logDebug("Module handler successfully retrieved command and sent it to device: {}", deviceName);
+		settings::Logger::logDebug("Module handler successfully retrieved command and sent it to device: {}", deviceName);
 	} else {
-		bringauto::settings::Logger::logWarning("Retrieving command failed with return code: {}", getCommandRc);
+		settings::Logger::logWarning("Retrieving command failed with return code: {}", getCommandRc);
 		return;
 	}
 

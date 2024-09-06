@@ -12,7 +12,6 @@
 namespace bringauto::external_client {
 
 namespace ip = InternalProtocol;
-//using log = bringauto::settings::Logger;
 
 ExternalClient::ExternalClient(std::shared_ptr<structures::GlobalContext> &context,
 							   structures::ModuleLibrary &moduleLibrary,
@@ -32,7 +31,7 @@ void ExternalClient::handleCommands() {
 		if(fromExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
-		bringauto::settings::Logger::logInfo("External client received command");
+		settings::Logger::logInfo("External client received command");
 
 		auto &message = fromExternalQueue_->front();
 		handleCommand(message);
@@ -45,13 +44,13 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 	const auto &moduleNumber = device.module();
 	auto &statusAggregators = moduleLibrary_.statusAggregators;
 	if(not statusAggregators.contains(moduleNumber)) {
-		bringauto::settings::Logger::logWarning("Module with module number {} does no exists", static_cast<int>(moduleNumber));
+		settings::Logger::logWarning("Module with module number {} does no exists", static_cast<int>(moduleNumber));
 		return;
 	}
 
 	const auto &commandData = deviceCommand.commanddata();
 	if (commandData.empty()) {
-		bringauto::settings::Logger::logWarning("Received empty command for device: {} {}", device.devicerole(), device.devicename());
+		settings::Logger::logWarning("Received empty command for device: {} {}", device.devicerole(), device.devicename());
 		return;
 	}
 	auto &moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
@@ -62,7 +61,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 	auto deviceId = structures::DeviceIdentification(device);
 	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);
 	if (ret == OK) {
-		bringauto::settings::Logger::logInfo("Command for device {} was added to queue", device.devicename());
+		settings::Logger::logInfo("Command for device {} was added to queue", device.devicename());
 	}
 }
 
@@ -71,11 +70,11 @@ void ExternalClient::destroy() {
 		externalConnection.deinitializeConnection(true);
 	}
 	fromExternalClientThread_.join();
-	bringauto::settings::Logger::logInfo("External client stopped");
+	settings::Logger::logInfo("External client stopped");
 }
 
 void ExternalClient::run() {
-	bringauto::settings::Logger::logInfo("External client started, constants used: reconnect_delay: {}, queue_timeout_length: {}, "
+	settings::Logger::logInfo("External client started, constants used: reconnect_delay: {}, queue_timeout_length: {}, "
 				 "immediate_disconnect_timeout: {}, status_response_timeout: {}",
 				 settings::reconnect_delay, settings::queue_timeout_length.count(),
 				 settings::immediate_disconnect_timeout.count(), settings::status_response_timeout.count());
@@ -104,7 +103,7 @@ void ExternalClient::handleAggregatedMessages() {
 			if(reconnectItem.reconnect) {
 				startExternalConnectSequence(connection);
 			} else {
-				bringauto::settings::Logger::logInfo("External connection is disconnected from external server");
+				settings::Logger::logInfo("External connection is disconnected from external server");
 				connection.setNotInitialized();
 			}
 			reconnectQueue_->pop();
@@ -112,7 +111,7 @@ void ExternalClient::handleAggregatedMessages() {
 		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
-		bringauto::settings::Logger::logInfo("External client received aggregated status, number of aggregated statuses in queue {}",
+		settings::Logger::logInfo("External client received aggregated status, number of aggregated statuses in queue {}",
 					 toExternalQueue_->size());
 		auto message = std::move(toExternalQueue_->front());
 		toExternalQueue_->pop();
@@ -127,7 +126,7 @@ bool ExternalClient::sendStatus(const structures::InternalClientMessage &interna
 	const auto &moduleNumber = deviceStatus.device().module();
 	auto it = externalConnectionMap_.find(moduleNumber);
 	if(it == externalConnectionMap_.end()) {
-		bringauto::settings::Logger::logError("Module number {} not found in the map\n", static_cast<int>(moduleNumber));
+		settings::Logger::logError("Module number {} not found in the map\n", static_cast<int>(moduleNumber));
 		return true;
 	}
 
@@ -137,7 +136,7 @@ bool ExternalClient::sendStatus(const structures::InternalClientMessage &interna
 
 		if(connection.getState() == connection::ConnectionState::NOT_INITIALIZED) {
 			if(insideConnectSequence_) {
-				bringauto::settings::Logger::logWarning(
+				settings::Logger::logWarning(
 						"Status moved to error aggregator. Cannot initialize connect sequence, when different is running");
 				return true;
 			}
@@ -158,7 +157,7 @@ bool ExternalClient::sendStatus(const structures::InternalClientMessage &interna
 }
 
 void ExternalClient::startExternalConnectSequence(connection::ExternalConnection &connection) {
-	bringauto::settings::Logger::logInfo("Initializing new connection");
+	settings::Logger::logInfo("Initializing new connection");
 	insideConnectSequence_ = true;
 
 	while(not toExternalQueue_->empty()) {
@@ -173,7 +172,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		}
 	}
 
-	bringauto::settings::Logger::logDebug("External client is forcing aggregation on all modules");
+	settings::Logger::logDebug("External client is forcing aggregation on all modules");
 	auto connectedDevices = connection.getAllConnectedDevices();
 	auto forcedDevices = connection.forceAggregationOnAllDevices(connectedDevices);
 
@@ -190,16 +189,16 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 			auto deviceId = structures::DeviceIdentification(device);
 			auto it = std::ranges::find(std::as_const(forcedDevices), deviceId);
 			if(it == forcedDevices.cend()) {
-				bringauto::settings::Logger::logDebug("Cannot fill error aggregator for same device: {} {}", device.devicerole(),
+				settings::Logger::logDebug("Cannot fill error aggregator for same device: {} {}", device.devicerole(),
 							  device.devicename());
 				toExternalQueue_->pushAndNotify(internalMessage);
 			} else {
-				bringauto::settings::Logger::logDebug("Filling error aggregator of device: {} {}", device.devicerole(), device.devicename());
+				settings::Logger::logDebug("Filling error aggregator of device: {} {}", device.devicerole(), device.devicename());
 				connection.fillErrorAggregator(deviceStatus);
 				forcedDevices.erase(it);
 			}
 		} else {
-			bringauto::settings::Logger::logDebug("Sending status inside connect sequence init");
+			settings::Logger::logDebug("Sending status inside connect sequence init");
 			// Send status from different connection, so it won't get lost. Shouldn't initialize bad recursion
 			sendStatus(internalMessage);
 		}
@@ -207,11 +206,11 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	connection.fillErrorAggregatorWithNotAckedStatuses();
 
 	if(connection.initializeConnection(connectedDevices) != 0 && not context_->ioContext.stopped()) {
-		bringauto::settings::Logger::logDebug("Waiting for reconnect timer to expire");
+		settings::Logger::logDebug("Waiting for reconnect timer to expire");
 		timer_.expires_from_now(boost::posix_time::seconds(settings::reconnect_delay));
 		timer_.async_wait([this, &connection](const boost::system::error_code&) {
 			reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(connection), true));
-			bringauto::settings::Logger::logDebug("Reconnect timer expired");
+			settings::Logger::logDebug("Reconnect timer expired");
 		});
 	}
 	insideConnectSequence_ = false;
