@@ -73,16 +73,17 @@ CMDEF_ADD_EXECUTABLE(
         VERSION ${BRINGAUTO_MODULE_GATEWAY_VERSION}
 )
 
-TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC module-gateway-lib)
-
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
     TARGET_COMPILE_OPTIONS(module-gateway-app PRIVATE -Wall -Wextra -Wpedantic
             -fsanitize=address,undefined,leak -fno-sanitize-recover )
-    TARGET_COMPILE_OPTIONS(module-gateway-lib PRIVATE -Wall -Wextra -Wpedantic
+    TARGET_LINK_OPTIONS(module-gateway-app PUBLIC -fsanitize=undefined,leak,address)
+    TARGET_COMPILE_OPTIONS(module-gateway-lib PUBLIC -Wall -Wextra -Wpedantic
             -fsanitize=address,undefined,leak -fno-sanitize-recover)
-    TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC -fsanitize=undefined,leak,address)
+    TARGET_LINK_OPTIONS(module-gateway-lib PUBLIC -Wall -Wextra -Wpedantic
+            -fsanitize=address,undefined,leak -fno-sanitize-recover)
 ENDIF()
 
+TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC module-gateway-lib)
 
 IF (BRINGAUTO_TESTS)
     ENABLE_TESTING()
