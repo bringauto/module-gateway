@@ -22,7 +22,7 @@ ADD_EXECUTABLE(modulegateway_tests ${source_test_files} ${CMAKE_CURRENT_LIST_DIR
 TARGET_INCLUDE_DIRECTORIES(modulegateway_tests PUBLIC "${CMAKE_CURRENT_LIST_DIR}/include/")
 TARGET_LINK_LIBRARIES(modulegateway_tests PUBLIC ${GTEST_LIBRARIES} pthread module-gateway-lib)
 
-TARGET_COMPILE_OPTIONS(modulegateway_tests PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address)
+TARGET_COMPILE_OPTIONS(modulegateway_tests PRIVATE -Wall -Wextra -Wpedantic)
 
 INCLUDE(GoogleTest)
 GTEST_DISCOVER_TESTS(modulegateway_tests)

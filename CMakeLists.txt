@@ -73,7 +73,7 @@ CMDEF_ADD_EXECUTABLE(
         VERSION ${BRINGAUTO_MODULE_GATEWAY_VERSION}
 )
 
-IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+IF(CMAKE_BUILD_TYPE STREQUAL "Debug" OR BRINGAUTO_TESTS)
     TARGET_COMPILE_OPTIONS(module-gateway-app PRIVATE -Wall -Wextra -Wpedantic
             -fsanitize=address,undefined,leak -fno-sanitize-recover )
     TARGET_LINK_OPTIONS(module-gateway-app PUBLIC -fsanitize=undefined,leak,address)
