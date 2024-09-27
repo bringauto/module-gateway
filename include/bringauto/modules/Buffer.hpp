@@ -53,6 +53,15 @@ struct Buffer final {
 		return raw_buffer_.data != nullptr && raw_buffer_.size_in_bytes > 0;
 	}
 
+	/**
+	 * @brief Determine if buffer is empty.
+	 *
+	 * @return true if size of buffer is 0, false otherwise
+	 */
+	[[nodiscard]] bool isEmpty() const {
+		return raw_buffer_.size_in_bytes == 0;
+	}
+
 private:
 
 	/**

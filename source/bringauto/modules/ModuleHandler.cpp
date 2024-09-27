@@ -177,11 +177,13 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 
 	const auto &statusData = status.statusdata();
 	auto statusBuffer = moduleHandler->constructBuffer(statusData.size());
-	common_utils::ProtobufUtils::copyStatusToBuffer(status, statusBuffer);
+	if (!statusBuffer.isEmpty()) {
+		common_utils::ProtobufUtils::copyStatusToBuffer(status, statusBuffer);
+	}
 
 	const auto deviceId = structures::DeviceIdentification(device);
 
-	if(!statusBuffer.isAllocated() || moduleHandler->statusDataValid(statusBuffer, deviceId.getDeviceType()) == NOT_OK) {
+	if(moduleHandler->statusDataValid(statusBuffer, deviceId.getDeviceType()) == NOT_OK) {
 		log::logWarning("Invalid status data on device id: {}", deviceId.convertToString());
 		return;
 	}

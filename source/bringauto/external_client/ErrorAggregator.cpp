@@ -28,11 +28,6 @@ ErrorAggregator::add_status_to_error_aggregator(const modules::Buffer& status, c
 		return DEVICE_NOT_SUPPORTED;
 	}
 
-	if(!status.isAllocated()) {
-		log::logWarning("Invalid status data for device: {}", device.convertToString());
-		return NOT_OK;
-	}
-
 	if(not devices_.contains(device)) {
 		devices_.insert({ device, {}});
 	}
@@ -56,12 +51,7 @@ int ErrorAggregator::get_last_status(modules::Buffer &status, const structures::
 		return DEVICE_NOT_REGISTERED;
 	}
 
-	auto &lastStatus = devices_[device].lastStatus;
-
-	if(!lastStatus.isAllocated()) {
-		return NO_MESSAGE_AVAILABLE;
-	}
-	status = lastStatus;
+	status = devices_[device].lastStatus;
 	return OK;
 }
 

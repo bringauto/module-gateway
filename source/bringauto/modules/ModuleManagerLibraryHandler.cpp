@@ -75,7 +75,17 @@ int ModuleManagerLibraryHandler::isDeviceTypeSupported(unsigned int device_type)
 int ModuleManagerLibraryHandler::sendStatusCondition(const Buffer current_status,
 													 const Buffer new_status,
 													 unsigned int device_type) {
-	return sendStatusCondition_(current_status.getStructBuffer(), new_status.getStructBuffer(), device_type);
+	struct ::buffer current_status_raw_buffer {};
+	struct ::buffer new_status_raw_buffer {};
+
+	if (current_status.isAllocated()) {
+		current_status_raw_buffer = current_status.getStructBuffer();
+	}
+	if (new_status.isAllocated()) {
+		new_status_raw_buffer = new_status.getStructBuffer();
+	}
+
+	return sendStatusCondition_(current_status_raw_buffer, new_status_raw_buffer, device_type);
 }
 
 int ModuleManagerLibraryHandler::generateCommand(Buffer &generated_command,
@@ -83,14 +93,22 @@ int ModuleManagerLibraryHandler::generateCommand(Buffer &generated_command,
 												 const Buffer current_status,
 												 const Buffer current_command, unsigned int device_type) {
 	struct ::buffer raw_buffer {};
+	struct ::buffer new_status_raw_buffer {};
 	struct ::buffer current_status_raw_buffer {};
+	struct ::buffer current_command_raw_buffer {};
 
+	if (new_status.isAllocated()) {
+		new_status_raw_buffer = new_status.getStructBuffer();
+	}
 	if (current_status.isAllocated()) {
 		current_status_raw_buffer = current_status.getStructBuffer();
 	}
+	if (current_command.isAllocated()) {
+		current_command_raw_buffer = current_command.getStructBuffer();
+	}
 
-	int ret = generateCommand_(&raw_buffer, new_status.getStructBuffer(),
-		current_status_raw_buffer, current_command.getStructBuffer(), device_type);
+	int ret = generateCommand_(&raw_buffer, new_status_raw_buffer,
+		current_status_raw_buffer, current_command_raw_buffer, device_type);
 	if (ret == OK) {
 		generated_command = constructBufferByTakeOwnership(raw_buffer);
 	} else {
@@ -104,12 +122,16 @@ int ModuleManagerLibraryHandler::aggregateStatus(Buffer &aggregated_status,
 												 const Buffer new_status, unsigned int device_type) {
 	struct ::buffer raw_buffer {};
 	struct ::buffer current_status_raw_buffer {};
+	struct ::buffer new_status_raw_buffer {};
 
 	if (current_status.isAllocated()) {
 		current_status_raw_buffer = current_status.getStructBuffer();
 	}
+	if (new_status.isAllocated()) {
+		new_status_raw_buffer = new_status.getStructBuffer();
+	}
 
-	int ret = aggregateStatus_(&raw_buffer, current_status_raw_buffer, new_status.getStructBuffer(), device_type);
+	int ret = aggregateStatus_(&raw_buffer, current_status_raw_buffer, new_status_raw_buffer, device_type);
 	if (ret == OK) {
 		aggregated_status = constructBufferByTakeOwnership(raw_buffer);
 	} else {
@@ -124,12 +146,16 @@ int ModuleManagerLibraryHandler::aggregateError(Buffer &error_message,
 
 	struct ::buffer raw_buffer {};
 	struct ::buffer current_error_raw_buffer {};
+	struct ::buffer status_raw_buffer {};
 
 	if (current_error_message.isAllocated()) {
 		current_error_raw_buffer = current_error_message.getStructBuffer();
 	}
+	if (status.isAllocated()) {
+		status_raw_buffer = status.getStructBuffer();
+	}
 
-	int ret = aggregateError_(&raw_buffer, current_error_raw_buffer, status.getStructBuffer(), device_type);
+	int ret = aggregateError_(&raw_buffer, current_error_raw_buffer, status_raw_buffer, device_type);
 	if (ret == OK) {
 		error_message = constructBufferByTakeOwnership(raw_buffer);
 	} else {
@@ -150,11 +176,19 @@ int ModuleManagerLibraryHandler::generateFirstCommand(Buffer &default_command, u
 }
 
 int ModuleManagerLibraryHandler::statusDataValid(const Buffer status, unsigned int device_type) {
-	return statusDataValid_(status.getStructBuffer(), device_type);
+	struct ::buffer raw_buffer {};
+	if (status.isAllocated()) {
+		raw_buffer = status.getStructBuffer();
+	}
+	return statusDataValid_(raw_buffer, device_type);
 }
 
 int ModuleManagerLibraryHandler::commandDataValid(const Buffer command, unsigned int device_type) {
-	return commandDataValid_(command.getStructBuffer(), device_type);
+	struct ::buffer raw_buffer {};
+	if (command.isAllocated()) {
+		raw_buffer = command.getStructBuffer();
+	}
+	return commandDataValid_(raw_buffer, device_type);
 }
 
 int ModuleManagerLibraryHandler::allocate(struct buffer *buffer_pointer, size_t size_in_bytes){
