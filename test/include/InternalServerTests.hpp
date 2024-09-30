@@ -1,7 +1,7 @@
 #pragma once
 
 #include <testing_utils/TestHandler.hpp>
-
+#include <bringauto/settings/LoggerId.hpp>
 #include <libbringauto_logger/bringauto/logging/Logger.hpp>
 #include <libbringauto_logger/bringauto/logging/FileSink.hpp>
 #include <libbringauto_logger/bringauto/logging/ConsoleSink.hpp>
@@ -20,20 +20,19 @@ protected:
 	const std::string defaultData { "Tested Data" };
 
 	void initLogger() {
-		using namespace bringauto::logging;
-		Logger::destroy();
-		Logger::addSink<ConsoleSink>();
-		Logger::LoggerSettings params {
+		bringauto::settings::Logger::destroy();
+		bringauto::settings::Logger::addSink<bringauto::logging::ConsoleSink>();
+		bringauto::logging::LoggerSettings params {
 			"InternalServerTests",
-			Logger::Verbosity::Debug
+			bringauto::logging::LoggerVerbosity::Debug
 		};
-		Logger::init(params);
+		bringauto::settings::Logger::init(params);
 	}
 	void SetUp() override {
 		initLogger();
 	}
 
 	void TearDown() override {
-		bringauto::logging::Logger::destroy();
+		bringauto::settings::Logger::destroy();
 	}
 };

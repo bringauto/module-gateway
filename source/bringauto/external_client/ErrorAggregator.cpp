@@ -2,14 +2,12 @@
 
 #include <fleet_protocol/module_maintainer/module_gateway/module_manager.h>
 #include <fleet_protocol/module_gateway/error_codes.h>
-#include <bringauto/logging/Logger.hpp>
+#include <bringauto/settings/LoggerId.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 
 
 
 namespace bringauto::external_client {
-
-using log = bringauto::logging::Logger;
 
 int ErrorAggregator::init_error_aggregator(const std::shared_ptr<modules::ModuleManagerLibraryHandler> &library) {
 	module_ = library;
@@ -39,7 +37,7 @@ ErrorAggregator::add_status_to_error_aggregator(const modules::Buffer& status, c
 	auto &currentError = devices_[device].errorMessage;
 
 	if(module_->aggregateError(errorMessageBuffer, currentError, status, device_type) != OK) {
-		log::logWarning("Error occurred in Error aggregator for device: {}", device.convertToString());
+		settings::Logger::logWarning("Error occurred in Error aggregator for device: {}", device.convertToString());
 		return NOT_OK;
 	}
 	currentError = errorMessageBuffer;

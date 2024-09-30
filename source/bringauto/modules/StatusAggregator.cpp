@@ -1,11 +1,11 @@
 #include <bringauto/modules/StatusAggregator.hpp>
-#include <bringauto/logging/Logger.hpp>
+#include <bringauto/settings/LoggerId.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 
 
 namespace bringauto::modules {
 
-using log = bringauto::logging::Logger;
+using log = bringauto::settings::Logger;
 
 int StatusAggregator::clear_device(const structures::DeviceIdentification &key) {
 	if(is_device_valid(key) == NOT_OK) {
