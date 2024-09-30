@@ -24,7 +24,7 @@ void SentMessagesHandler::addNotAckedStatus(const ExternalProtocol::Status &stat
 int SentMessagesHandler::acknowledgeStatus(const ExternalProtocol::StatusResponse &statusResponse) {
 	std::scoped_lock lock {ackMutex_};
 	auto responseCounter = getStatusResponseCounter(statusResponse);
-	for(auto i = 0; i < notAckedStatuses_.size(); ++i) {
+	for(auto i = 0u; i < notAckedStatuses_.size(); ++i) {
 		if(getStatusCounter(notAckedStatuses_[i]->getStatus()) == responseCounter) {
 			notAckedStatuses_[i]->cancelTimer();
 			notAckedStatuses_.erase(notAckedStatuses_.begin() + i);
