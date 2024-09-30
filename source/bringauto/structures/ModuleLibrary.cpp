@@ -1,6 +1,6 @@
 #include <bringauto/structures/ModuleLibrary.hpp>
 
-#include <bringauto/logging/Logger.hpp>
+#include <bringauto/settings/LoggerId.hpp>
 
 #include <iostream>
 
@@ -18,7 +18,7 @@ void ModuleLibrary::loadLibraries(const std::map<int, std::string> &libPaths) {
 		auto handler = std::make_shared<modules::ModuleManagerLibraryHandler>();
 		handler->loadLibrary(path);
 		if(handler->getModuleNumber() != key) {
-			logging::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path, key, handler->getModuleNumber());
+			settings::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path, key, handler->getModuleNumber());
 			throw std::runtime_error {"Module numbers from config are not corresponding to binaries. Unable to continue. Fix configuration file."};
 		}
 		moduleLibraryHandlers.emplace(key, handler);
@@ -31,7 +31,7 @@ void ModuleLibrary::initStatusAggregators(std::shared_ptr<GlobalContext> &contex
 		statusAggregator->init_status_aggregator();
 		auto moduleNumber = statusAggregator->get_module_number();
 		if(statusAggregators.find(moduleNumber) != statusAggregators.end()) {
-			logging::Logger::logWarning("Module with number: {} is already initialized, so skipping this module",
+			settings::Logger::logWarning("Module with number: {} is already initialized, so skipping this module",
 										moduleNumber);
 			continue;
 		}
@@ -41,13 +41,13 @@ void ModuleLibrary::initStatusAggregators(std::shared_ptr<GlobalContext> &contex
 			const auto &modules = connection.modules;
 			if(std::find(modules.cbegin(), modules.cend(), moduleNumber) != modules.cend()) {
 				statusAggregators.emplace(moduleNumber, statusAggregator);
-				logging::Logger::logInfo("Module with number: {} started", moduleNumber);
+				settings::Logger::logInfo("Module with number: {} started", moduleNumber);
 				found = true;
 				break;
 			}
 		}
 		if(not found) {
-			logging::Logger::logWarning("Module with number: {} does not have endpoint, so skipping this module",
+			settings::Logger::logWarning("Module with number: {} does not have endpoint, so skipping this module",
 										moduleNumber);
 		}
 	}

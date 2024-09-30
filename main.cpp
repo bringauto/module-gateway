@@ -8,7 +8,7 @@
 #include <bringauto/structures/ModuleLibrary.hpp>
 #include <bringauto/structures/InternalClientMessage.hpp>
 #include <bringauto/structures/ModuleHandlerMessage.hpp>
-#include <bringauto/logging/Logger.hpp>
+#include <bringauto/settings/LoggerId.hpp>
 
 #include <InternalProtocol.pb.h>
 #include <libbringauto_logger/bringauto/logging/Logger.hpp>
@@ -23,19 +23,19 @@
 
 
 void initLogger(const std::string &logPath, bool verbose) {
-	using namespace bringauto::logging;
 	if(verbose) {
-		Logger::addSink<ConsoleSink>();
+		bringauto::settings::Logger::addSink<bringauto::logging::ConsoleSink>();
 	}
-	FileSink::Params paramFileSink { logPath, "ModuleGateway.log" };
+	bringauto::logging::FileSink::Params paramFileSink { logPath, "ModuleGateway.log" };
+	using namespace bringauto::logging;
 	paramFileSink.maxFileSize = 50_MiB;
 	paramFileSink.numberOfRotatedFiles = 5;
-	paramFileSink.verbosity = Logger::Verbosity::Info;
+	paramFileSink.verbosity = LoggerVerbosity::Info;
 
-	Logger::addSink<FileSink>(paramFileSink);
-	Logger::LoggerSettings params { "ModuleGateway",
-									Logger::Verbosity::Debug }; // TODO change to Info
-	Logger::init(params);
+	bringauto::settings::Logger::addSink<FileSink>(paramFileSink);
+	LoggerSettings params { "ModuleGateway",
+							LoggerVerbosity::Debug };
+	bringauto::settings::Logger::init(params);
 }
 
 int main(int argc, char **argv) {
@@ -50,8 +50,8 @@ int main(int argc, char **argv) {
 		}
 		context->settings = settingsParser.getSettings();
 		initLogger(context->settings->logPath, context->settings->verbose);
-		bringauto::logging::Logger::logInfo("Version: {}", MODULE_GATEWAY_VERSION);
-		bringauto::logging::Logger::logInfo("Loaded config:\n{}", settingsParser.serializeToJson());
+		baset::Logger::logInfo("Version: {}", MODULE_GATEWAY_VERSION);
+		baset::Logger::logInfo("Loaded config:\n{}", settingsParser.serializeToJson());
 	} catch(std::exception &e) {
 		std::cerr << "[ERROR] Error occurred during reading configuration: " << e.what() << std::endl;
 		return 1;
@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
 	try {
 		internalServer.run();
 	} catch(boost::system::system_error &e) {
-		bringauto::logging::Logger::logError("Error during run {}", e.what());
+		baset::Logger::logError("Error during run {}", e.what());
 		context->ioContext.stop();
 	}
 

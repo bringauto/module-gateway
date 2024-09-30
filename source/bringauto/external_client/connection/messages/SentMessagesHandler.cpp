@@ -1,5 +1,5 @@
 #include <bringauto/external_client/connection/messages/SentMessagesHandler.hpp>
-#include <bringauto/logging/Logger.hpp>
+#include <bringauto/settings/LoggerId.hpp>
 
 #include <fleet_protocol/common_headers/general_error_codes.h>
 #include <google/protobuf/util/message_differencer.h>
@@ -59,7 +59,7 @@ void SentMessagesHandler::deleteConnectedDevice(const structures::DeviceIdentifi
 	if(it != connectedDevices_.end()) {
 		connectedDevices_.erase(it);
 	} else {
-		logging::Logger::logError("Trying to delete not connected device id: {}", device.convertToString());
+		settings::Logger::logError("Trying to delete not connected device id: {}", device.convertToString());
 	}
 }
 

@@ -3,14 +3,14 @@
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
 
-#include <bringauto/logging/Logger.hpp>
+#include <bringauto/settings/LoggerId.hpp>
 
 #include <random>
 
 
 
 namespace bringauto::external_client::connection {
-using log = bringauto::logging::Logger;
+using log = bringauto::settings::Logger;
 
 ExternalConnection::ExternalConnection(const std::shared_ptr<structures::GlobalContext> &context,
 									   structures::ModuleLibrary &moduleLibrary,
@@ -53,12 +53,12 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 	if(!errorAggregators.contains(deviceModule)){
 		log::logError(
 				"Status with module number ({}) was passed to external connection, that doesn't support this module",
-				device.module());
+				static_cast<int>(device.module()));
 		return;
 	}
 	auto &errorAggregator = errorAggregators.at(deviceModule);
 	auto deviceId = structures::DeviceIdentification(device);
-	auto moduleLibraryHanlder = moduleLibrary_.moduleLibraryHandlers.at(deviceModule);
+	auto moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(deviceModule);
 
 	modules::Buffer lastStatus {};
 	auto isRegistered = errorAggregator.get_last_status(lastStatus, deviceId);
@@ -66,7 +66,7 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 		deviceState = ExternalProtocol::Status_DeviceState_CONNECTING;
 
 		const auto &statusData = status.statusdata();
-		auto statusBuffer = moduleLibraryHanlder->constructBuffer(statusData.size());
+		auto statusBuffer = moduleLibraryHandler->constructBuffer(statusData.size());
 		common_utils::ProtobufUtils::copyStatusToBuffer(status, statusBuffer);
 		errorAggregator.add_status_to_error_aggregator(statusBuffer, deviceId);
 	}
@@ -324,7 +324,7 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command &commandMe
 
 	auto commandResponse = common_utils::ProtobufUtils::createExternalClientCommandResponse(sessionId_, responseType,
 																							messageCounter);
-	log::logDebug("Sending command response with type={} and messageCounter={}", responseType, messageCounter);
+	log::logDebug("Sending command response with type={} and messageCounter={}", static_cast<int>(responseType), messageCounter);
 	communicationChannel_->sendMessage(&commandResponse);
 	return 0;
 }
