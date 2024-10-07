@@ -24,7 +24,9 @@ ProtobufUtils::createInternalServerCommandMessage(const InternalProtocol::Device
 												  const modules::Buffer &command) {
 	InternalProtocol::InternalServer message {};
 	auto deviceCommand = message.mutable_devicecommand();
-	deviceCommand->set_commanddata(command.getStructBuffer().data, command.getStructBuffer().size_in_bytes);
+	if (command.isAllocated()) {
+		deviceCommand->set_commanddata(command.getStructBuffer().data, command.getStructBuffer().size_in_bytes);
+	}
 	auto device_ = deviceCommand->mutable_device();
 	device_->CopyFrom(device);
 	return message;
@@ -35,7 +37,9 @@ ProtobufUtils::createInternalClientStatusMessage(const InternalProtocol::Device 
 												 const modules::Buffer &status) {
 	InternalProtocol::InternalClient message {};
 	auto deviceStatus = message.mutable_devicestatus();
-	deviceStatus->set_statusdata(status.getStructBuffer().data, status.getStructBuffer().size_in_bytes);
+	if (status.isAllocated()) {
+		deviceStatus->set_statusdata(status.getStructBuffer().data, status.getStructBuffer().size_in_bytes);
+	}
 	auto device_ = deviceStatus->mutable_device();
 	device_->CopyFrom(device);
 	return message;
@@ -45,7 +49,9 @@ InternalProtocol::DeviceStatus ProtobufUtils::createDeviceStatus(const structure
 																 const modules::Buffer &status) {
 	InternalProtocol::DeviceStatus deviceStatus {};
 	deviceStatus.mutable_device()->CopyFrom(deviceId.convertToIPDevice());
-	deviceStatus.set_statusdata(status.getStructBuffer().data, status.getStructBuffer().size_in_bytes);
+	if (status.isAllocated()) {
+		deviceStatus.set_statusdata(status.getStructBuffer().data, status.getStructBuffer().size_in_bytes);
+	}
 	return deviceStatus;
 }
 
