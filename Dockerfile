@@ -70,7 +70,7 @@ WORKDIR /home/bringauto/
 ADD --chown=bringauto:bringauto https://github.com/bringauto/transparent-module.git#$TRANSPARENT_MODULE_VERSION transparent-module
 
 WORKDIR /home/bringauto/transparent-module/_build
-RUN cmake .. -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREFIX=/home/bringauto/modules/transparent_module/ \
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREFIX=/home/bringauto/modules/transparent_module/ \
     -DFLEET_PROTOCOL_BUILD_EXTERNAL_SERVER=OFF .. && \
     make install
     
