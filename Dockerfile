@@ -62,8 +62,18 @@ RUN cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREF
     -DFLEET_PROTOCOL_BUILD_EXTERNAL_SERVER=OFF .. && \
     make install
 
+FROM bringauto/cpp-build-environment:latest AS transparent_module_builder
 
+ARG TRANSPARENT_MODULE_VERSION=v1.0.1
 
+WORKDIR /home/bringauto/
+ADD --chown=bringauto:bringauto https://github.com/bringauto/transparent-module.git#$TRANSPARENT_MODULE_VERSION transparent-module
+
+WORKDIR /home/bringauto/transparent-module/_build
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREFIX=/home/bringauto/modules/transparent_module/ \
+    -DFLEET_PROTOCOL_BUILD_EXTERNAL_SERVER=OFF .. && \
+    make install
+    
 FROM bringauto/cpp-build-environment:latest
 
 WORKDIR /home/bringauto/module-gateway
@@ -86,5 +96,6 @@ RUN mkdir -p /home/bringauto/module-gateway/tmp/build && \
 # Copy module libraries
 COPY --from=mission_module_builder /home/bringauto/modules /home/bringauto/modules
 COPY --from=io_module_builder /home/bringauto/modules /home/bringauto/modules
+COPY --from=transparent_module_builder /home/bringauto/modules /home/bringauto/modules
 
 EXPOSE 1636

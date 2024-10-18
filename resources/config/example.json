@@ -9,6 +9,7 @@
   "module-paths": {
     "1": "./libmission-module-gateway-sharedd.so",
     "2": "./libio-module-gateway-shared.so",
+    "3": "./libtransparent-module-gateway-shared.so",
     "1000": "./libmission-module-gateway-shared.so"
 
   },
@@ -27,7 +28,7 @@
         },
         "server-ip": "localhost",
         "port": 1883,
-        "modules": [ 1, 2, 1000 ]
+        "modules": [ 1, 2, 3, 1000 ]
       }
     ]
   }
