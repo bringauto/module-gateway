@@ -26,15 +26,17 @@ void initLogger(const std::string &logPath, bool verbose) {
 	if(verbose) {
 		bringauto::settings::Logger::addSink<bringauto::logging::ConsoleSink>();
 	}
-	bringauto::logging::FileSink::Params paramFileSink { logPath, "ModuleGateway.log" };
-	using namespace bringauto::logging;
-	paramFileSink.maxFileSize = 50_MiB;
-	paramFileSink.numberOfRotatedFiles = 5;
-	paramFileSink.verbosity = LoggerVerbosity::Info;
+	if(!logPath.empty()) {
+		bringauto::logging::FileSink::Params paramFileSink { logPath, "ModuleGateway.log" };
+		using namespace bringauto::logging;
+		paramFileSink.maxFileSize = 50_MiB;
+		paramFileSink.numberOfRotatedFiles = 5;
+		paramFileSink.verbosity = LoggerVerbosity::Info;
+		bringauto::settings::Logger::addSink<FileSink>(paramFileSink);
+	}
 
-	bringauto::settings::Logger::addSink<FileSink>(paramFileSink);
-	LoggerSettings params { "ModuleGateway",
-							LoggerVerbosity::Debug };
+	bringauto::logging::LoggerSettings params { "ModuleGateway",
+												bringauto::logging::LoggerVerbosity::Debug };
 	bringauto::settings::Logger::init(params);
 }
 

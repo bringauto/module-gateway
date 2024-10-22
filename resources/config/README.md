@@ -9,6 +9,7 @@ Setting used in Module Gateway can be parsed out of .json file.
   - string
   - logs will be saved to provided folder
   - path can be both relative and absolute
+  - can be empty to disable logging to files
 * verbose : 
   - bool
   - if true logs will be printed to console
