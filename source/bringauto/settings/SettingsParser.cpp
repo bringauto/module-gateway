@@ -93,7 +93,7 @@ bool SettingsParser::areCmdArgumentsCorrect() {
 bool SettingsParser::areSettingsCorrect() {
 	bool isCorrect = true;
 
-	if(!std::filesystem::exists(settings_->logPath)) {
+	if(!settings_->logPath.empty() && !std::filesystem::exists(settings_->logPath)) {
 		std::cerr << "Given log path (" << settings_->logPath << ") does not exist." << std::endl;
 		isCorrect = false;
 	}
