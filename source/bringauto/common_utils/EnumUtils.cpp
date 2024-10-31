@@ -2,7 +2,7 @@
 #include <bringauto/settings/Constants.hpp>
 
 #include <algorithm>
-
+#include <iostream>
 
 
 namespace bringauto::common_utils {
@@ -37,6 +37,7 @@ logging::LoggerVerbosity EnumUtils::stringToLoggerVerbosity(std::string toEnum) 
 	} else if(toEnum == settings::Constants::LOG_LEVEL_CRITICAL) {
 		return logging::LoggerVerbosity::Critical;
 	}
+	std::cerr << "Invalid logger verbosity: " << toEnum << std::endl;
 	return logging::LoggerVerbosity::Debug;
 }
 
