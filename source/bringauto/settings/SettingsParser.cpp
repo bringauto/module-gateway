@@ -127,17 +127,17 @@ void SettingsParser::fillSettings() {
 }
 
 void SettingsParser::fillLoggingSettings(const nlohmann::json &file) {
-	settings_->loggingSettings.console.use = file[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_CONSOLE)]
-		[std::string(Constants::LOG_USE)];
-	settings_->loggingSettings.console.level = common_utils::EnumUtils::stringToLoggerVerbosity(
-		file[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_CONSOLE)][std::string(Constants::LOG_LEVEL)]);
+	const auto &consoleLogging = file[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_CONSOLE)];
+	const auto &fileLogging = file[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_FILE)];
 
-	settings_->loggingSettings.file.use = file[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_FILE)]
-		[std::string(Constants::LOG_USE)];
+	settings_->loggingSettings.console.use = consoleLogging[std::string(Constants::LOG_USE)];
+	settings_->loggingSettings.console.level = common_utils::EnumUtils::stringToLoggerVerbosity(
+		consoleLogging[std::string(Constants::LOG_LEVEL)]);
+
+	settings_->loggingSettings.file.use = fileLogging[std::string(Constants::LOG_USE)];
 	settings_->loggingSettings.file.level = common_utils::EnumUtils::stringToLoggerVerbosity(
-		file[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_FILE)][std::string(Constants::LOG_LEVEL)]);
-	settings_->loggingSettings.file.path = std::filesystem::path(
-		file[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_FILE)][std::string(Constants::LOG_PATH)]);
+		fileLogging[std::string(Constants::LOG_LEVEL)]);
+	settings_->loggingSettings.file.path = std::filesystem::path(fileLogging[std::string(Constants::LOG_PATH)]);
 }
 
 void SettingsParser::fillInternalServerSettings(const nlohmann::json &file) {
