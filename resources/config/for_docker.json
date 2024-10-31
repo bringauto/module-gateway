@@ -1,7 +1,14 @@
 {
-  "general-settings": {
-    "log-path": "/home/bringauto/log",
-    "verbose": true
+  "logging": {
+    "console": {
+      "level": "DEBUG",
+      "use": true
+    },
+    "file": {
+      "level": "DEBUG",
+      "use": true,
+      "path": "/home/bringauto/log"
+    }
   },
   "internal-server-settings": {
     "port": 1636

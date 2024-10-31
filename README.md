@@ -53,8 +53,6 @@ make
 * required arguments:
   * `-c | --config-path <string>`path to json configuration file ([Configs Readme](./configs/README.md))
 * All arguments:
-  * `-v | --verbose` logs will be printed to console
-  * `-l | --log-path <string>` logs will be saved to provided path
   * `-h | --help` print help
   * `--port <unsigned short>` port on which Internal Server communicates
   * `--module-paths <string>` path to shared module libraries

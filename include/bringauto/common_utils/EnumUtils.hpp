@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bringauto/structures/ExternalConnectionSettings.hpp>
+#include <bringauto/logging/LoggerVerbosity.hpp>
 
 
 
@@ -27,6 +28,22 @@ public:
 	 * @return std::string
 	 */
 	static std::string protocolTypeToString(structures::ProtocolType toString);
+
+	/**
+	 * @brief Converts string to logger verbosity
+	 * 
+	 * @param toEnum string
+	 * @return logging::LoggerVerbosity
+	 */
+	static logging::LoggerVerbosity stringToLoggerVerbosity(std::string toEnum);
+
+	/**
+	 * @brief Converts logger verbosity to string
+	 *
+	 * @param verbosity logging::LoggerVerbosity
+	 * @return std::string
+	 */
+	static std::string loggerVerbosityToString(logging::LoggerVerbosity verbosity);
 
 };
 

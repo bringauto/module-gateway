@@ -50,7 +50,7 @@ private:
 
 	void fillSettings();
 
-	void fillGeneralSettings(const nlohmann::json &file);
+	void fillLoggingSettings(const nlohmann::json &file);
 
 	void fillInternalServerSettings(const nlohmann::json &file);
 

@@ -34,9 +34,7 @@ void SettingsParser::parseCmdArguments(int argc, char **argv) {
 	options.add_options("General")
 				   ("h, " + std::string(Constants::HELP), "Print usage")
 				   ("c, " + std::string(Constants::CONFIG_PATH), "Path to configuration file",
-					cxxopts::value<std::string>())
-				   ("l, " + std::string(Constants::LOG_PATH), "Path to logs", cxxopts::value<std::string>())
-				   ("v, " + std::string(Constants::VERBOSE), "Print log messages into terminal");
+					cxxopts::value<std::string>());
 	options.add_options("Internal Server")(std::string(Constants::PORT), "Port on which Server listens",
 										   cxxopts::value<int>());
 	options.add_options("Module Handler")(std::string(Constants::MODULE_PATHS), "Paths to shared module libraries",
@@ -56,8 +54,6 @@ bool SettingsParser::areCmdArgumentsCorrect() {
 	};
 	std::vector<std::string> allParameters = {
 			std::string(Constants::CONFIG_PATH),
-			std::string(Constants::VERBOSE),
-			std::string(Constants::LOG_PATH),
 			std::string(Constants::PORT),
 			std::string(Constants::MODULE_PATHS)
 	};
@@ -93,8 +89,8 @@ bool SettingsParser::areCmdArgumentsCorrect() {
 bool SettingsParser::areSettingsCorrect() {
 	bool isCorrect = true;
 
-	if(!settings_->logPath.empty() && !std::filesystem::exists(settings_->logPath)) {
-		std::cerr << "Given log path (" << settings_->logPath << ") does not exist." << std::endl;
+	if(settings_->loggingSettings.file.use && !std::filesystem::exists(settings_->loggingSettings.file.path)) {
+		std::cerr << "Given log path (" << settings_->loggingSettings.file.path << ") does not exist." << std::endl;
 		isCorrect = false;
 	}
 	if(settings_->modulePaths.empty()) {
@@ -124,24 +120,24 @@ void SettingsParser::fillSettings() {
 	std::ifstream inputFile(configPath);
 	const auto file = nlohmann::json::parse(inputFile);
 
-	fillGeneralSettings(file);
+	fillLoggingSettings(file);
 	fillInternalServerSettings(file);
 	fillModulePathsSettings(file);
 	fillExternalConnectionSettings(file);
 }
 
-void SettingsParser::fillGeneralSettings(const nlohmann::json &file) {
-	if(cmdArguments_.count(std::string(Constants::LOG_PATH))) {
-		settings_->logPath = cmdArguments_[std::string(Constants::LOG_PATH)].as<std::string>();
-	} else {
-		settings_->logPath = std::filesystem::path(
-				file[std::string(Constants::GENERAL_SETTINGS)][std::string(Constants::LOG_PATH)]);
-	}
-	if(cmdArguments_.count(std::string(Constants::VERBOSE))) {
-		settings_->verbose = cmdArguments_.count(std::string(Constants::VERBOSE)) == 1;
-	} else {
-		settings_->verbose = file[std::string(Constants::GENERAL_SETTINGS)][std::string(Constants::VERBOSE)];
-	}
+void SettingsParser::fillLoggingSettings(const nlohmann::json &file) {
+	settings_->loggingSettings.console.use = file[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_CONSOLE)]
+		[std::string(Constants::LOG_USE)];
+	settings_->loggingSettings.console.level = common_utils::EnumUtils::stringToLoggerVerbosity(
+		file[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_CONSOLE)][std::string(Constants::LOG_LEVEL)]);
+
+	settings_->loggingSettings.file.use = file[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_FILE)]
+		[std::string(Constants::LOG_USE)];
+	settings_->loggingSettings.file.level = common_utils::EnumUtils::stringToLoggerVerbosity(
+		file[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_FILE)][std::string(Constants::LOG_LEVEL)]);
+	settings_->loggingSettings.file.path = std::filesystem::path(
+		file[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_FILE)][std::string(Constants::LOG_PATH)]);
 }
 
 void SettingsParser::fillInternalServerSettings(const nlohmann::json &file) {
@@ -206,12 +202,23 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 
 std::string SettingsParser::serializeToJson() {
 	nlohmann::json settingsAsJson {};
-	settingsAsJson[std::string(Constants::GENERAL_SETTINGS)][std::string(Constants::LOG_PATH)] = settings_->logPath;
-	settingsAsJson[std::string(Constants::GENERAL_SETTINGS)][std::string(Constants::VERBOSE)] = settings_->verbose;
+
+	settingsAsJson[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_CONSOLE)]
+		[std::string(Constants::LOG_USE)] = settings_->loggingSettings.console.use;
+	settingsAsJson[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_CONSOLE)][std::string(Constants::LOG_LEVEL)] =
+		common_utils::EnumUtils::loggerVerbosityToString(settings_->loggingSettings.console.level);
+	settingsAsJson[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_FILE)]
+		[std::string(Constants::LOG_USE)] = settings_->loggingSettings.file.use;
+	settingsAsJson[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_FILE)][std::string(Constants::LOG_LEVEL)] =
+		common_utils::EnumUtils::loggerVerbosityToString(settings_->loggingSettings.file.level);
+	settingsAsJson[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_FILE)]
+		[std::string(Constants::LOG_PATH)] = settings_->loggingSettings.file.path;
+
 	settingsAsJson[std::string(Constants::INTERNAL_SERVER_SETTINGS)][std::string(Constants::PORT)] = settings_->port;
 	for(const auto &[key, val]: settings_->modulePaths) {
 		settingsAsJson[std::string(Constants::MODULE_PATHS)][std::to_string(key)] = val;
 	}
+
 	settingsAsJson[std::string(Constants::EXTERNAL_CONNECTION)][std::string(Constants::COMPANY)] = settings_->company;
 	settingsAsJson[std::string(Constants::EXTERNAL_CONNECTION)][std::string(Constants::VEHICLE_NAME)] = settings_->vehicleName;
 	nlohmann::json::array_t endpoints {};

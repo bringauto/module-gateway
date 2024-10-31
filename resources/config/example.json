@@ -1,7 +1,14 @@
 {
-  "general-settings": {
-    "log-path": "./",
-    "verbose": true
+  "logging": {
+    "console": {
+      "level": "DEBUG",
+      "use": true
+    },
+    "file": {
+      "level": "DEBUG",
+      "use": false,
+      "path": ""
+    }
   },
   "internal-server-settings": {
     "port": 8888

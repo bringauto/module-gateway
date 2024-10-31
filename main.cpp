@@ -22,16 +22,17 @@
 #endif
 
 
-void initLogger(const std::string &logPath, bool verbose) {
-	if(verbose) {
-		bringauto::settings::Logger::addSink<bringauto::logging::ConsoleSink>();
+void initLogger(const bringauto::structures::LoggingSettings &settings) {
+	if(settings.console.use) {
+		bringauto::logging::ConsoleSink::Params paramConsoleSink { settings.console.level };
+		bringauto::settings::Logger::addSink<bringauto::logging::ConsoleSink>(paramConsoleSink);
 	}
-	if(!logPath.empty()) {
-		bringauto::logging::FileSink::Params paramFileSink { logPath, "ModuleGateway.log" };
+	if(settings.file.use) {
+		bringauto::logging::FileSink::Params paramFileSink { settings.file.path, "ModuleGateway.log" };
 		using namespace bringauto::logging;
 		paramFileSink.maxFileSize = 50_MiB;
 		paramFileSink.numberOfRotatedFiles = 5;
-		paramFileSink.verbosity = LoggerVerbosity::Info;
+		paramFileSink.verbosity = settings.file.level;
 		bringauto::settings::Logger::addSink<FileSink>(paramFileSink);
 	}
 
@@ -51,7 +52,7 @@ int main(int argc, char **argv) {
 			return 0;
 		}
 		context->settings = settingsParser.getSettings();
-		initLogger(context->settings->logPath, context->settings->verbose);
+		initLogger(context->settings->loggingSettings);
 		baset::Logger::logInfo("Version: {}", MODULE_GATEWAY_VERSION);
 		baset::Logger::logInfo("Loaded config:\n{}", settingsParser.serializeToJson());
 	} catch(std::exception &e) {

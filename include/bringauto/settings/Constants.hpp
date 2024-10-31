@@ -118,14 +118,26 @@ struct MqttConstants {
 class Constants {
 public:
 	inline static constexpr std::string_view CONFIG_PATH { "config-path" };
-	inline static constexpr std::string_view VERBOSE { "verbose" };
-	inline static constexpr std::string_view LOG_PATH { "log-path" };
+
+	inline static constexpr std::string_view LOGGING { "logging" };
+	inline static constexpr std::string_view LOGGING_CONSOLE { "console" };
+	inline static constexpr std::string_view LOGGING_FILE { "file" };
+	inline static constexpr std::string_view LOG_LEVEL { "level" };
+	inline static constexpr std::string_view LOG_USE { "use" };
+	inline static constexpr std::string_view LOG_PATH { "path" };
+
+	inline static constexpr std::string_view LOG_LEVEL_DEBUG { "DEBUG" };
+	inline static constexpr std::string_view LOG_LEVEL_INFO { "INFO" };
+	inline static constexpr std::string_view LOG_LEVEL_WARNING { "WARNING" };
+	inline static constexpr std::string_view LOG_LEVEL_ERROR { "ERROR" };
+	inline static constexpr std::string_view LOG_LEVEL_CRITICAL { "CRITICAL" };
+	inline static constexpr std::string_view LOG_LEVEL_INVALID { "INVALID" };
+
 	inline static constexpr std::string_view HELP { "help" };
 	inline static constexpr std::string_view PORT { "port" };
 
 	inline static constexpr std::string_view MODULE_PATHS { "module-paths" };
 
-	inline static constexpr std::string_view GENERAL_SETTINGS { "general-settings" };
 	inline static constexpr std::string_view INTERNAL_SERVER_SETTINGS { "internal-server-settings" };
 
 	inline static constexpr std::string_view EXTERNAL_CONNECTION { "external-connection" };
