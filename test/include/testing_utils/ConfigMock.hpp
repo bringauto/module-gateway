@@ -28,7 +28,7 @@ public:
 		} internal_server_settings;
 
 		std::map<int, std::string> module_paths { {1, "/path/to/lib1.so"}, {2, "/path/to/lib2.so"}, {3, "/path/to/lib3.so"} };
-		std::string modulePathsToString() {
+		std::string modulePathsToString() const {
 			std::string result = "";
 			for (auto [key, value] : module_paths) {
 				result += std::format("\"{}\": \"{}\",\n", key, value);
@@ -54,7 +54,7 @@ public:
 					{ "client-cert", "\"client.pem\"" },
 					{ "client", "\"key.pem\"" }
 				};
-				std::string mqttSettingsToString() {
+				std::string mqttSettingsToString() const {
 					std::string result = "";
 					for (auto [key, value] : mqtt_settings) {
 						result += std::format("\"{}\": {},\n", key, value);
@@ -67,7 +67,7 @@ public:
 				}
 				
 				std::vector<int> modules { 1, 2, 3 };
-				std::string modulesToString() {
+				std::string modulesToString() const {
 					std::string result = "";
 					for (auto module : modules) {
 						result += std::format("{},", module);
@@ -83,7 +83,7 @@ public:
 
 	
 
-	ConfigMock(Config config) : config_(config) {
+	ConfigMock(const Config &config) : config_(config) {
 		auto endpoint = config_.external_connection.endpoint;
 
 		configString_ = std::format(
@@ -133,12 +133,12 @@ public:
 		);
 	}
 
-	std::string getConfigString() {
+	std::string getConfigString() const {
 		return configString_;
 	}
 
 private:
-	std::string boolToString(bool value) {
+	std::string boolToString(bool value) const {
 		return value ? "true" : "false";
 	}
 

@@ -9,8 +9,6 @@
 #include <fstream>
 
 
-using namespace testing_utils;
-
 class SettingsParserTests: public ::testing::Test {
 protected:
 	void SetUp() override {
@@ -21,8 +19,8 @@ protected:
 		std::remove(CONFIG_PATH);
 	}
 
-	bool parseConfig(ConfigMock::Config config, std::vector<std::string> cmdArgs = {}, bool overrideArgs = false) {
-		ConfigMock configMock(config);
+	bool parseConfig(testing_utils::ConfigMock::Config config, std::vector<std::string> cmdArgs = {}, bool overrideArgs = false) {
+		testing_utils::ConfigMock configMock(config);
 		configFile << configMock.getConfigString();
 		configFile.close();
 

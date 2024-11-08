@@ -10,7 +10,7 @@ namespace bacu = bringauto::common_utils;
  * @brief Test if settings are correctly parsed from the config file
  */
 TEST_F(SettingsParserTests, ValidConfig) {
-	ConfigMock::Config config {};
+	testing_utils::ConfigMock::Config config {};
 	auto result = parseConfig(config);
 	EXPECT_TRUE(result);
 
@@ -42,7 +42,7 @@ TEST_F(SettingsParserTests, ValidConfig) {
  * @brief Test if settings are correctly parsed from command line arguments
  */
 TEST_F(SettingsParserTests, CmdOptionsPriority){
-	ConfigMock::Config config {};
+	testing_utils::ConfigMock::Config config {};
 	auto result = parseConfig(config, {
 		"--port=2000"
 	});
@@ -57,7 +57,7 @@ TEST_F(SettingsParserTests, CmdOptionsPriority){
  * @brief Test if the help command option is correctly parsed
  */
 TEST_F(SettingsParserTests, HelpCmdOption){
-	auto result = parseConfig(ConfigMock::Config(), {"--help"});
+	auto result = parseConfig(testing_utils::ConfigMock::Config(), {"--help"});
 	EXPECT_FALSE(result);
 }
 
@@ -68,7 +68,7 @@ TEST_F(SettingsParserTests, HelpCmdOption){
 TEST_F(SettingsParserTests, DuplicateCmdOption){
 	bool failed = false;
 	try	{
-		parseConfig(ConfigMock::Config(), {"--config-path=/path"});
+		parseConfig(testing_utils::ConfigMock::Config(), {"--config-path=/path"});
 	}catch (std::invalid_argument &e){
 		EXPECT_STREQ(e.what(), "Cmd arguments are not correct.");
 		failed = true;
@@ -83,7 +83,7 @@ TEST_F(SettingsParserTests, DuplicateCmdOption){
 TEST_F(SettingsParserTests, UnmatchedCmdOption){
 	bool failed = false;
 	try	{
-		parseConfig(ConfigMock::Config(), {"--made-up-option=value"});
+		parseConfig(testing_utils::ConfigMock::Config(), {"--made-up-option=value"});
 	}catch (std::invalid_argument &e){
 		EXPECT_STREQ(e.what(), "Cmd arguments are not correct.");
 		failed = true;
@@ -98,7 +98,7 @@ TEST_F(SettingsParserTests, UnmatchedCmdOption){
 TEST_F(SettingsParserTests, MissingRequiredConfigOption){
 	bool failed = false;
 	try	{
-		parseConfig(ConfigMock::Config(), {"modulegateway_tests", "--port=2000"}, true);
+		parseConfig(testing_utils::ConfigMock::Config(), {"modulegateway_tests", "--port=2000"}, true);
 	}catch (std::invalid_argument &e){
 		EXPECT_STREQ(e.what(), "Cmd arguments are not correct.");
 		failed = true;
@@ -111,7 +111,7 @@ TEST_F(SettingsParserTests, MissingRequiredConfigOption){
  * @brief Test if non existent log path is correctly handled
  */
 TEST_F(SettingsParserTests, LogPathNonExistent){
-	ConfigMock::Config config {};
+	testing_utils::ConfigMock::Config config {};
 	config.logging.file.path = "/non/existent/path";
 	bool failed = false;
 	try {
@@ -128,7 +128,7 @@ TEST_F(SettingsParserTests, LogPathNonExistent){
  * @brief Test if empty module paths are correctly handled 
  */
 TEST_F(SettingsParserTests, EmptyModulePaths){
-	ConfigMock::Config config {};
+	testing_utils::ConfigMock::Config config {};
 	config.module_paths = {};
 	bool failed = false;
 	try {
@@ -145,7 +145,7 @@ TEST_F(SettingsParserTests, EmptyModulePaths){
  * @brief Test if invalid company name is correctly handled 
  */
 TEST_F(SettingsParserTests, InvalidCompany){
-	ConfigMock::Config config {};
+	testing_utils::ConfigMock::Config config {};
 	config.external_connection.company = "Company Name";
 	bool failed = false;
 	try {
@@ -162,7 +162,7 @@ TEST_F(SettingsParserTests, InvalidCompany){
  * @brief Test if invalid vehicle name is correctly handled 
  */
 TEST_F(SettingsParserTests, InvalidVehicleName){
-	ConfigMock::Config config {};
+	testing_utils::ConfigMock::Config config {};
 	config.external_connection.vehicle_name = "Vehicle Name";
 	bool failed = false;
 	try {
@@ -179,7 +179,7 @@ TEST_F(SettingsParserTests, InvalidVehicleName){
  * @brief Test if invalid protocol type is correctly handled 
  */
 TEST_F(SettingsParserTests, InvalidProtocol){
-	ConfigMock::Config config {};
+	testing_utils::ConfigMock::Config config {};
 	config.external_connection.endpoint.protocol_type = "INVALID";
 	auto result = parseConfig(config);
 	EXPECT_TRUE(result);
