@@ -17,7 +17,7 @@ bool SettingsParser::parseSettings(int argc, char **argv) {
 	}
 
 	if(!areCmdArgumentsCorrect()) {
-		throw std::invalid_argument {"Cmd arguments are not correct"};
+		throw std::invalid_argument {"Cmd arguments are not correct."};
 	}
 
 	fillSettings();
@@ -40,6 +40,7 @@ void SettingsParser::parseCmdArguments(int argc, char **argv) {
 	options.add_options("Module Handler")(std::string(Constants::MODULE_PATHS), "Paths to shared module libraries",
 										  cxxopts::value<std::vector<std::string >>());
 
+	options.allow_unrecognised_options();
 	cmdArguments_ = options.parse(argc, argv);
 
 	if(cmdArguments_.count("help") != 0 || argc == 1) {
@@ -149,35 +150,19 @@ void SettingsParser::fillInternalServerSettings(const nlohmann::json &file) {
 }
 
 void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) {
-	if(cmdArguments_.count(std::string(Constants::MODULE_PATHS))) {
-		settings_->modulePaths = cmdArguments_[std::string(Constants::MODULE_PATHS)].as<std::map<int, std::string >>();
-	} else {
-		for(auto &[key, val]: file[std::string(Constants::MODULE_PATHS)].items()) {
-			settings_->modulePaths[stoi(key)] = val;
-		}
+	for(auto &[key, val]: file[std::string(Constants::MODULE_PATHS)].items()) {
+		settings_->modulePaths[stoi(key)] = val;
 	}
 }
 
 void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) {
-	if(cmdArguments_.count(std::string(Constants::VEHICLE_NAME))) {
-		settings_->vehicleName = cmdArguments_[std::string(Constants::VEHICLE_NAME)].as<std::string>();
-	} else {
-		settings_->vehicleName = file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(
-				Constants::VEHICLE_NAME)];
-	}
-	if(cmdArguments_.count(std::string(Constants::COMPANY))) {
-		settings_->company = cmdArguments_[std::string(Constants::COMPANY)].as<std::string>();
-	} else {
-		settings_->company = file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(Constants::COMPANY)];
-	}
+	settings_->vehicleName = file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(
+			Constants::VEHICLE_NAME)];
+	settings_->company = file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(Constants::COMPANY)];
 
 	for(const auto &endpoint: file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(
 			Constants::EXTERNAL_ENDPOINTS)]) {
 		structures::ExternalConnectionSettings externalConnectionSettings {};
-		externalConnectionSettings.serverIp = endpoint[std::string(Constants::SERVER_IP)];
-		externalConnectionSettings.port = endpoint[std::string(Constants::PORT)];
-		externalConnectionSettings.modules = endpoint[std::string(Constants::MODULES)].get<std::vector<int >>();
-
 		externalConnectionSettings.protocolType = common_utils::EnumUtils::stringToProtocolType(
 				endpoint[std::string(Constants::PROTOCOL_TYPE)]);
 		std::string settingsName {};
@@ -190,6 +175,11 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 				std::cerr << "Invalid protocol type: " << endpoint[std::string(Constants::PROTOCOL_TYPE)] << std::endl;
 				continue;
 		}
+
+		externalConnectionSettings.serverIp = endpoint[std::string(Constants::SERVER_IP)];
+		externalConnectionSettings.port = endpoint[std::string(Constants::PORT)];
+		externalConnectionSettings.modules = endpoint[std::string(Constants::MODULES)].get<std::vector<int >>();
+		
 		if(endpoint.find(settingsName) != endpoint.end()) {
 			for(auto &[key, val]: endpoint[settingsName].items()) {
 				externalConnectionSettings.protocolSettings[key] = to_string(val);

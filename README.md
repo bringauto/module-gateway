@@ -51,11 +51,10 @@ make
 ### Arguments
 
 * required arguments:
-  * `-c | --config-path <string>`path to json configuration file ([Configs Readme](./configs/README.md))
+  * `-c <string> | --config-path=<string>`path to json configuration file ([Configs Readme](./configs/README.md))
 * All arguments:
   * `-h | --help` print help
-  * `--port <unsigned short>` port on which Internal Server communicates
-  * `--module-paths <string>` path to shared module libraries
+  * `--port=<unsigned short>` port on which Internal Server communicates
 
 ### CMAKE arguments
 
