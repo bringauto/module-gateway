@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bringauto/structures/ExternalConnectionSettings.hpp>
+#include <bringauto/structures/LoggingSettings.hpp>
 
 #include <filesystem>
 #include <vector>
@@ -18,14 +19,6 @@ struct Settings {
  	 * @brief port on which the server is started
  	 */
 	unsigned short port;
-	/**
-	 * @brief path to folder, where logs will be generated
-	 */
-	std::filesystem::path logPath {};
-	/**
-	 * @brief verbose switch, if true, logs will be also printed to console
-	 */
-	bool verbose;
 
 	/**
 	 * @brief company name for external connection
@@ -47,5 +40,9 @@ struct Settings {
 	 */
 	std::vector<structures::ExternalConnectionSettings> externalConnectionSettingsList {};
 
+	/**
+	 * @brief Settings for logging
+	 */
+	structures::LoggingSettings loggingSettings {};
 };
 }
