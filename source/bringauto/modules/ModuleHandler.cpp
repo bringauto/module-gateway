@@ -72,6 +72,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 					toExternalQueue_->pushAndNotify(structures::InternalClientMessage(false, statusMessage));
 					settings::Logger::logDebug("Module handler pushed a timed out aggregated status, number of aggregated statuses in queue {}",
 								  toExternalQueue_->size());
+					checkExternalQueueSize();
 				}
 
 				if(statusAggregator->getDeviceTimeoutCount(device) >= settings::status_aggregation_timeout_max_count){
@@ -123,6 +124,7 @@ void ModuleHandler::sendAggregatedStatus(const structures::DeviceIdentification 
 	toExternalQueue_->pushAndNotify(structures::InternalClientMessage(disconnected, statusMessage));
 	settings::Logger::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}",
 				  toExternalQueue_->size());
+	checkExternalQueueSize();
 }
 
 void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
@@ -208,6 +210,13 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	while(addStatusToAggregatorRc > 0) {
 		sendAggregatedStatus(deviceId, device, false);
 		addStatusToAggregatorRc--;
+	}
+}
+
+void ModuleHandler::checkExternalQueueSize() {
+	if(toExternalQueue_->size() > settings::max_external_queue_size) {
+		settings::Logger::logError("External queue size is too big, external client is not handling messages");
+		throw std::runtime_error("External queue size is too big");
 	}
 }
 
