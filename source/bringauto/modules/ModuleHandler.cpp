@@ -216,6 +216,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 void ModuleHandler::checkExternalQueueSize() {
 	if(toExternalQueue_->size() > settings::max_external_queue_size) {
 		settings::Logger::logError("External queue size is too big, external client is not handling messages");
+		destroy();
 		throw std::runtime_error("External queue size is too big");
 	}
 }
