@@ -94,6 +94,11 @@ private:
 	 */
 	void handleStatus(const InternalProtocol::DeviceStatus &status);
 
+	/**
+	 * @brief Throws an error if external queue size is too big
+	 */
+	void checkExternalQueueSize();
+
 	std::shared_ptr <structures::GlobalContext> context_ {};
 
 	structures::ModuleLibrary &moduleLibrary_;
