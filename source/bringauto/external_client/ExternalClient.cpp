@@ -97,7 +97,7 @@ void ExternalClient::initConnections() {
 			case structures::ProtocolType::INVALID:
 			default:
 				settings::Logger::logError("Invalid external communication protocol type");
-				throw std::runtime_error("Invalid external communication protocol type");
+				throw std::invalid_argument("Invalid external communication protocol type");
 		}
 
 		newConnection.init(context_->settings->company, context_->settings->vehicleName, communicationChannel);
