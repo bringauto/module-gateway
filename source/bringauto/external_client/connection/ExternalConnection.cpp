@@ -157,7 +157,7 @@ int ExternalConnection::connectMessageHandle(const std::vector<structures::Devic
 	const auto connectResponseMsg = communicationChannel_->receiveMessage();
 	if(connectResponseMsg == nullptr) {
 		log::logError("Communication client couldn't receive any message");
-		return NOT_OK;
+		return NO_MESSAGE_AVAILABLE;
 	}
 	if(not connectResponseMsg->has_connectresponse()) {
 		log::logError("Received message doesn't have connect response type");
@@ -185,7 +185,7 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 			log::logError("Device is not registered in error aggregator: {} {}",
 				deviceIdentification.getDeviceRole(),
 				deviceIdentification.getDeviceName());
-			return NOT_OK;
+			return DEVICE_NOT_REGISTERED;
 		}
 
 		int lastStatusRc = errorAggregators_[deviceModule].get_last_status(statusBuffer, deviceIdentification);
@@ -193,7 +193,7 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 			log::logError("Cannot obtain status for device: {} {}",
 				deviceIdentification.getDeviceRole(),
 				deviceIdentification.getDeviceName());
-			return NOT_OK;
+			return NO_MESSAGE_AVAILABLE;
 		}
 		auto deviceStatus = common_utils::ProtobufUtils::createDeviceStatus(deviceIdentification, statusBuffer);
 		sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_CONNECTING, errorBuffer);
@@ -204,19 +204,19 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 		const auto statusResponseMsg = communicationChannel_->receiveMessage();
 		if(statusResponseMsg == nullptr) {
 			log::logError("Communication client couldn't receive any message");
-			return NOT_OK;
+			return NO_MESSAGE_AVAILABLE;
 		}
 		if(not statusResponseMsg->has_statusresponse()) {
 			log::logError("Received message doesn't have status response type");
-			return NOT_OK;
+			return STATUS_INVALID;
 		}
 		if(statusResponseMsg->statusresponse().type() != ExternalProtocol::StatusResponse_Type_OK) {
 			log::logError("Status response does not contain OK");
-			return NOT_OK;
+			return STATUS_INVALID;
 		}
 		if(statusResponseMsg->statusresponse().sessionid() != sessionId_) {
 			log::logError("Bad session id in status response");
-			return NOT_OK;
+			return STATUS_INVALID;
 		}
 		sentMessagesHandler_->acknowledgeStatus(statusResponseMsg->statusresponse());
 	}
@@ -229,11 +229,11 @@ int ExternalConnection::commandMessageHandle(const std::vector<structures::Devic
 		const auto commandMsg = communicationChannel_->receiveMessage();
 		if(commandMsg == nullptr) {
 			log::logError("Communication client couldn't receive any message");
-			return NOT_OK;
+			return NO_MESSAGE_AVAILABLE;
 		}
 		if(not commandMsg->has_command()) {
 			log::logError("Received message doesn't have command type");
-			return NOT_OK;
+			return COMMAND_INVALID;
 		}
 		if(handleCommand(commandMsg->command()) != OK) {
 			return NOT_OK;
@@ -242,7 +242,7 @@ int ExternalConnection::commandMessageHandle(const std::vector<structures::Devic
 	return OK;
 }
 
-void ExternalConnection::generateSessionId() { // todo sprav toto lepsie a napis unit testy pre tento class
+void ExternalConnection::generateSessionId() {
 	static const std::string chrs = "0123456789"
 									"abcdefghijklmnopqrstuvwxyz"
 									"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -287,12 +287,12 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command &commandMe
 
 	if(commandMessage.sessionid() != sessionId_) {
 		log::logError("Command {} has incorrect sessionId", messageCounter);
-		return NOT_OK;
+		return COMMAND_INVALID;
 	}
 	if(serverMessageCounter_ != 0) {
 		if(serverMessageCounter_ + 1 != messageCounter) {
 			log::logError("Command {} is out of order", messageCounter);
-			return NOT_OK; // Out of order
+			return COMMAND_INVALID;
 		}
 	}
 	serverMessageCounter_ = messageCounter;
@@ -310,7 +310,7 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command &commandMe
 	if(sentMessagesHandler_->isDeviceConnected(deviceId)) {
 		responseType = ExternalProtocol::CommandResponse_Type_OK;
 		commandQueue_->pushAndNotify(commandMessage.devicecommand());
-	} else if(errorAggregator.is_device_type_supported(deviceId.getDeviceType()) == NOT_OK) {
+	} else if(errorAggregator.is_device_type_supported(deviceId.getDeviceType()) != OK) {
 		responseType = ExternalProtocol::CommandResponse_Type_DEVICE_NOT_SUPPORTED;
 	} else {
 		responseType = ExternalProtocol::CommandResponse_Type_DEVICE_NOT_CONNECTED;

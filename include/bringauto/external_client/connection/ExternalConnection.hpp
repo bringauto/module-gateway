@@ -139,7 +139,8 @@ private:
 	 *
 	 * @param commandMessage
 	 * @return OK if successful
-	 * @return NOT_OK if command is out of order or has incorrect session ID
+	 * @return COMMAND_INVALID if command is out of order or has incorrect session ID
+	 * @return NOT_OK otherwise
 	 */
 	int handleCommand(const ExternalProtocol::Command &commandMessage);
 
