@@ -84,7 +84,7 @@ constexpr unsigned int max_external_commands { 3 };
 /**
  * @brief how many messages can be in the message queue sent to External Client before it is considered unresponsive
  */
-constexpr unsigned int max_external_queue_size { 200 }; 
+constexpr unsigned int max_external_queue_size { 300 }; 
 
 /**
  * @brief Constants for Mqtt communication
