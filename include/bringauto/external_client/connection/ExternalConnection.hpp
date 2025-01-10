@@ -21,7 +21,7 @@
 
 namespace bringauto::external_client::connection {
 /**
- * @brief Class representing connection to one external server endpoint
+ * @brief Class representing a connection to one external server endpoint
  */
 class ExternalConnection {
 public:
@@ -32,20 +32,19 @@ public:
 					   const std::shared_ptr <structures::AtomicQueue<structures::ReconnectQueueItem>>& reconnectQueue);
 
 	/**
-	 * @brief Initialize external connection
-	 * it has to be called after constructor
+	 * @brief Initialize the external connection
+	 * it has to be called after the constructor
 	 *
-	 * @param company name of the company
-	 * @param vehicleName name of the vehicle
+	 * @param communicationChannel communication channel to the external server
 	 */
-	void init(const std::string &company, const std::string &vehicleName);
+	void init(const std::shared_ptr <communication::ICommunicationChannel> &communicationChannel);
 
 	/**
-	 * @brief Handles all etapes of connect sequence. If connect sequence is successful,
-	 * infinite receive loop is started in new thread.
+	 * @brief Handles all stages of the connect sequence. If the connect sequence is successful,
+	 * an infinite receive loop is started in a new thread.
 	 *
 	 * @param connectedDevices devices that are connected to the internal server
-	 * @return 0 if OK otherwise NOT_OK
+	 * @return OK if successful, otherwise NOT_OK
 	 */
 	int initializeConnection(const std::vector<structures::DeviceIdentification>& connectedDevices);
 
@@ -59,7 +58,7 @@ public:
 	void deinitializeConnection(bool completeDisconnect);
 
 	/**
-	 * @brief Send status message to the external server
+	 * @brief Send a status message to the external server
 	 *
 	 * @param status status message
 	 * @param deviceState state of the device
@@ -70,15 +69,8 @@ public:
 					const modules::Buffer& errorMessage = modules::Buffer {});
 
 	/**
-	 * @brief Check if any device is connected to the external connection
-	 *
-	 * @return true if yes otherwise false
-	 */
-	bool hasAnyDeviceConnected();
-
-	/**
-	 * @brief Force aggregation on all devices in all modules that connection service
-	 * Is used before connect sequence to assure that every device has available status to be sent
+	 * @brief Force aggregation on all devices in all modules that the connection services.
+	 * Is used before the connect sequence to assure that every device has an available status to be sent
 	 *
 	 * @return number of devices
 	 */
@@ -123,7 +115,7 @@ private:
 	/**
 	 * @brief Generate and set the session id
 	 */
-	void setSessionId();
+	void generateSessionId();
 
 	[[nodiscard]] u_int32_t getNextStatusCounter();
 
@@ -132,7 +124,7 @@ private:
 	int connectMessageHandle(const std::vector <structures::DeviceIdentification> &devices);
 
 	/**
-	 * @brief Takes care of second etape of connect sequence - for all devices send their last status
+	 * @brief Takes care of second stage of the connect sequence - send the last status of all devices
 	 * @param devices
 	 */
 	int statusMessageHandle(const std::vector <structures::DeviceIdentification> &devices);
@@ -143,9 +135,9 @@ private:
 	 * @brief Check if command is in order and send commandResponse
 	 *
 	 * @param commandMessage
-	 * @return 0 if OK
-	 * @return -1 if command is out of order
-	 * @return -2 if command has incorrect session ID
+	 * @return OK if successful
+	 * @return COMMAND_INVALID if command is out of order or has incorrect session ID
+	 * @return NOT_OK otherwise
 	 */
 	int handleCommand(const ExternalProtocol::Command &commandMessage);
 
@@ -165,7 +157,7 @@ private:
 	/// ID of the current external connection session, changes with every connect sequence
 	std::string sessionId_ {};
 	/// Communication channel to the external server
-	std::unique_ptr <communication::ICommunicationChannel> communicationChannel_ {};
+	std::shared_ptr <communication::ICommunicationChannel> communicationChannel_ {};
 	/// Thread for receiving loop
 	std::jthread listeningThread {};
 
@@ -180,14 +172,12 @@ private:
 	/// Class handling sent messages - timers, not acknowledged statuses etc.
 	std::unique_ptr <messages::SentMessagesHandler> sentMessagesHandler_ {};
 	/// @brief Map of error aggregators, key is module number
-	std::map<unsigned int, ErrorAggregator> errorAggregators {};
+	std::map<unsigned int, ErrorAggregator> errorAggregators_ {};
 	/// Queue of commands received from external server, commands are processed by aggregator
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_ {};
 
 	std::shared_ptr <structures::AtomicQueue<structures::ReconnectQueueItem>>
 	reconnectQueue_ {};
-	/// Unique id of the vehicle - car name + session id
-	std::string vehicleId_ {};
 	/// Name of the vehicle
 	std::string vehicleName_ {};
 	/// Name of the company

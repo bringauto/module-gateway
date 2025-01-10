@@ -33,6 +33,14 @@ Tests can be split into 5 different groups:
 * Testing for correct behavior of timeouts when Client does not send whole message.
   - NOTICE: both the behavior and tests for it are not implemented
 
+### ExternalConnectionTests suite:
+
+Handles testing of the external connection.
+
+A mock class for external communication is created and then passed to the ExternalConnection object.
+The whole connection sequence is being tested, including all possible failure points.
+Session id is also tested for proper length.
+
 ### ModuleHandlerTests suite:
 
 ### ExternalClientTests suite:

@@ -2,6 +2,7 @@
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 #include <bringauto/external_client/connection/ConnectionState.hpp>
+#include <bringauto/external_client/connection/communication/MqttCommunication.hpp>
 
 #include <bringauto/settings/LoggerId.hpp>
 
@@ -87,7 +88,21 @@ void ExternalClient::initConnections() {
 		externalConnectionsList_.emplace_back(context_, moduleLibrary_, connection, fromExternalQueue_,
 											  reconnectQueue_);
 		auto &newConnection = externalConnectionsList_.back();
-		newConnection.init(context_->settings->company, context_->settings->vehicleName);
+		std::shared_ptr<connection::communication::ICommunicationChannel> communicationChannel;
+
+		switch(connection.protocolType) {
+			case structures::ProtocolType::MQTT:
+				communicationChannel = std::make_shared<connection::communication::MqttCommunication>(
+					connection, context_->settings->company, context_->settings->vehicleName
+				);
+				break;
+			case structures::ProtocolType::INVALID:
+			default:
+				settings::Logger::logError("Invalid external communication protocol type");
+				throw std::invalid_argument("Invalid external communication protocol type");
+		}
+
+		newConnection.init(communicationChannel);
 		for(auto const &moduleNumber: connection.modules) {
 			externalConnectionMap_.emplace(moduleNumber, newConnection);
 		}
