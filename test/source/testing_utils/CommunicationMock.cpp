@@ -11,10 +11,6 @@ CommunicationMock::~CommunicationMock() {
 	closeConnection();
 }
 
-void CommunicationMock::setProperties([[maybe_unused]] const std::string& company,
-									  [[maybe_unused]] const std::string& vehicleName) {
-}
-
 void CommunicationMock::initializeConnection() {
 	if (failOnInitConnection_) {
 		throw std::runtime_error("Failed to initialize connection");

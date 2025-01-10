@@ -6,14 +6,14 @@
 
 namespace bringauto::external_client::connection::communication {
 
-MqttCommunication::MqttCommunication(const structures::ExternalConnectionSettings &settings)
-	: ICommunicationChannel(settings) {
-	
+MqttCommunication::MqttCommunication(const structures::ExternalConnectionSettings &settings, const std::string &company,
+									 const std::string &vehicleName) : ICommunicationChannel(settings) {
 	connopts_.set_mqtt_version(MQTTVERSION_3_1_1);
 	connopts_.set_keep_alive_interval(settings::MqttConstants::keepalive);
 	connopts_.set_automatic_reconnect(settings::MqttConstants::automatic_reconnect);
 	connopts_.set_connect_timeout(std::chrono::milliseconds(settings::MqttConstants::connect_timeout));
 	connopts_.set_max_inflight(settings::MqttConstants::max_inflight);
+	setProperties(company, vehicleName);
 
 	settings::Logger::logInfo(
 		"MQTT communication parameters: keepalive: {}, automatic_reconnect: {}, connect_timeout: {}, "

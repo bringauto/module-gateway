@@ -27,14 +27,12 @@ ExternalConnection::ExternalConnection(const std::shared_ptr<structures::GlobalC
 	});
 }
 
-void ExternalConnection::init(const std::string &company, const std::string &vehicleName,
-							  const std::shared_ptr<communication::ICommunicationChannel> &communicationChannel) {
+void ExternalConnection::init(const std::shared_ptr<communication::ICommunicationChannel> &communicationChannel) {
 	for(const auto &moduleNum: settings_.modules) {
 		errorAggregators_[moduleNum] = ErrorAggregator();
 		errorAggregators_[moduleNum].init_error_aggregator(moduleLibrary_.moduleLibraryHandlers[moduleNum]);
 	}
 	communicationChannel_ = communicationChannel;
-	communicationChannel_->setProperties(company, vehicleName);
 }
 
 void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status,

@@ -14,8 +14,6 @@ public:
 
 	~CommunicationMock() override;
 
-	void setProperties(const std::string &company, const std::string &vehicleName) override;
-
 	void initializeConnection() override;
 
 	bool sendMessage(ExternalProtocol::ExternalClient *message) override;

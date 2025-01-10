@@ -51,7 +51,7 @@ protected:
 		);
 
 		communicationChannel_ = std::make_shared<testing_utils::CommunicationMock>(context_->settings->externalConnectionSettingsList[0]);
-		externalConnection_->init("company", "vehicle", communicationChannel_);
+		externalConnection_->init(communicationChannel_);
 		::device_identification device {
 			.module = MODULE,
 			.device_type = BUTTON_DEVICE_TYPE,

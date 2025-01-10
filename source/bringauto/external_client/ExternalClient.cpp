@@ -92,7 +92,9 @@ void ExternalClient::initConnections() {
 
 		switch(connection.protocolType) {
 			case structures::ProtocolType::MQTT:
-				communicationChannel = std::make_shared<connection::communication::MqttCommunication>(connection);
+				communicationChannel = std::make_shared<connection::communication::MqttCommunication>(
+					connection, context_->settings->company, context_->settings->vehicleName
+				);
 				break;
 			case structures::ProtocolType::INVALID:
 			default:
@@ -100,7 +102,7 @@ void ExternalClient::initConnections() {
 				throw std::invalid_argument("Invalid external communication protocol type");
 		}
 
-		newConnection.init(context_->settings->company, context_->settings->vehicleName, communicationChannel);
+		newConnection.init(communicationChannel);
 		for(auto const &moduleNumber: connection.modules) {
 			externalConnectionMap_.emplace(moduleNumber, newConnection);
 		}

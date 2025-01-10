@@ -21,14 +21,6 @@ public:
 	virtual ~ICommunicationChannel() = default;
 
 	/**
-	 * @brief Set the basic properties to the communication object
-	 *
-	 * @param company name of the company
-	 * @param vehicleName name of the vehicle
-	 */
-	virtual void setProperties(const std::string &company, const std::string &vehicleName) = 0;
-
-	/**
 	 * @brief Initialize connection with the server
 	 *
 	 */

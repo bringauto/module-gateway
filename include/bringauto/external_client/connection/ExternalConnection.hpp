@@ -35,12 +35,9 @@ public:
 	 * @brief Initialize the external connection
 	 * it has to be called after the constructor
 	 *
-	 * @param company name of the company
-	 * @param vehicleName name of the vehicle
 	 * @param communicationChannel communication channel to the external server
 	 */
-	void init(const std::string &company, const std::string &vehicleName,
-			  const std::shared_ptr <communication::ICommunicationChannel> &communicationChannel);
+	void init(const std::shared_ptr <communication::ICommunicationChannel> &communicationChannel);
 
 	/**
 	 * @brief Handles all stages of the connect sequence. If the connect sequence is successful,
