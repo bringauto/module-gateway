@@ -72,6 +72,8 @@ private:
 	std::string serverAddress_ {};
 	/// MQTT QOS level. Level 1 assures that message is delivered at least once
 	constexpr static int8_t qos { 1 };
+	/// Mutex to prevent deadlocks when receiving messages
+	std::mutex receiveMessageMutex_ {};
 };
 
 }
