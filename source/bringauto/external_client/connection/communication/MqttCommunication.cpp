@@ -98,6 +98,7 @@ bool MqttCommunication::sendMessage(ExternalProtocol::ExternalClient* message) {
 }
 
 std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMessage() {
+	std::lock_guard<std::mutex> lock(receiveMessageMutex_);
 	if(client_ == nullptr) {
 		return nullptr;
 	}
@@ -119,6 +120,7 @@ std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMess
 }
 
 void MqttCommunication::closeConnection() {
+	std::lock_guard<std::mutex> lock(receiveMessageMutex_);
 	if(not client_) {
 		return;
 	}
