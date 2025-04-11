@@ -14,7 +14,7 @@ RUN cmake .. -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_GET_PACKAGES_ONLY=ON
 
 FROM bringauto/cpp-build-environment:latest AS mission_module_builder
 
-ARG MISSION_MODULE_VERSION=v1.2.11
+ARG MISSION_MODULE_VERSION=v1.2.12
 
 # Install mission module dependencies
 WORKDIR /home/bringauto/modules/
@@ -40,7 +40,7 @@ RUN cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREF
 
 FROM bringauto/cpp-build-environment:latest AS io_module_builder
 
-ARG IO_MODULE_VERSION=v1.3.1
+ARG IO_MODULE_VERSION=v1.3.2
 
 # Install io module dependencies
 WORKDIR /home/bringauto/modules
@@ -64,7 +64,7 @@ RUN cmake -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_INSTALL=ON -DCMAKE_INSTALL_PREF
 
 FROM bringauto/cpp-build-environment:latest AS transparent_module_builder
 
-ARG TRANSPARENT_MODULE_VERSION=v1.0.1
+ARG TRANSPARENT_MODULE_VERSION=v1.0.2
 
 WORKDIR /home/bringauto/
 ADD --chown=bringauto:bringauto https://github.com/bringauto/transparent-module.git#$TRANSPARENT_MODULE_VERSION transparent-module
