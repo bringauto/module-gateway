@@ -68,6 +68,10 @@ int ErrorAggregator::get_error(modules::Buffer &error, const structures::DeviceI
 }
 
 int ErrorAggregator::clear_error_aggregator() {
+	for(auto &[device, deviceState]: devices_) {
+		deviceState.errorMessage = {};
+		deviceState.lastStatus = {};
+	}
 	return OK;
 }
 
