@@ -49,6 +49,7 @@ FIND_PACKAGE(PahoMqttCpp REQUIRED)
 FIND_PACKAGE(eclipse-paho-mqtt-c REQUIRED)
 FIND_PACKAGE(libbringauto_logger 2.0.0 REQUIRED)
 FIND_PACKAGE(fleet-protocol-interface 2.0.0 REQUIRED)
+FIND_PACKAGE(ZLIB 1.2.11 REQUIRED)
 
 FILE(GLOB_RECURSE source_files "source/*")
 ADD_LIBRARY(module-gateway-lib STATIC "${source_files}")
@@ -65,6 +66,7 @@ TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         bringauto_logger::bringauto_logger
                         eclipse-paho-mqtt-c::paho-mqtt3as
                         PahoMqttCpp::paho-mqttpp3
+                        ZLIB::ZLIB
                         ${CMAKE_DL_LIBS}
 )
 
