@@ -1,42 +1,43 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.25 FATAL_ERROR)
 PROJECT(ModuleGateway)
-INCLUDE(GNUInstallDirs)
 
-SET(BRINGAUTO_MODULE_GATEWAY_VERSION 1.3.3)
-ADD_COMPILE_DEFINITIONS(MODULE_GATEWAY_VERSION="${BRINGAUTO_MODULE_GATEWAY_VERSION}")
-SET(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+FIND_PACKAGE(CMLIB
+        COMPONENTS CMDEF CMUTIL STORAGE
+        REQUIRED
+)
+
+SET(BRINGAUTO_MODULE_GATEWAY_VERSION 1.3.4)
+
+CMDEF_COMPILE_DEFINITIONS(
+        ALL "MODULE_GATEWAY_VERSION=\"${BRINGAUTO_MODULE_GATEWAY_VERSION}\""
+)
+SET(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMDEF_LIBRARY_INSTALL_DIR}")
 SET(CMAKE_CXX_STANDARD 20)
 
 INCLUDE(CheckPIESupported)
 CHECK_PIE_SUPPORTED()
 SET(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-
-OPTION(BRINGAUTO_TESTS "Disable tests" OFF)
-OPTION(BRINGAUTO_PACKAGE "Package creation" OFF)
-OPTION(BRINGAUTO_INSTALL "Disable install" OFF)
-OPTION(BRINGAUTO_SYSTEM_DEP "Enable system dependencies" OFF)
-OPTION(BRINGAUTO_SAMPLES "Enable build of sample app, not used in project" OFF)
+OPTION(BRINGAUTO_TESTS             "Disable tests" OFF)
+OPTION(BRINGAUTO_PACKAGE           "Package creation" OFF)
+OPTION(BRINGAUTO_INSTALL           "Disable install" OFF)
+OPTION(BRINGAUTO_SYSTEM_DEP        "Enable system dependencies" OFF)
+OPTION(BRINGAUTO_SAMPLES           "Enable build of sample app, not used in project" OFF)
 OPTION(BRINGAUTO_GET_PACKAGES_ONLY "Only download packages for this project" OFF)
 
-IF (BRINGAUTO_PACKAGE)
-    IF (NOT BRINGAUTO_INSTALL)
+IF(BRINGAUTO_PACKAGE)
+    IF(NOT BRINGAUTO_INSTALL)
         SET(BRINGAUTO_INSTALL ON CACHE BOOL "Forced install due to BRINGAUTO_PACKAGE=ON" FORCE)
         MESSAGE(WARNING "BRINGAUTO_INSTALL is switched to on because of BRINGAUTO_PACKAGE=ON")
-    ENDIF ()
-ENDIF ()
+    ENDIF()
+ENDIF()
 
-FIND_PACKAGE(CMLIB
-        COMPONENTS CMDEF CMUTIL STORAGE
-        REQUIRED
-        )
-
-IF (NOT BRINGAUTO_SYSTEM_DEP)
+IF(NOT BRINGAUTO_SYSTEM_DEP)
     INCLUDE(cmake/Dependencies.cmake)
-    IF (BRINGAUTO_GET_PACKAGES_ONLY)
+    IF(BRINGAUTO_GET_PACKAGES_ONLY)
         RETURN()
-    ENDIF ()
-ENDIF ()
+    ENDIF()
+ENDIF()
 
 SET(Protobuf_USE_STATIC_LIBS ON)
 
@@ -48,6 +49,7 @@ FIND_PACKAGE(PahoMqttCpp REQUIRED)
 FIND_PACKAGE(eclipse-paho-mqtt-c REQUIRED)
 FIND_PACKAGE(libbringauto_logger 2.0.0 REQUIRED)
 FIND_PACKAGE(fleet-protocol-interface 2.0.0 REQUIRED)
+FIND_PACKAGE(ZLIB 1.2.11 REQUIRED)
 
 FILE(GLOB_RECURSE source_files "source/*")
 ADD_LIBRARY(module-gateway-lib STATIC "${source_files}")
@@ -64,6 +66,7 @@ TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         bringauto_logger::bringauto_logger
                         eclipse-paho-mqtt-c::paho-mqtt3as
                         PahoMqttCpp::paho-mqttpp3
+                        ZLIB::ZLIB
                         ${CMAKE_DL_LIBS}
 )
 
@@ -85,14 +88,14 @@ ENDIF()
 
 TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC module-gateway-lib)
 
-IF (BRINGAUTO_TESTS)
+IF(BRINGAUTO_TESTS)
     ENABLE_TESTING()
     INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt)
     INCLUDE(CTest)
-ENDIF (BRINGAUTO_TESTS)
+ENDIF(BRINGAUTO_TESTS)
 
 
-IF (BRINGAUTO_INSTALL)
+IF(BRINGAUTO_INSTALL)
     INCLUDE(GNUInstallDirs)
     CONFIGURE_FILE(resources/systemd/module-gateway.service.in module-gateway.service @ONLY)
     CMDEF_INSTALL(
@@ -107,7 +110,7 @@ IF (BRINGAUTO_INSTALL)
     INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/module-gateway.service"
             DESTINATION
             "${CMAKE_INSTALL_SYSCONFDIR}/systemd/system/")
-ENDIF ()
+ENDIF()
 
 
 IF (BRINGAUTO_PACKAGE)
@@ -116,7 +119,5 @@ IF (BRINGAUTO_PACKAGE)
             VERSION ${BRINGAUTO_MODULE_GATEWAY_VERSION}
     )
     SET(CPACK_GENERATOR ZIP)
-    SET(CPACK_PACKAGE_CONTACT "BringAuto s.r.o. <maintainers@bringauto.com>")
-    SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "BringAuto s.r.o <maintainers@bringauto.com>")
     INCLUDE(CPack)
 ENDIF ()
