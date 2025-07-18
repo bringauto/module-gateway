@@ -24,7 +24,7 @@ protected:
 		bringauto::settings::Logger::addSink<bringauto::logging::ConsoleSink>();
 		bringauto::logging::LoggerSettings params {
 			"InternalServerTests",
-			bringauto::logging::LoggerVerbosity::Debug
+			LOGGER_VERBOSITY
 		};
 		bringauto::settings::Logger::init(params);
 	}

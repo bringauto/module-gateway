@@ -1,6 +1,7 @@
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
-
 #include <bringauto/settings/LoggerId.hpp>
+
+#include <fleet_protocol/common_headers/general_error_codes.h>
 
 #include <stdexcept>
 #include <dlfcn.h>
@@ -17,7 +18,7 @@ struct FunctionTypeDeducer<std::function<R(Args...)>> {
 	using fncptr = R (*)(Args...);
 };
 
-using log = bringauto::settings::Logger;
+using log = settings::Logger;
 
 ModuleManagerLibraryHandler::~ModuleManagerLibraryHandler() {
 	if(module_ != nullptr) {
@@ -56,25 +57,25 @@ void ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path &path)
 	log::logDebug("Library " + path.string() + " was successfully loaded");
 }
 
-void *ModuleManagerLibraryHandler::checkFunction(const char *functionName) {
-	auto function = dlsym(module_, functionName);
+void *ModuleManagerLibraryHandler::checkFunction(const char *functionName) const {
+	const auto function = dlsym(module_, functionName);
 	if(not function) {
 		throw std::runtime_error {"Function " + std::string(functionName) + " is not included in library"};
 	}
 	return function;
 }
 
-int ModuleManagerLibraryHandler::getModuleNumber() {
+int ModuleManagerLibraryHandler::getModuleNumber() const {
 	return getModuleNumber_();
 }
 
-int ModuleManagerLibraryHandler::isDeviceTypeSupported(unsigned int device_type) {
+int ModuleManagerLibraryHandler::isDeviceTypeSupported(unsigned int device_type) const {
 	return isDeviceTypeSupported_(device_type);
 }
 
-int ModuleManagerLibraryHandler::sendStatusCondition(const Buffer current_status,
-													 const Buffer new_status,
-													 unsigned int device_type) {
+int ModuleManagerLibraryHandler::sendStatusCondition(const Buffer &current_status,
+													 const Buffer &new_status,
+													 unsigned int device_type) const {
 	struct ::buffer current_status_raw_buffer {};
 	struct ::buffer new_status_raw_buffer {};
 
@@ -89,9 +90,9 @@ int ModuleManagerLibraryHandler::sendStatusCondition(const Buffer current_status
 }
 
 int ModuleManagerLibraryHandler::generateCommand(Buffer &generated_command,
-												 const Buffer new_status,
-												 const Buffer current_status,
-												 const Buffer current_command, unsigned int device_type) {
+												 const Buffer &new_status,
+												 const Buffer &current_status,
+												 const Buffer &current_command, unsigned int device_type) {
 	struct ::buffer raw_buffer {};
 	struct ::buffer new_status_raw_buffer {};
 	struct ::buffer current_status_raw_buffer {};
@@ -118,8 +119,8 @@ int ModuleManagerLibraryHandler::generateCommand(Buffer &generated_command,
 }
 
 int ModuleManagerLibraryHandler::aggregateStatus(Buffer &aggregated_status,
-												 const Buffer current_status,
-												 const Buffer new_status, unsigned int device_type) {
+												 const Buffer &current_status,
+												 const Buffer &new_status, unsigned int device_type) {
 	struct ::buffer raw_buffer {};
 	struct ::buffer current_status_raw_buffer {};
 	struct ::buffer new_status_raw_buffer {};
@@ -131,7 +132,7 @@ int ModuleManagerLibraryHandler::aggregateStatus(Buffer &aggregated_status,
 		new_status_raw_buffer = new_status.getStructBuffer();
 	}
 
-	int ret = aggregateStatus_(&raw_buffer, current_status_raw_buffer, new_status_raw_buffer, device_type);
+	const int ret = aggregateStatus_(&raw_buffer, current_status_raw_buffer, new_status_raw_buffer, device_type);
 	if (ret == OK) {
 		aggregated_status = constructBufferByTakeOwnership(raw_buffer);
 	} else {
@@ -141,8 +142,8 @@ int ModuleManagerLibraryHandler::aggregateStatus(Buffer &aggregated_status,
 }
 
 int ModuleManagerLibraryHandler::aggregateError(Buffer &error_message,
-												const Buffer current_error_message,
-												const Buffer status, unsigned int device_type) {
+												const Buffer &current_error_message,
+												const Buffer &status, unsigned int device_type) {
 
 	struct ::buffer raw_buffer {};
 	struct ::buffer current_error_raw_buffer {};
@@ -155,7 +156,7 @@ int ModuleManagerLibraryHandler::aggregateError(Buffer &error_message,
 		status_raw_buffer = status.getStructBuffer();
 	}
 
-	int ret = aggregateError_(&raw_buffer, current_error_raw_buffer, status_raw_buffer, device_type);
+	const int ret = aggregateError_(&raw_buffer, current_error_raw_buffer, status_raw_buffer, device_type);
 	if (ret == OK) {
 		error_message = constructBufferByTakeOwnership(raw_buffer);
 	} else {
@@ -166,7 +167,7 @@ int ModuleManagerLibraryHandler::aggregateError(Buffer &error_message,
 
 int ModuleManagerLibraryHandler::generateFirstCommand(Buffer &default_command, unsigned int device_type) {
 	struct ::buffer raw_buffer {};
-	int ret = generateFirstCommand_(&raw_buffer, device_type);
+	const int ret = generateFirstCommand_(&raw_buffer, device_type);
 	if (ret == OK) {
 		default_command = constructBufferByTakeOwnership(raw_buffer);
 	} else {
@@ -175,7 +176,7 @@ int ModuleManagerLibraryHandler::generateFirstCommand(Buffer &default_command, u
 	return ret;
 }
 
-int ModuleManagerLibraryHandler::statusDataValid(const Buffer status, unsigned int device_type) {
+int ModuleManagerLibraryHandler::statusDataValid(const Buffer &status, unsigned int device_type) const {
 	struct ::buffer raw_buffer {};
 	if (status.isAllocated()) {
 		raw_buffer = status.getStructBuffer();
@@ -183,7 +184,7 @@ int ModuleManagerLibraryHandler::statusDataValid(const Buffer status, unsigned i
 	return statusDataValid_(raw_buffer, device_type);
 }
 
-int ModuleManagerLibraryHandler::commandDataValid(const Buffer command, unsigned int device_type) {
+int ModuleManagerLibraryHandler::commandDataValid(const Buffer &command, unsigned int device_type) const {
 	struct ::buffer raw_buffer {};
 	if (command.isAllocated()) {
 		raw_buffer = command.getStructBuffer();
@@ -191,11 +192,11 @@ int ModuleManagerLibraryHandler::commandDataValid(const Buffer command, unsigned
 	return commandDataValid_(raw_buffer, device_type);
 }
 
-int ModuleManagerLibraryHandler::allocate(struct buffer *buffer_pointer, size_t size_in_bytes){
+int ModuleManagerLibraryHandler::allocate(struct buffer *buffer_pointer, size_t size_in_bytes) const {
 	return allocate_(buffer_pointer, size_in_bytes);
 }
 
-void ModuleManagerLibraryHandler::deallocate(struct buffer *buffer){
+void ModuleManagerLibraryHandler::deallocate(struct buffer *buffer) const {
 	deallocate_(buffer);
 }
 

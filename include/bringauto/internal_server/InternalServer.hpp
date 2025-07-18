@@ -15,19 +15,19 @@
 
 namespace bringauto::internal_server {
 /**
- * Server implements internal protocol. Serves as link between Module handler and Internal client..
+ * Server implements internal protocol. Serves as link between Module handler and Internal client.
  * It accepts connections from multiple Internal clients.
  * Receives messages on these connections. The message needs to begin with 4 bytes header.
- * Header's format is 32 bit unsigned int with little endian endianity.
+ * Header's format is 32 bit unsigned int with little endian endianness.
  * Header represents size of the remaining part of the message.
- * Messaged is send thru queue to ModuleHandler, and when answer is given resends it to Internal client.
+ * Messaged is send through queue to ModuleHandler, and when answer is given resends it to Internal client.
  */
 class InternalServer {
 
 public:
 	/**
 	 * @brief Constructs Internal Server.
-	 * @param settings shares context with Internal Server
+	 * @param context shares context with Internal Server
 	 * @param fromInternalQueue queue for sending data from Server to Module Handler
 	 * @param toInternalQueue queue for sending data from Module Handler to Server
 	 */
@@ -64,7 +64,7 @@ private:
 
 	/**
 	 * @brief Asynchronously receives data.
-	 * @param connection connection that data are being sent thru
+	 * @param connection connection that data are being sent through
 	 */
 	void addAsyncReceive(const std::shared_ptr<structures::Connection> &connection);
 
@@ -79,7 +79,7 @@ private:
 
 	/**
 	 * @brief Processes buffer data and once message is complete calls handleMessage(...)
-	 * @param connection conneection with context holding received and processed data
+	 * @param connection connection with context holding received and processed data
 	 * @param bytesTransferred  size of received data
 	 * @param bufferOffset offset of buffer where data starts
 	 * @return true if data and whole message is correct in context to fleet protocol
@@ -97,16 +97,16 @@ private:
 	bool handleMessage(const std::shared_ptr<structures::Connection> &connection);
 
 	/**
-	 * @brief Checks if status is valid, if it is sends message to Module Handler.
+	 * @brief Checks if status is valid. If it is, the message is sent to Module Handler.
 	 * @param connection connection with information about validity
 	 * @param client message to be checked and sent
 	 * @return true if status is valid.
 	 */
 	bool handleStatus(const std::shared_ptr<structures::Connection> &connection,
-					  const InternalProtocol::InternalClient &client);
+					  const InternalProtocol::InternalClient &client) const;
 
 	/**
-	 * @brief Checks for existance of this device and possibly its priority and calls matching method.
+	 * @brief Checks for existence of this device and possibly its priority and calls matching method.
 	 * @param connection connection holding data
 	 * @param client message to be checked
 	 * @return true if connect is valid.
@@ -132,7 +132,7 @@ private:
 
 	/**
 	 * @brief Sends response to InternalClient, that device is already connected and with higher priority.
-	 * @param connection connection response will be sent thru
+	 * @param connection connection response will be sent through
 	 * @param connect message containing data for response message
 	 * @param deviceId unique device identification
 	 */
@@ -142,7 +142,7 @@ private:
 
 	/**
 	 * @brief Sends response to InternalClient, that device is already connected and with same priority.
-	 * @param connection connection response will be sent thru
+	 * @param connection connection response will be sent through
 	 * @param connect message containing data for response message
 	 * @param deviceId unique device identification
 	 */
@@ -153,18 +153,18 @@ private:
 	/**
 	 * Ends all operations of previous connection using same device,
 	 * closes its socket, then replaces it in map with new connection.
-	 * Afterwards sends new connection message to Module Handler.
-	 * @param connection new connection to replace the old one
+	 * Afterward sends new connection message to Module Handler.
+	 * @param newConnection new connection to replace the old one
 	 * @param connect message to be sent
 	 * @param deviceId unique device identification
 	 */
-	void changeConnection(const std::shared_ptr<structures::Connection> &connection,
+	void changeConnection(const std::shared_ptr<structures::Connection> &newConnection,
 						  const InternalProtocol::InternalClient &connect,
 						  const structures::DeviceIdentification &deviceId);
 
 	/**
 	 * @brief Writes messages to Internal client.
-	 * @param connection connection message will be sent thru
+	 * @param connection connection message will be sent through
 	 * @param message message to be sent
 	 * @return true if writes are successful
 	 */
@@ -178,15 +178,15 @@ private:
 	void removeConnFromMap(const std::shared_ptr<structures::Connection> &connection);
 
 	/**
-	 * Periodicly checks for new messages received from module handler thru queue.
+	 * Periodically checks for new messages received from module handler through queue.
 	 * If message is received calls validatesResponse(...).
 	 * Runs until stop() is called.
 	 */
 	void listenToQueue();
 
 	/**
-	 * Validates if message belongs to any active connection, if it does resends the message to InternalClient,
-	 * then notifies waiting connection.
+	 * Validates if message belongs to any active connection. If it does, the message is resent to InternalClient,
+	 * then the waiting connection is notified.
 	 * @param message message to be validated
 	 */
 	void validateResponse(const InternalProtocol::InternalServer &message);

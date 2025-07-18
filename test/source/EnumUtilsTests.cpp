@@ -14,9 +14,11 @@ TEST(EnumUtilsTests, EnumUtils){
 	namespace balog = bringauto::logging;
 
 	EXPECT_EQ(bacu::EnumUtils::stringToProtocolType(std::string(baset::Constants::MQTT)), bas::ProtocolType::MQTT);
+	EXPECT_EQ(bacu::EnumUtils::stringToProtocolType(std::string(baset::Constants::DUMMY)), bas::ProtocolType::DUMMY);
 	EXPECT_EQ(bacu::EnumUtils::stringToProtocolType("INVALID"), bas::ProtocolType::INVALID);
 
-	EXPECT_EQ(bacu::EnumUtils::protocolTypeToString(bas::ProtocolType::MQTT), "mqtt");
+	EXPECT_EQ(bacu::EnumUtils::protocolTypeToString(bas::ProtocolType::MQTT), "MQTT");
+	EXPECT_EQ(bacu::EnumUtils::protocolTypeToString(bas::ProtocolType::DUMMY), "DUMMY");
 	EXPECT_EQ(bacu::EnumUtils::protocolTypeToString(bas::ProtocolType::INVALID), "");
 
 	EXPECT_EQ(bacu::EnumUtils::stringToLoggerVerbosity(std::string(baset::Constants::LOG_LEVEL_DEBUG)), balog::LoggerVerbosity::Debug);

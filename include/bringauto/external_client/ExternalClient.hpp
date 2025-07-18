@@ -20,9 +20,9 @@ namespace bringauto::external_client {
 class ExternalClient {
 public:
 
-	ExternalClient(std::shared_ptr<structures::GlobalContext> &context,
+	ExternalClient(const std::shared_ptr<structures::GlobalContext> &context,
 				   structures::ModuleLibrary &moduleLibrary,
-				   std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue);
+				   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue);
 
 	/**
 	 * @brief Initialize connections, error aggregators
@@ -54,7 +54,7 @@ private:
 	void handleAggregatedMessages();
 
 	/**
-	 * @brief Handle commands messages from from an external server
+	 * @brief Handle commands messages from an external server
 	 */
 	void handleCommands();
 
@@ -68,10 +68,10 @@ private:
 	/**
 	 * @brief Send aggregated status message to the external server
 	 *
-	 * @param deviceStatus aggregated status message ready to send
+	 * @param internalMessage aggregated status message ready to send
 	 * @return reconnect expected if true, reconnect not expected if false
 	 */
-	bool sendStatus(const structures::InternalClientMessage &deviceStatus);
+	bool sendStatus(const structures::InternalClientMessage &internalMessage);
 
 	bool insideConnectSequence_ { false };
 
@@ -79,7 +79,7 @@ private:
 	 * @brief Map of external connections, key is number from settings
 	 * - map is needed because of the possibility of multiple modules connected to one external server
 	 */
-	std::map<unsigned int, std::reference_wrapper<connection::ExternalConnection>> externalConnectionMap_ {};
+	std::unordered_map<unsigned int, std::reference_wrapper<connection::ExternalConnection>> externalConnectionMap_ {};
 	/// List of external connections, each device can have its own connection or multiple devices can share one connection
 	std::list<connection::ExternalConnection> externalConnectionsList_ {};
 	/// Queue for  messages from module handler to external client to be sent to external server

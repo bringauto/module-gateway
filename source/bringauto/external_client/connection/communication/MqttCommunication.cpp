@@ -64,7 +64,7 @@ void MqttCommunication::initializeConnection() {
 	if (client_ != nullptr && client_->is_connected()) {
 		return;
 	}
-	else if (client_ != nullptr) {
+	if (client_ != nullptr) {
 		closeConnection();
 	}
 	connect();

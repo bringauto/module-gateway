@@ -1,13 +1,8 @@
 #pragma once
 
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
-
-#include <fleet_protocol/common_headers/memory_management.h>
-#include <fleet_protocol/common_headers/device_management.h>
-
 #include <bringauto/structures/DeviceIdentification.hpp>
 
-#include <functional>
 #include <filesystem>
 #include <unordered_map>
 
@@ -108,7 +103,7 @@ public:
 	 *
 	 * @see fleet-protocol/lib/common_headers/include/device_management.h
 	 */
-	int is_device_type_supported(unsigned int device_type);
+	int is_device_type_supported(unsigned int device_type) const;
 
 private:
 	struct DeviceState {

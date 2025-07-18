@@ -23,7 +23,7 @@ void SentMessagesHandler::addNotAckedStatus(const ExternalProtocol::Status &stat
 
 int SentMessagesHandler::acknowledgeStatus(const ExternalProtocol::StatusResponse &statusResponse) {
 	std::scoped_lock lock {ackMutex_};
-	auto responseCounter = getStatusResponseCounter(statusResponse);
+	const auto responseCounter = getStatusResponseCounter(statusResponse);
 	for(auto i = 0u; i < notAckedStatuses_.size(); ++i) {
 		if(getStatusCounter(notAckedStatuses_[i]->getStatus()) == responseCounter) {
 			notAckedStatuses_[i]->cancelTimer();
@@ -55,7 +55,7 @@ void SentMessagesHandler::addDeviceAsConnected(const structures::DeviceIdentific
 }
 
 void SentMessagesHandler::deleteConnectedDevice(const structures::DeviceIdentification &device) {
-	auto it = std::find(connectedDevices_.begin(), connectedDevices_.end(), device);
+	const auto it = std::find(connectedDevices_.begin(), connectedDevices_.end(), device);
 	if(it != connectedDevices_.end()) {
 		connectedDevices_.erase(it);
 	} else {
@@ -74,7 +74,7 @@ bool SentMessagesHandler::isAnyDeviceConnected() const {
 }
 
 void SentMessagesHandler::clearAllTimers() {
-	for(auto &notAckedStatus: notAckedStatuses_) {
+	for(const auto &notAckedStatus: notAckedStatuses_) {
 		notAckedStatus->cancelTimer();
 	}
 	responseHandled_ = false;

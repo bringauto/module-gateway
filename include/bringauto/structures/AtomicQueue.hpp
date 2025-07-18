@@ -30,7 +30,7 @@ public:
 	}
 
 	/**
-	 * @brief Waits for timeout or till being notifed that queue is not empty.
+	 * @brief Waits for timeout or till being notified that queue is not empty.
 	 * @param timeout length of timeout
 	 * @return true if the queue is empty
 	 */

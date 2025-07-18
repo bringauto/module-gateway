@@ -1,7 +1,6 @@
 #pragma once
 
 #include <bringauto/external_client/connection/communication/ICommunicationChannel.hpp>
-#include <bringauto/structures/ExternalConnectionSettings.hpp>
 
 #include <mqtt/async_client.h>
 

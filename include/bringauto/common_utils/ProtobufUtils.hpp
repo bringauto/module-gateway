@@ -5,8 +5,6 @@
 
 #include <InternalProtocol.pb.h>
 #include <ExternalProtocol.pb.h>
-#include <fleet_protocol/common_headers/device_management.h>
-#include <fleet_protocol/common_headers/memory_management.h>
 
 
 
@@ -37,7 +35,7 @@ public:
 											   const InternalProtocol::DeviceConnectResponse_ResponseType &resType);
 
 	/**
-	 * @brief Create a Internal Server Command message
+	 * @brief Create an Internal Server Command message
 	 *
 	 * @param device Protobuf message Device
 	 * @param command command data
@@ -47,7 +45,7 @@ public:
 																			   const modules::Buffer &command);
 
 	/**
-	 * @brief Create a Internal Client Status message
+	 * @brief Create an Internal Client Status message
 	 *
 	 * @param device Protobuf message Device
 	 * @param status status data
@@ -67,7 +65,7 @@ public:
 															 const modules::Buffer &status);
 
 	/**
-	 * @brief Create a External Client Connect message
+	 * @brief Create an External Client Connect message
 	 *
 	 * @param sessionId session identification
 	 * @param company name of the company
@@ -81,7 +79,7 @@ public:
 																		const std::vector<structures::DeviceIdentification> &devices);
 
 	/**
-	 * @brief Create a External Client Status message
+	 * @brief Create an External Client Status message
 	 *
 	 * @param sessionId session identification
 	 * @param deviceState state of the device
@@ -97,7 +95,7 @@ public:
 																	   const modules::Buffer &errorMessage = modules::Buffer {});
 
 	/**
-	 * @brief Create a External Client Command Response object
+	 * @brief Create an External Client Command Response object
 	 *
 	 * @param sessionId session identification
 	 * @param type command response message type
@@ -114,7 +112,7 @@ public:
 	 * @param status status to be copied 
 	 * @param buffer buffer to copy to
 	 */
-	static void copyStatusToBuffer(const InternalProtocol::DeviceStatus &status, modules::Buffer &buffer);
+	static void copyStatusToBuffer(const InternalProtocol::DeviceStatus &status, const modules::Buffer &buffer);
 
 	/**
 	 * @brief Copy command data from DeviceCommand to a Buffer
@@ -122,7 +120,7 @@ public:
 	 * @param command command to be copied 
 	 * @param buffer buffer to copy to
 	 */
-	static void copyCommandToBuffer(const InternalProtocol::DeviceCommand &command, modules::Buffer &buffer);
+	static void copyCommandToBuffer(const InternalProtocol::DeviceCommand &command, const modules::Buffer &buffer);
 
 };
 }
