@@ -5,7 +5,6 @@
 #include <boost/asio.hpp>
 
 #include <condition_variable>
-#include <string>
 
 
 
@@ -20,6 +19,18 @@ struct Connection {
 	 * @param io_context_ context shared across Gateway
 	 */
 	explicit Connection(boost::asio::io_context &io_context_): socket(io_context_) {}
+
+	/**
+	 * @brief Get the remote endpoint address as a string.
+	 * @return remote endpoint address as a string
+	 */
+	[[nodiscard]]
+	std::string getRemoteEndpointAddress() const {
+		if (!socket.is_open()) {
+			return "(N/A, socket is not open)";
+		}
+		return socket.remote_endpoint().address().to_string();
+	}
 
 	/**
 	 * @brief socket endpoint in communication between server and client

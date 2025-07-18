@@ -2,7 +2,6 @@
 
 #include <bringauto/structures/DeviceIdentification.hpp>
 
-#include <fleet_protocol/common_headers/device_management.h>
 #include <InternalProtocol.pb.h>
 
 

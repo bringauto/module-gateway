@@ -36,7 +36,7 @@ public:
 	 * @brief Serializes settings to json
 	 * @return string with json representation of settings
 	 */
-	std::string serializeToJson();
+	std::string serializeToJson() const;
 
 private:
 	cxxopts::ParseResult cmdArguments_ {};
@@ -44,18 +44,18 @@ private:
 
 	void parseCmdArguments(int argc, char **argv);
 
-	bool areCmdArgumentsCorrect();
+	bool areCmdArgumentsCorrect() const;
 
-	bool areSettingsCorrect();
+	bool areSettingsCorrect() const;
 
 	void fillSettings();
 
-	void fillLoggingSettings(const nlohmann::json &file);
+	void fillLoggingSettings(const nlohmann::json &file) const;
 
-	void fillInternalServerSettings(const nlohmann::json &file);
+	void fillInternalServerSettings(const nlohmann::json &file) const;
 
-	void fillModulePathsSettings(const nlohmann::json &file);
+	void fillModulePathsSettings(const nlohmann::json &file) const;
 
-	void fillExternalConnectionSettings(const nlohmann::json &file);
+	void fillExternalConnectionSettings(const nlohmann::json &file) const;
 };
 }

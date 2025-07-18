@@ -77,6 +77,15 @@ make
 * BRINGAUTO_SYSTEM_DEP=ON/OFF
   - DEFAULT: OFF
 
+* MINIMUM_LOGGER_VERBOSITY=0/1/2/3/4
+  - DEFAULT: 0
+  - sets the minimum logger verbosity on compile level to improve performance
+  - 0: DEBUG
+  - 1: INFO
+  - 2: WARNING
+  - 3: ERROR
+  - 4: CRITICAL
+
 
 * CURRENTLY UNUSED
   * BRINGAUTO_SAMPLES=ON/OFF

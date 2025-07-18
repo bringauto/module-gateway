@@ -59,7 +59,7 @@ public:
 
 	/**
 	 * @brief get priority value
-	 * @return priorirt value
+	 * @return priority value
 	 */
 	[[nodiscard]] uint32_t getPriority() const;
 

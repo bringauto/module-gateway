@@ -1,10 +1,8 @@
 #pragma once
 
 #include <fleet_protocol/common_headers/device_management.h>
-#include <fleet_protocol/common_headers/general_error_codes.h>
 
 #include <memory>
-#include <cstring>
 #include <functional>
 
 
@@ -94,7 +92,7 @@ private:
 	}
 
 	/**
-	 * Underlyig data type used to hold information by shared_ptr.
+	 * Underlying data type used to hold information by shared_ptr.
 	 * Data type in ::buffer struct is a type void*. It is not viable
 	 * to use void* in C++ --> use 1-byte data type.
 	 */

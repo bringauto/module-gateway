@@ -2,8 +2,6 @@
 
 #include <bringauto/settings/LoggerId.hpp>
 
-#include <iostream>
-
 
 
 namespace bringauto::structures {
@@ -13,7 +11,7 @@ ModuleLibrary::~ModuleLibrary() {
 				  [](auto &pair) { pair.second->destroy_status_aggregator(); });
 }
 
-void ModuleLibrary::loadLibraries(const std::map<int, std::string> &libPaths) {
+void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::string> &libPaths) {
 	for(auto const &[key, path]: libPaths) {
 		auto handler = std::make_shared<modules::ModuleManagerLibraryHandler>();
 		handler->loadLibrary(path);
@@ -30,7 +28,7 @@ void ModuleLibrary::initStatusAggregators(std::shared_ptr<GlobalContext> &contex
 		auto statusAggregator = std::make_shared<modules::StatusAggregator>(context, libraryHandler);
 		statusAggregator->init_status_aggregator();
 		auto moduleNumber = statusAggregator->get_module_number();
-		if(statusAggregators.find(moduleNumber) != statusAggregators.end()) {
+		if(statusAggregators.contains(moduleNumber)) {
 			settings::Logger::logWarning("Module with number: {} is already initialized, so skipping this module",
 										moduleNumber);
 			continue;

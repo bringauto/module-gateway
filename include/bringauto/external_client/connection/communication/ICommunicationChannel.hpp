@@ -1,10 +1,9 @@
 #pragma once
 
 #include <bringauto/structures/ExternalConnectionSettings.hpp>
+#include <utility>
 
 #include <ExternalProtocol.pb.h>
-
-#include <utility>
 
 
 
@@ -16,7 +15,7 @@ namespace bringauto::external_client::connection::communication {
  */
 class ICommunicationChannel {
 public:
-	explicit ICommunicationChannel(const structures::ExternalConnectionSettings &settings): settings_ { settings } {};
+	explicit ICommunicationChannel(structures::ExternalConnectionSettings settings): settings_ {std::move( settings )} {};
 
 	virtual ~ICommunicationChannel() = default;
 

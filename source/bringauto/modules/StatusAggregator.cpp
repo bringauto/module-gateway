@@ -2,19 +2,21 @@
 #include <bringauto/settings/LoggerId.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 
+#include <fleet_protocol/module_gateway/error_codes.h>
+
 
 namespace bringauto::modules {
 
-using log = bringauto::settings::Logger;
+using log = settings::Logger;
 
-int StatusAggregator::clear_device(const structures::DeviceIdentification &key) {
-	if(is_device_valid(key) == NOT_OK) {
+int StatusAggregator::clear_device(const structures::DeviceIdentification &device) {
+	if(is_device_valid(device) == NOT_OK) {
 		return DEVICE_NOT_REGISTERED;
 	}
-	if (not devices.contains(key)) {
+	if (not devices.contains(device)) {
 		return NOT_OK;
 	}
-	auto &deviceState = devices.at(key);
+	auto &deviceState = devices.at(device);
 	auto &aggregatedMessages = deviceState.aggregatedMessages();
 	while(not aggregatedMessages.empty()) {
 		aggregatedMessages.pop();
@@ -23,8 +25,8 @@ int StatusAggregator::clear_device(const structures::DeviceIdentification &key) 
 }
 
 Buffer
-StatusAggregator::aggregateStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
-								  const unsigned int &device_type) {
+StatusAggregator::aggregateStatus(const structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
+								  const unsigned int &device_type) const {
 	auto &currStatus = deviceState.getStatus();
 	Buffer aggregatedStatusBuff {};
 	if (module_->aggregateStatus(aggregatedStatusBuff, currStatus, status, device_type) != OK) {
@@ -34,14 +36,14 @@ StatusAggregator::aggregateStatus(structures::StatusAggregatorDeviceState &devic
 }
 
 void StatusAggregator::aggregateSetStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
-										  const unsigned int &device_type) {
+										  const unsigned int &device_type) const {
 	const auto aggregatedStatusBuff = aggregateStatus(deviceState, status, device_type);
 	deviceState.setStatus(aggregatedStatusBuff);
 }
 
 void
 StatusAggregator::aggregateSetSendStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
-										 const unsigned int &device_type) {
+										 const unsigned int &device_type) const {
 	const auto aggregatedStatusBuff = aggregateStatus(deviceState, status, device_type);
 	deviceState.setStatusAndResetTimer(aggregatedStatusBuff);
 
@@ -92,14 +94,14 @@ int StatusAggregator::add_status_to_aggregator(const Buffer& status,
 			return COMMAND_INVALID;
 		}
 
-		std::function<int(const structures::DeviceIdentification&)> timeouted_force_aggregation = [device, this](
+		const std::function<int(const structures::DeviceIdentification&)> timeouted_force_aggregation = [device, this](
 				const structures::DeviceIdentification& deviceId) {
 					timeoutedMessageReady_.store(true);
 					deviceTimeouts_[device]++;
 					return force_aggregation_on_device(deviceId);
 		};
-		devices.insert(
-				{ device, structures::StatusAggregatorDeviceState(context_, timeouted_force_aggregation, device, commandBuffer, status) });
+		devices.emplace(
+				device, structures::StatusAggregatorDeviceState(context_, timeouted_force_aggregation, device, commandBuffer, status));
 
 		force_aggregation_on_device(device);
 		return 1;
@@ -107,7 +109,7 @@ int StatusAggregator::add_status_to_aggregator(const Buffer& status,
 
 	auto &deviceState = devices.at(device);
 	auto &currStatus = deviceState.getStatus();
-	auto &aggregatedMessages = deviceState.aggregatedMessages();
+	const auto &aggregatedMessages = deviceState.aggregatedMessages();
 	if(module_->sendStatusCondition(currStatus, status, device_type) == OK) {
 		aggregateSetSendStatus(deviceState, status, device_type);
 	} else {
@@ -222,8 +224,8 @@ bool StatusAggregator::getTimeoutedMessageReady() const {
 	return timeoutedMessageReady_.load();
 }
 
-int StatusAggregator::getDeviceTimeoutCount(const structures::DeviceIdentification &key) {
-	return deviceTimeouts_[key];
+int StatusAggregator::getDeviceTimeoutCount(const structures::DeviceIdentification &device) {
+	return deviceTimeouts_[device];
 }
 
 }

@@ -3,7 +3,6 @@
 #include <bringauto/external_client/connection/messages/NotAckedStatus.hpp>
 #include <bringauto/structures/GlobalContext.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
-#include <utility>
 
 #include <ExternalProtocol.pb.h>
 
@@ -91,7 +90,7 @@ private:
 
 	/**
 	 * @brief returns message counter of status_response
-	 * @param status
+	 * @param statusResponse
 	 * @return counter
 	 */
 	[[nodiscard]] static u_int32_t getStatusResponseCounter(const ExternalProtocol::StatusResponse &statusResponse);

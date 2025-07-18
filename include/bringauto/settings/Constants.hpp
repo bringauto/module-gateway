@@ -153,6 +153,7 @@ public:
 	inline static constexpr std::string_view PROTOCOL_TYPE { "protocol-type" };
 
 	inline static constexpr std::string_view MQTT { "MQTT" };
+	inline static constexpr std::string_view DUMMY { "DUMMY" };
 	inline static constexpr std::string_view MQTT_SETTINGS { "mqtt-settings" };
 	inline static constexpr std::string_view SSL { "ssl" };
 	inline static constexpr std::string_view CA_FILE { "ca-file" };

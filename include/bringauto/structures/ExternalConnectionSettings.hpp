@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 
@@ -13,14 +13,15 @@ namespace bringauto::structures {
  */
 enum class ProtocolType {
 	INVALID = -1,
-	MQTT
+	MQTT,
+	DUMMY
 };
 
 struct ExternalConnectionSettings {
 	/// Communication protocol
 	ProtocolType protocolType {};
-	/// Map of protocol specific settings, taken from config, pair of key and value
-	std::map<std::string, std::string> protocolSettings {};
+	/// Map of protocol specific settings, taken from config, a pair of key and value
+	std::unordered_map<std::string, std::string> protocolSettings {};
 	/// Ip address of the external server
 	std::string serverIp {};
 	/// Port of the external server

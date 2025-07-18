@@ -3,7 +3,7 @@
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 
-#include <fleet_protocol/common_headers/memory_management.h>
+#include <fleet_protocol/common_headers/general_error_codes.h>
 
 
 
@@ -11,7 +11,7 @@ namespace bringauto::modules {
 
 namespace ip = InternalProtocol;
 
-void ModuleHandler::destroy() {
+void ModuleHandler::destroy() const {
 	while(not fromInternalQueue_->empty()) {
 		auto &message = fromInternalQueue_->front();
 		if(message.disconnected()) {
@@ -22,13 +22,13 @@ void ModuleHandler::destroy() {
 	settings::Logger::logInfo("Module handler stopped");
 }
 
-void ModuleHandler::run() {
+void ModuleHandler::run() const {
 	settings::Logger::logInfo("Module handler started, constants used: queue_timeout_length: {}, status_aggregation_timeout: {}",
 				 settings::queue_timeout_length.count(), settings::status_aggregation_timeout.count());
 	handleMessages();
 }
 
-void ModuleHandler::handleMessages() {
+void ModuleHandler::handleMessages() const {
 	while(not context_->ioContext.stopped()) {
 		if(fromInternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			checkTimeoutedMessages();
@@ -48,12 +48,12 @@ void ModuleHandler::handleMessages() {
 	}
 }
 
-void ModuleHandler::checkTimeoutedMessages(){
+void ModuleHandler::checkTimeoutedMessages() const {
 	for (const auto& [key, statusAggregator] : moduleLibrary_.statusAggregators) {
 		auto moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(key);
 		if(statusAggregator->getTimeoutedMessageReady()){
 			std::list<structures::DeviceIdentification> unique_devices {};
-			int ret = statusAggregator->get_unique_devices(unique_devices);
+			const int ret = statusAggregator->get_unique_devices(unique_devices);
 			if (ret == NOT_OK) {
 				settings::Logger::logError("Could not get unique devices in checkTimeoutedMessages");
 				return;
@@ -62,7 +62,7 @@ void ModuleHandler::checkTimeoutedMessages(){
 			for (auto &device: unique_devices) {
 				while(true) {
 					Buffer aggregatedStatusBuffer {};
-					int remainingMessages = statusAggregator->get_aggregated_status(aggregatedStatusBuffer, device);
+					const int remainingMessages = statusAggregator->get_aggregated_status(aggregatedStatusBuffer, device);
 					if(remainingMessages < 0) {
 						break;
 					}
@@ -85,10 +85,10 @@ void ModuleHandler::checkTimeoutedMessages(){
 	}
 }
 
-void ModuleHandler::handleDisconnect(const structures::DeviceIdentification& deviceId) {
+void ModuleHandler::handleDisconnect(const structures::DeviceIdentification& deviceId) const {
 	const auto &moduleNumber = deviceId.getModule();
 	const std::string& deviceName { deviceId.getDeviceName() };
-	auto &statusAggregators = moduleLibrary_.statusAggregators;
+	const auto &statusAggregators = moduleLibrary_.statusAggregators;
 
 	if(not statusAggregators.contains(moduleNumber)) {
 		settings::Logger::logWarning("Module number: {} is not supported", moduleNumber);
@@ -106,8 +106,8 @@ void ModuleHandler::handleDisconnect(const structures::DeviceIdentification& dev
 		settings::Logger::logWarning("Force aggregation failed on device: {} with error code: {}", deviceName, ret);
 		return;
 	}
-	auto device = structures::DeviceIdentification(deviceId);
-	auto internalProtocolDevice = device.convertToIPDevice();
+	const auto device = structures::DeviceIdentification(deviceId);
+	const auto internalProtocolDevice = device.convertToIPDevice();
 	sendAggregatedStatus(deviceId, internalProtocolDevice, true);
 
 	statusAggregator->remove_device(deviceId);
@@ -116,7 +116,7 @@ void ModuleHandler::handleDisconnect(const structures::DeviceIdentification& dev
 }
 
 void ModuleHandler::sendAggregatedStatus(const structures::DeviceIdentification &deviceId, const ip::Device &device,
-										 bool disconnected) {
+										 bool disconnected) const {
 	const auto &statusAggregator = moduleLibrary_.statusAggregators.at(deviceId.getModule());
 	Buffer aggregatedStatusBuffer {};
 	statusAggregator->get_aggregated_status(aggregatedStatusBuffer, deviceId);
@@ -127,11 +127,11 @@ void ModuleHandler::sendAggregatedStatus(const structures::DeviceIdentification 
 	checkExternalQueueSize();
 }
 
-void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
+void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) const {
 	const auto &device = connect.device();
 	const auto &moduleNumber = device.module();
 	const auto &deviceName = device.devicename();
-	auto &statusAggregators = moduleLibrary_.statusAggregators;
+	const auto &statusAggregators = moduleLibrary_.statusAggregators;
 	settings::Logger::logInfo("Module handler received Connect message from device: {}", deviceName);
 
 	if(not statusAggregators.contains(moduleNumber)) {
@@ -147,7 +147,7 @@ void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
 		return;
 	}
 
-	auto deviceId = structures::DeviceIdentification(device);
+	const auto deviceId = structures::DeviceIdentification(device);
 	if(statusAggregator->is_device_valid(deviceId) == OK) {
 		settings::Logger::logInfo("Device {} is replaced by device with higher priority", deviceName);
 	}
@@ -156,13 +156,13 @@ void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) {
 }
 
 void
-ModuleHandler::sendConnectResponse(const ip::Device &device, ip::DeviceConnectResponse_ResponseType response_type) {
-	auto response = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(device, response_type);
+ModuleHandler::sendConnectResponse(const ip::Device &device, ip::DeviceConnectResponse_ResponseType response_type) const {
+	const auto response = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(device, response_type);
 	toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false,response));
 	settings::Logger::logInfo("New device {} is trying to connect, sending response {}", device.devicename(), static_cast<int>(response_type));
 }
 
-void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
+void ModuleHandler::handleStatus(const ip::DeviceStatus &status) const {
 	const auto &device = status.device();
 	const auto &moduleNumber = device.module();
 	const auto &deviceName = device.devicename();
@@ -173,11 +173,11 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 		settings::Logger::logWarning("Module number: {} is not supported", static_cast<int>(moduleNumber));
 		return;
 	}
-	auto statusAggregator = statusAggregators[moduleNumber];
+	const auto statusAggregator = statusAggregators[moduleNumber];
 	const auto moduleHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
 
 	const auto &statusData = status.statusdata();
-	auto statusBuffer = moduleHandler->constructBuffer(statusData.size());
+	const auto statusBuffer = moduleHandler->constructBuffer(statusData.size());
 	if (!statusBuffer.isEmpty()) {
 		common_utils::ProtobufUtils::copyStatusToBuffer(status, statusBuffer);
 	}
@@ -198,7 +198,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	Buffer commandBuffer {};
 	int getCommandRc = statusAggregator->get_command(statusBuffer, deviceId, commandBuffer);
 	if(getCommandRc == OK) {
-		auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device,
+		const auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device,
 																									commandBuffer);
 		toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false, deviceCommandMessage));
 		settings::Logger::logDebug("Module handler successfully retrieved command and sent it to device: {}", deviceName);
@@ -213,7 +213,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) {
 	}
 }
 
-void ModuleHandler::checkExternalQueueSize() {
+void ModuleHandler::checkExternalQueueSize() const {
 	if(toExternalQueue_->size() > settings::max_external_queue_size) {
 		settings::Logger::logError("External queue size is too big, external client is not handling messages");
 		//temporarily disabled to verify if the bug related to deadlocks is fixed

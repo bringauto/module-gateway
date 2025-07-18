@@ -3,7 +3,6 @@
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
 #include <bringauto/modules/StatusAggregator.hpp>
 
-#include <map>
 #include <memory>
 
 
@@ -22,7 +21,7 @@ struct ModuleLibrary {
 	 *
 	 * @param libPaths paths to the libraries
 	 */
-	void loadLibraries(const std::map<int, std::string> &libPaths);
+	void loadLibraries(const std::unordered_map<int, std::string> &libPaths);
 
 	/**
 	 * @brief Initialize status aggregators with context
@@ -31,9 +30,9 @@ struct ModuleLibrary {
 	 */
 	void initStatusAggregators(std::shared_ptr<GlobalContext> &context);
 	/// Map of module handlers, key is module id
-	std::map<unsigned int, std::shared_ptr<modules::ModuleManagerLibraryHandler>> moduleLibraryHandlers {};
+	std::unordered_map<unsigned int, std::shared_ptr<modules::ModuleManagerLibraryHandler>> moduleLibraryHandlers {};
 	/// Map of status aggregators, key is module id
-	std::map<unsigned int, std::shared_ptr<modules::StatusAggregator>> statusAggregators {};
+	std::unordered_map<unsigned int, std::shared_ptr<modules::StatusAggregator>> statusAggregators {};
 };
 
 }

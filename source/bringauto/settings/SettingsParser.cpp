@@ -48,7 +48,7 @@ void SettingsParser::parseCmdArguments(int argc, char **argv) {
 	}
 }
 
-bool SettingsParser::areCmdArgumentsCorrect() {
+bool SettingsParser::areCmdArgumentsCorrect() const {
 	bool isCorrect = true;
 	std::vector<std::string> requiredParams {
 			std::string(Constants::CONFIG_PATH)
@@ -87,7 +87,7 @@ bool SettingsParser::areCmdArgumentsCorrect() {
 	return isCorrect;
 }
 
-bool SettingsParser::areSettingsCorrect() {
+bool SettingsParser::areSettingsCorrect() const {
 	bool isCorrect = true;
 
 	if(settings_->loggingSettings.file.use && !std::filesystem::exists(settings_->loggingSettings.file.path)) {
@@ -127,7 +127,7 @@ void SettingsParser::fillSettings() {
 	fillExternalConnectionSettings(file);
 }
 
-void SettingsParser::fillLoggingSettings(const nlohmann::json &file) {
+void SettingsParser::fillLoggingSettings(const nlohmann::json &file) const {
 	const auto &consoleLogging = file[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_CONSOLE)];
 	const auto &fileLogging = file[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_FILE)];
 
@@ -141,7 +141,7 @@ void SettingsParser::fillLoggingSettings(const nlohmann::json &file) {
 	settings_->loggingSettings.file.path = std::filesystem::path(fileLogging[std::string(Constants::LOG_PATH)]);
 }
 
-void SettingsParser::fillInternalServerSettings(const nlohmann::json &file) {
+void SettingsParser::fillInternalServerSettings(const nlohmann::json &file) const {
 	if(cmdArguments_.count(std::string(Constants::PORT))) {
 		settings_->port = cmdArguments_[std::string(Constants::PORT)].as<int>();
 	} else {
@@ -149,13 +149,13 @@ void SettingsParser::fillInternalServerSettings(const nlohmann::json &file) {
 	}
 }
 
-void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) {
+void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) const {
 	for(auto &[key, val]: file[std::string(Constants::MODULE_PATHS)].items()) {
 		settings_->modulePaths[stoi(key)] = val;
 	}
 }
 
-void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) {
+void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) const {
 	settings_->vehicleName = file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(
 			Constants::VEHICLE_NAME)];
 	settings_->company = file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(Constants::COMPANY)];
@@ -170,6 +170,8 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 			case structures::ProtocolType::MQTT:
 				settingsName = std::string(Constants::MQTT_SETTINGS);
 				break;
+			case structures::ProtocolType::DUMMY:
+				break;
 			case structures::ProtocolType::INVALID:
 			default:
 				std::cerr << "Invalid protocol type: " << endpoint[std::string(Constants::PROTOCOL_TYPE)] << std::endl;
@@ -180,7 +182,7 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 		externalConnectionSettings.port = endpoint[std::string(Constants::PORT)];
 		externalConnectionSettings.modules = endpoint[std::string(Constants::MODULES)].get<std::vector<int >>();
 		
-		if(endpoint.find(settingsName) != endpoint.end()) {
+		if(!settingsName.empty() && endpoint.find(settingsName) != endpoint.end()) {
 			for(auto &[key, val]: endpoint[settingsName].items()) {
 				externalConnectionSettings.protocolSettings[key] = to_string(val);
 			}
@@ -190,7 +192,7 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 	}
 }
 
-std::string SettingsParser::serializeToJson() {
+std::string SettingsParser::serializeToJson() const {
 	nlohmann::json settingsAsJson {};
 
 	settingsAsJson[std::string(Constants::LOGGING)][std::string(Constants::LOGGING_CONSOLE)]
@@ -222,6 +224,9 @@ std::string SettingsParser::serializeToJson() {
 		switch (endpoint.protocolType) {
 			case structures::ProtocolType::MQTT:
 				settingsName = std::string(Constants::MQTT_SETTINGS);
+				break;
+			case structures::ProtocolType::DUMMY:
+				settingsName = std::string(Constants::DUMMY);
 				break;
 			case structures::ProtocolType::INVALID:
 				settingsName = "INVALID";
