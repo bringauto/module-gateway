@@ -20,7 +20,7 @@ public:
 
 	void closeConnection() override;
 
-protected:
+private:
 	/// Flag to indicate if the fake connection is established
 	bool isConnected_ { false };
 };
