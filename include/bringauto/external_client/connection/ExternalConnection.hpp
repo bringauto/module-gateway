@@ -11,8 +11,6 @@
 #include <bringauto/structures/DeviceIdentification.hpp>
 #include <bringauto/structures/ReconnectQueueItem.hpp>
 
-#include <fleet_protocol/common_headers/general_error_codes.h>
-
 #include <string>
 #include <vector>
 #include <thread>
@@ -72,9 +70,10 @@ public:
 	 * @brief Force aggregation on all devices in all modules that the connection services.
 	 * Is used before the connect sequence to assure that every device has an available status to be sent
 	 *
+	 * @param connectedDevices
 	 * @return number of devices
 	 */
-	std::vector<structures::DeviceIdentification> forceAggregationOnAllDevices(std::vector<structures::DeviceIdentification> connectedDevices);
+	std::vector<structures::DeviceIdentification> forceAggregationOnAllDevices(const std::vector<structures::DeviceIdentification> &connectedDevices);
 
 	/**
 	 * @brief Fill error aggregator with not acknowledged status messages
@@ -104,11 +103,11 @@ public:
 	 * @brief Check if module type is supported
 	 *
 	 * @param moduleNum module type number
-	 * @return true if moudle type is supported otherwise false
+	 * @return true if module type is supported otherwise false
 	 */
-	bool isModuleSupported(int moduleNum);
+	bool isModuleSupported(int moduleNum) const;
 
-	std::vector <structures::DeviceIdentification> getAllConnectedDevices();
+	std::vector <structures::DeviceIdentification> getAllConnectedDevices() const;
 
 private:
 
@@ -172,7 +171,7 @@ private:
 	/// Class handling sent messages - timers, not acknowledged statuses etc.
 	std::unique_ptr <messages::SentMessagesHandler> sentMessagesHandler_ {};
 	/// @brief Map of error aggregators, key is module number
-	std::map<unsigned int, ErrorAggregator> errorAggregators_ {};
+	std::unordered_map<unsigned int, ErrorAggregator> errorAggregators_ {};
 	/// Queue of commands received from external server, commands are processed by aggregator
 	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_ {};
 

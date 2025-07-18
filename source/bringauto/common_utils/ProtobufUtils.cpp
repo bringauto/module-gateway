@@ -1,9 +1,5 @@
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 
-#include <fleet_protocol/common_headers/general_error_codes.h>
-
-#include <sstream>
-
 
 
 namespace bringauto::common_utils {
@@ -12,10 +8,9 @@ InternalProtocol::InternalServer
 ProtobufUtils::createInternalServerConnectResponseMessage(const InternalProtocol::Device &device,
 														  const InternalProtocol::DeviceConnectResponse_ResponseType &resType) {
 	InternalProtocol::InternalServer message {};
-	auto response = message.mutable_deviceconnectresponse();
+	const auto response = message.mutable_deviceconnectresponse();
 	response->set_responsetype(resType);
-	auto device_ = response->mutable_device();
-	device_->CopyFrom(device);
+	*response->mutable_device() = std::move(device);
 	return message;
 }
 
@@ -23,12 +18,11 @@ InternalProtocol::InternalServer
 ProtobufUtils::createInternalServerCommandMessage(const InternalProtocol::Device &device,
 												  const modules::Buffer &command) {
 	InternalProtocol::InternalServer message {};
-	auto deviceCommand = message.mutable_devicecommand();
+	const auto deviceCommand = message.mutable_devicecommand();
 	if (command.isAllocated()) {
 		deviceCommand->set_commanddata(command.getStructBuffer().data, command.getStructBuffer().size_in_bytes);
 	}
-	auto device_ = deviceCommand->mutable_device();
-	device_->CopyFrom(device);
+	*deviceCommand->mutable_device() = std::move(device);
 	return message;
 }
 
@@ -36,12 +30,11 @@ InternalProtocol::InternalClient
 ProtobufUtils::createInternalClientStatusMessage(const InternalProtocol::Device &device,
 												 const modules::Buffer &status) {
 	InternalProtocol::InternalClient message {};
-	auto deviceStatus = message.mutable_devicestatus();
+	const auto deviceStatus = message.mutable_devicestatus();
 	if (status.isAllocated()) {
 		deviceStatus->set_statusdata(status.getStructBuffer().data, status.getStructBuffer().size_in_bytes);
 	}
-	auto device_ = deviceStatus->mutable_device();
-	device_->CopyFrom(device);
+	*deviceStatus->mutable_device() = std::move(device);
 	return message;
 }
 
@@ -60,14 +53,15 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientConnect(cons
 																			const std::string &vehicleName,
 																			const std::vector<structures::DeviceIdentification> &devices) {
 	ExternalProtocol::ExternalClient externalMessage {};
-	auto connectMessage = externalMessage.mutable_connect();
+	const auto connectMessage = externalMessage.mutable_connect();
 
 	connectMessage->set_sessionid(sessionId);
 	connectMessage->set_company(company);
 	connectMessage->set_vehiclename(vehicleName);
 
+	connectMessage->mutable_devices()->Reserve(devices.size());
 	for(const auto &tmpDevice: devices) {
-		auto devicePtr = connectMessage->add_devices();
+		const auto devicePtr = connectMessage->add_devices();
 		devicePtr->CopyFrom(tmpDevice.convertToIPDevice());
 	}
 
@@ -81,7 +75,7 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientStatus(const
 																		   const modules::Buffer &errorMessage) {
 	ExternalProtocol::ExternalClient externalMessage {};
 	ExternalProtocol::Status *status = externalMessage.mutable_status();
-	status->mutable_devicestatus()->CopyFrom(deviceStatus);
+	*status->mutable_devicestatus() = std::move(deviceStatus);
 	status->set_sessionid(sessionId);
 	status->set_devicestate(deviceState);
 	status->set_messagecounter(messageCounter);
@@ -102,24 +96,26 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientCommandRespo
 	return externalMessage;
 }
 
-void ProtobufUtils::copyStatusToBuffer(const InternalProtocol::DeviceStatus &status, modules::Buffer &buffer) {
+void ProtobufUtils::copyStatusToBuffer(const InternalProtocol::DeviceStatus &status, const modules::Buffer &buffer) {
 	if (!buffer.isAllocated()) {
 		throw BufferNotAllocated { "Buffer is not allocated" };
 	}
-	if (status.statusdata().size() > buffer.getStructBuffer().size_in_bytes) {
+	const auto statusSize = status.statusdata().size();
+	if (statusSize > buffer.getStructBuffer().size_in_bytes) {
 		throw BufferTooSmall { "Buffer does not have enough space allocated for status" };
 	}
-	std::memcpy(buffer.getStructBuffer().data, status.statusdata().c_str(), status.statusdata().size());
+	std::memcpy(buffer.getStructBuffer().data, status.statusdata().c_str(), statusSize);
 }
 
-void ProtobufUtils::copyCommandToBuffer(const InternalProtocol::DeviceCommand &command, modules::Buffer &buffer) {
+void ProtobufUtils::copyCommandToBuffer(const InternalProtocol::DeviceCommand &command, const modules::Buffer &buffer) {
 	if (!buffer.isAllocated()) {
 		throw BufferNotAllocated { "Buffer is not allocated" };
 	}
-	if (command.commanddata().size() > buffer.getStructBuffer().size_in_bytes) {
+	const auto commandSize = command.commanddata().size();
+	if (commandSize > buffer.getStructBuffer().size_in_bytes) {
 		throw BufferTooSmall { "Buffer does not have enough space allocated for command" };
 	}
-	std::memcpy(buffer.getStructBuffer().data, command.commanddata().c_str(), command.commanddata().size());
+	std::memcpy(buffer.getStructBuffer().data, command.commanddata().c_str(), commandSize);
 }
 
 }

@@ -2,7 +2,7 @@
 
 #include <format>
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 
@@ -27,7 +27,7 @@ public:
 			int port { 1636 };
 		} internal_server_settings;
 
-		std::map<int, std::string> module_paths { {1, "/path/to/lib1.so"}, {2, "/path/to/lib2.so"}, {3, "/path/to/lib3.so"} };
+		std::unordered_map<int, std::string> module_paths { {1, "/path/to/lib1.so"}, {2, "/path/to/lib2.so"}, {3, "/path/to/lib3.so"} };
 		std::string modulePathsToString() const {
 			std::string result = "";
 			for (auto [key, value] : module_paths) {
@@ -48,7 +48,7 @@ public:
 				std::string server_ip { "localhost" };
 				int port { 1883 };
 				
-				std::map<std::string, std::string> mqtt_settings {
+				std::unordered_map<std::string, std::string> mqtt_settings {
 					{ "ssl", "\"false\"" },
 					{ "ca-file", "\"ca.pem\"" },
 					{ "client-cert", "\"client.pem\"" },

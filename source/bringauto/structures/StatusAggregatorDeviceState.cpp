@@ -1,6 +1,6 @@
 #include <bringauto/structures/StatusAggregatorDeviceState.hpp>
 
-#include <fleet_protocol/common_headers/memory_management.h>
+#include <fleet_protocol/common_headers/general_error_codes.h>
 
 
 
@@ -45,8 +45,8 @@ std::queue<struct modules::Buffer> &StatusAggregatorDeviceState::aggregatedMessa
 	return aggregatedMessages_;
 }
 
-int StatusAggregatorDeviceState::addExternalCommand(const modules::Buffer &command) {
-	externalCommandQueue_.push(command);
+int StatusAggregatorDeviceState::addExternalCommand(const modules::Buffer &commandBuffer) {
+	externalCommandQueue_.push(commandBuffer);
 	if (externalCommandQueue_.size() > settings::max_external_commands) {
 		externalCommandQueue_.pop();
 		return NOT_OK;

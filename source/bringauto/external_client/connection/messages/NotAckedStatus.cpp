@@ -5,8 +5,6 @@
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <thread>
-
 
 
 namespace bringauto::external_client::connection::messages {
@@ -25,7 +23,7 @@ void NotAckedStatus::cancelTimer() {
 	timer_.cancel();
 }
 
-void NotAckedStatus::timeoutHandler(const std::function<void()> &endConnectionFunc) {
+void NotAckedStatus::timeoutHandler(const std::function<void()> &endConnectionFunc) const {
 	std::string loggingStr("Status response Timeout (" + std::to_string(status_.messagecounter()) + "):");
 	std::unique_lock<std::mutex> lock(responseHandledMutex_);
 	if(responseHandled_.load()) {

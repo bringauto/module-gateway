@@ -2,7 +2,6 @@
 
 #include <ExternalProtocol.pb.h>
 #include <boost/asio.hpp>
-
 #include <utility>
 
 
@@ -14,8 +13,8 @@ namespace bringauto::external_client::connection::messages {
  */
 class NotAckedStatus {
 public:
-	NotAckedStatus(const ExternalProtocol::Status &status, boost::asio::io_context &timerContext,
-				   std::atomic<bool> &responseHandled, std::mutex &responseHandledMutex): status_ { status },
+	NotAckedStatus(ExternalProtocol::Status status, boost::asio::io_context &timerContext,
+				   std::atomic<bool> &responseHandled, std::mutex &responseHandledMutex): status_ {std::move( status )},
 																						  timer_ { timerContext },
 																						  responseHandled_ {
 																								  responseHandled },
@@ -54,7 +53,7 @@ private:
 	 *
 	 * @param endConnectionFunc function which is called when status does not get response
 	 */
-	void timeoutHandler(const std::function<void()> &endConnectionFunc);
+	void timeoutHandler(const std::function<void()> &endConnectionFunc) const;
 	/// Status message that was not acknowledged yet
 	ExternalProtocol::Status status_ {};
 	/// Timer for checking if status got response

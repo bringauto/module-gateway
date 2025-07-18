@@ -3,8 +3,10 @@
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 #include <bringauto/external_client/connection/ConnectionState.hpp>
 #include <bringauto/external_client/connection/communication/MqttCommunication.hpp>
-
+#include <bringauto/external_client/connection/communication/DummyCommunication.hpp>
 #include <bringauto/settings/LoggerId.hpp>
+
+#include <fleet_protocol/common_headers/general_error_codes.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -14,9 +16,9 @@ namespace bringauto::external_client {
 
 namespace ip = InternalProtocol;
 
-ExternalClient::ExternalClient(std::shared_ptr<structures::GlobalContext> &context,
+ExternalClient::ExternalClient(const std::shared_ptr<structures::GlobalContext> &context,
 							   structures::ModuleLibrary &moduleLibrary,
-							   std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue):
+							   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue):
 		toExternalQueue_ { toExternalQueue },
 		context_ { context },
 		moduleLibrary_ { moduleLibrary },
@@ -44,7 +46,8 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 	const auto &device = deviceCommand.device();
 	const auto &moduleNumber = device.module();
 	auto &statusAggregators = moduleLibrary_.statusAggregators;
-	if(not statusAggregators.contains(moduleNumber)) {
+	const auto it = statusAggregators.find(moduleNumber);
+	if (it == statusAggregators.end()) {
 		settings::Logger::logWarning("Module with module number {} does no exists", static_cast<int>(moduleNumber));
 		return;
 	}
@@ -54,13 +57,13 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 		settings::Logger::logWarning("Received empty command for device: {} {}", device.devicerole(), device.devicename());
 		return;
 	}
-	auto &moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
-	auto commandBuffer = moduleLibraryHandler->constructBuffer(commandData.size());
+	const auto &moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
+	const auto commandBuffer = moduleLibraryHandler->constructBuffer(commandData.size());
 	common_utils::ProtobufUtils::copyCommandToBuffer(deviceCommand, commandBuffer);
 
 
-	auto deviceId = structures::DeviceIdentification(device);
-	int ret = statusAggregators.at(moduleNumber)->update_command(commandBuffer, deviceId);
+	const auto deviceId = structures::DeviceIdentification(device);
+	int ret = it->second->update_command(commandBuffer, deviceId);
 	if (ret == OK) {
 		settings::Logger::logInfo("Command for device {} was added to queue", device.devicename());
 	}
@@ -84,16 +87,21 @@ void ExternalClient::run() {
 }
 
 void ExternalClient::initConnections() {
-	for(auto const &connection: context_->settings->externalConnectionSettingsList) {
-		externalConnectionsList_.emplace_back(context_, moduleLibrary_, connection, fromExternalQueue_,
+	for(auto const &connectionSettings: context_->settings->externalConnectionSettingsList) {
+		externalConnectionsList_.emplace_back(context_, moduleLibrary_, connectionSettings, fromExternalQueue_,
 											  reconnectQueue_);
 		auto &newConnection = externalConnectionsList_.back();
 		std::shared_ptr<connection::communication::ICommunicationChannel> communicationChannel;
 
-		switch(connection.protocolType) {
+		switch(connectionSettings.protocolType) {
 			case structures::ProtocolType::MQTT:
 				communicationChannel = std::make_shared<connection::communication::MqttCommunication>(
-					connection, context_->settings->company, context_->settings->vehicleName
+					connectionSettings, context_->settings->company, context_->settings->vehicleName
+				);
+				break;
+			case structures::ProtocolType::DUMMY:
+				communicationChannel = std::make_shared<connection::communication::DummyCommunication>(
+					connectionSettings
 				);
 				break;
 			case structures::ProtocolType::INVALID:
@@ -103,7 +111,7 @@ void ExternalClient::initConnections() {
 		}
 
 		newConnection.init(communicationChannel);
-		for(auto const &moduleNumber: connection.modules) {
+		for(auto const &moduleNumber: connectionSettings.modules) {
 			externalConnectionMap_.emplace(moduleNumber, newConnection);
 		}
 	}
@@ -139,7 +147,7 @@ void ExternalClient::handleAggregatedMessages() {
 bool ExternalClient::sendStatus(const structures::InternalClientMessage &internalMessage) {
 	auto &deviceStatus = internalMessage.getMessage().devicestatus();
 	const auto &moduleNumber = deviceStatus.device().module();
-	auto it = externalConnectionMap_.find(moduleNumber);
+	const auto it = externalConnectionMap_.find(moduleNumber);
 	if(it == externalConnectionMap_.end()) {
 		settings::Logger::logError("Module number {} not found in the map\n", static_cast<int>(moduleNumber));
 		return true;

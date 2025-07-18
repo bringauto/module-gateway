@@ -3,8 +3,6 @@
 #include <bringauto/modules/Buffer.hpp>
 
 #include <fleet_protocol/common_headers/memory_management.h>
-#include <fleet_protocol/common_headers/device_management.h>
-#include <fleet_protocol/common_headers/general_error_codes.h>
 
 #include <functional>
 #include <filesystem>
@@ -29,19 +27,19 @@ public:
 	 */
 	void loadLibrary(const std::filesystem::path &path);
 
-	int getModuleNumber();
+	int getModuleNumber() const;
 
-	int isDeviceTypeSupported(unsigned int device_type);
+	int isDeviceTypeSupported(unsigned int device_type) const;
 
-	int	sendStatusCondition(const Buffer current_status, const Buffer new_status, unsigned int device_type);
+	int	sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) const;
 
 	/**
 	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
 	 * 
 	 * @see fleet-protocol/lib/module_maintainer/module_gateway/include/module_manager.h
 	 */
-	int generateCommand(Buffer &generated_command, const Buffer new_status,
-						const Buffer current_status, const Buffer current_command,
+	int generateCommand(Buffer &generated_command, const Buffer &new_status,
+						const Buffer &current_status, const Buffer &current_command,
 						unsigned int device_type);
 
 	/**
@@ -49,15 +47,15 @@ public:
 	 * 
 	 * @see fleet-protocol/lib/module_maintainer/module_gateway/include/module_manager.h
 	 */
-	int aggregateStatus(Buffer &aggregated_status, const Buffer current_status,
-						const Buffer new_status, unsigned int device_type);
+	int aggregateStatus(Buffer &aggregated_status, const Buffer &current_status,
+						const Buffer &new_status, unsigned int device_type);
 
 	/**
 	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
 	 * 
 	 * @see fleet-protocol/lib/module_maintainer/module_gateway/include/module_manager.h
 	 */
-	int	aggregateError(Buffer &error_message, const Buffer current_error_message, const Buffer status,
+	int	aggregateError(Buffer &error_message, const Buffer &current_error_message, const Buffer &status,
 						  unsigned int device_type);
 
 	/**
@@ -67,9 +65,9 @@ public:
 	 */
 	int generateFirstCommand(Buffer &default_command, unsigned int device_type);
 
-	int statusDataValid(const Buffer status, unsigned int device_type);
+	int statusDataValid(const Buffer &status, unsigned int device_type) const;
 
-	int commandDataValid(const Buffer command, unsigned int device_type);
+	int commandDataValid(const Buffer &command, unsigned int device_type) const;
 
 	/**
 	 * @brief Constructs a buffer with the given size
@@ -81,11 +79,11 @@ public:
 
 private:
 
-	int allocate(struct buffer *buffer_pointer, size_t size_in_bytes);
+	int allocate(struct buffer *buffer_pointer, size_t size_in_bytes) const;
 
-	void deallocate(struct buffer *buffer);
+	void deallocate(struct buffer *buffer) const;
 
-	void *checkFunction(const char *functionName);
+	void *checkFunction(const char *functionName) const;
 
 	/**
 	 * @brief Constructs a buffer with the same raw c buffer as provided

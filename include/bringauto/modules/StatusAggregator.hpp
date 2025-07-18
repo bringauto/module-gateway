@@ -4,13 +4,7 @@
 #include <bringauto/structures/StatusAggregatorDeviceState.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
 
-#include <fleet_protocol/module_gateway/command_manager.h>
-#include <fleet_protocol/module_maintainer/module_gateway/module_manager.h>
-
-#include <functional>
 #include <unordered_map>
-#include <string>
-#include <filesystem>
 #include <list>
 
 
@@ -151,10 +145,10 @@ public:
 	/**
 	 * @brief Get the device timeout count
 	 *
-	 * @param key device unique key, obtained from getId function in ProtobufUtils
+	 * @param device device unique key, obtained from getId function in ProtobufUtils
 	 * @return number of timeouts
 	 */
-	int getDeviceTimeoutCount(const structures::DeviceIdentification& );
+	int getDeviceTimeoutCount(const structures::DeviceIdentification& device);
 
 private:
 
@@ -166,9 +160,9 @@ private:
 	 * @param device_type device type
 	 * @return struct buffer with aggregated status message
 	 */
-	Buffer aggregateStatus(structures::StatusAggregatorDeviceState &deviceState,
+	Buffer aggregateStatus(const structures::StatusAggregatorDeviceState &deviceState,
 											   const Buffer &status,
-											   const unsigned int &device_type);
+											   const unsigned int &device_type) const;
 
 	/**
 	 * @brief Aggregate and set status message
@@ -178,7 +172,7 @@ private:
 	 * @param device_type device type
 	 */
 	void aggregateSetStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
-							const unsigned int &device_type);
+							const unsigned int &device_type) const;
 
 	/**
 	 * @brief Aggregate, set and send status message
@@ -188,7 +182,7 @@ private:
 	 * @param device_type device type
 	 */
 	void aggregateSetSendStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
-								const unsigned int &device_type);
+								const unsigned int &device_type) const;
 
 	std::shared_ptr<structures::GlobalContext> context_ {};
 

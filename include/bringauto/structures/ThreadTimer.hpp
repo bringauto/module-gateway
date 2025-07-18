@@ -4,11 +4,8 @@
 #include <bringauto/structures/DeviceIdentification.hpp>
 #include <bringauto/settings/Constants.hpp>
 
-#include <fleet_protocol/common_headers/device_management.h>
 #include <fleet_protocol/common_headers/memory_management.h>
-#include <boost/asio/io_context.hpp>
 #include <boost/asio/deadline_timer.hpp>
-#include <boost/bind/bind.hpp>
 
 #include <chrono>
 #include <functional>
@@ -27,13 +24,12 @@ public:
 	/**
 	 * @brief Constructor
 	 *
-	 * @param context   Global context
-	 * @param func		Function which should be executed
-	 * @param interval	Interval of time in which function will be executed
-	 *					(in seconds)
+	 * @param context  Global context
+	 * @param function Function which should be executed
+	 * @param deviceId DeviceIdentification
 	 */
-	explicit ThreadTimer(std::shared_ptr<GlobalContext> &context,
-						 std::function<int(const DeviceIdentification&)> &function,
+	explicit ThreadTimer(const std::shared_ptr<GlobalContext> &context,
+						 const std::function<int(const DeviceIdentification&)> &function,
 						 const DeviceIdentification& deviceId): timer_ { context->ioContext },
 																fun_ { function },
 																deviceId_ { deviceId } {}

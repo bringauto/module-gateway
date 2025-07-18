@@ -1,6 +1,5 @@
 #include <bringauto/external_client/ErrorAggregator.hpp>
 
-#include <fleet_protocol/module_maintainer/module_gateway/module_manager.h>
 #include <fleet_protocol/module_gateway/error_codes.h>
 #include <bringauto/settings/LoggerId.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
@@ -58,7 +57,7 @@ int ErrorAggregator::get_error(modules::Buffer &error, const structures::DeviceI
 		return DEVICE_NOT_REGISTERED;
 	}
 
-	auto &currentError = devices_[device].errorMessage;
+	const auto &currentError = devices_[device].errorMessage;
 
 	if(!currentError.isAllocated()) {
 		return NO_MESSAGE_AVAILABLE;
@@ -79,7 +78,7 @@ int ErrorAggregator::get_module_number() const {
 	return module_->getModuleNumber();
 }
 
-int ErrorAggregator::is_device_type_supported(unsigned int device_type) {
+int ErrorAggregator::is_device_type_supported(unsigned int device_type) const {
 	return module_->isDeviceTypeSupported(device_type);
 }
 

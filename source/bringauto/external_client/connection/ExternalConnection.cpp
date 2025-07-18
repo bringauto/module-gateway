@@ -1,15 +1,16 @@
 #include <bringauto/external_client/connection/ExternalConnection.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
-
 #include <bringauto/settings/LoggerId.hpp>
+
+#include <fleet_protocol/module_gateway/error_codes.h>
 
 #include <random>
 
 
 
 namespace bringauto::external_client::connection {
-using log = bringauto::settings::Logger;
+using log = settings::Logger;
 
 ExternalConnection::ExternalConnection(const std::shared_ptr<structures::GlobalContext> &context,
 									   structures::ModuleLibrary &moduleLibrary,
@@ -41,23 +42,24 @@ void ExternalConnection::sendStatus(const InternalProtocol::DeviceStatus &status
 	const auto &device = status.device();
 	const auto &deviceModule = device.module();
 
-	if(!errorAggregators_.contains(deviceModule)){
+	const auto it = errorAggregators_.find(deviceModule);
+	if(it == errorAggregators_.end()) {
 		log::logError(
 				"Status with module number ({}) was passed to external connection, that doesn't support this module",
 				static_cast<int>(device.module()));
 		return;
 	}
-	auto &errorAggregator = errorAggregators_.at(deviceModule);
-	auto deviceId = structures::DeviceIdentification(device);
-	auto moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(deviceModule);
+	auto &errorAggregator = it->second;
+	const auto deviceId = structures::DeviceIdentification(device);
+	const auto moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(deviceModule);
 
 	modules::Buffer lastStatus {};
-	auto isRegistered = errorAggregator.get_last_status(lastStatus, deviceId);
+	const auto isRegistered = errorAggregator.get_last_status(lastStatus, deviceId);
 	if (isRegistered == DEVICE_NOT_REGISTERED){
 		deviceState = ExternalProtocol::Status_DeviceState_CONNECTING;
 
 		const auto &statusData = status.statusdata();
-		auto statusBuffer = moduleLibraryHandler->constructBuffer(statusData.size());
+		const auto statusBuffer = moduleLibraryHandler->constructBuffer(statusData.size());
 		if (!statusBuffer.isEmpty()) {
 			common_utils::ProtobufUtils::copyStatusToBuffer(status, statusBuffer);
 		}
@@ -186,7 +188,7 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 			return DEVICE_NOT_REGISTERED;
 		}
 
-		int lastStatusRc = errorAggregators_[deviceModule].get_last_status(statusBuffer, deviceIdentification);
+		const int lastStatusRc = errorAggregators_[deviceModule].get_last_status(statusBuffer, deviceIdentification);
 		if(lastStatusRc != OK) {
 			log::logError("Cannot obtain status for device: {} {}",
 				deviceIdentification.getDeviceRole(),
@@ -296,15 +298,16 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command &commandMe
 	serverMessageCounter_ = messageCounter;
 
 	ExternalProtocol::CommandResponse::Type responseType {};
-	auto deviceId = structures::DeviceIdentification(commandMessage.devicecommand().device());
+	const auto deviceId = structures::DeviceIdentification(commandMessage.devicecommand().device());
 	const auto &moduleNumber = deviceId.getModule();
 
-	if (not errorAggregators_.contains(moduleNumber)){
+	const auto it = errorAggregators_.find(moduleNumber);
+	if (it == errorAggregators_.end()) {
 		log::logError("Module with module number {} does not exist", moduleNumber);
 		return NOT_OK;
 	}
 
-	auto &errorAggregator = errorAggregators_.at(moduleNumber);
+	const auto &errorAggregator = it->second;
 	if(sentMessagesHandler_->isDeviceConnected(deviceId)) {
 		responseType = ExternalProtocol::CommandResponse_Type_OK;
 		commandQueue_->pushAndNotify(commandMessage.devicecommand());
@@ -378,28 +381,25 @@ void ExternalConnection::fillErrorAggregatorWithNotAckedStatuses() {
 
 void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatus &deviceStatus) {
 	int moduleNum = deviceStatus.device().module();
-	if(not errorAggregators_.contains(moduleNum)){
+	const auto it = errorAggregators_.find(moduleNum);
+	if(it == errorAggregators_.end()) {
 		log::logError("Module with module number {} does no exists", moduleNum);
 		return;
 	}
 	fillErrorAggregatorWithNotAckedStatuses();
-	if(errorAggregators_.find(moduleNum) != errorAggregators_.end()) {
-		const auto &statusData = deviceStatus.statusdata();
-		auto statusBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNum)->constructBuffer(
-			statusData.size());
-		if (!statusBuffer.isEmpty()) {
-			common_utils::ProtobufUtils::copyStatusToBuffer(deviceStatus, statusBuffer);
-		}
-
-		auto deviceId = structures::DeviceIdentification(deviceStatus.device());
-		auto &errorAggregator = errorAggregators_.at(moduleNum);
-		errorAggregator.add_status_to_error_aggregator(statusBuffer, deviceId);
-	} else {
-		log::logError("Device status with unsupported module was passed to fillErrorAggregator()");
+	const auto &statusData = deviceStatus.statusdata();
+	const auto statusBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNum)->constructBuffer(
+		statusData.size());
+	if (!statusBuffer.isEmpty()) {
+		common_utils::ProtobufUtils::copyStatusToBuffer(deviceStatus, statusBuffer);
 	}
+
+	const auto deviceId = structures::DeviceIdentification(deviceStatus.device());
+	auto &errorAggregator = it->second;
+	errorAggregator.add_status_to_error_aggregator(statusBuffer, deviceId);
 }
 
-std::vector<structures::DeviceIdentification> ExternalConnection::forceAggregationOnAllDevices(std::vector<structures::DeviceIdentification> connectedDevices) {
+std::vector<structures::DeviceIdentification> ExternalConnection::forceAggregationOnAllDevices(const std::vector<structures::DeviceIdentification> &connectedDevices) {
 	std::vector<structures::DeviceIdentification> forcedDevices {};
 	for(const auto &device: connectedDevices) {
 		modules::Buffer last_status {};
@@ -412,11 +412,11 @@ std::vector<structures::DeviceIdentification> ExternalConnection::forceAggregati
 	return forcedDevices;
 }
 
-std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnectedDevices() {
+std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnectedDevices() const {
 	std::vector<structures::DeviceIdentification> devices {};
 	for(const auto &moduleNumber: settings_.modules) {
 		std::list<structures::DeviceIdentification> unique_devices {};
-		int ret = moduleLibrary_.statusAggregators.at(moduleNumber)->get_unique_devices(unique_devices);
+		const int ret = moduleLibrary_.statusAggregators.at(moduleNumber)->get_unique_devices(unique_devices);
 		if(ret <= 0) {
 			log::logWarning("Module {} does not have any connected devices", moduleNumber);
 			continue;
@@ -436,8 +436,8 @@ void ExternalConnection::setNotInitialized() {
 	state_.exchange(ConnectionState::NOT_INITIALIZED);
 }
 
-bool ExternalConnection::isModuleSupported(int moduleNum) {
-	return errorAggregators_.find(moduleNum) != errorAggregators_.end();
+bool ExternalConnection::isModuleSupported(int moduleNum) const {
+	return errorAggregators_.contains(moduleNum);
 }
 
 

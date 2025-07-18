@@ -1,5 +1,6 @@
 #include <StatusAggregatorTests.hpp>
 #include <testing_utils/DeviceIdentificationHelper.h>
+#include <fleet_protocol/module_gateway/error_codes.h>
 
 
 namespace modules = bringauto::modules;

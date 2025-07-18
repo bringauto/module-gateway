@@ -4,7 +4,6 @@
 #include <bringauto/structures/ThreadTimer.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
 #include <bringauto/modules/Buffer.hpp>
-#include <fleet_protocol/common_headers/device_management.h>
 
 #include <queue>
 #include <memory>
@@ -73,7 +72,7 @@ public:
 
 	/**
 	 * @brief Add a command to the queue of received commands from the external server.
-	 * Commands are being retreived by the getCommand method, which also removes them from the queue.
+	 * Commands are being retrieved by the getCommand method, which also removes them from the queue.
 	 * If the queue is full, the oldest command will be removed.
 	 *
 	 * @param commandBuffer command Buffer
