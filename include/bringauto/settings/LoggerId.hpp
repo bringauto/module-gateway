@@ -3,7 +3,7 @@
 #include <bringauto/settings/LoggerWrapper.hpp>
 
 #ifndef MINIMUM_LOGGER_VERBOSITY
-#define MINUMUM_LOGGER_VERBOSITY 0 // DEBUG
+#define MINIMUM_LOGGER_VERBOSITY 0 // DEBUG
 #endif
 
 #if MINIMUM_LOGGER_VERBOSITY == 0 // DEBUG
