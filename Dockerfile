@@ -14,7 +14,7 @@ RUN cmake .. -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_GET_PACKAGES_ONLY=ON
 
 FROM bringauto/cpp-build-environment:latest AS mission_module_builder
 
-ARG MISSION_MODULE_VERSION=v1.2.12
+ARG MISSION_MODULE_VERSION=v1.2.13
 
 # Install mission module dependencies
 WORKDIR /home/bringauto/modules/
