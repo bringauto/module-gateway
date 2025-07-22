@@ -302,7 +302,7 @@ void TestHandler::runConnects(size_t numberOfErrors) {
 		if(i < numberOfErrors) {
 			clients[i].connectSocket();
 			clients[i].sendMessage(connects[i]);
-			clients[i].insteadOfMessageExpectTimeoutThenError();
+			clients[i].insteadOfMessageExpectError();
 			clients[i].disconnectSocket();
 		} else {
 			clients[i].connectSocket();
@@ -332,7 +332,7 @@ void TestHandler::runStatuses(size_t numberOfErrors) {
 	for(size_t i = 0; i < clients.size()*(numberOfMessages - 1); ++i) {
 		if(i < numberOfErrors) {
 			clients[i].sendMessage(statuses[i]);
-			clients[i].insteadOfMessageExpectTimeoutThenError();
+			clients[i].insteadOfMessageExpectError();
 			clients[i].disconnectSocket();
 		} else if(clients[i%clients.size()].isOpen()) {
 			clients[i%clients.size()].sendMessage(statuses[i%clients.size()]);

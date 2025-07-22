@@ -31,6 +31,7 @@ TEST_F(InternalServerTests, OneClient) {
 	testing_utils::TestHandler testedData(devices, data);
 	testedData.runTestsParallelConnections();
 }
+
 /**
  * @brief Tests Connection of 2 clients, and communication between clients-server-handler
  */
@@ -50,6 +51,7 @@ TEST_F(InternalServerTests, TwoClients) {
 	testing_utils::TestHandler testedData(devices, data);
 	testedData.runTestsParallelConnections();
 }
+
 /**
  * @brief Tests Connection of 5 clients, and communication between clients-server-handler
  */
@@ -69,6 +71,7 @@ TEST_F(InternalServerTests, FiveClients) {
 	testing_utils::TestHandler testedData(devices, data);
 	testedData.runTestsParallelConnections();
 }
+
 /**
  * @brief Tests Connection of 50 clients, and communication between clients-server-handler
  */
@@ -88,6 +91,7 @@ TEST_F(InternalServerTests, FiftyClients) {
 	testing_utils::TestHandler testedData(devices, data);
 	testedData.runTestsParallelConnections();
 }
+
 ///TESTS FOR RESPONSES TO DIFFERENT PRIORITES
 /**
  * @brief tests if server responds to each client with correct response and running communication is not broken
@@ -115,6 +119,7 @@ TEST_F(InternalServerTests, SameRolePriority000) {
 	testing_utils::TestHandler testedData(devices, responseType, data);
 	testedData.runTestsSerialConnections();
 }
+
 /**
  * @brief tests if server responds to each client with correct response and running communication is not broken
  */
@@ -142,6 +147,7 @@ TEST_F(InternalServerTests, SameRolePriority001) {
 	testing_utils::TestHandler testedData(devices, responseType, data);
 	testedData.runTestsSerialConnections();
 }
+
 /**
  * @brief tests if server responds to each client with correct response, lower priority connection is disconnected correctly and no communication is broken
  */
@@ -168,6 +174,7 @@ TEST_F(InternalServerTests, SameRolePriority110) {
 	testing_utils::TestHandler testedData(devices, responseType, data);
 	testedData.runTestsSerialConnections();
 }
+
 /**
  * @brief tests if server responds to each client with correct response and running communication is not broken
  */
@@ -194,6 +201,7 @@ TEST_F(InternalServerTests, SameRolePriority121) {
 	testing_utils::TestHandler testedData(devices, responseType, data);
 	testedData.runTestsSerialConnections();
 }
+
 /**
  * @brief tests if server responds to each client with correct response, lower priority connection is disconnected correctly and no communication is broken
  */
@@ -220,6 +228,7 @@ TEST_F(InternalServerTests, SameRolePriority101) {
 	testing_utils::TestHandler testedData(devices, responseType, data);
 	testedData.runTestsSerialConnections();
 }
+
 /**
  * @brief tests if server responds to each client with correct response and running communication is not broken
  */
@@ -246,6 +255,7 @@ TEST_F(InternalServerTests, SameRolePriority122) {
 	testing_utils::TestHandler testedData(devices, responseType, data);
 	testedData.runTestsSerialConnections();
 }
+
 /**
  * @brief tests if server responds to each client with correct response, lower priority connection is disconnected correctly and no communication is broken
  */
@@ -272,6 +282,7 @@ TEST_F(InternalServerTests, SameRolePriority120) {
 	testing_utils::TestHandler testedData(devices, responseType, data);
 	testedData.runTestsSerialConnections();
 }
+
 /**
  * @brief tests if server responds to each client with correct response, lower priority connection is disconnected correctly and no communication is broken
  */
@@ -298,6 +309,7 @@ TEST_F(InternalServerTests, SameRolePriority210) {
 	testing_utils::TestHandler testedData(devices, responseType, data);
 	testedData.runTestsSerialConnections();
 }
+
 /**
  * @brief tests if server responds to each client with correct response, lower priority connection is disconnected correctly and no communication is broken
  */
@@ -324,6 +336,7 @@ TEST_F(InternalServerTests, SameRolePriority211) {
 	testing_utils::TestHandler testedData(devices, responseType, data);
 	testedData.runTestsSerialConnections();
 }
+
 /**
  * @brief tests if connection is rejected when we send less than 4 bytes of a message and other communication is not broken
  */
@@ -350,6 +363,7 @@ TEST_F(InternalServerTests, RejectMessageSmallerThan4Bytes) {
 	auto connectStr = testedData.getConnect(0).SerializeAsString();
 	testedData.runTestsWithWrongMessage(1, connectStr.size(), "", false, true);
 }
+
 /**
  * @brief tests if connection is rejected when we send 4 bytes of the message (as the header) defining size of the rest of message as 0 and other communication is not broken
  */
@@ -375,10 +389,9 @@ TEST_F(InternalServerTests, RejectMesseageComposedOfOnlyHeaderWithNumber0) {
 	testing_utils::TestHandler testedData(devices, responseType, data);
 	testedData.runTestsWithWrongMessage(1, 0, "", true);
 }
+
 /**
- * this is timeout from client side
- * test is not working and the feature is not implemented
- * should test for if connection is rejected when we send only 4 bytes of the message (as the header) defining message size larger than 0 and other communication is not broken
+ * this test will only make sense when processBufferData returns false if bytesTransferred is 0 and header value is not 0 (not intended as of v1.3.5)
  */
 TEST_F(InternalServerTests, RejectMessageComposedOfOnlyHeader) {
 	GTEST_SKIP();
@@ -404,6 +417,7 @@ TEST_F(InternalServerTests, RejectMessageComposedOfOnlyHeader) {
 	auto connectStr = testedData.getConnect(0).SerializeAsString();
 	testedData.runTestsWithWrongMessage(0, connectStr.size(), "", true);
 }
+
 /**
  * @brief tests if connection is rejected when we send message that is not matching InternalProtocol::InternalClient message and other communication is not broken
  */
@@ -430,14 +444,13 @@ TEST_F(InternalServerTests, RejectMessageWithGarbageDataMatchingHeaderSize) {
 	auto connectStr = testedData.getConnect(0).SerializeAsString();
 	testedData.runTestsWithWrongMessage(1, connectStr.size() + 5, connectStr + "12345", true);
 }
+
 /**
  * this is timeout from client side
  * test is not working and the feature is not implemented
  * should tests for if connection is rejected when we send less data than header defines as size of the message and other communication is not broken
-
  */
 TEST_F(InternalServerTests, RejectMessageWithLessDataThanHeaderSays) {
-	GTEST_SKIP();
 	std::vector<InternalProtocol::DeviceConnectResponse_ResponseType> responseType {
 		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
 		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
@@ -488,6 +501,7 @@ TEST_F(InternalServerTests, RejectMessageWhereStatusIsSentBeforeConnection) {
 	auto connectStr = testedData.getConnect(1).SerializeAsString();
 	testedData.runTestsWithWrongMessage(1, connectStr.size(), connectStr, true);
 }
+
 /**
  * @brief tests for disconnection when client receives connect message on connection that is already connected
  */
@@ -515,11 +529,11 @@ TEST_F(InternalServerTests, RejectMessageWhereConnectionIsSentAfterAlreadyBeingC
 	auto connectStr = testedData.getConnect(0).SerializeAsString();
 	testedData.runTestsWithWrongMessage(0, connectStr.size(), connectStr, false);
 }
+
 /**
- * @brief tests if server correctly timeouts then disconnects if it does not receive response to connect from module hanlder in itme
+ * @brief tests if server correctly disconnects if it does not receive response to connect from module hanlder in itme
  */
 TEST_F(InternalServerTests, TestForBehaviorWhereModuleHandlerDoesntRespondToConnect) {
-	GTEST_SKIP();
 	std::vector<InternalProtocol::DeviceConnectResponse_ResponseType> responseType {
 		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
 		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
@@ -541,11 +555,11 @@ TEST_F(InternalServerTests, TestForBehaviorWhereModuleHandlerDoesntRespondToConn
 	testing_utils::TestHandler testedData(devices, responseType, data);
 	testedData.runTestsWithModuleHandlerTimeout(true, 2);
 }
+
 /**
- * @brief tests if server correctly timeouts then disconnects if it does not receive command to status from module hanlder in time
+ * @brief tests if server correctly disconnects if it does not receive command to status from module hanlder in time
  */
 TEST_F(InternalServerTests, TestForBehaviorWhereModuleHandlerDoesntRespondToStatus) {
-	GTEST_SKIP();
 	std::vector<InternalProtocol::DeviceConnectResponse_ResponseType> responseType {
 		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
 		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
