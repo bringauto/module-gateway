@@ -10,7 +10,8 @@ ProtobufUtils::createInternalServerConnectResponseMessage(const InternalProtocol
 	InternalProtocol::InternalServer message {};
 	const auto response = message.mutable_deviceconnectresponse();
 	response->set_responsetype(resType);
-	*response->mutable_device() = std::move(device);
+	const auto device_ = response->mutable_device();
+	device_->CopyFrom(device);
 	return message;
 }
 
@@ -22,7 +23,8 @@ ProtobufUtils::createInternalServerCommandMessage(const InternalProtocol::Device
 	if (command.isAllocated()) {
 		deviceCommand->set_commanddata(command.getStructBuffer().data, command.getStructBuffer().size_in_bytes);
 	}
-	*deviceCommand->mutable_device() = std::move(device);
+	const auto device_ = deviceCommand->mutable_device();
+	device_->CopyFrom(device);
 	return message;
 }
 
@@ -34,7 +36,8 @@ ProtobufUtils::createInternalClientStatusMessage(const InternalProtocol::Device 
 	if (status.isAllocated()) {
 		deviceStatus->set_statusdata(status.getStructBuffer().data, status.getStructBuffer().size_in_bytes);
 	}
-	*deviceStatus->mutable_device() = std::move(device);
+	const auto device_ = deviceStatus->mutable_device();
+	device_->CopyFrom(device);
 	return message;
 }
 
@@ -75,7 +78,7 @@ ExternalProtocol::ExternalClient ProtobufUtils::createExternalClientStatus(const
 																		   const modules::Buffer &errorMessage) {
 	ExternalProtocol::ExternalClient externalMessage {};
 	ExternalProtocol::Status *status = externalMessage.mutable_status();
-	*status->mutable_devicestatus() = std::move(deviceStatus);
+	status->mutable_devicestatus()->CopyFrom(deviceStatus);
 	status->set_sessionid(sessionId);
 	status->set_devicestate(deviceState);
 	status->set_messagecounter(messageCounter);

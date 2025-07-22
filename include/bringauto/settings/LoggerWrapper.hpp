@@ -5,6 +5,7 @@
 
 
 namespace bringauto::settings {
+
 /**
  * @brief Custom Logger wrapper, which optimises out logging calls bellow the set verbosity level at compile time.
  *
