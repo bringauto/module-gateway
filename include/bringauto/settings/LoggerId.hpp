@@ -8,7 +8,7 @@
 
 
 
-namespace bringauto::settings {
+namespace {
 
 /**
  * @brief Compile time string comparison
@@ -27,25 +27,30 @@ static_assert(stringsEqual(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY, "DEBUG") ||
 			  stringsEqual(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY, "CRITICAL"),
 			  "Invalid MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY defined. Use DEBUG, INFO, WARNING, ERROR, or CRITICAL.");
 
+}
+
+namespace bringauto::settings {
+
 /**
  * @brief Converts the minimum logger verbosity defined in CMake to LoggerVerbosity enum.
  * @param verbosityString The minimum logger verbosity defined in CMake.
  */
-constexpr logging::LoggerVerbosity toLoggerVerbosity(std::string_view verbosityString) {
+constexpr bringauto::logging::LoggerVerbosity toLoggerVerbosity(std::string_view verbosityString) {
 	if (verbosityString == "INFO") {
-		return logging::LoggerVerbosity::Info;
+		return bringauto::logging::LoggerVerbosity::Info;
 	} else if (verbosityString == "WARNING") {
-		return logging::LoggerVerbosity::Warning;
+		return bringauto::logging::LoggerVerbosity::Warning;
 	} else if (verbosityString == "ERROR") {
-		return logging::LoggerVerbosity::Error;
+		return bringauto::logging::LoggerVerbosity::Error;
 	} else if (verbosityString == "CRITICAL") {
-		return logging::LoggerVerbosity::Critical;
+		return bringauto::logging::LoggerVerbosity::Critical;
 	}
-	return logging::LoggerVerbosity::Debug;
+	return bringauto::logging::LoggerVerbosity::Debug;
 }
 
 constexpr logging::LoggerId logId = {.id = "ModuleGateway"};
 using BaseLogger = logging::Logger<logId, logging::LoggerImpl>;
 
 using Logger = LoggerWrapper<BaseLogger, toLoggerVerbosity(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY)>;
+
 }
