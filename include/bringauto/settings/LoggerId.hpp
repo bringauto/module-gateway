@@ -25,7 +25,7 @@ static_assert(stringsEqual(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY, "DEBUG") ||
 			  stringsEqual(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY, "WARNING") ||
 			  stringsEqual(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY, "ERROR") ||
 			  stringsEqual(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY, "CRITICAL"),
-			  "Invalid MINIMUM_LOGGER_VERBOSITY defined. Use DEBUG, INFO, WARNING, ERROR, or CRITICAL.");
+			  "Invalid MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY defined. Use DEBUG, INFO, WARNING, ERROR, or CRITICAL.");
 
 /**
  * @brief Converts the minimum logger verbosity defined in CMake to LoggerVerbosity enum.
