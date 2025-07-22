@@ -3,34 +3,45 @@
 #include <bringauto/settings/LoggerWrapper.hpp>
 
 #ifndef MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY
-#define MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY 0 // DEBUG
+#define MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY "DEBUG"
 #endif
 
 
 
 namespace bringauto::settings {
 
-static_assert(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY >= 0 && MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY <= 4,
-			  "Invalid MINIMUM_LOGGER_VERBOSITY defined. Use DEBUG(0), INFO(1), WARNING(2), ERROR(3), or CRITICAL(4).");
+/**
+ * @brief Compile time string comparison
+ * @param str1 First string to compare
+ * @param str2 Second string to compare
+ * @return true if both strings are equal, false otherwise
+ */
+constexpr bool stringsEqual(char const *str1, char const *str2) {
+	return std::string_view(str1) == str2;
+}
+
+static_assert(stringsEqual(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY, "DEBUG") ||
+			  stringsEqual(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY, "INFO") ||
+			  stringsEqual(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY, "WARNING") ||
+			  stringsEqual(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY, "ERROR") ||
+			  stringsEqual(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY, "CRITICAL"),
+			  "Invalid MINIMUM_LOGGER_VERBOSITY defined. Use DEBUG, INFO, WARNING, ERROR, or CRITICAL.");
 
 /**
  * @brief Converts the minimum logger verbosity defined in CMake to LoggerVerbosity enum.
- * @param verbosityNumber The minimum logger verbosity defined in CMake.
+ * @param verbosityString The minimum logger verbosity defined in CMake.
  */
-constexpr logging::LoggerVerbosity toLoggerVerbosity(uint8_t verbosityNumber) {
-	switch (verbosityNumber) {
-		case 1:
-			return logging::LoggerVerbosity::Info;
-		case 2:
-			return logging::LoggerVerbosity::Warning;
-		case 3:
-			return logging::LoggerVerbosity::Error;
-		case 4:
-			return logging::LoggerVerbosity::Critical;
-		case 0:
-		default:
-			return logging::LoggerVerbosity::Debug;
+constexpr logging::LoggerVerbosity toLoggerVerbosity(std::string_view verbosityString) {
+	if (verbosityString == "INFO") {
+		return logging::LoggerVerbosity::Info;
+	} else if (verbosityString == "WARNING") {
+		return logging::LoggerVerbosity::Warning;
+	} else if (verbosityString == "ERROR") {
+		return logging::LoggerVerbosity::Error;
+	} else if (verbosityString == "CRITICAL") {
+		return logging::LoggerVerbosity::Critical;
 	}
+	return logging::LoggerVerbosity::Debug;
 }
 
 constexpr logging::LoggerId logId = {.id = "ModuleGateway"};
