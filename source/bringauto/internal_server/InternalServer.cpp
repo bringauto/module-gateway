@@ -41,7 +41,7 @@ void InternalServer::addAsyncAccept() {
 
 		log::logInfo("Accepted connection with Internal Client, "
 					 "connection's ip address is {}",
-					 connection->getRemoteEndpointAddress());
+					 connection->remoteEndpointAddress());
 		addAsyncReceive(connection);
 		addAsyncAccept();
 	});
@@ -78,7 +78,7 @@ void InternalServer::asyncReceiveHandler(
 		} else {
 			log::logWarning(
 					"Internal Client with ip address {} has been disconnected. Reason: {}",
-					connection->getRemoteEndpointAddress(), error.message());
+					connection->remoteEndpointAddress(), error.message());
 		}
 		std::lock_guard<std::mutex> lock(serverMutex_);
 		removeConnFromMap(connection);
@@ -102,7 +102,7 @@ bool InternalServer::processBufferData(
 				"Error in processBufferData(...): bufferOffset: {} is greater than bytesTransferred: {}, "
 				"Invalid bufferOffset: {} received from Internal Client, "
 				"connection's ip address is {}", bufferOffset, bytesTransferred, 
-				connection->getRemoteEndpointAddress());
+				connection->remoteEndpointAddress());
 		return false;
 	}
 
@@ -114,7 +114,7 @@ bool InternalServer::processBufferData(
 	if(bytesTransferred < headerSize && completeMessageSize == 0) {
 		log::logError(
 				"Error in processBufferData(...): Incomplete header received from Internal Client, "
-				"connection's ip address is {}", connection->getRemoteEndpointAddress());
+				"connection's ip address is {}", connection->remoteEndpointAddress());
 		return false;
 	}
 
@@ -133,7 +133,7 @@ bool InternalServer::processBufferData(
 		if(bytesLeft < headerSize) {
 			log::logError(
 					"Error in processBufferData(...): Incomplete header received from Internal Client, "
-					"connection's ip address is {}", connection->getRemoteEndpointAddress());
+					"connection's ip address is {}", connection->remoteEndpointAddress());
 			return false;
 		}
 		bytesLeft -= headerSize;
@@ -154,7 +154,7 @@ bool InternalServer::processBufferData(
 	if(bytesLeft < messageBytesLeft) {
 		log::logError("Error in processBufferData(...): messageBytesLeft: {} is greater than bytesLeft: {}, "
 					  "connection's ip address is {}", messageBytesLeft, bytesLeft,
-					  connection->getRemoteEndpointAddress());
+					  connection->remoteEndpointAddress());
 		return false;
 	}
 	bytesLeft -= messageBytesLeft;
@@ -162,14 +162,14 @@ bool InternalServer::processBufferData(
 	if(bytesTransferred < bytesLeft) {
 		log::logError("Error in processBufferData(...): bytesLeft: {} is greater than bytesTransferred: {}, "
 					  "connection's ip address is {}", bytesLeft, bytesTransferred,
-					  connection->getRemoteEndpointAddress());
+					  connection->remoteEndpointAddress());
 		return false;
 	}
 	if(bytesLeft && !processBufferData(connection, bytesLeft, bytesTransferred - bytesLeft)) {
 		log::logError("Error in processBufferData(...): "
 					  "Received extra invalid bytes of data: {} from Internal Client, "
 					  "connection's ip address is {}", bytesLeft,
-					  connection->getRemoteEndpointAddress());
+					  connection->remoteEndpointAddress());
 		return false;
 	}
 	return true;
@@ -182,7 +182,7 @@ bool InternalServer::handleMessage(const std::shared_ptr<structures::Connection>
 							  connection->connContext.completeMessage.size())) {
 		log::logError(
 				"Error in handleMessage(...): message received from Internal Client cannot be parsed, "
-				"connection's ip address is {}", connection->getRemoteEndpointAddress());
+				"connection's ip address is {}", connection->remoteEndpointAddress());
 		return false;
 	}
 	if(client.has_devicestatus()) {
@@ -196,7 +196,7 @@ bool InternalServer::handleMessage(const std::shared_ptr<structures::Connection>
 	} else {
 		log::logError(
 				"Error in handleMessage(...): message received from Internal Client cannot be parsed, "
-				"connection's ip address is {}", connection->getRemoteEndpointAddress());
+				"connection's ip address is {}", connection->remoteEndpointAddress());
 		return false;
 	}
 	std::unique_lock<std::mutex> lk(connection->connectionMutex);
@@ -208,7 +208,7 @@ bool InternalServer::handleMessage(const std::shared_ptr<structures::Connection>
 		log::logError("Error in handleMessage(...): "
 					  "Module Handler did not respond to a message in time, "
 					  "connection's ip address is {}",
-					  connection->getRemoteEndpointAddress());
+					  connection->remoteEndpointAddress());
 		return false;
 	}
 	return !context_->ioContext.stopped();
@@ -220,7 +220,7 @@ bool InternalServer::handleStatus(const std::shared_ptr<structures::Connection> 
 		log::logError("Error in handleStatus(...): "
 					  "received status from Internal Client without being connected, "
 					  "connection's ip address is {}",
-					  connection->getRemoteEndpointAddress());
+					  connection->remoteEndpointAddress());
 		return false;
 	}
 	std::lock_guard<std::mutex> lk(connection->connectionMutex);
@@ -236,7 +236,7 @@ bool InternalServer::handleConnection(const std::shared_ptr<structures::Connecti
 		log::logError("Error in handleConnection(...): "
 					  "Internal Client is sending a connect message while already connected, "
 					  "connection's ip address is {}",
-					  connection->getRemoteEndpointAddress());
+					  connection->remoteEndpointAddress());
 		return false;
 	}
 
@@ -339,19 +339,19 @@ bool InternalServer::sendResponse(const std::shared_ptr<structures::Connection> 
 		log::logError("Error in sendResponse(...): "
 					  "Cannot write message header to Internal Client, "
 					  "connection's ip address is {}",
-					  connection->getRemoteEndpointAddress());
+					  connection->remoteEndpointAddress());
 		return false;
 	}
 	try {
 		log::logDebug("Sending response to Internal Client, "
 					  "connection's ip address is {}",
-					  connection->getRemoteEndpointAddress());
+					  connection->remoteEndpointAddress());
 		const auto dataWSize = connection->socket.write_some(boost::asio::buffer(data));
 		if(dataWSize != header) {
 			log::logError("Error in sendResponse(...): "
 						  "Cannot write data to Internal Client, "
 						  "connection's ip address is {}",
-						  connection->getRemoteEndpointAddress());
+						  connection->remoteEndpointAddress());
 			return false;
 		}
 	} catch(const boost::exception &) {

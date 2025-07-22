@@ -25,7 +25,7 @@ struct Connection {
 	 * @return remote endpoint address as a string
 	 */
 	[[nodiscard]]
-	std::string getRemoteEndpointAddress() const {
+	std::string remoteEndpointAddress() const {
 		if (!socket.is_open()) {
 			return "(N/A, socket is not open)";
 		}

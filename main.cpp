@@ -37,7 +37,10 @@ void initLogger(const bringauto::structures::LoggingSettings &settings) {
 		bringauto::settings::Logger::addSink<FileSink>(paramFileSink);
 	}
 
-	const bringauto::logging::LoggerSettings params { "ModuleGateway", LOGGER_VERBOSITY };
+	const bringauto::logging::LoggerSettings params {
+		"ModuleGateway",
+		bringauto::settings::toLoggerVerbosity(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY)
+	};
 	bringauto::settings::Logger::init(params);
 }
 
