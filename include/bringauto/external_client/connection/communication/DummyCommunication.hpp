@@ -6,6 +6,12 @@
 
 namespace bringauto::external_client::connection::communication {
 
+/**
+ * @brief Dummy communication channel for testing purposes.
+ * Does not establish any real connection, just simulates it.
+ * receiveMessage always returns nullptr.
+ * Initialization and closing connection only changes the debug logs of sendMessage.
+ */
 class DummyCommunication: public ICommunicationChannel {
 public:
 	explicit DummyCommunication(const structures::ExternalConnectionSettings &settings);
