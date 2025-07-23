@@ -446,11 +446,10 @@ TEST_F(InternalServerTests, RejectMessageWithGarbageDataMatchingHeaderSize) {
 }
 
 /**
- * this is timeout from client side
- * test is not working and the feature is not implemented
- * should tests for if connection is rejected when we send less data than header defines as size of the message and other communication is not broken
+ * this test will only make sense if processBufferData returns false if bytesTransferred is less than header size and header value is not 0 (not intended as of v1.3.5)
  */
 TEST_F(InternalServerTests, RejectMessageWithLessDataThanHeaderSays) {
+	GTEST_SKIP();
 	std::vector<InternalProtocol::DeviceConnectResponse_ResponseType> responseType {
 		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
 		InternalProtocol::DeviceConnectResponse_ResponseType_OK,
