@@ -2,6 +2,7 @@
 
 #include <bringauto/modules/IModuleManagerLibraryHandler.hpp>
 #include <bringauto/modules/StatusAggregator.hpp>
+#include <bringauto/aeron_communication/AeronClient.hpp>
 
 #include <memory>
 
@@ -35,6 +36,8 @@ struct ModuleLibrary {
 	std::unordered_map<int, std::shared_ptr<modules::IModuleManagerLibraryHandler>> moduleLibraryHandlers {};
 	/// Map of status aggregators, key is module id
 	std::unordered_map<int, std::shared_ptr<modules::StatusAggregator>> statusAggregators {};
+	/// Aeron client used for communication with modules
+	std::shared_ptr<aeron_communication::AeronClient> aeronClient {nullptr};
 };
 
 }

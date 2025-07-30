@@ -1,6 +1,13 @@
 #pragma once
 
 #include <bringauto/modules/IModuleManagerLibraryHandler.hpp>
+#include <bringauto/modules/Buffer.hpp>
+#include <bringauto/aeron_communication/AeronClient.hpp>
+
+#include <fleet_protocol/common_headers/memory_management.h>
+
+#include <functional>
+#include <filesystem>
 
 
 
@@ -92,6 +99,7 @@ private:
 	std::function<int(struct buffer *, struct buffer, struct buffer, struct buffer, unsigned int)> generateCommand_ {};
 	std::function<int(struct buffer *, size_t)> allocate_ {};
 	std::function<void(struct buffer *)> deallocate_ {};
+	std::shared_ptr<aeron_communication::AeronClient> aeronClient_ {nullptr};
 };
 
 }
