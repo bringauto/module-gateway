@@ -54,6 +54,11 @@ void ModuleManagerLibraryHandlerLocal::loadLibrary(const std::filesystem::path &
 			"allocate"));
 	deallocate_ = reinterpret_cast<FunctionTypeDeducer<decltype(deallocate_)>::fncptr>(checkFunction(
 			"deallocate"));
+
+	if (aeronClient_ != nullptr) {
+		aeronClient_->addModule(getModuleNumber_());
+	}
+
 	log::logDebug("Library " + path.string() + " was successfully loaded");
 }
 
@@ -115,6 +120,9 @@ int ModuleManagerLibraryHandlerLocal::generateCommand(Buffer &generated_command,
 	} else {
 		generated_command = constructBuffer();
 	}
+	if (aeronClient_ != nullptr) {
+		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::GENERATE_COMMAND, "TODO");
+	}
 	return ret;
 }
 
@@ -137,6 +145,9 @@ int ModuleManagerLibraryHandlerLocal::aggregateStatus(Buffer &aggregated_status,
 		aggregated_status = constructBufferByTakeOwnership(raw_buffer);
 	} else {
 		aggregated_status = current_status;
+	}
+	if (aeronClient_ != nullptr) {
+		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::AGGREGATE_STATUS, "TODO");
 	}
 	return ret;
 }
@@ -162,6 +173,9 @@ int ModuleManagerLibraryHandlerLocal::aggregateError(Buffer &error_message,
 	} else {
 		error_message = constructBuffer();
 	}
+	if (aeronClient_ != nullptr) {
+		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::AGGREGATE_ERROR, "TODO");
+	}
 	return ret;
 }
 
@@ -173,6 +187,9 @@ int ModuleManagerLibraryHandlerLocal::generateFirstCommand(Buffer &default_comma
 	} else {
 		default_command = constructBuffer();
 	}
+	if (aeronClient_ != nullptr) {
+		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::GENERATE_FIRST_COMMAND, "TODO");
+	}
 	return ret;
 }
 
@@ -180,6 +197,9 @@ int ModuleManagerLibraryHandlerLocal::statusDataValid(const Buffer &status, unsi
 	struct ::buffer raw_buffer {};
 	if (status.isAllocated()) {
 		raw_buffer = status.getStructBuffer();
+	}
+	if (aeronClient_ != nullptr) {
+		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::STATUS_DATA_VALID, "TODO");
 	}
 	return statusDataValid_(raw_buffer, device_type);
 }
@@ -189,14 +209,23 @@ int ModuleManagerLibraryHandlerLocal::commandDataValid(const Buffer &command, un
 	if (command.isAllocated()) {
 		raw_buffer = command.getStructBuffer();
 	}
+	if (aeronClient_ != nullptr) {
+		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::COMMAND_DATA_VALID, "TODO");
+	}
 	return commandDataValid_(raw_buffer, device_type);
 }
 
 int ModuleManagerLibraryHandlerLocal::allocate(struct buffer *buffer_pointer, size_t size_in_bytes) const {
+	if (aeronClient_ != nullptr) {
+		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::ALLOCATE, "TODO");
+	}
 	return allocate_(buffer_pointer, size_in_bytes);
 }
 
 void ModuleManagerLibraryHandlerLocal::deallocate(struct buffer *buffer) const {
+	if (aeronClient_ != nullptr) {
+		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::DEALLOCATE, "TODO");
+	}
 	deallocate_(buffer);
 }
 
