@@ -87,6 +87,16 @@ constexpr unsigned int max_external_commands { 3 };
 constexpr unsigned int max_external_queue_size { 500 }; 
 
 /**
+ * @brief base stream id for Aeron communication from Module Gateway to module binary
+ */
+constexpr unsigned int aeron_to_module_stream_id_base { 10000 };
+
+/**
+ * @brief base stream id for Aeron communication from module binary to Module Gateway
+ */
+constexpr unsigned int aeron_to_gateway_stream_id_base { 20000 };
+
+/**
  * @brief Constants for Mqtt communication
 */
 struct MqttConstants {
@@ -161,6 +171,7 @@ public:
 	inline static constexpr std::string_view CLIENT_KEY { "client-key" };
 
 	inline static constexpr std::string_view MODULES { "modules" };
+	inline static constexpr std::string_view AERON_CONNECTION { "aeron:ipc"};
 };
 
 }
