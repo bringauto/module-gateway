@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bringauto/modules/Buffer.hpp>
+#include <bringauto/aeron_communication/AeronClient.hpp>
 
 #include <fleet_protocol/common_headers/memory_management.h>
 
@@ -17,6 +18,8 @@ namespace bringauto::modules {
 class ModuleManagerLibraryHandler {
 public:
 	ModuleManagerLibraryHandler() = default;
+	ModuleManagerLibraryHandler(std::shared_ptr<aeron_communication::AeronClient> &aeronClient):
+		aeronClient_(aeronClient) {};
 
 	~ModuleManagerLibraryHandler();
 
@@ -109,6 +112,7 @@ private:
 	std::function<int(struct buffer *, struct buffer, struct buffer, struct buffer, unsigned int)> generateCommand_ {};
 	std::function<int(struct buffer *, size_t)> allocate_ {};
 	std::function<void(struct buffer *)> deallocate_ {};
+	std::shared_ptr<aeron_communication::AeronClient> aeronClient_ {nullptr};
 };
 
 }
