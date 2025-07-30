@@ -6,6 +6,10 @@
 
 namespace bringauto::structures {
 
+ModuleLibrary::ModuleLibrary() {
+	aeronClient = std::make_shared<aeron_communication::AeronClient>();
+}
+
 ModuleLibrary::~ModuleLibrary() {
 	std::for_each(statusAggregators.cbegin(), statusAggregators.cend(),
 				  [](auto &pair) { pair.second->destroy_status_aggregator(); });
@@ -13,7 +17,7 @@ ModuleLibrary::~ModuleLibrary() {
 
 void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::string> &libPaths) {
 	for(auto const &[key, path]: libPaths) {
-		auto handler = std::make_shared<modules::ModuleManagerLibraryHandler>();
+		auto handler = std::make_shared<modules::ModuleManagerLibraryHandler>(aeronClient);
 		handler->loadLibrary(path);
 		if(handler->getModuleNumber() != key) {
 			settings::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path, key, handler->getModuleNumber());

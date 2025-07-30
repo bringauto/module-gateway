@@ -9,6 +9,7 @@
 #include <bringauto/structures/InternalClientMessage.hpp>
 #include <bringauto/structures/ModuleHandlerMessage.hpp>
 #include <bringauto/settings/LoggerId.hpp>
+#include <bringauto/aeron_communication/AeronDriver.hpp>
 
 #include <InternalProtocol.pb.h>
 #include <libbringauto_logger/bringauto/logging/Logger.hpp>
@@ -58,7 +59,13 @@ int main(int argc, char **argv) {
 		std::cerr << "[ERROR] Error occurred during reading configuration: " << e.what() << std::endl;
 		return 1;
 	}
+
+	bringauto::aeron_communication::AeronDriver aeronDriver {};
+	std::jthread aeronDriverThread([&aeronDriver]() { aeronDriver.run(); });
+	baset::Logger::logInfo("Aeron Driver starting...");
+	std::this_thread::sleep_for(std::chrono::seconds(2)); //TODO Not sure how much time is needed.
 	bas::ModuleLibrary moduleLibrary {};
+
 	try {
 		moduleLibrary.loadLibraries(context->settings->modulePaths);
 		moduleLibrary.initStatusAggregators(context);
@@ -90,10 +97,12 @@ int main(int argc, char **argv) {
 		context->ioContext.stop();
 	}
 
+	aeronDriver.stop();
 	contextThread2.join();
 	contextThread1.join();
 	externalClientThread.join();
 	moduleHandlerThread.join();
+	aeronDriverThread.join();
 
 	internalServer.destroy();
 	moduleHandler.destroy();
