@@ -29,7 +29,9 @@ public:
 
 	void addModule(uint16_t moduleId);
 
-	void callModuleFunction(ModuleFunctions function ,const std::string &message) const;
+	void callModuleFunction(ModuleFunctions function ,const std::string &message);
+
+	std::string_view getMessage() const;
 
 private:
 	bool waitForAeronResponse();
