@@ -78,7 +78,7 @@ void AeronClient::addModule(uint16_t moduleId) {
 }
 
 
-void AeronClient::callModuleFunction(ModuleFunctions function, const std::string &message) const {
+void AeronClient::callModuleFunction(ModuleFunctions function, const std::string &message) {
 	std::string fullMessage = std::string(moduleFunctionToCode(function)) + ":" + message;
 
 	std::array<std::uint8_t, 256> buff;
@@ -87,6 +87,12 @@ void AeronClient::callModuleFunction(ModuleFunctions function, const std::string
 	const int messageLen = ::snprintf(charMessage, sizeof(charMessage), "%s", fullMessage.c_str());
 	srcBuffer.putBytes(0, reinterpret_cast<std::uint8_t *>(charMessage), messageLen);
 	aeronPublication_->offer(srcBuffer, 0, messageLen);
+	waitForAeronResponse();
+}
+
+
+std::string_view AeronClient::getMessage() const {
+	return aeronMessage_;
 }
 
 

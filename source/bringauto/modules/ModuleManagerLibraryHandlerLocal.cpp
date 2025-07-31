@@ -91,6 +91,12 @@ int ModuleManagerLibraryHandlerLocal::sendStatusCondition(const Buffer &current_
 		new_status_raw_buffer = new_status.getStructBuffer();
 	}
 
+	if (aeronClient_ != nullptr) {
+		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::SEND_STATUS_CONDITION, "TODO");
+		if (aeronClient_->getMessage() != "sendStatusCondition") {
+			throw std::runtime_error("AeronClient did not receive the expected message");
+		}
+	}
 	return sendStatusCondition_(current_status_raw_buffer, new_status_raw_buffer, device_type);
 }
 
@@ -122,6 +128,9 @@ int ModuleManagerLibraryHandlerLocal::generateCommand(Buffer &generated_command,
 	}
 	if (aeronClient_ != nullptr) {
 		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::GENERATE_COMMAND, "TODO");
+		if (aeronClient_->getMessage() != "generateCommand") {
+			throw std::runtime_error("AeronClient did not receive the expected message");
+		}
 	}
 	return ret;
 }
@@ -148,6 +157,9 @@ int ModuleManagerLibraryHandlerLocal::aggregateStatus(Buffer &aggregated_status,
 	}
 	if (aeronClient_ != nullptr) {
 		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::AGGREGATE_STATUS, "TODO");
+		if (aeronClient_->getMessage() != "aggregateStatus") {
+			throw std::runtime_error("AeronClient did not receive the expected message");
+		}
 	}
 	return ret;
 }
@@ -175,6 +187,9 @@ int ModuleManagerLibraryHandlerLocal::aggregateError(Buffer &error_message,
 	}
 	if (aeronClient_ != nullptr) {
 		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::AGGREGATE_ERROR, "TODO");
+		if (aeronClient_->getMessage() != "aggregateError") {
+			throw std::runtime_error("AeronClient did not receive the expected message");
+		}
 	}
 	return ret;
 }
@@ -189,6 +204,9 @@ int ModuleManagerLibraryHandlerLocal::generateFirstCommand(Buffer &default_comma
 	}
 	if (aeronClient_ != nullptr) {
 		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::GENERATE_FIRST_COMMAND, "TODO");
+		if (aeronClient_->getMessage() != "generateFirstCommand") {
+			throw std::runtime_error("AeronClient did not receive the expected message");
+		}
 	}
 	return ret;
 }
@@ -200,6 +218,9 @@ int ModuleManagerLibraryHandlerLocal::statusDataValid(const Buffer &status, unsi
 	}
 	if (aeronClient_ != nullptr) {
 		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::STATUS_DATA_VALID, "TODO");
+		if (aeronClient_->getMessage() != "statusDataValid") {
+			throw std::runtime_error("AeronClient did not receive the expected message");
+		}
 	}
 	return statusDataValid_(raw_buffer, device_type);
 }
@@ -211,6 +232,9 @@ int ModuleManagerLibraryHandlerLocal::commandDataValid(const Buffer &command, un
 	}
 	if (aeronClient_ != nullptr) {
 		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::COMMAND_DATA_VALID, "TODO");
+		if (aeronClient_->getMessage() != "commandDataValid") {
+			throw std::runtime_error("AeronClient did not receive the expected message");
+		}
 	}
 	return commandDataValid_(raw_buffer, device_type);
 }
@@ -218,6 +242,9 @@ int ModuleManagerLibraryHandlerLocal::commandDataValid(const Buffer &command, un
 int ModuleManagerLibraryHandlerLocal::allocate(struct buffer *buffer_pointer, size_t size_in_bytes) const {
 	if (aeronClient_ != nullptr) {
 		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::ALLOCATE, "TODO");
+		if (aeronClient_->getMessage() != "allocate") {
+			throw std::runtime_error("AeronClient did not receive the expected message");
+		}
 	}
 	return allocate_(buffer_pointer, size_in_bytes);
 }
@@ -225,6 +252,9 @@ int ModuleManagerLibraryHandlerLocal::allocate(struct buffer *buffer_pointer, si
 void ModuleManagerLibraryHandlerLocal::deallocate(struct buffer *buffer) const {
 	if (aeronClient_ != nullptr) {
 		aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::DEALLOCATE, "TODO");
+		if (aeronClient_->getMessage() != "deallocate") {
+			throw std::runtime_error("AeronClient did not receive the expected message");
+		}
 	}
 	deallocate_(buffer);
 }
