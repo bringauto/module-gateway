@@ -55,11 +55,13 @@ FIND_PACKAGE(eclipse-paho-mqtt-c REQUIRED)
 FIND_PACKAGE(libbringauto_logger 2.0.0 REQUIRED)
 FIND_PACKAGE(fleet-protocol-interface 2.0.0 REQUIRED)
 FIND_PACKAGE(ZLIB 1.2.11 REQUIRED)
+FIND_PACKAGE(fleet-protocol-cxx-helpers-static 1.1.1 REQUIRED)
 FIND_PACKAGE(aeron REQUIRED) # Requires local installation
 
 FILE(GLOB_RECURSE source_files "source/*")
 ADD_LIBRARY(module-gateway-lib STATIC "${source_files}")
 TARGET_INCLUDE_DIRECTORIES(module-gateway-lib PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+ADD_SUBDIRECTORY(source/bringauto/modules/memory_management)
 TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         Boost::headers
                         protobuf::libprotobuf
@@ -73,9 +75,11 @@ TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         eclipse-paho-mqtt-c::paho-mqtt3as
                         PahoMqttCpp::paho-mqttpp3
                         ZLIB::ZLIB
+                        fleet-protocol-cxx-helpers-static::fleet-protocol-cxx-helpers-static
                         aeron::aeron
                         aeron::aeron_client
                         aeron::aeron_driver
+                        memory_management
                         ${CMAKE_DL_LIBS}
 )
 
