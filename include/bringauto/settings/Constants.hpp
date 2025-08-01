@@ -199,6 +199,7 @@ public:
 
 	inline static constexpr std::string_view MODULES { "modules" };
 	inline static constexpr std::string_view AERON_CONNECTION { "aeron:ipc"};
+	inline static constexpr std::string_view SEPARATOR { ":::" };
 };
 
 }
