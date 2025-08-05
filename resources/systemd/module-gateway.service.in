@@ -4,10 +4,11 @@ After=network.target nss-lookup.target
 
 [Service]
 Type=simple
+User=root
 Restart=always
 RestartSec=20
-WorkingDirectory=@CMAKE_INSTALL_SYSCONFDIR@
-ExecStart=@CMAKE_INSTALL_PREFIX@/bin/module-gateway-app --config-path=@CMAKE_INSTALL_SYSCONFDIR@/bringauto/module-gateway/config.json
+WorkingDirectory=@CMAKE_INSTALL_PREFIX@
+ExecStart=@CMAKE_INSTALL_PREFIX@/bin/module-gateway-app --config-path=/@CMAKE_INSTALL_SYSCONFDIR@/bringauto/module-gateway/config.json
 
 [Install]
 WantedBy=multi-user.target
