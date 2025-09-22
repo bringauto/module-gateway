@@ -8,7 +8,7 @@
 
 namespace bringauto::external_client {
 
-int ErrorAggregator::init_error_aggregator(const std::shared_ptr<modules::ModuleManagerLibraryHandler> &library) {
+int ErrorAggregator::init_error_aggregator(const std::shared_ptr<modules::ModuleManagerLibraryHandlerAsync> &library) { //TODO select type from config
 	module_ = library;
 	return OK;
 }

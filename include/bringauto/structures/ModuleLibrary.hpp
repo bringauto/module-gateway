@@ -1,8 +1,8 @@
 #pragma once
 
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
+#include <bringauto/modules/ModuleManagerLibraryHandlerAsync.hpp>
 #include <bringauto/modules/StatusAggregator.hpp>
-#include <bringauto/aeron_communication/AeronClient.hpp>
 
 #include <memory>
 
@@ -14,7 +14,7 @@ namespace bringauto::structures {
  * @brief Library with library handlers and status aggregators
  */
 struct ModuleLibrary {
-	ModuleLibrary();
+	ModuleLibrary() = default;
 
 	~ModuleLibrary();
 
@@ -23,7 +23,7 @@ struct ModuleLibrary {
 	 *
 	 * @param libPaths paths to the libraries
 	 */
-	void loadLibraries(const std::unordered_map<int, std::string> &libPaths);
+	void loadLibraries(const std::unordered_map<int, std::string> &libPaths, const std::string &moduleBinaryPath);
 
 	/**
 	 * @brief Initialize status aggregators with context
@@ -32,11 +32,9 @@ struct ModuleLibrary {
 	 */
 	void initStatusAggregators(std::shared_ptr<GlobalContext> &context);
 	/// Map of module handlers, key is module id
-	std::unordered_map<unsigned int, std::shared_ptr<modules::ModuleManagerLibraryHandler>> moduleLibraryHandlers {};
+	std::unordered_map<unsigned int, std::shared_ptr<modules::ModuleManagerLibraryHandlerAsync>> moduleLibraryHandlers {}; //TODO select type from config
 	/// Map of status aggregators, key is module id
 	std::unordered_map<unsigned int, std::shared_ptr<modules::StatusAggregator>> statusAggregators {};
-	/// Aeron client used for communication with modules
-	std::shared_ptr<aeron_communication::AeronClient> aeronClient {nullptr};
 };
 
 }

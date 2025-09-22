@@ -1,8 +1,6 @@
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
 #include <bringauto/settings/LoggerId.hpp>
-#include <bringauto/settings/Constants.hpp>
 
-#include <bringauto/fleet_protocol/cxx/StringAsBuffer.hpp>
 #include <fleet_protocol/common_headers/general_error_codes.h>
 
 #include <stdexcept>
@@ -56,11 +54,6 @@ void ModuleManagerLibraryHandler::loadLibrary(const std::filesystem::path &path)
 			"allocate"));
 	deallocate_ = reinterpret_cast<FunctionTypeDeducer<decltype(deallocate_)>::fncptr>(checkFunction(
 			"deallocate"));
-
-	if (aeronClient_ != nullptr) {
-		aeronClient_->addModule(getModuleNumber_());
-	}
-
 	log::logDebug("Library " + path.string() + " was successfully loaded");
 }
 
@@ -93,13 +86,6 @@ int ModuleManagerLibraryHandler::sendStatusCondition(const Buffer &current_statu
 		new_status_raw_buffer = new_status.getStructBuffer();
 	}
 
-	if (aeronClient_ != nullptr) {
-		aeronClient_->callModuleFunction(
-			aeron_communication::AeronClient::ModuleFunctions::SEND_STATUS_CONDITION,
-			constructAeronMessage({&current_status_raw_buffer, &new_status_raw_buffer}, device_type)
-		);
-		return std::stoi(std::string(aeronClient_->getMessage()));
-	}
 	return sendStatusCondition_(current_status_raw_buffer, new_status_raw_buffer, device_type);
 }
 
@@ -122,17 +108,8 @@ int ModuleManagerLibraryHandler::generateCommand(Buffer &generated_command,
 		current_command_raw_buffer = current_command.getStructBuffer();
 	}
 
-	int ret;
-	if (aeronClient_ != nullptr) {
-		aeronClient_->callModuleFunction(
-			aeron_communication::AeronClient::ModuleFunctions::GENERATE_COMMAND,
-			constructAeronMessage({&new_status_raw_buffer, &current_status_raw_buffer, &current_command_raw_buffer}, device_type)
-		);
-		ret = parseAeronResponse(raw_buffer, aeronClient_->getMessage());
-	} else {
-		ret = generateCommand_(&raw_buffer, new_status_raw_buffer,
-			current_status_raw_buffer, current_command_raw_buffer, device_type);
-	}
+	int ret = generateCommand_(&raw_buffer, new_status_raw_buffer,
+		current_status_raw_buffer, current_command_raw_buffer, device_type);
 	if (ret == OK) {
 		generated_command = constructBufferByTakeOwnership(raw_buffer);
 	} else {
@@ -155,16 +132,7 @@ int ModuleManagerLibraryHandler::aggregateStatus(Buffer &aggregated_status,
 		new_status_raw_buffer = new_status.getStructBuffer();
 	}
 
-	int ret;
-	if (aeronClient_ != nullptr) {
-		aeronClient_->callModuleFunction(
-			aeron_communication::AeronClient::ModuleFunctions::AGGREGATE_STATUS,
-			constructAeronMessage({&current_status_raw_buffer, &new_status_raw_buffer}, device_type)
-		);
-		ret = parseAeronResponse(raw_buffer, aeronClient_->getMessage());
-	} else {
-		ret = aggregateStatus_(&raw_buffer, current_status_raw_buffer, new_status_raw_buffer, device_type);
-	}
+	const int ret = aggregateStatus_(&raw_buffer, current_status_raw_buffer, new_status_raw_buffer, device_type);
 	if (ret == OK) {
 		aggregated_status = constructBufferByTakeOwnership(raw_buffer);
 	} else {
@@ -187,16 +155,8 @@ int ModuleManagerLibraryHandler::aggregateError(Buffer &error_message,
 	if (status.isAllocated()) {
 		status_raw_buffer = status.getStructBuffer();
 	}
-	int ret;
-	if (aeronClient_ != nullptr) {
-		aeronClient_->callModuleFunction(
-			aeron_communication::AeronClient::ModuleFunctions::AGGREGATE_ERROR,
-			constructAeronMessage({&current_error_raw_buffer, &status_raw_buffer}, device_type)
-		);
-		ret = parseAeronResponse(raw_buffer, aeronClient_->getMessage());
-	} else {
-		ret = aggregateError_(&raw_buffer, current_error_raw_buffer, status_raw_buffer, device_type);
-	}
+
+	const int ret = aggregateError_(&raw_buffer, current_error_raw_buffer, status_raw_buffer, device_type);
 	if (ret == OK) {
 		error_message = constructBufferByTakeOwnership(raw_buffer);
 	} else {
@@ -207,16 +167,7 @@ int ModuleManagerLibraryHandler::aggregateError(Buffer &error_message,
 
 int ModuleManagerLibraryHandler::generateFirstCommand(Buffer &default_command, unsigned int device_type) {
 	struct ::buffer raw_buffer {};
-	int ret;
-	if (aeronClient_ != nullptr) {
-		aeronClient_->callModuleFunction(
-			aeron_communication::AeronClient::ModuleFunctions::GENERATE_FIRST_COMMAND,
-			constructAeronMessage({}, device_type)
-		);
-		ret = parseAeronResponse(raw_buffer, aeronClient_->getMessage());	
-	} else {
-		ret = generateFirstCommand_(&raw_buffer, device_type);
-	}
+	const int ret = generateFirstCommand_(&raw_buffer, device_type);
 	if (ret == OK) {
 		default_command = constructBufferByTakeOwnership(raw_buffer);
 	} else {
@@ -230,13 +181,6 @@ int ModuleManagerLibraryHandler::statusDataValid(const Buffer &status, unsigned 
 	if (status.isAllocated()) {
 		raw_buffer = status.getStructBuffer();
 	}
-	if (aeronClient_ != nullptr) {
-		aeronClient_->callModuleFunction(
-			aeron_communication::AeronClient::ModuleFunctions::STATUS_DATA_VALID,
-			constructAeronMessage({&raw_buffer}, device_type)
-		);
-		return std::stoi(std::string(aeronClient_->getMessage()));
-	}
 	return statusDataValid_(raw_buffer, device_type);
 }
 
@@ -245,33 +189,14 @@ int ModuleManagerLibraryHandler::commandDataValid(const Buffer &command, unsigne
 	if (command.isAllocated()) {
 		raw_buffer = command.getStructBuffer();
 	}
-	if (aeronClient_ != nullptr) {
-		aeronClient_->callModuleFunction(
-			aeron_communication::AeronClient::ModuleFunctions::COMMAND_DATA_VALID,
-			constructAeronMessage({&raw_buffer}, device_type)
-		);
-		return std::stoi(std::string(aeronClient_->getMessage()));
-	}
 	return commandDataValid_(raw_buffer, device_type);
 }
 
 int ModuleManagerLibraryHandler::allocate(struct buffer *buffer_pointer, size_t size_in_bytes) const {
-	// if (aeronClient_ != nullptr) {
-	// 	aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::ALLOCATE, "TODO");
-	// 	if (aeronClient_->getMessage() != "allocate") {
-	// 		throw std::runtime_error("AeronClient did not receive the expected message");
-	// 	}
-	// }
 	return allocate_(buffer_pointer, size_in_bytes);
 }
 
 void ModuleManagerLibraryHandler::deallocate(struct buffer *buffer) const {
-	// if (aeronClient_ != nullptr) {
-	// 	aeronClient_->callModuleFunction(aeron_communication::AeronClient::ModuleFunctions::DEALLOCATE, "TODO");
-	// 	if (aeronClient_->getMessage() != "deallocate") {
-	// 		throw std::runtime_error("AeronClient did not receive the expected message");
-	// 	}
-	// }
 	deallocate_(buffer);
 }
 
@@ -292,26 +217,6 @@ Buffer ModuleManagerLibraryHandler::constructBufferByTakeOwnership(struct ::buff
 		throw Buffer::BufferNotAllocated { "Buffer not allocated - cannot take ownership" };
 	}
 	return { buffer, deallocate_ };
-}
-
-std::string ModuleManagerLibraryHandler::constructAeronMessage(const std::vector<struct ::buffer *> &buffers, int deviceType) const {
-	std::string message;
-	for (const auto &buff : buffers) {
-		message += std::string(static_cast<char*>(buff->data), buff->size_in_bytes) + std::string(settings::Constants::SEPARATOR);
-	}
-	return message + std::to_string(deviceType);
-}
-
-int ModuleManagerLibraryHandler::parseAeronResponse(struct ::buffer &raw_buffer, std::string_view response) const {
-	size_t sepPos = response.find(settings::Constants::SEPARATOR);
-	if (sepPos == std::string::npos) {
-		throw std::runtime_error("Invalid response format: " + std::string(response));
-	}
-	bringauto::fleet_protocol::cxx::StringAsBuffer::createBufferAndCopyData(
-		&raw_buffer,
-		response.substr(sepPos + settings::Constants::SEPARATOR.size())
-	);
-	return std::stoi(std::string(response.substr(0, sepPos)));
 }
 
 }
