@@ -1,8 +1,6 @@
 #pragma once
 
 #include <bringauto/modules/Buffer.hpp>
-#include <bringauto/aeron_communication/AeronClient.hpp>
-#include <bringauto/modules/IModuleManagerLibraryHandler.hpp>
 
 #include <fleet_protocol/common_headers/memory_management.h>
 
@@ -16,40 +14,38 @@ namespace bringauto::modules {
 /**
  * @brief Class used to load and handle library created by module maintainer
  */
-class ModuleManagerLibraryHandlerLocal : public IModuleManagerLibraryHandler {
+class ModuleManagerLibraryHandlerLocal {
 public:
 	ModuleManagerLibraryHandlerLocal() = default;
-	ModuleManagerLibraryHandlerLocal(std::shared_ptr<aeron_communication::AeronClient> &aeronClient):
-		aeronClient_(aeronClient) {};
 
-	~ModuleManagerLibraryHandlerLocal() override;
+	~ModuleManagerLibraryHandlerLocal();
 
 	/**
 	 * @brief Loads the module shared library from the given path using dlmopen.
 	 */
-	void loadLibrary(const std::filesystem::path &path) override;
+	void loadLibrary(const std::filesystem::path &path);
 
-	int getModuleNumber() override;
+	int getModuleNumber();
 
-	int isDeviceTypeSupported(unsigned int device_type) override;
+	int isDeviceTypeSupported(unsigned int device_type);
 
 	int sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) override;
 
 	int generateCommand(Buffer &generated_command, const Buffer &new_status,
 						const Buffer &current_status, const Buffer &current_command,
-						unsigned int device_type) override;
+						unsigned int device_type);
 
 	int aggregateStatus(Buffer &aggregated_status, const Buffer &current_status,
-						const Buffer &new_status, unsigned int device_type) override;
+						const Buffer &new_status, unsigned int device_type);
 
 	int aggregateError(Buffer &error_message, const Buffer &current_error_message, const Buffer &status,
-					   unsigned int device_type) override;
+					   unsigned int device_type);
 
-	int generateFirstCommand(Buffer &default_command, unsigned int device_type) override;
+	int generateFirstCommand(Buffer &default_command, unsigned int device_type);
 
-	int statusDataValid(const Buffer &status, unsigned int device_type) override;
+	int statusDataValid(const Buffer &status, unsigned int device_type);
 
-	int commandDataValid(const Buffer &command, unsigned int device_type) override;
+	int commandDataValid(const Buffer &command, unsigned int device_type);
 
 	/**
 	 * @brief Constructs a buffer with the given size
@@ -57,7 +53,7 @@ public:
 	 * @param size size of the buffer
 	 * @return a new Buffer object
 	 */
-	Buffer constructBuffer(std::size_t size = 0) override;
+	Buffer constructBuffer(std::size_t size = 0);
 
 private:
 
@@ -75,24 +71,6 @@ private:
 	 */
 	Buffer constructBufferByTakeOwnership(struct ::buffer& buffer);
 
-	/**
-	 * @brief Constructs a message for AeronClient to send to the module
-	 * 
-	 * @param buffers vector of raw c buffers to be included in the message
-	 * @param deviceType type of the device for which the message is constructed
-	 * @return a string message to be sent
-	 */
-	std::string constructAeronMessage(const std::vector<struct ::buffer *> &buffers, int deviceType) const;
-
-	/**
-	 * @brief Parses the response from AeronClient
-	 * 
-	 * @param raw_buffer raw buffer to be filled with the response data
-	 * @param response response string from AeronClient
-	 * @return status code of the response
-	 */
-	int parseAeronResponse(struct ::buffer &raw_buffer, std::string_view response) const;
-
 	void *module_ {};
 
 	std::function<int()> getModuleNumber_ {};
@@ -109,7 +87,6 @@ private:
 	std::function<int(struct buffer *, struct buffer, struct buffer, struct buffer, unsigned int)> generateCommand_ {};
 	std::function<int(struct buffer *, size_t)> allocate_ {};
 	std::function<void(struct buffer *)> deallocate_ {};
-	std::shared_ptr<aeron_communication::AeronClient> aeronClient_ {nullptr};
 };
 
 }

@@ -1,76 +1,68 @@
 #include <bringauto/modules/ModuleManagerLibraryHandlerAsync.hpp>
 #include <bringauto/settings/Constants.hpp>
-#include <bringauto/settings/LoggerId.hpp>
+#include <bringauto/settings/Constants.hpp>
 
 #include <fleet_protocol/common_headers/general_error_codes.h>
 
 #include <csignal>
-#include <thread>
 
 
 
 namespace bringauto::modules {
 
-ModuleManagerLibraryHandlerAsync::ModuleManagerLibraryHandlerAsync(const std::filesystem::path &moduleBinaryPath, const int moduleNumber) :
-		moduleBinaryPath_ { moduleBinaryPath } {
-	aeronClient.connect(moduleNumber);
+async_function_execution::AsyncFunctionExecutor aeronClient {
+	async_function_execution::Config {
+		.isProducer = true,
+		.defaultTimeout = std::chrono::seconds(1)
+	},
+	settings::FunctionIds::functionList
+};
+
+ModuleManagerLibraryHandlerAsync::ModuleManagerLibraryHandlerAsync() {
+	aeronClient.connect();
 	deallocate_ = [this](struct buffer *buffer) {
 		this->deallocate(buffer);
 	};
 }
 
 ModuleManagerLibraryHandlerAsync::~ModuleManagerLibraryHandlerAsync() {
-	if (moduleBinaryProcess_.valid()) {
-		::kill(moduleBinaryProcess_.id(), SIGTERM);
-		try
-		{
-			moduleBinaryProcess_.wait();
-		}
-		catch (const std::exception& e)
-		{
-			settings::Logger::logError("Failed to wait for module binary process: {}", e.what());
-		}
+	if (moduleBinaryPid_ != 0) {
+		::kill(moduleBinaryPid_, SIGTERM);
 	}
 }
 
-void ModuleManagerLibraryHandlerAsync::loadLibrary(const std::filesystem::path &path) {
-	if(moduleBinaryProcess_.valid()) {
-		::kill(moduleBinaryProcess_.id(), SIGTERM);
-		try {
-			moduleBinaryProcess_.wait();
-		} catch(const std::system_error &e) {
-			settings::Logger::logError("Failed to wait for previous module binary process: {}", e.what());
-		}
+void ModuleManagerLibraryHandlerAsync::loadLibrary(const std::filesystem::path &path, const std::string &moduleBinaryPath) {
+	pid_t pid = ::fork();
+	if (pid < 0) {
+		throw std::runtime_error { "Fork failed when trying to start module binary " + moduleBinaryPath };
 	}
-	// boost::process::child constructor throws boost::process::process_error on spawn failure.
-	moduleBinaryProcess_ = boost::process::child { moduleBinaryPath_.string(), "-m", path.string() };
-	const auto deadline = std::chrono::steady_clock::now() + settings::AeronClientConstants::aeron_client_startup_timeout;
-	while(std::chrono::steady_clock::now() < deadline) {
-		if(aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::getModuleNumberAsync).has_value()) {
-			return;
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds { 10 });
+	if (pid > 0) {
+		moduleBinaryPid_ = pid;
+		return;
 	}
-	throw std::runtime_error { "Module binary " + moduleBinaryPath_.string() + " did not become ready within startup timeout" };
+	char *args[4];
+	args[0] = const_cast<char *>(moduleBinaryPath.c_str());
+	args[1] = const_cast<char *>("-m");
+	args[2] = const_cast<char *>(path.c_str());
+	args[3] = nullptr;
+	if (::execv(moduleBinaryPath.c_str(), args) < 0) {
+		throw std::runtime_error { "Exec failed when trying to start module binary " + moduleBinaryPath };
+	}
 }
 
-int ModuleManagerLibraryHandlerAsync::getModuleNumber() {
-	std::lock_guard lock { getModuleNumberMutex_ };
-	return aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::getModuleNumberAsync).value_or(NOT_OK);
+int ModuleManagerLibraryHandlerAsync::getModuleNumber() const {
+	return aeronClient.callFunc(settings::FunctionIds::getModuleNumber);
 }
 
-int ModuleManagerLibraryHandlerAsync::isDeviceTypeSupported(unsigned int device_type) {
-	std::lock_guard lock { isDeviceTypeSupportedMutex_ };
-	return aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::isDeviceTypeSupportedAsync,
-								device_type).value_or(NOT_OK);
+int ModuleManagerLibraryHandlerAsync::isDeviceTypeSupported(unsigned int device_type) const {
+	return aeronClient.callFunc(settings::FunctionIds::isDeviceTypeSupported, device_type);
 }
 
 int ModuleManagerLibraryHandlerAsync::sendStatusCondition(const Buffer &current_status,
 														  const Buffer &new_status,
-													 	  unsigned int device_type) {
-	std::lock_guard lock { sendStatusConditionMutex_ };
-	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer current_status_raw_buffer;
-	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer new_status_raw_buffer;
+													 	  unsigned int device_type) const {
+	settings::ConvertibleBuffer current_status_raw_buffer;
+	settings::ConvertibleBuffer new_status_raw_buffer;
 
 	if (current_status.isAllocated()) {
 		current_status_raw_buffer = current_status.getStructBuffer();
@@ -79,20 +71,16 @@ int ModuleManagerLibraryHandlerAsync::sendStatusCondition(const Buffer &current_
 		new_status_raw_buffer = new_status.getStructBuffer();
 	}
 
-	return aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::sendStatusConditionAsync,
-								current_status_raw_buffer,
-								new_status_raw_buffer,
-								device_type).value_or(NOT_OK);
+	return aeronClient.callFunc(settings::FunctionIds::sendStatusCondition, current_status_raw_buffer, new_status_raw_buffer, device_type);
 }
 
 int ModuleManagerLibraryHandlerAsync::generateCommand(Buffer &generated_command,
 													  const Buffer &new_status,
 													  const Buffer &current_status,
 													  const Buffer &current_command, unsigned int device_type) {
-	std::lock_guard lock { generateCommandMutex_ };
-	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer new_status_raw_buffer;
-	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer current_status_raw_buffer;
-	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer current_command_raw_buffer;
+	settings::ConvertibleBuffer new_status_raw_buffer;
+	settings::ConvertibleBuffer current_status_raw_buffer;
+	settings::ConvertibleBuffer current_command_raw_buffer;
 
 	if (new_status.isAllocated()) {
 		new_status_raw_buffer = new_status.getStructBuffer();
@@ -104,30 +92,25 @@ int ModuleManagerLibraryHandlerAsync::generateCommand(Buffer &generated_command,
 		current_command_raw_buffer = current_command.getStructBuffer();
 	}
 
-	auto ret = aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::generateCommandAsync,
+	auto ret = aeronClient.callFunc(settings::FunctionIds::generateCommand,
 									new_status_raw_buffer,
 									current_status_raw_buffer,
 									current_command_raw_buffer,
 									device_type);
 
-	if (!ret.has_value()) {
-		return NOT_OK;
-	}
-
-	if (ret.value().returnCode == OK) {
-		generated_command = constructBufferByTakeOwnership(ret.value().buffer);
+	if (ret.returnCode == OK) {
+		generated_command = constructBufferByTakeOwnership(ret.buffer);
 	} else {
 		generated_command = constructBuffer();
 	}
-	return ret.value().returnCode;
+	return ret.returnCode;
 }
 
 int ModuleManagerLibraryHandlerAsync::aggregateStatus(Buffer &aggregated_status,
 													  const Buffer &current_status,
 													  const Buffer &new_status, unsigned int device_type) {
-	std::lock_guard lock { aggregateStatusMutex_ };
-	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer current_status_raw_buffer;
-	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer new_status_raw_buffer;
+	settings::ConvertibleBuffer current_status_raw_buffer;
+	settings::ConvertibleBuffer new_status_raw_buffer;
 
 	if (current_status.isAllocated()) {
 		current_status_raw_buffer = current_status.getStructBuffer();
@@ -136,15 +119,9 @@ int ModuleManagerLibraryHandlerAsync::aggregateStatus(Buffer &aggregated_status,
 		new_status_raw_buffer = new_status.getStructBuffer();
 	}
 
-	auto ret = aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::aggregateStatusAsync,
-									current_status_raw_buffer,
-									new_status_raw_buffer,
-									device_type);
-	if (!ret.has_value()) {
-		return NOT_OK;
-	}
-	if (ret.value().returnCode == OK) {
-		aggregated_status = constructBufferByTakeOwnership(ret.value().buffer);
+	auto ret = aeronClient.callFunc(settings::FunctionIds::aggregateStatus, current_status_raw_buffer, new_status_raw_buffer, device_type);
+	if (ret.returnCode == OK) {
+		aggregated_status = constructBufferByTakeOwnership(ret.buffer);
 	} else {
 		// Needed to properly free the allocated buffer memory
 		if (ret.value().buffer.data != nullptr) {
@@ -152,15 +129,14 @@ int ModuleManagerLibraryHandlerAsync::aggregateStatus(Buffer &aggregated_status,
 		}
 		aggregated_status = current_status;
 	}
-	return ret.value().returnCode;
+	return ret.returnCode;
 }
 
 int ModuleManagerLibraryHandlerAsync::aggregateError(Buffer &error_message,
 													 const Buffer &current_error_message,
 													 const Buffer &status, unsigned int device_type) {
-	std::lock_guard lock { aggregateErrorMutex_ };
-	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer current_error_raw_buffer;
-	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer status_raw_buffer;
+	settings::ConvertibleBuffer current_error_raw_buffer;
+	settings::ConvertibleBuffer status_raw_buffer;
 
 	if (current_error_message.isAllocated()) {
 		current_error_raw_buffer = current_error_message.getStructBuffer();
@@ -169,73 +145,49 @@ int ModuleManagerLibraryHandlerAsync::aggregateError(Buffer &error_message,
 		status_raw_buffer = status.getStructBuffer();
 	}
 
-	auto ret = aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::aggregateErrorAsync,
-									current_error_raw_buffer,
-									status_raw_buffer,
-									device_type);
-	if (!ret.has_value()) {
-		return NOT_OK;
-	}
-	if (ret.value().returnCode == OK) {
-		error_message = constructBufferByTakeOwnership(ret.value().buffer);
+	auto ret = aeronClient.callFunc(settings::FunctionIds::aggregateError, current_error_raw_buffer, status_raw_buffer, device_type);
+	if (ret.returnCode == OK) {
+		error_message = constructBufferByTakeOwnership(ret.buffer);
 	} else {
 		error_message = constructBuffer();
 	}
-	return ret.value().returnCode;
+	return ret.returnCode;
 }
 
 int ModuleManagerLibraryHandlerAsync::generateFirstCommand(Buffer &default_command, unsigned int device_type) {
-	std::lock_guard lock { generateFirstCommandMutex_ };
-	auto ret = aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::generateFirstCommandAsync, device_type);
-	if (!ret.has_value()) {
-		return NOT_OK;
-	}
-	if (ret.value().returnCode == OK) {
-		default_command = constructBufferByTakeOwnership(ret.value().buffer);
+	auto ret = aeronClient.callFunc(settings::FunctionIds::generateFirstCommand, device_type);
+	if (ret.returnCode == OK) {
+		default_command = constructBufferByTakeOwnership(ret.buffer);
 	} else {
 		default_command = constructBuffer();
 	}
-	return ret.value().returnCode;
+	return ret.returnCode;
 }
 
-int ModuleManagerLibraryHandlerAsync::statusDataValid(const Buffer &status, unsigned int device_type) {
-	std::lock_guard lock { statusDataValidMutex_ };
-	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer status_raw_buffer;
+int ModuleManagerLibraryHandlerAsync::statusDataValid(const Buffer &status, unsigned int device_type) const {
+	settings::ConvertibleBuffer status_raw_buffer;
 	if (status.isAllocated()) {
 		status_raw_buffer = status.getStructBuffer();
 	}
 
-	return aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::statusDataValidAsync,
-								status_raw_buffer,
-								device_type).value_or(NOT_OK);
+	return aeronClient.callFunc(settings::FunctionIds::statusDataValid, status_raw_buffer, device_type);
 }
 
-int ModuleManagerLibraryHandlerAsync::commandDataValid(const Buffer &command, unsigned int device_type) {
-	std::lock_guard lock { commandDataValidMutex_ };
-	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer command_raw_buffer;
+int ModuleManagerLibraryHandlerAsync::commandDataValid(const Buffer &command, unsigned int device_type) const {
+	settings::ConvertibleBuffer command_raw_buffer;
 	if (command.isAllocated()) {
 		command_raw_buffer = command.getStructBuffer();
 	}
 
-	return aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::commandDataValidAsync,
-								command_raw_buffer,
-								device_type).value_or(NOT_OK);
+	return aeronClient.callFunc(settings::FunctionIds::commandDataValid, command_raw_buffer, device_type);
 }
 
 int ModuleManagerLibraryHandlerAsync::allocate(struct buffer *buffer_pointer, size_t size_in_bytes) const {
-	try{
-		buffer_pointer->data = new char[size_in_bytes]();
-	} catch(std::bad_alloc&){
-		return NOT_OK;
-	}
-	buffer_pointer->size_in_bytes = size_in_bytes;
-	return OK;
+	return ::allocate(buffer_pointer, size_in_bytes);
 }
 
 void ModuleManagerLibraryHandlerAsync::deallocate(struct buffer *buffer) const {
-	delete[] static_cast<char *>(buffer->data);
-	buffer->data = nullptr;
-	buffer->size_in_bytes = 0;
+	::deallocate(buffer);
 }
 
 Buffer ModuleManagerLibraryHandlerAsync::constructBuffer(std::size_t size) {

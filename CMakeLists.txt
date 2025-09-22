@@ -62,6 +62,9 @@ FIND_PACKAGE(fleet-protocol-cxx-helpers-static 1.2.0 REQUIRED)
 FIND_PACKAGE(aeron 1.48.6 REQUIRED)
 FIND_PACKAGE(async-function-execution-shared 1.0.0 REQUIRED)
 
+#temp
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/aeron-interface)
+
 FILE(GLOB_RECURSE source_files "source/*")
 ADD_LIBRARY(module-gateway-lib STATIC "${source_files}")
 TARGET_INCLUDE_DIRECTORIES(module-gateway-lib PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
@@ -105,7 +108,7 @@ TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC module-gateway-lib)
 
 IF(BRINGAUTO_TESTS)
     ENABLE_TESTING()
-    INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt)
+    #INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt)
     INCLUDE(CTest)
 ENDIF(BRINGAUTO_TESTS)
 

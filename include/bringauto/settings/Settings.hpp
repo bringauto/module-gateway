@@ -33,17 +33,12 @@ struct Settings {
 	/**
 	 * @brief paths to shared module libraries
 	 */
-	std::unordered_map<int, std::filesystem::path> modulePaths {};
+	std::unordered_map<int, std::string> modulePaths {};
 
 	/**
 	 * @brief path to module binary
 	 */
-	std::filesystem::path moduleBinaryPath {};
-
-	/**
-	 * @brief path to module binary
-	 */
-	std::filesystem::path moduleBinaryPath {};
+	std::string moduleBinaryPath {};
 
 	/**
 	 * @brief Setting of external connection endpoints and protocols
