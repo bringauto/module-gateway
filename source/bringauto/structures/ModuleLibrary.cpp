@@ -8,33 +8,12 @@
 
 namespace bringauto::structures {
 
-ModuleLibrary::ModuleLibrary() {
-	aeronClient = std::make_shared<aeron_communication::AeronClient>();
-}
-
 ModuleLibrary::~ModuleLibrary() {
 	std::for_each(statusAggregators.cbegin(), statusAggregators.cend(),
 				  [](auto &pair) { pair.second->destroy_status_aggregator(); });
 }
 
-void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem::path> &libPaths) {
-	std::shared_ptr<modules::IModuleManagerLibraryHandler> handler;
-	for(auto const &[key, path]: libPaths) {
-		handler = std::make_shared<modules::ModuleManagerLibraryHandlerLocal>();
-		handler->loadLibrary(path);
-		if(handler->getModuleNumber() != key) {
-			settings::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path.string(), key, handler->getModuleNumber());
-			throw std::runtime_error {"Module numbers from config are not corresponding to binaries. Unable to continue. Fix configuration file."};
-		}
-		auto [it, inserted] = moduleLibraryHandlers.try_emplace(key, handler);
-		if(!inserted) {
-			settings::Logger::logWarning("Module with number: {} is already registered, skipping duplicate", key);
-		}
-	}
-}
-
-void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem::path> &libPaths, const std::filesystem::path &moduleBinaryPath) {
-	std::shared_ptr<modules::IModuleManagerLibraryHandler> handler;
+void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::string> &libPaths, const std::string &moduleBinaryPath) {
 	for(auto const &[key, path]: libPaths) {
 		auto handler = std::make_shared<modules::IModuleManagerLibraryHandler>(aeronClient);
 		handler->loadLibrary(path);

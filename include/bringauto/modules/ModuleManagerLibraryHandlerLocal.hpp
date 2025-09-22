@@ -12,9 +12,7 @@ namespace bringauto::modules {
  */
 class ModuleManagerLibraryHandlerLocal : public IModuleManagerLibraryHandler {
 public:
-	ModuleManagerLibraryHandlerLocal() = default;
-	ModuleManagerLibraryHandlerLocal(std::shared_ptr<aeron_communication::AeronClient> &aeronClient):
-		aeronClient_(aeronClient) {};
+	ModuleManagerLibraryHandler() = default;
 
 	~ModuleManagerLibraryHandlerLocal() override;
 
@@ -69,24 +67,6 @@ private:
 	 */
 	Buffer constructBufferByTakeOwnership(struct ::buffer& buffer);
 
-	/**
-	 * @brief Constructs a message for AeronClient to send to the module
-	 * 
-	 * @param buffers vector of raw c buffers to be included in the message
-	 * @param deviceType type of the device for which the message is constructed
-	 * @return a string message to be sent
-	 */
-	std::string constructAeronMessage(const std::vector<struct ::buffer *> &buffers, int deviceType) const;
-
-	/**
-	 * @brief Parses the response from AeronClient
-	 * 
-	 * @param raw_buffer raw buffer to be filled with the response data
-	 * @param response response string from AeronClient
-	 * @return status code of the response
-	 */
-	int parseAeronResponse(struct ::buffer &raw_buffer, std::string_view response) const;
-
 	void *module_ {};
 
 	std::function<int()> getModuleNumber_ {};
@@ -103,7 +83,6 @@ private:
 	std::function<int(struct buffer *, struct buffer, struct buffer, struct buffer, unsigned int)> generateCommand_ {};
 	std::function<int(struct buffer *, size_t)> allocate_ {};
 	std::function<void(struct buffer *)> deallocate_ {};
-	std::shared_ptr<aeron_communication::AeronClient> aeronClient_ {nullptr};
 };
 
 }
