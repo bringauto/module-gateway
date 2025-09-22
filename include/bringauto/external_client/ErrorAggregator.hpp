@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
+#include <bringauto/modules/ModuleManagerLibraryHandlerAsync.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
 
 #include <filesystem>
@@ -25,7 +26,7 @@ public:
 	 * @return OK if initialization was successful
 	 * @return NOT_OK if an error occurred
 	 */
-	int init_error_aggregator(const std::shared_ptr <modules::ModuleManagerLibraryHandler> &library);
+	int init_error_aggregator(const std::shared_ptr <modules::ModuleManagerLibraryHandlerAsync> &library); //TODO select type from config
 
 	/**
 	 * @short Clean up.
@@ -111,7 +112,7 @@ private:
 		modules::Buffer lastStatus {};
 	};
 
-	std::shared_ptr <modules::ModuleManagerLibraryHandler> module_ {};
+	std::shared_ptr <modules::ModuleManagerLibraryHandlerAsync> module_ {}; //TODO select type from config
 
 	/**
 	 * @brief Map of devices states, key is device identification converted to string

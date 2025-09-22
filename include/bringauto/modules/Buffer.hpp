@@ -19,6 +19,7 @@ namespace bringauto::modules {
 struct Buffer final {
 
 	friend class ModuleManagerLibraryHandler;
+	friend class ModuleManagerLibraryHandlerAsync;
 
 	Buffer() = default;
 	Buffer(const Buffer& buff) = default;

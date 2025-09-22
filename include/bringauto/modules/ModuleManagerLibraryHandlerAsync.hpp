@@ -14,18 +14,19 @@ namespace bringauto::modules {
 /**
  * @brief Class used to load and handle library created by module maintainer
  */
-class ModuleManagerLibraryHandler {
+class ModuleManagerLibraryHandlerAsync {
 public:
-	ModuleManagerLibraryHandler() = default;
+	ModuleManagerLibraryHandlerAsync();
 
-	~ModuleManagerLibraryHandler();
+	~ModuleManagerLibraryHandlerAsync();
 
 	/**
 	 * @brief Load library created by a module maintainer
 	 *
 	 * @param path path to the library
+	 * @param moduleBinaryPath path to the module binary
 	 */
-	void loadLibrary(const std::filesystem::path &path);
+	void loadLibrary(const std::filesystem::path &path, const std::string &moduleBinaryPath);
 
 	int getModuleNumber() const;
 
@@ -83,8 +84,6 @@ private:
 
 	void deallocate(struct buffer *buffer) const;
 
-	void *checkFunction(const char *functionName) const;
-
 	/**
 	 * @brief Constructs a buffer with the same raw c buffer as provided
 	 * 
@@ -93,22 +92,10 @@ private:
 	 */
 	Buffer constructBufferByTakeOwnership(struct ::buffer& buffer);
 
-	void *module_ {};
-
-	std::function<int()> getModuleNumber_ {};
-	std::function<int(unsigned int)> isDeviceTypeSupported_ {};
-	std::function<int(struct buffer *, unsigned int)> generateFirstCommand_ {};
-	std::function<int(const struct buffer, unsigned int)> statusDataValid_ {};
-	std::function<int(const struct buffer, unsigned int)> commandDataValid_ {};
-	std::function<int(struct buffer, struct buffer, unsigned int)> sendStatusCondition_ {};
-	std::function<int(struct buffer *, struct buffer, struct buffer, unsigned int)> aggregateStatus_ {};
-	std::function<int(struct buffer *error_message,
-					  const struct buffer current_error_message,
-					  const struct buffer status,
-					  unsigned int device_type)> aggregateError_ {};
-	std::function<int(struct buffer *, struct buffer, struct buffer, struct buffer, unsigned int)> generateCommand_ {};
-	std::function<int(struct buffer *, size_t)> allocate_ {};
 	std::function<void(struct buffer *)> deallocate_ {};
+
+	/// Process id of the module binary
+	pid_t moduleBinaryPid_ {};
 };
 
 }
