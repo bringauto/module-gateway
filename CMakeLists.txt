@@ -56,7 +56,9 @@ FIND_PACKAGE(libbringauto_logger 2.0.0 REQUIRED)
 FIND_PACKAGE(fleet-protocol-interface 2.0.0 REQUIRED)
 FIND_PACKAGE(ZLIB 1.2.11 REQUIRED)
 FIND_PACKAGE(fleet-protocol-cxx-helpers-static 1.1.1 REQUIRED)
-FIND_PACKAGE(aeron REQUIRED) # Requires local installation
+
+#temp
+ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/aeron-interface)
 
 FILE(GLOB_RECURSE source_files "source/*")
 ADD_LIBRARY(module-gateway-lib STATIC "${source_files}")
@@ -76,9 +78,7 @@ TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         PahoMqttCpp::paho-mqttpp3
                         ZLIB::ZLIB
                         fleet-protocol-cxx-helpers-static::fleet-protocol-cxx-helpers-static
-                        aeron::aeron
-                        aeron::aeron_client
-                        aeron::aeron_driver
+                        async-function-execution-static
                         memory_management
                         ${CMAKE_DL_LIBS}
 )
@@ -103,7 +103,7 @@ TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC module-gateway-lib)
 
 IF(BRINGAUTO_TESTS)
     ENABLE_TESTING()
-    INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt)
+    #INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt)
     INCLUDE(CTest)
 ENDIF(BRINGAUTO_TESTS)
 

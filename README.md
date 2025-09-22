@@ -29,7 +29,7 @@ connection is broken and as soon as the connection is up, then error aggregated 
 - [cmlib](https://github.com/cmakelib/cmakelib)
 
 - [protobuf](https://github.com/protocolbuffers/protobuf/tree/main/src) >= v3.21.12
-- [cxxopts](https://github.com/jarro2783/cxxopts) >= v3.0.0
+- [cxxopts](https://github.com/jarro2783/cxxopts) >= v3.1.1
 - [boost](https://github.com/boostorg/boost) >= v1.74.0
 - [nlohmann-json](https://github.com/nlohmann/json) >= v3.2.0
 - [ba-logger](https://github.com/bringauto/ba-logger) >= v1.2.0

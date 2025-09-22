@@ -98,6 +98,10 @@ bool SettingsParser::areSettingsCorrect() const {
 		std::cerr << "No shared module library provided." << std::endl;
 		isCorrect = false;
 	}
+	if(!settings_->moduleBinaryPath.empty() && !std::filesystem::exists(settings_->moduleBinaryPath)) {
+		std::cerr << "Given module binary path (" << settings_->moduleBinaryPath << ") does not exist." << std::endl;
+		isCorrect = false;
+	}
 	if(!std::regex_match(settings_->company, std::regex("^[a-z0-9_]+$"))) {
 		std::cerr << "Company name (" << settings_->company << ") is not valid." << std::endl;
 		isCorrect = false;
@@ -153,6 +157,7 @@ void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) const {
 	for(auto &[key, val]: file[std::string(Constants::MODULE_PATHS)].items()) {
 		settings_->modulePaths[stoi(key)] = val;
 	}
+	settings_->moduleBinaryPath = file[std::string(Constants::MODULE_BINARY_PATH)];
 }
 
 void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) const {

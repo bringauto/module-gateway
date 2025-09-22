@@ -9,9 +9,9 @@
 #include <bringauto/structures/InternalClientMessage.hpp>
 #include <bringauto/structures/ModuleHandlerMessage.hpp>
 #include <bringauto/settings/LoggerId.hpp>
-#include <bringauto/aeron_communication/AeronDriver.hpp>
 
 #include <InternalProtocol.pb.h>
+#include <bringauto/async_function_execution/AeronDriver.hpp>
 #include <libbringauto_logger/bringauto/logging/Logger.hpp>
 #include <libbringauto_logger/bringauto/logging/FileSink.hpp>
 #include <libbringauto_logger/bringauto/logging/ConsoleSink.hpp>
@@ -60,14 +60,15 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	bringauto::aeron_communication::AeronDriver aeronDriver {};
-	std::jthread aeronDriverThread([&aeronDriver]() { aeronDriver.run(); });
-	baset::Logger::logInfo("Aeron Driver starting...");
-	std::this_thread::sleep_for(std::chrono::seconds(2)); //TODO Not sure how much time is needed.
+	// bringauto::aeron_interface::AeronDriver aeronDriver {};
+	// std::jthread aeronDriverThread([&aeronDriver]() { aeronDriver.run(); });
+	// baset::Logger::logInfo("Aeron Driver starting...");
+	// std::this_thread::sleep_for(std::chrono::seconds(3)); //TODO Not sure how much time is needed.
+
 	bas::ModuleLibrary moduleLibrary {};
 
 	try {
-		moduleLibrary.loadLibraries(context->settings->modulePaths);
+		moduleLibrary.loadLibraries(context->settings->modulePaths, context->settings->moduleBinaryPath);
 		moduleLibrary.initStatusAggregators(context);
 	} catch(std::exception &e) {
 		std::cerr << "[ERROR] Error occurred during module initialization: " << e.what() << std::endl;
@@ -97,12 +98,12 @@ int main(int argc, char **argv) {
 		context->ioContext.stop();
 	}
 
-	aeronDriver.stop();
+	// aeronDriver.stop();
 	contextThread2.join();
 	contextThread1.join();
 	externalClientThread.join();
 	moduleHandlerThread.join();
-	aeronDriverThread.join();
+	// aeronDriverThread.join();
 
 	internalServer.destroy();
 	moduleHandler.destroy();

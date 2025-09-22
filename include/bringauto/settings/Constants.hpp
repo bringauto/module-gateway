@@ -1,5 +1,11 @@
 #pragma once
 
+#include <bringauto/modules/Buffer.hpp>
+
+#include <bringauto/async_function_execution/AsyncFunctionExecutor.hpp>
+#include <bringauto/fleet_protocol/cxx/BufferAsString.hpp>
+#include <bringauto/fleet_protocol/cxx/StringAsBuffer.hpp>
+
 #include <string_view>
 #include <chrono>
 
@@ -152,6 +158,7 @@ public:
 	inline static constexpr std::string_view PORT { "port" };
 
 	inline static constexpr std::string_view MODULE_PATHS { "module-paths" };
+	inline static constexpr std::string_view MODULE_BINARY_PATH { "module-binary-path" };
 
 	inline static constexpr std::string_view INTERNAL_SERVER_SETTINGS { "internal-server-settings" };
 
@@ -173,6 +180,113 @@ public:
 	inline static constexpr std::string_view MODULES { "modules" };
 	inline static constexpr std::string_view AERON_CONNECTION { "aeron:ipc"};
 	inline static constexpr std::string_view SEPARATOR { ":::" };
+};
+
+struct ConvertibleBufferReturn final {
+	int returnCode { 0 }; //TODO temporary, need to serialize return code aswell
+	struct ::buffer buffer {};
+	ConvertibleBufferReturn() = default;
+	ConvertibleBufferReturn(int code, struct ::buffer buff) : returnCode(code), buffer(buff) {}
+	~ConvertibleBufferReturn() {
+		buffer.data = nullptr;
+	}
+
+	std::span<const uint8_t> serialize() const {
+		return std::span {reinterpret_cast<const uint8_t *>(buffer.data), buffer.size_in_bytes};
+	}
+	void deserialize(std::span<const uint8_t> bytes) {
+		if(buffer.data != nullptr) {
+			delete[] buffer.data;
+		}
+		buffer.size_in_bytes = bytes.size();
+		buffer.data = new uint8_t[buffer.size_in_bytes];
+		std::memcpy(buffer.data, bytes.data(), buffer.size_in_bytes);
+	}
+};
+
+struct ConvertibleBuffer final {
+	struct ::buffer buffer {};
+	ConvertibleBuffer() = default;
+	ConvertibleBuffer(struct ::buffer buff) : buffer(buff) {}
+	
+	std::span<const uint8_t> serialize() const {
+		return std::span {reinterpret_cast<const uint8_t *>(buffer.data), buffer.size_in_bytes};
+	}
+	void deserialize(std::span<const uint8_t> bytes) {
+		buffer.data = const_cast<uint8_t *>(bytes.data());
+		buffer.size_in_bytes = bytes.size();
+	}
+};
+
+class FunctionIds {
+public:
+	inline static const async_function_execution::FunctionDefinition getModuleNumber {
+		async_function_execution::FunctionId { 0 },
+		async_function_execution::Return { int {} },
+		async_function_execution::Arguments {}
+	};
+
+	inline static const async_function_execution::FunctionDefinition isDeviceTypeSupported {
+		async_function_execution::FunctionId { 1 },
+		async_function_execution::Return { int {} },
+		async_function_execution::Arguments { uint32_t {} }
+	};
+
+	inline static const async_function_execution::FunctionDefinition sendStatusCondition {
+		async_function_execution::FunctionId { 2 },
+		async_function_execution::Return { int {} },
+		async_function_execution::Arguments { ConvertibleBuffer {}, ConvertibleBuffer {}, uint32_t {} }
+	};
+
+	inline static const async_function_execution::FunctionDefinition generateCommand {
+		async_function_execution::FunctionId { 3 },
+		async_function_execution::Return { ConvertibleBufferReturn {} },
+		async_function_execution::Arguments { ConvertibleBuffer {}, ConvertibleBuffer {}, uint32_t {} }
+	};
+
+	inline static const async_function_execution::FunctionDefinition aggregateStatus {
+		async_function_execution::FunctionId { 4 },
+		async_function_execution::Return { ConvertibleBufferReturn {} },
+		async_function_execution::Arguments { ConvertibleBuffer {}, ConvertibleBuffer {}, uint32_t {} }
+	};
+
+	inline static const async_function_execution::FunctionDefinition aggregateError {
+		async_function_execution::FunctionId { 5 },
+		async_function_execution::Return { ConvertibleBufferReturn {} },
+		async_function_execution::Arguments { ConvertibleBuffer {}, ConvertibleBuffer {}, uint32_t {} }
+	};
+
+	inline static const async_function_execution::FunctionDefinition generateFirstCommand {
+		async_function_execution::FunctionId { 6 },
+		async_function_execution::Return { ConvertibleBufferReturn {} },
+		async_function_execution::Arguments { uint32_t {} }
+	};
+
+	inline static const async_function_execution::FunctionDefinition statusDataValid {
+		async_function_execution::FunctionId { 7 },
+		async_function_execution::Return { int {} },
+		async_function_execution::Arguments { ConvertibleBuffer {}, uint32_t {} }
+	};
+
+	inline static const async_function_execution::FunctionDefinition commandDataValid {
+		async_function_execution::FunctionId { 8 },
+		async_function_execution::Return { int {} },
+		async_function_execution::Arguments { ConvertibleBuffer {}, uint32_t {} }
+	};
+
+	inline static const async_function_execution::FunctionList functionList {
+		std::tuple {
+			getModuleNumber,
+			isDeviceTypeSupported,
+			sendStatusCondition,
+			generateCommand,
+			aggregateStatus,
+			aggregateError,
+			generateFirstCommand,
+			statusDataValid,
+			commandDataValid
+		}
+	};
 };
 
 }

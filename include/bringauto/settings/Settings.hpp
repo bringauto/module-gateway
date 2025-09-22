@@ -34,6 +34,11 @@ struct Settings {
 	std::unordered_map<int, std::string> modulePaths {};
 
 	/**
+	 * @brief path to module binary
+	 */
+	std::string moduleBinaryPath {};
+
+	/**
 	 * @brief Setting of external connection endpoints and protocols
 	 */
 	std::vector<structures::ExternalConnectionSettings> externalConnectionSettingsList {};
