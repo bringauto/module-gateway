@@ -100,6 +100,10 @@ bool SettingsParser::areSettingsCorrect() const {
 		std::cerr << "Given module binary path (" << settings_->moduleBinaryPath << ") does not exist." << std::endl;
 		isCorrect = false;
 	}
+	if(!settings_->moduleBinaryPath.empty() && !std::filesystem::exists(settings_->moduleBinaryPath)) {
+		std::cerr << "Given module binary path (" << settings_->moduleBinaryPath << ") does not exist." << std::endl;
+		isCorrect = false;
+	}
 	if(!std::regex_match(settings_->company, std::regex("^[a-z0-9_]+$"))) {
 		std::cerr << "Company name (" << settings_->company << ") is not valid." << std::endl;
 		isCorrect = false;
@@ -174,7 +178,6 @@ void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) const {
 	if(file.contains(std::string(Constants::MODULE_BINARY_PATH))) {
 		file.at(std::string(Constants::MODULE_BINARY_PATH)).get_to(settings_->moduleBinaryPath);
 	}
-	file.at(std::string(Constants::MODULE_BINARY_PATH)).get_to(settings_->moduleBinaryPath);
 }
 
 void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) const {

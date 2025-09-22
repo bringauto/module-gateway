@@ -58,15 +58,16 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	bringauto::aeron_communication::AeronDriver aeronDriver {};
-	std::jthread aeronDriverThread([&aeronDriver]() { aeronDriver.run(); });
-	baset::Logger::logInfo("Aeron Driver starting...");
-	std::this_thread::sleep_for(std::chrono::seconds(2)); //TODO Not sure how much time is needed.
+	// bringauto::aeron_interface::AeronDriver aeronDriver {};
+	// std::jthread aeronDriverThread([&aeronDriver]() { aeronDriver.run(); });
+	// baset::Logger::logInfo("Aeron Driver starting...");
+	// std::this_thread::sleep_for(std::chrono::seconds(3)); //TODO Not sure how much time is needed.
+
 	bas::ModuleLibrary moduleLibrary {};
 
 	try {
 		if(context->settings->moduleBinaryPath.empty()) {
-			moduleLibrary.loadLibraries(context->settings->modulePaths);
+			moduleLibrary.loadLibraries(context->settings->modulePaths, context->settings->moduleBinaryPath);
 		} else {
 			moduleLibrary.loadLibraries(context->settings->modulePaths, context->settings->moduleBinaryPath);
 		}
@@ -99,12 +100,12 @@ int main(int argc, char **argv) {
 		context->ioContext.stop();
 	}
 
-	aeronDriver.stop();
+	// aeronDriver.stop();
 	contextThread2.join();
 	contextThread1.join();
 	externalClientThread.join();
 	moduleHandlerThread.join();
-	aeronDriverThread.join();
+	// aeronDriverThread.join();
 
 	internalServer.destroy();
 	moduleHandler.destroy();

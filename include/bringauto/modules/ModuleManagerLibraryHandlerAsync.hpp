@@ -1,12 +1,15 @@
 #pragma once
 
+#include <bringauto/modules/Buffer.hpp>
 #include <bringauto/modules/IModuleManagerLibraryHandler.hpp>
 
+#include <fleet_protocol/common_headers/memory_management.h>
 #include <bringauto/async_function_execution/AsyncFunctionExecutor.hpp>
 #include <boost/process.hpp>
 
 #include <mutex>
-
+#include <functional>
+#include <filesystem>
 
 
 
@@ -40,7 +43,7 @@ struct ConvertibleBuffer final {
 	struct ::buffer buffer {};
 	ConvertibleBuffer() = default;
 	ConvertibleBuffer(struct ::buffer buff) : buffer(buff) {}
-	
+
 	std::span<const uint8_t> serialize() const {
 		return std::span {reinterpret_cast<const uint8_t *>(buffer.data), buffer.size_in_bytes};
 	}
@@ -109,6 +112,7 @@ inline static const async_function_execution::FunctionDefinition commandDataVali
  */
 class ModuleManagerLibraryHandlerAsync : public IModuleManagerLibraryHandler {
 public:
+	ModuleManagerLibraryHandlerAsync();
 	explicit ModuleManagerLibraryHandlerAsync(const std::string &moduleBinaryPath);
 
 	~ModuleManagerLibraryHandlerAsync() override;
@@ -122,8 +126,9 @@ public:
 	 * @brief Load library created by a module maintainer
 	 *
 	 * @param path path to the library
+	 * @param moduleBinaryPath path to the module binary
 	 */
-	void loadLibrary(const std::filesystem::path &path) override;
+	void loadLibrary(const std::filesystem::path &path, const std::string &moduleBinaryPath) override;
 
 	int getModuleNumber() const override;
 
@@ -191,12 +196,8 @@ private:
 
 	std::function<void(struct buffer *)> deallocate_ {};
 
-	/// Path to the module binary
-	std::string moduleBinaryPath_ {};
-	/// Process of the module binary
-	boost::process::child moduleBinaryProcess_ {};
-	/// TODO find a way to not need this
-	std::mutex tmpMutex_ {};
+	/// Process id of the module binary
+	pid_t moduleBinaryPid_ {};
 };
 
 }

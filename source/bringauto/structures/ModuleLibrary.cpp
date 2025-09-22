@@ -8,10 +8,6 @@
 
 namespace bringauto::structures {
 
-ModuleLibrary::ModuleLibrary() {
-	aeronClient = std::make_shared<aeron_communication::AeronClient>();
-}
-
 ModuleLibrary::~ModuleLibrary() {
 	std::for_each(statusAggregators.cbegin(), statusAggregators.cend(),
 				  [](auto &pair) { pair.second->destroy_status_aggregator(); });
