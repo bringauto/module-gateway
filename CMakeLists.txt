@@ -55,9 +55,8 @@ FIND_PACKAGE(libbringauto_logger 2.0.0 REQUIRED)
 FIND_PACKAGE(fleet-protocol-interface 2.0.0 REQUIRED)
 FIND_PACKAGE(ZLIB 1.2.11 REQUIRED)
 FIND_PACKAGE(fleet-protocol-cxx-helpers-static 1.1.1 REQUIRED)
-
-#temp
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_LIST_DIR}/aeron-interface)
+FIND_PACKAGE(aeron 1.48.6 REQUIRED)
+FIND_PACKAGE(async-function-execution-shared 0.1.0 REQUIRED)
 
 FILE(GLOB_RECURSE source_files "source/*")
 ADD_LIBRARY(module-gateway-lib STATIC "${source_files}")
@@ -77,7 +76,7 @@ TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         PahoMqttCpp::paho-mqttpp3
                         ZLIB::ZLIB
                         fleet-protocol-cxx-helpers-static::fleet-protocol-cxx-helpers-static
-                        async-function-execution-static
+                        async-function-execution-shared::async-function-execution-shared
                         memory_management
                         ${CMAKE_DL_LIBS}
 )
