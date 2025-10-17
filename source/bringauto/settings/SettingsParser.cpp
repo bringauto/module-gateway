@@ -37,8 +37,6 @@ void SettingsParser::parseCmdArguments(int argc, char **argv) {
 					cxxopts::value<std::string>());
 	options.add_options("Internal Server")(std::string(Constants::PORT), "Port on which Server listens",
 										   cxxopts::value<int>());
-	options.add_options("Module Handler")(std::string(Constants::MODULE_PATHS), "Paths to shared module libraries",
-										  cxxopts::value<std::vector<std::string >>());
 
 	options.allow_unrecognised_options();
 	cmdArguments_ = options.parse(argc, argv);
@@ -55,8 +53,7 @@ bool SettingsParser::areCmdArgumentsCorrect() const {
 	};
 	std::vector<std::string> allParameters = {
 			std::string(Constants::CONFIG_PATH),
-			std::string(Constants::PORT),
-			std::string(Constants::MODULE_PATHS)
+			std::string(Constants::PORT)
 	};
 	allParameters.insert(allParameters.end(), requiredParams.begin(), requiredParams.end());
 
@@ -155,15 +152,16 @@ void SettingsParser::fillInternalServerSettings(const nlohmann::json &file) cons
 
 void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) const {
 	for(auto &[key, val]: file[std::string(Constants::MODULE_PATHS)].items()) {
-		settings_->modulePaths[stoi(key)] = val;
+		val.get_to(settings_->modulePaths[stoi(key)]);
 	}
-	settings_->moduleBinaryPath = file[std::string(Constants::MODULE_BINARY_PATH)];
+	file.at(std::string(Constants::MODULE_BINARY_PATH)).get_to(settings_->moduleBinaryPath);
 }
 
 void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) const {
-	settings_->vehicleName = file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(
-			Constants::VEHICLE_NAME)];
-	settings_->company = file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(Constants::COMPANY)];
+	file.at(std::string(Constants::EXTERNAL_CONNECTION)).at(std::string(Constants::VEHICLE_NAME)).get_to(
+			settings_->vehicleName);
+	file.at(std::string(Constants::EXTERNAL_CONNECTION)).at(std::string(Constants::COMPANY)).get_to(
+			settings_->company);
 
 	for(const auto &endpoint: file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(
 			Constants::EXTERNAL_ENDPOINTS)]) {
@@ -183,7 +181,7 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 				continue;
 		}
 
-		externalConnectionSettings.serverIp = endpoint[std::string(Constants::SERVER_IP)];
+		endpoint.at(std::string(Constants::SERVER_IP)).get_to(externalConnectionSettings.serverIp);
 		externalConnectionSettings.port = endpoint[std::string(Constants::PORT)];
 		externalConnectionSettings.modules = endpoint[std::string(Constants::MODULES)].get<std::vector<int >>();
 		

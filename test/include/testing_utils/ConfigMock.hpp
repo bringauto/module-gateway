@@ -105,6 +105,7 @@ public:
 				"\"module-paths\": {{\n"
 					"{}\n"
 				"}},\n"
+				"\"module-binary-path\": \"\",\n"
 				"\"external-connection\": {{\n"
 					"\"company\": \"{}\",\n"
 					"\"vehicle-name\": \"{}\",\n"
