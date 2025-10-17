@@ -1,4 +1,6 @@
 #include <bringauto/structures/ModuleLibrary.hpp>
+#include <bringauto/modules/ModuleManagerLibraryHandlerLocal.hpp>
+#include <bringauto/modules/ModuleManagerLibraryHandlerAsync.hpp>
 
 #include <bringauto/settings/LoggerId.hpp>
 
@@ -12,10 +14,14 @@ ModuleLibrary::~ModuleLibrary() {
 }
 
 void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::string> &libPaths, const std::string &moduleBinaryPath) {
+	std::shared_ptr<modules::IModuleManagerLibraryHandler> handler;
 	for(auto const &[key, path]: libPaths) {
-		auto handler = std::make_shared<modules::ModuleManagerLibraryHandlerAsync>(); //TODO select type from config
-		handler->loadLibrary(path, moduleBinaryPath);
-		std::this_thread::sleep_for(std::chrono::seconds(3)); // TODO Not sure how much time is needed.
+		if (moduleBinaryPath.empty()) {
+			handler = std::make_shared<modules::ModuleManagerLibraryHandlerLocal>();
+		} else {
+			handler = std::make_shared<modules::ModuleManagerLibraryHandlerAsync>(moduleBinaryPath);
+		}
+		handler->loadLibrary(path);
 		if(handler->getModuleNumber() != key) {
 			settings::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path, key, handler->getModuleNumber());
 			throw std::runtime_error {"Module numbers from config are not corresponding to binaries. Unable to continue. Fix configuration file."};

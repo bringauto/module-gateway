@@ -12,7 +12,6 @@
 #include <bringauto/common_utils/EnumUtils.hpp>
 
 #include <InternalProtocol.pb.h>
-#include <bringauto/async_function_execution/AeronDriver.hpp>
 #include <libbringauto_logger/bringauto/logging/Logger.hpp>
 #include <libbringauto_logger/bringauto/logging/FileSink.hpp>
 #include <libbringauto_logger/bringauto/logging/ConsoleSink.hpp>
@@ -69,11 +68,6 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	// bringauto::aeron_interface::AeronDriver aeronDriver {};
-	// std::jthread aeronDriverThread([&aeronDriver]() { aeronDriver.run(); });
-	// baset::Logger::logInfo("Aeron Driver starting...");
-	// std::this_thread::sleep_for(std::chrono::seconds(3)); //TODO Not sure how much time is needed.
-
 	bas::ModuleLibrary moduleLibrary {};
 
 	try {
@@ -107,12 +101,10 @@ int main(int argc, char **argv) {
 		context->ioContext.stop();
 	}
 
-	// aeronDriver.stop();
 	contextThread2.join();
 	contextThread1.join();
 	externalClientThread.join();
 	moduleHandlerThread.join();
-	// aeronDriverThread.join();
 
 	internalServer.destroy();
 	moduleHandler.destroy();

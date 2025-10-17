@@ -1,11 +1,6 @@
 #pragma once
 
-#include <bringauto/modules/Buffer.hpp>
-
-#include <fleet_protocol/common_headers/memory_management.h>
-
-#include <functional>
-#include <filesystem>
+#include <bringauto/modules/IModuleManagerLibraryHandler.hpp>
 
 
 
@@ -14,24 +9,24 @@ namespace bringauto::modules {
 /**
  * @brief Class used to load and handle library created by module maintainer
  */
-class ModuleManagerLibraryHandler {
+class ModuleManagerLibraryHandlerLocal : public IModuleManagerLibraryHandler {
 public:
-	ModuleManagerLibraryHandler() = default;
+	explicit ModuleManagerLibraryHandlerLocal() = default;
 
-	~ModuleManagerLibraryHandler();
+	~ModuleManagerLibraryHandlerLocal() override;
 
 	/**
 	 * @brief Load library created by a module maintainer
 	 *
 	 * @param path path to the library
 	 */
-	void loadLibrary(const std::filesystem::path &path);
+	void loadLibrary(const std::filesystem::path &path) override;
 
-	int getModuleNumber() const;
+	int getModuleNumber() const override;
 
-	int isDeviceTypeSupported(unsigned int device_type) const;
+	int isDeviceTypeSupported(unsigned int device_type) override;
 
-	int	sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) const;
+	int	sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) const override;
 
 	/**
 	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
@@ -40,7 +35,7 @@ public:
 	 */
 	int generateCommand(Buffer &generated_command, const Buffer &new_status,
 						const Buffer &current_status, const Buffer &current_command,
-						unsigned int device_type);
+						unsigned int device_type) override;
 
 	/**
 	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
@@ -48,7 +43,7 @@ public:
 	 * @see fleet-protocol/lib/module_maintainer/module_gateway/include/module_manager.h
 	 */
 	int aggregateStatus(Buffer &aggregated_status, const Buffer &current_status,
-						const Buffer &new_status, unsigned int device_type);
+						const Buffer &new_status, unsigned int device_type) override;
 
 	/**
 	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
@@ -56,18 +51,18 @@ public:
 	 * @see fleet-protocol/lib/module_maintainer/module_gateway/include/module_manager.h
 	 */
 	int	aggregateError(Buffer &error_message, const Buffer &current_error_message, const Buffer &status,
-						  unsigned int device_type);
+					   unsigned int device_type) override;
 
 	/**
 	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
 	 * 
 	 * @see fleet-protocol/lib/module_maintainer/module_gateway/include/module_manager.h
 	 */
-	int generateFirstCommand(Buffer &default_command, unsigned int device_type);
+	int generateFirstCommand(Buffer &default_command, unsigned int device_type) override;
 
-	int statusDataValid(const Buffer &status, unsigned int device_type) const;
+	int statusDataValid(const Buffer &status, unsigned int device_type) const override;
 
-	int commandDataValid(const Buffer &command, unsigned int device_type) const;
+	int commandDataValid(const Buffer &command, unsigned int device_type) const override;
 
 	/**
 	 * @brief Constructs a buffer with the given size
@@ -75,7 +70,7 @@ public:
 	 * @param size size of the buffer
 	 * @return a new Buffer object
 	 */
-	Buffer constructBuffer(std::size_t size = 0);
+	Buffer constructBuffer(std::size_t size = 0) override;
 
 private:
 

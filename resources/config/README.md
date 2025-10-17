@@ -22,6 +22,8 @@ Note: at least one logging sink needs to be used
 ### module-paths:
 * key : number that corresponds to the module being loaded
 * value : path to the module shared library file
+### module-binary-path:
+  - path to the module binary for async function execution over shared memory. If none is provided, the module will be loaded as a shared library
 ### external-connection:
 * company : company name used as identification in external connection (string)
 * vehicle-name : vehicle name used as identification in external connection (string)

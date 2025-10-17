@@ -3,7 +3,7 @@
 #include <bringauto/external_client/ErrorAggregator.hpp>
 #include <bringauto/settings/LoggerId.hpp>
 #include <bringauto/logging/ConsoleSink.hpp>
-#include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
+#include <bringauto/modules/IModuleManagerLibraryHandler.hpp>
 
 #include <libbringauto_logger/bringauto/logging/Logger.hpp>
 #include <libbringauto_logger/bringauto/logging/FileSink.hpp>
@@ -31,7 +31,7 @@ protected:
 	bringauto::modules::Buffer init_status_buffer();
 
 	bringauto::external_client::ErrorAggregator errorAggregator_ {};
-	std::shared_ptr<bringauto::modules::ModuleManagerLibraryHandler> libHandler_ {};
+	std::shared_ptr<bringauto::modules::IModuleManagerLibraryHandler> libHandler_ {};
 #ifdef DEBUG
 	static constexpr const char* PATH_TO_MODULE { "./test/lib/example-module/libexample-module-gateway-sharedd.so" };
 #else
