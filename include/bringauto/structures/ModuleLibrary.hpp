@@ -1,7 +1,6 @@
 #pragma once
 
-#include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
-#include <bringauto/modules/ModuleManagerLibraryHandlerAsync.hpp>
+#include <bringauto/modules/IModuleManagerLibraryHandler.hpp>
 #include <bringauto/modules/StatusAggregator.hpp>
 
 #include <memory>
@@ -22,8 +21,9 @@ struct ModuleLibrary {
 	 * @brief Load libraries from paths
 	 *
 	 * @param libPaths paths to the libraries
+	 * @param moduleBinaryPath path to module binary for async function execution over shared memory
 	 */
-	void loadLibraries(const std::unordered_map<int, std::string> &libPaths, const std::string &moduleBinaryPath);
+	void loadLibraries(const std::unordered_map<int, std::string> &libPaths, const std::string &moduleBinaryPath = "");
 
 	/**
 	 * @brief Initialize status aggregators with context
@@ -32,7 +32,7 @@ struct ModuleLibrary {
 	 */
 	void initStatusAggregators(std::shared_ptr<GlobalContext> &context);
 	/// Map of module handlers, key is module id
-	std::unordered_map<unsigned int, std::shared_ptr<modules::ModuleManagerLibraryHandlerAsync>> moduleLibraryHandlers {}; //TODO select type from config
+	std::unordered_map<unsigned int, std::shared_ptr<modules::IModuleManagerLibraryHandler>> moduleLibraryHandlers {};
 	/// Map of status aggregators, key is module id
 	std::unordered_map<unsigned int, std::shared_ptr<modules::StatusAggregator>> statusAggregators {};
 };

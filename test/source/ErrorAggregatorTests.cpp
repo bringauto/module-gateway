@@ -1,5 +1,7 @@
 #include <ErrorAggregatorTests.hpp>
 #include <testing_utils/DeviceIdentificationHelper.h>
+#include <bringauto/modules/ModuleManagerLibraryHandlerLocal.hpp>
+
 #include <fleet_protocol/module_gateway/error_codes.h>
 
 
@@ -15,7 +17,7 @@ bam::Buffer ErrorAggregatorTests::init_status_buffer() {
 }
 
 void ErrorAggregatorTests::SetUp(){
-	libHandler_ = std::make_shared<bam::ModuleManagerLibraryHandler>();
+	libHandler_ = std::make_shared<bam::ModuleManagerLibraryHandlerLocal>();
 	libHandler_->loadLibrary(PATH_TO_MODULE);
 	errorAggregator_.init_error_aggregator(libHandler_);
 }
@@ -26,14 +28,14 @@ void ErrorAggregatorTests::TearDown(){
 
 TEST_F(ErrorAggregatorTests, init_error_aggregator_ok) {
 	external_client::ErrorAggregator errorAggregatorTest {};
-	const auto libHandler = std::make_shared<bam::ModuleManagerLibraryHandler>();
+	const auto libHandler = std::make_shared<bam::ModuleManagerLibraryHandlerLocal>();
 	const int ret = errorAggregatorTest.init_error_aggregator(libHandler);
 	EXPECT_EQ(ret, OK);
 }
 
 TEST_F(ErrorAggregatorTests, destroy_error_aggregator_ok) {
 	external_client::ErrorAggregator errorAggregatorTest {};
-	const auto libHandler = std::make_shared<bam::ModuleManagerLibraryHandler>();
+	const auto libHandler = std::make_shared<bam::ModuleManagerLibraryHandlerLocal>();
 	errorAggregatorTest.init_error_aggregator(libHandler);
 	const int ret = errorAggregatorTest.destroy_error_aggregator();
 	EXPECT_EQ(ret, OK);

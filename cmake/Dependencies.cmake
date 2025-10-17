@@ -11,7 +11,7 @@ BA_PACKAGE_LIBRARY(pahomqttcpp              v1.3.2)
 BA_PACKAGE_LIBRARY(zlib                     v1.2.11 OUTPUT_PATH_VAR ZLIB_DIR)
 BA_PACKAGE_LIBRARY(fleet-protocol-cpp       v1.1.1)
 BA_PACKAGE_LIBRARY(aeron                    v1.48.6)
-BA_PACKAGE_LIBRARY(async-function-execution v0.1.0)
+BA_PACKAGE_LIBRARY(async-function-execution v1.0.0)
 
 IF (BRINGAUTO_TESTS)
     BA_PACKAGE_LIBRARY(gtest v1.12.1)

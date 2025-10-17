@@ -18,6 +18,7 @@
     "2": "/home/bringauto/modules/io_module/lib/libio-module-gateway-shared.so",
     "3": "/home/bringauto/modules/transparent_module/lib/libtransparent-module-gateway-shared.so"
   },
+  "module-binary-path": "",
   "external-connection" : {
     "company" : "bringauto",
     "vehicle-name" : "virtual_vehicle",

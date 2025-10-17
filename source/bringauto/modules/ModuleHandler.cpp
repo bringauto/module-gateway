@@ -194,7 +194,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) const {
 		settings::Logger::logWarning("Add status to aggregator failed with return code: {}", addStatusToAggregatorRc);
 		return;
 	}
-	
+
 	Buffer commandBuffer {};
 	int getCommandRc = statusAggregator->get_command(statusBuffer, deviceId, commandBuffer);
 	if(getCommandRc == OK) {
