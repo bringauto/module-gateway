@@ -2,6 +2,9 @@
 
 #include <bringauto/modules/Buffer.hpp>
 
+#include <fleet_protocol/common_headers/memory_management.h>
+
+#include <functional>
 #include <filesystem>
 #include <functional>
 

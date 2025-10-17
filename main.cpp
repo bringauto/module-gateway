@@ -58,11 +58,6 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	// bringauto::aeron_interface::AeronDriver aeronDriver {};
-	// std::jthread aeronDriverThread([&aeronDriver]() { aeronDriver.run(); });
-	// baset::Logger::logInfo("Aeron Driver starting...");
-	// std::this_thread::sleep_for(std::chrono::seconds(3)); //TODO Not sure how much time is needed.
-
 	bas::ModuleLibrary moduleLibrary {};
 
 	try {
@@ -100,12 +95,10 @@ int main(int argc, char **argv) {
 		context->ioContext.stop();
 	}
 
-	// aeronDriver.stop();
 	contextThread2.join();
 	contextThread1.join();
 	externalClientThread.join();
 	moduleHandlerThread.join();
-	// aeronDriverThread.join();
 
 	internalServer.destroy();
 	moduleHandler.destroy();
