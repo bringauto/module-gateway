@@ -106,7 +106,7 @@ TARGET_LINK_LIBRARIES(module-gateway-app PUBLIC module-gateway-lib)
 
 IF(BRINGAUTO_TESTS)
     ENABLE_TESTING()
-    #INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt)
+    INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt)
     INCLUDE(CTest)
 ENDIF(BRINGAUTO_TESTS)
 
