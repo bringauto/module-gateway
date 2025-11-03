@@ -12,7 +12,7 @@ namespace bringauto::modules {
 async_function_execution::AsyncFunctionExecutor aeronClient {
 	async_function_execution::Config {
 		.isProducer = true,
-		.defaultTimeout = std::chrono::seconds(1)
+		.defaultTimeout = settings::AeronClientConstants::aeron_client_default_timeout,
 	},
 	async_function_execution::FunctionList {
 		getModuleNumberAsync,
@@ -27,9 +27,9 @@ async_function_execution::AsyncFunctionExecutor aeronClient {
 	}
 };
 
-ModuleManagerLibraryHandlerAsync::ModuleManagerLibraryHandlerAsync(const std::filesystem::path &moduleBinaryPath) :
+ModuleManagerLibraryHandlerAsync::ModuleManagerLibraryHandlerAsync(const std::filesystem::path &moduleBinaryPath, const int moduleNumber) :
 		moduleBinaryPath_ { moduleBinaryPath } {
-	aeronClient.connect();
+	aeronClient.connect(moduleNumber);
 	deallocate_ = [this](struct buffer *buffer) {
 		this->deallocate(buffer);
 	};
@@ -190,11 +190,19 @@ int ModuleManagerLibraryHandlerAsync::commandDataValid(const Buffer &command, un
 }
 
 int ModuleManagerLibraryHandlerAsync::allocate(struct buffer *buffer_pointer, size_t size_in_bytes) const {
-	return ::allocate(buffer_pointer, size_in_bytes);
+	try{
+        buffer_pointer->data = new char[size_in_bytes]();
+    } catch(std::bad_alloc&){
+        return NOT_OK;
+    }
+    buffer_pointer->size_in_bytes = size_in_bytes;
+    return OK;
 }
 
 void ModuleManagerLibraryHandlerAsync::deallocate(struct buffer *buffer) const {
-	::deallocate(buffer);
+	delete[] static_cast<char *>(buffer->data);
+    buffer->data = nullptr;
+    buffer->size_in_bytes = 0;
 }
 
 Buffer ModuleManagerLibraryHandlerAsync::constructBuffer(std::size_t size) {

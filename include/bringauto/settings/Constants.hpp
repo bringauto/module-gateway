@@ -1,11 +1,5 @@
 #pragma once
 
-#include <bringauto/modules/Buffer.hpp>
-
-#include <bringauto/async_function_execution/AsyncFunctionExecutor.hpp>
-#include <bringauto/fleet_protocol/cxx/BufferAsString.hpp>
-#include <bringauto/fleet_protocol/cxx/StringAsBuffer.hpp>
-
 #include <string_view>
 #include <chrono>
 
@@ -93,44 +87,44 @@ constexpr unsigned int max_external_commands { 3 };
 constexpr unsigned int max_external_queue_size { 500 }; 
 
 /**
- * @brief base stream id for Aeron communication from Module Gateway to module binary
- */
-constexpr unsigned int aeron_to_module_stream_id_base { 10000 };
-
-/**
- * @brief base stream id for Aeron communication from module binary to Module Gateway
- */
-constexpr unsigned int aeron_to_gateway_stream_id_base { 20000 };
-
-/**
  * @brief Constants for Mqtt communication
-*/
+ */
 struct MqttConstants {
 	/**
 	 * @brief keep alive interval in seconds;
 	 *        value reasoning: keepalive is half of the default timeout in Fleet protocol
 	 *        The value is chosen based on empiric measurement.
-	*/
+	 */
 	static constexpr std::chrono::seconds keepalive { status_response_timeout / 2U };
 
 	/**
 	 * @brief automatic reconnection of mqtt client option
-	*/
+	 */
 	static constexpr bool automatic_reconnect { true };
 
 	/**
 	 * @brief max time that the mqtt client will wait for a connection before failing;
 	 *        value reasoning: TCP timeout for retransmission when TCP packet is dropped is 200ms,
 	 *        this value is multiple of three of this value
-	*/
+	 */
 	static constexpr std::chrono::milliseconds connect_timeout { 600 };
 
 	/**
 	 * @brief max messages that can be in the process of transmission simultaneously;
 	 *        value reasoning: How many MQTT inflight messages can be open at one time.
 	 *        The value is chosen as a recommendation from a MQTT community.
-	*/
+	 */
 	static constexpr size_t max_inflight { 20 };
+};
+
+/**
+ * @brief Constants for Aeron client communication
+ */
+struct AeronClientConstants {
+	/**
+	 * @brief default timeout for Aeron client function calls
+	 */
+	static constexpr std::chrono::milliseconds aeron_client_default_timeout { 1000 };
 };
 
 /**

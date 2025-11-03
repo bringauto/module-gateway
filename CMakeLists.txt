@@ -61,7 +61,6 @@ FIND_PACKAGE(async-function-execution-shared 1.0.0 REQUIRED)
 FILE(GLOB_RECURSE source_files "source/*")
 ADD_LIBRARY(module-gateway-lib STATIC "${source_files}")
 TARGET_INCLUDE_DIRECTORIES(module-gateway-lib PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
-ADD_SUBDIRECTORY(source/bringauto/modules/memory_management)
 TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         Boost::headers
                         protobuf::libprotobuf
@@ -77,7 +76,6 @@ TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         ZLIB::ZLIB
                         fleet-protocol-cxx-helpers-static::fleet-protocol-cxx-helpers-static
                         async-function-execution-shared::async-function-execution-shared
-                        memory_management
                         ${CMAKE_DL_LIBS}
 )
 
