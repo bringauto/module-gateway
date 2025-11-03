@@ -29,7 +29,7 @@ void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem:
 void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem::path> &libPaths, const std::filesystem::path &moduleBinaryPath) {
 	std::shared_ptr<modules::IModuleManagerLibraryHandler> handler;
 	for(auto const &[key, path]: libPaths) {
-		handler = std::make_shared<modules::ModuleManagerLibraryHandlerAsync>(moduleBinaryPath);
+		handler = std::make_shared<modules::ModuleManagerLibraryHandlerAsync>(moduleBinaryPath, key);
 		handler->loadLibrary(path);
 		if(handler->getModuleNumber() != key) {
 			settings::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path.string(), key, handler->getModuleNumber());
