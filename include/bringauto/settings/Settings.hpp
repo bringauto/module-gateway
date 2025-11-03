@@ -43,7 +43,7 @@ struct Settings {
 	/**
 	 * @brief path to module binary
 	 */
-	std::string moduleBinaryPath {};
+	std::filesystem::path moduleBinaryPath {};
 
 	/**
 	 * @brief Setting of external connection endpoints and protocols

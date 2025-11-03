@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
 
 	try {
 		if(context->settings->moduleBinaryPath.empty()) {
-			moduleLibrary.loadLibraries(context->settings->modulePaths, context->settings->moduleBinaryPath);
+			moduleLibrary.loadLibraries(context->settings->modulePaths);
 		} else {
 			moduleLibrary.loadLibraries(context->settings->modulePaths, context->settings->moduleBinaryPath);
 		}
