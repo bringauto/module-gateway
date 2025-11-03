@@ -22,11 +22,11 @@ public:
 	 */
 	void loadLibrary(const std::filesystem::path &path) override;
 
-	int getModuleNumber() const override;
+	int getModuleNumber() override;
 
 	int isDeviceTypeSupported(unsigned int device_type) override;
 
-	int	sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) const override;
+	int	sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) override;
 
 	/**
 	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
@@ -60,9 +60,9 @@ public:
 	 */
 	int generateFirstCommand(Buffer &default_command, unsigned int device_type) override;
 
-	int statusDataValid(const Buffer &status, unsigned int device_type) const override;
+	int statusDataValid(const Buffer &status, unsigned int device_type) override;
 
-	int commandDataValid(const Buffer &command, unsigned int device_type) const override;
+	int commandDataValid(const Buffer &command, unsigned int device_type) override;
 
 	/**
 	 * @brief Constructs a buffer with the given size
