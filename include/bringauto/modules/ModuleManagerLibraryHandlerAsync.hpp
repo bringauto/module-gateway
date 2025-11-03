@@ -30,7 +30,8 @@ struct ConvertibleBufferReturn final {
 		if (size < sizeof(int)) return;
 		std::memcpy(&returnCode, bytes.data(), sizeof(int));
 		size -= sizeof(int);
-		allocate(&buffer, size);
+		buffer.data = new uint8_t[size];
+		buffer.size_in_bytes = size;
 		std::memcpy(buffer.data, bytes.data() + sizeof(int), size);
 		buffer.size_in_bytes = size;
 	}
@@ -109,7 +110,7 @@ inline static const async_function_execution::FunctionDefinition commandDataVali
  */
 class ModuleManagerLibraryHandlerAsync : public IModuleManagerLibraryHandler {
 public:
-	explicit ModuleManagerLibraryHandlerAsync(const std::filesystem::path &moduleBinaryPath);
+	explicit ModuleManagerLibraryHandlerAsync(const std::filesystem::path &moduleBinaryPath, const int moduleNumber);
 
 	~ModuleManagerLibraryHandlerAsync() override;
 
