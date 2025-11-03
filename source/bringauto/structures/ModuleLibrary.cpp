@@ -13,17 +13,26 @@ ModuleLibrary::~ModuleLibrary() {
 				  [](auto &pair) { pair.second->destroy_status_aggregator(); });
 }
 
-void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::string> &libPaths, const std::string &moduleBinaryPath) {
+void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem::path> &libPaths) {
 	std::shared_ptr<modules::IModuleManagerLibraryHandler> handler;
 	for(auto const &[key, path]: libPaths) {
-		if (moduleBinaryPath.empty()) {
-			handler = std::make_shared<modules::ModuleManagerLibraryHandlerLocal>();
-		} else {
-			handler = std::make_shared<modules::ModuleManagerLibraryHandlerAsync>(moduleBinaryPath);
-		}
+		handler = std::make_shared<modules::ModuleManagerLibraryHandlerLocal>();
 		handler->loadLibrary(path);
 		if(handler->getModuleNumber() != key) {
-			settings::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path, key, handler->getModuleNumber());
+			settings::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path.string(), key, handler->getModuleNumber());
+			throw std::runtime_error {"Module numbers from config are not corresponding to binaries. Unable to continue. Fix configuration file."};
+		}
+		moduleLibraryHandlers.emplace(key, handler);
+	}
+}
+
+void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem::path> &libPaths, const std::filesystem::path &moduleBinaryPath) {
+	std::shared_ptr<modules::IModuleManagerLibraryHandler> handler;
+	for(auto const &[key, path]: libPaths) {
+		handler = std::make_shared<modules::ModuleManagerLibraryHandlerAsync>(moduleBinaryPath);
+		handler->loadLibrary(path);
+		if(handler->getModuleNumber() != key) {
+			settings::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path.string(), key, handler->getModuleNumber());
 			throw std::runtime_error {"Module numbers from config are not corresponding to binaries. Unable to continue. Fix configuration file."};
 		}
 		moduleLibraryHandlers.emplace(key, handler);

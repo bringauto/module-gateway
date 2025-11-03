@@ -27,11 +27,11 @@ public:
 	 */
 	virtual void loadLibrary(const std::filesystem::path &path) = 0;
 
-	virtual int getModuleNumber() const = 0;
+	virtual int getModuleNumber() = 0;
 
 	virtual int isDeviceTypeSupported(unsigned int device_type) = 0;
 
-	virtual int sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) const = 0;
+	virtual int sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) = 0;
 
 	/**
 	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
@@ -65,9 +65,9 @@ public:
 	 */
 	virtual int generateFirstCommand(Buffer &default_command, unsigned int device_type) = 0;
 
-	virtual int statusDataValid(const Buffer &status, unsigned int device_type) const = 0;
+	virtual int statusDataValid(const Buffer &status, unsigned int device_type) = 0;
 
-	virtual int commandDataValid(const Buffer &command, unsigned int device_type) const = 0;
+	virtual int commandDataValid(const Buffer &command, unsigned int device_type) = 0;
 
 	/**
 	 * @brief Constructs a buffer with the given size
