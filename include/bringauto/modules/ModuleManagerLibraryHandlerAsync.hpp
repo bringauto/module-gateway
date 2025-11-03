@@ -28,7 +28,8 @@ struct ConvertibleBufferReturn final {
 		if (size < sizeof(int)) return;
 		std::memcpy(&returnCode, bytes.data(), sizeof(int));
 		size -= sizeof(int);
-		allocate(&buffer, size);
+		buffer.data = new uint8_t[size];
+		buffer.size_in_bytes = size;
 		std::memcpy(buffer.data, bytes.data() + sizeof(int), size);
 		buffer.size_in_bytes = size;
 	}
@@ -107,7 +108,7 @@ inline static const async_function_execution::FunctionDefinition commandDataVali
  */
 class ModuleManagerLibraryHandlerAsync : public IModuleManagerLibraryHandler {
 public:
-	explicit ModuleManagerLibraryHandlerAsync(const std::string &moduleBinaryPath);
+	explicit ModuleManagerLibraryHandlerAsync(const std::filesystem::path &moduleBinaryPath, const int moduleNumber);
 
 	~ModuleManagerLibraryHandlerAsync() override;
 
@@ -121,13 +122,14 @@ public:
 	 *
 	 * @param path path to the library
 	 */
-	void loadLibrary(const std::filesystem::path &path, const std::string &moduleBinaryPath) override;
+	void loadLibrary(const std::filesystem::path &path) override;
 
-	int getModuleNumber() const override;
+	int getModuleNumber() override;
 
 	int isDeviceTypeSupported(unsigned int device_type) override;
 
-	int	sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) const override;
+	int sendStatusCondition(const Buffer& current_status, const Buffer& new_status,
+	                        unsigned int device_type) override;
 
 	/**
 	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
@@ -161,9 +163,9 @@ public:
 	 */
 	int generateFirstCommand(Buffer &default_command, unsigned int device_type) override;
 
-	int statusDataValid(const Buffer &status, unsigned int device_type) const override;
+	int statusDataValid(const Buffer &status, unsigned int device_type) override;
 
-	int commandDataValid(const Buffer &command, unsigned int device_type) const override;
+	int commandDataValid(const Buffer &command, unsigned int device_type) override;
 
 	/**
 	 * @brief Constructs a buffer with the given size
@@ -190,11 +192,20 @@ private:
 	std::function<void(struct buffer *)> deallocate_ {};
 
 	/// Path to the module binary
-	std::string moduleBinaryPath_ {};
+	std::filesystem::path moduleBinaryPath_ {};
 	/// Process of the module binary
 	boost::process::child moduleBinaryProcess_ {};
+
 	/// TODO find a way to not need this
-	std::mutex tmpMutex_ {};
+	std::mutex getModuleNumberMutex_ {};
+	std::mutex isDeviceTypeSupportedMutex_ {};
+	std::mutex sendStatusConditionMutex_ {};
+	std::mutex generateCommandMutex_ {};
+	std::mutex aggregateStatusMutex_ {};
+	std::mutex aggregateErrorMutex_ {};
+	std::mutex generateFirstCommandMutex_ {};
+	std::mutex statusDataValidMutex_ {};
+	std::mutex commandDataValidMutex_ {};
 };
 
 }

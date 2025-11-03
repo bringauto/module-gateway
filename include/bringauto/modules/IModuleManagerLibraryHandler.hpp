@@ -2,11 +2,7 @@
 
 #include <bringauto/modules/Buffer.hpp>
 
-#include <fleet_protocol/common_headers/memory_management.h>
-
-#include <functional>
 #include <filesystem>
-#include <functional>
 
 
 
@@ -33,7 +29,7 @@ public:
 	 *
 	 * @return module number
 	 */
-	virtual int getModuleNumber() const = 0;
+	virtual int getModuleNumber() = 0;
 
 	/**
 	 * @brief Check if device type is supported by the module
@@ -51,7 +47,8 @@ public:
 	 * @param device_type device type
 	 * @return OK if the new status should be aggregated, NOT_OK otherwise
 	 */
-	virtual int sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) const = 0;
+	virtual int sendStatusCondition(const Buffer& current_status, const Buffer& new_status,
+	                                unsigned int device_type) = 0;
 
 	/**
 	 * @brief After executing the respective module function, an error might be thrown when allocating the buffer.
@@ -92,7 +89,7 @@ public:
 	 * @param device_type device type
 	 * @return OK if valid, NOT_OK otherwise
 	 */
-	virtual int statusDataValid(const Buffer &status, unsigned int device_type) const = 0;
+	virtual int statusDataValid(const Buffer &status, unsigned int device_type) = 0;
 
 	/**
 	 * @brief Check if the command data is valid
@@ -101,7 +98,7 @@ public:
 	 * @param device_type device type
 	 * @return OK if valid, NOT_OK otherwise
 	 */
-	virtual int commandDataValid(const Buffer &command, unsigned int device_type) const = 0;
+	virtual int commandDataValid(const Buffer &command, unsigned int device_type) = 0;
 
 	/**
 	 * @brief Constructs a buffer with the given size

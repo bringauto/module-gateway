@@ -1,11 +1,5 @@
 #pragma once
 
-#include <bringauto/modules/Buffer.hpp>
-
-#include <bringauto/async_function_execution/AsyncFunctionExecutor.hpp>
-#include <bringauto/fleet_protocol/cxx/BufferAsString.hpp>
-#include <bringauto/fleet_protocol/cxx/StringAsBuffer.hpp>
-
 #include <string_view>
 #include <chrono>
 
@@ -91,16 +85,6 @@ constexpr unsigned int max_external_commands { 3 };
  * @brief how many messages can be in the message queue sent to External Client before it is considered unresponsive
  */
 constexpr unsigned int max_external_queue_size { 500 }; 
-
-/**
- * @brief base stream id for Aeron communication from Module Gateway to module binary
- */
-constexpr unsigned int aeron_to_module_stream_id_base { 10000 };
-
-/**
- * @brief base stream id for Aeron communication from module binary to Module Gateway
- */
-constexpr unsigned int aeron_to_gateway_stream_id_base { 20000 };
 
 /**
  * @brief Constants for Mqtt communication
