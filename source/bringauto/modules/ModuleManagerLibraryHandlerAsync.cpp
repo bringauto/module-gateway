@@ -52,12 +52,12 @@ void ModuleManagerLibraryHandlerAsync::loadLibrary(const std::filesystem::path &
 
 int ModuleManagerLibraryHandlerAsync::getModuleNumber() {
 	std::lock_guard lock { getModuleNumberMutex_ };
-	return aeronClient.callFunc(getModuleNumberAsync).value();
+	return aeronClient.callFunc(getModuleNumberAsync).value_or(NOT_OK);
 }
 
 int ModuleManagerLibraryHandlerAsync::isDeviceTypeSupported(unsigned int device_type) {
 	std::lock_guard lock { isDeviceTypeSupportedMutex_ };
-	return aeronClient.callFunc(isDeviceTypeSupportedAsync, device_type).value();
+	return aeronClient.callFunc(isDeviceTypeSupportedAsync, device_type).value_or(NOT_OK);
 }
 
 int ModuleManagerLibraryHandlerAsync::sendStatusCondition(const Buffer &current_status,
@@ -74,7 +74,7 @@ int ModuleManagerLibraryHandlerAsync::sendStatusCondition(const Buffer &current_
 		new_status_raw_buffer = new_status.getStructBuffer();
 	}
 
-	return aeronClient.callFunc(sendStatusConditionAsync, current_status_raw_buffer, new_status_raw_buffer, device_type).value();
+	return aeronClient.callFunc(sendStatusConditionAsync, current_status_raw_buffer, new_status_raw_buffer, device_type).value_or(NOT_OK);
 }
 
 int ModuleManagerLibraryHandlerAsync::generateCommand(Buffer &generated_command,
@@ -100,14 +100,18 @@ int ModuleManagerLibraryHandlerAsync::generateCommand(Buffer &generated_command,
 									new_status_raw_buffer,
 									current_status_raw_buffer,
 									current_command_raw_buffer,
-									device_type).value();
+									device_type);
 
-	if (ret.returnCode == OK) {
-		generated_command = constructBufferByTakeOwnership(ret.buffer);
+	if (!ret.has_value()) {
+		return NOT_OK;
+	}
+
+	if (ret.value().returnCode == OK) {
+		generated_command = constructBufferByTakeOwnership(ret.value().buffer);
 	} else {
 		generated_command = constructBuffer();
 	}
-	return ret.returnCode;
+	return ret.value().returnCode;
 }
 
 int ModuleManagerLibraryHandlerAsync::aggregateStatus(Buffer &aggregated_status,
@@ -124,15 +128,18 @@ int ModuleManagerLibraryHandlerAsync::aggregateStatus(Buffer &aggregated_status,
 		new_status_raw_buffer = new_status.getStructBuffer();
 	}
 
-	auto ret = aeronClient.callFunc(aggregateStatusAsync, current_status_raw_buffer, new_status_raw_buffer, device_type).value();
-	if (ret.returnCode == OK) {
-		aggregated_status = constructBufferByTakeOwnership(ret.buffer);
+	auto ret = aeronClient.callFunc(aggregateStatusAsync, current_status_raw_buffer, new_status_raw_buffer, device_type);
+	if (!ret.has_value()) {
+		return NOT_OK;
+	}
+	if (ret.value().returnCode == OK) {
+		aggregated_status = constructBufferByTakeOwnership(ret.value().buffer);
 	} else {
 		// Needed to properly free the allocated buffer memory
-		auto invalid_buffer = constructBufferByTakeOwnership(ret.buffer);
+		auto invalid_buffer = constructBufferByTakeOwnership(ret.value().buffer);
 		aggregated_status = current_status;
 	}
-	return ret.returnCode;
+	return ret.value().returnCode;
 }
 
 int ModuleManagerLibraryHandlerAsync::aggregateError(Buffer &error_message,
@@ -149,24 +156,30 @@ int ModuleManagerLibraryHandlerAsync::aggregateError(Buffer &error_message,
 		status_raw_buffer = status.getStructBuffer();
 	}
 
-	auto ret = aeronClient.callFunc(aggregateErrorAsync, current_error_raw_buffer, status_raw_buffer, device_type).value();
-	if (ret.returnCode == OK) {
-		error_message = constructBufferByTakeOwnership(ret.buffer);
+	auto ret = aeronClient.callFunc(aggregateErrorAsync, current_error_raw_buffer, status_raw_buffer, device_type);
+	if (!ret.has_value()) {
+		return NOT_OK;
+	}
+	if (ret.value().returnCode == OK) {
+		error_message = constructBufferByTakeOwnership(ret.value().buffer);
 	} else {
 		error_message = constructBuffer();
 	}
-	return ret.returnCode;
+	return ret.value().returnCode;
 }
 
 int ModuleManagerLibraryHandlerAsync::generateFirstCommand(Buffer &default_command, unsigned int device_type) {
 	std::lock_guard lock { generateFirstCommandMutex_ };
-	auto ret = aeronClient.callFunc(generateFirstCommandAsync, device_type).value();
-	if (ret.returnCode == OK) {
-		default_command = constructBufferByTakeOwnership(ret.buffer);
+	auto ret = aeronClient.callFunc(generateFirstCommandAsync, device_type);
+	if (!ret.has_value()) {
+		return NOT_OK;
+	}
+	if (ret.value().returnCode == OK) {
+		default_command = constructBufferByTakeOwnership(ret.value().buffer);
 	} else {
 		default_command = constructBuffer();
 	}
-	return ret.returnCode;
+	return ret.value().returnCode;
 }
 
 int ModuleManagerLibraryHandlerAsync::statusDataValid(const Buffer &status, unsigned int device_type) {
@@ -176,7 +189,7 @@ int ModuleManagerLibraryHandlerAsync::statusDataValid(const Buffer &status, unsi
 		status_raw_buffer = status.getStructBuffer();
 	}
 
-	return aeronClient.callFunc(statusDataValidAsync, status_raw_buffer, device_type).value();
+	return aeronClient.callFunc(statusDataValidAsync, status_raw_buffer, device_type).value_or(NOT_OK);
 }
 
 int ModuleManagerLibraryHandlerAsync::commandDataValid(const Buffer &command, unsigned int device_type) {
@@ -186,7 +199,7 @@ int ModuleManagerLibraryHandlerAsync::commandDataValid(const Buffer &command, un
 		command_raw_buffer = command.getStructBuffer();
 	}
 
-	return aeronClient.callFunc(commandDataValidAsync, command_raw_buffer, device_type).value();
+	return aeronClient.callFunc(commandDataValidAsync, command_raw_buffer, device_type).value_or(NOT_OK);
 }
 
 int ModuleManagerLibraryHandlerAsync::allocate(struct buffer *buffer_pointer, size_t size_in_bytes) const {
