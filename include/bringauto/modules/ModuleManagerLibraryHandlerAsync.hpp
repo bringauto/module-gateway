@@ -1,109 +1,17 @@
 #pragma once
 
 #include <bringauto/modules/IModuleManagerLibraryHandler.hpp>
+#include <bringauto/settings/Constants.hpp>
 
 #include <bringauto/async_function_execution/AsyncFunctionExecutor.hpp>
+#include <bringauto/fleet_protocol/cxx/AsyncModuleFunctionDefinitions.hpp>
 #include <boost/process.hpp>
 
 #include <mutex>
 
 
 
-
 namespace bringauto::modules {
-
-struct ConvertibleBufferReturn final {
-	int returnCode {};
-	struct ::buffer buffer {};
-	ConvertibleBufferReturn() = default;
-	ConvertibleBufferReturn(int code, struct ::buffer buff) : returnCode(code), buffer(buff) {}
-
-	std::span<const uint8_t> serialize() const {
-		size_t total_size = sizeof(int) + buffer.size_in_bytes;
-		uint8_t* data = new uint8_t[total_size];
-		std::memcpy(data, &returnCode, sizeof(int));
-		std::memcpy(data + sizeof(int), buffer.data, buffer.size_in_bytes);
-		return {data, total_size};
-	}
-	void deserialize(std::span<const uint8_t> bytes) {
-		auto size = bytes.size();
-		if (size < sizeof(int)) return;
-		std::memcpy(&returnCode, bytes.data(), sizeof(int));
-		size -= sizeof(int);
-		buffer.data = new uint8_t[size];
-		buffer.size_in_bytes = size;
-		std::memcpy(buffer.data, bytes.data() + sizeof(int), size);
-		buffer.size_in_bytes = size;
-	}
-};
-
-struct ConvertibleBuffer final {
-	struct ::buffer buffer {};
-	ConvertibleBuffer() = default;
-	ConvertibleBuffer(struct ::buffer buff) : buffer(buff) {}
-	
-	std::span<const uint8_t> serialize() const {
-		return std::span {reinterpret_cast<const uint8_t *>(buffer.data), buffer.size_in_bytes};
-	}
-	void deserialize(std::span<const uint8_t> bytes) {
-		buffer.data = const_cast<uint8_t *>(bytes.data());
-		buffer.size_in_bytes = bytes.size();
-	}
-};
-
-inline static const async_function_execution::FunctionDefinition getModuleNumberAsync {
-	async_function_execution::FunctionId { 0 },
-	async_function_execution::Return { int {} },
-	async_function_execution::Arguments {}
-};
-
-inline static const async_function_execution::FunctionDefinition isDeviceTypeSupportedAsync {
-	async_function_execution::FunctionId { 1 },
-	async_function_execution::Return { int {} },
-	async_function_execution::Arguments { uint32_t {} }
-};
-
-inline static const async_function_execution::FunctionDefinition sendStatusConditionAsync {
-	async_function_execution::FunctionId { 2 },
-	async_function_execution::Return { int {} },
-	async_function_execution::Arguments { ConvertibleBuffer {}, ConvertibleBuffer {}, uint32_t {} }
-};
-
-inline static const async_function_execution::FunctionDefinition generateCommandAsync {
-	async_function_execution::FunctionId { 3 },
-	async_function_execution::Return { ConvertibleBufferReturn {} },
-	async_function_execution::Arguments { ConvertibleBuffer {}, ConvertibleBuffer {}, uint32_t {} }
-};
-
-inline static const async_function_execution::FunctionDefinition aggregateStatusAsync {
-	async_function_execution::FunctionId { 4 },
-	async_function_execution::Return { ConvertibleBufferReturn {} },
-	async_function_execution::Arguments { ConvertibleBuffer {}, ConvertibleBuffer {}, uint32_t {} }
-};
-
-inline static const async_function_execution::FunctionDefinition aggregateErrorAsync {
-	async_function_execution::FunctionId { 5 },
-	async_function_execution::Return { ConvertibleBufferReturn {} },
-	async_function_execution::Arguments { ConvertibleBuffer {}, ConvertibleBuffer {}, uint32_t {} }
-};
-
-inline static const async_function_execution::FunctionDefinition generateFirstCommandAsync {
-	async_function_execution::FunctionId { 6 },
-	async_function_execution::Return { ConvertibleBufferReturn {} },
-	async_function_execution::Arguments { uint32_t {} }
-};
-
-inline static const async_function_execution::FunctionDefinition statusDataValidAsync {
-	async_function_execution::FunctionId { 7 },
-	async_function_execution::Return { int {} },
-	async_function_execution::Arguments { ConvertibleBuffer {}, uint32_t {} }
-};
-
-inline static const async_function_execution::FunctionDefinition commandDataValidAsync {
-	async_function_execution::FunctionId { 8 },
-	async_function_execution::Return { int {} },
-	async_function_execution::Arguments { ConvertibleBuffer {}, uint32_t {} }
-};
 
 /**
  * @brief Class used to load and handle library created by module maintainer
@@ -202,6 +110,14 @@ private:
 	std::mutex generateFirstCommandMutex_ {};
 	std::mutex statusDataValidMutex_ {};
 	std::mutex commandDataValidMutex_ {};
+
+	fleet_protocol::cxx::ModuleFunctionExecutor aeronClient {
+		async_function_execution::Config {
+			.isProducer = true,
+			.defaultTimeout = settings::AeronClientConstants::aeron_client_default_timeout,
+		},
+		fleet_protocol::cxx::moduleFunctionList
+	};
 };
 
 }
