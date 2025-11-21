@@ -9,7 +9,7 @@ BA_PACKAGE_LIBRARY(ba-logger                v2.0.0)
 BA_PACKAGE_LIBRARY(pahomqttc                v1.3.9)
 BA_PACKAGE_LIBRARY(pahomqttcpp              v1.3.2)
 BA_PACKAGE_LIBRARY(zlib                     v1.2.11 OUTPUT_PATH_VAR ZLIB_DIR)
-BA_PACKAGE_LIBRARY(fleet-protocol-cpp       v1.1.1)
+BA_PACKAGE_LIBRARY(fleet-protocol-cpp       v1.2.0)
 BA_PACKAGE_LIBRARY(aeron                    v1.48.6)
 BA_PACKAGE_LIBRARY(async-function-execution v1.0.0)
 
