@@ -54,7 +54,7 @@ FIND_PACKAGE(eclipse-paho-mqtt-c REQUIRED)
 FIND_PACKAGE(libbringauto_logger 2.0.0 REQUIRED)
 FIND_PACKAGE(fleet-protocol-interface 2.0.0 REQUIRED)
 FIND_PACKAGE(ZLIB 1.2.11 REQUIRED)
-FIND_PACKAGE(fleet-protocol-cxx-helpers-static 1.1.1 REQUIRED)
+FIND_PACKAGE(fleet-protocol-cxx-helpers-static 1.2.0 REQUIRED)
 FIND_PACKAGE(aeron 1.48.6 REQUIRED)
 FIND_PACKAGE(async-function-execution-shared 1.0.0 REQUIRED)
 
