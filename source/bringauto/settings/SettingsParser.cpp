@@ -123,6 +123,19 @@ bool SettingsParser::areSettingsCorrect() const {
 		}
 	}
 
+	std::ranges::any_of(settings_->externalConnectionSettingsList, [&](auto& externalConnectionSettings){
+		return std::ranges::any_of(externalConnectionSettings.modules, [&](auto const& externalModuleId) {
+			bool isMissing = !settings_->modulePaths.contains(externalModuleId);
+			if (isMissing)
+			{
+				std::cerr << "Module " << externalModuleId <<
+				" is defined in external-connection endpoint modules but is not specified in module-paths" << std::endl;
+				isCorrect = false;
+			}
+			return isMissing;
+		});
+	});
+
 	return isCorrect;
 }
 
