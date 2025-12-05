@@ -420,7 +420,8 @@ std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnecte
 
 		if (statusAggregatorItr == moduleLibrary_.statusAggregators.end())
 		{
-			log::logWarning("Module {} is defined in external-connection endpoint but is not specified in module-paths");
+			log::logWarning("Module {} is defined in external-connection endpoint but is not specified in module-paths",
+							moduleNumber);
 			continue;
 		}
 
