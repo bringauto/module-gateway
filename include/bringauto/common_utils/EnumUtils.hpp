@@ -32,6 +32,8 @@ public:
 		switch(toString) {
 			case structures::ProtocolType::MQTT:
 				return settings::Constants::MQTT;
+			case structures::ProtocolType::QUIC:
+				return settings::Constants::QUIC;
 			case structures::ProtocolType::DUMMY:
 				return settings::Constants::DUMMY;
 			case structures::ProtocolType::INVALID:
