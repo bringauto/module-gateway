@@ -31,16 +31,17 @@ private:
 	std::string alpn_;
 	QUIC_BUFFER alpnBuffer_ {};
 
-	QUIC_CERTIFICATE_FILE certificate_ {};
-	QUIC_CREDENTIAL_CONFIG credential_ {};
-
-
-
-	std::string host_;
-	uint16_t port_ { 0 };
 	std::string certFile_;
     std::string keyFile_;
 	std::string caFile_;
+
+	/// ---------- Connection ----------
+	void loadMsQuic();
+	void initRegistration(const char *appName);
+	void initConfiguration();
+	void configurationOpen(const QUIC_SETTINGS *settings);
+	void configurationLoadCredential(const QUIC_CREDENTIAL_CONFIG *credential) const;
+	void stop();
 
 	static QUIC_STATUS QUIC_API connectionCallback(HQUIC connection, void *context, QUIC_CONNECTION_EVENT *event);
 
