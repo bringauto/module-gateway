@@ -5,6 +5,8 @@
 
 #include <fstream>
 
+#include "bringauto/settings/LoggerId.hpp"
+
 
 namespace bringauto::external_client::connection::communication {
 
@@ -14,89 +16,38 @@ namespace bringauto::external_client::connection::communication {
 		keyFile_(settings.protocolSettings.at(std::string(settings::Constants::CLIENT_KEY))),
 		caFile_(settings.protocolSettings.at(std::string(settings::Constants::CA_FILE)))
 	{
-		std::cout << "QuicCommunication for " << vehicleName << "/" << company << std::endl;
-
-		// TODO: Implement
-
 		alpn_ = "sample";
 		alpnBuffer_.Buffer = reinterpret_cast<uint8_t*>(alpn_.data());
 		alpnBuffer_.Length = static_cast<uint32_t>(alpn_.size());
 
-		QUIC_STATUS status = MsQuicOpen2(&quic_);
+		settings::Logger::logInfo("Initialize QUIC connection to {}:{} for {}/{}", settings.serverIp, settings.port, company, vehicleName);
+
+		loadMsQuic();
+		initRegistration("module-gateway-quic-client");
+		initConfiguration();
+	}
+
+	QuicCommunication::~QuicCommunication() {
+		stop();
+	}
+
+	void QuicCommunication::initializeConnection() {
+		QUIC_STATUS status = quic_->ConnectionOpen(registration_, connectionCallback, this, &connection_);
 		if (QUIC_FAILED(status)) {
-			throw std::runtime_error("Failed to open QUIC");
-		}
-
-		QUIC_REGISTRATION_CONFIG config {};
-		config.AppName = const_cast<char*>("module-gateway-quic-client");
-		config.ExecutionProfile = QUIC_EXECUTION_PROFILE_LOW_LATENCY;
-
-		status = quic_->RegistrationOpen(&config, &registration_);
-		if (QUIC_FAILED(status)) {
-			throw std::runtime_error("Failed to open QUIC registration");
-		}
-
-		status = quic_->ConfigurationOpen(
-			registration_,
-		   &alpnBuffer_,
-		   1,
-		   nullptr,
-		   0,
-		   nullptr,
-		   &config_
-		);
-
-		if (QUIC_FAILED(status)) {
-			throw std::runtime_error("Failed to open QUIC configuration");
-		}
-
-		certificate_.CertificateFile = certFile_.c_str();
-		certificate_.PrivateKeyFile = keyFile_.c_str();
-
-		credential_.Type = QUIC_CREDENTIAL_TYPE_CERTIFICATE_FILE;
-		credential_.Flags = QUIC_CREDENTIAL_FLAG_CLIENT | QUIC_CREDENTIAL_FLAG_SET_CA_CERTIFICATE_FILE;
-		credential_.CertificateFile = &certificate_;
-		credential_.CaCertificateFile = caFile_.c_str();
-
-		status = quic_->ConfigurationLoadCredential(config_, &credential_);
-		if (QUIC_FAILED(status)) {
-			throw std::runtime_error("Failed to load QUIC credential");
-		}
-
-		status = quic_->ConnectionOpen(registration_, connectionCallback, this, &connection_);
-		if (QUIC_FAILED(status)) {
-			throw std::runtime_error("Failed to open QUIC connection");
+			settings::Logger::logError("[quic] Failed to open QUIC connection; QUIC_STATUS => {:x}", status);
 		}
 
 		status = quic_->ConnectionStart(
 			connection_,
 			config_,
 			QUIC_ADDRESS_FAMILY_INET,
-			settings.serverIp.c_str(),
-			settings.port
+			settings_.serverIp.c_str(),
+			settings_.port
 		);
 
 		if (QUIC_FAILED(status)) {
-			throw std::runtime_error("Failed to start QUIC connection");
+			settings::Logger::logError("[quic] Failed to start QUIC connection; QUIC_STATUS => {:x}", status);
 		}
-
-		// loadMsQuic();
-		// initRegistration("quic_client");
-		// initConfiguration();
-	}
-
-	QuicCommunication::~QuicCommunication() {
-		// TODO: Implement
-
-		// stop()
-	}
-
-	void QuicCommunication::initializeConnection() {
-		// TODO: Implement
-
-		// initConnection();
-		// isRunning_ = true;
-
 	}
 
 	bool QuicCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
@@ -122,6 +73,94 @@ namespace bringauto::external_client::connection::communication {
 		// stop()
 	}
 
+
+	/// ---------- Connection ----------
+	void QuicCommunication::loadMsQuic() {
+		QUIC_STATUS status = MsQuicOpen2(&quic_);
+		if (QUIC_FAILED(status)) {
+			settings::Logger::logError("[quic] Failed to open QUIC; QUIC_STATUS => {:x}", status);
+		}
+	}
+
+	void QuicCommunication::initRegistration(const char* appName) {
+		QUIC_REGISTRATION_CONFIG config {};
+		config.AppName = const_cast<char*>(appName);
+		config.ExecutionProfile = QUIC_EXECUTION_PROFILE_LOW_LATENCY;
+
+		QUIC_STATUS status = quic_->RegistrationOpen(&config, &registration_);
+		if (QUIC_FAILED(status)) {
+			settings::Logger::logError("[quic] Failed to open QUIC registration; QUIC_STATUS => {:x}", status);
+		}
+	}
+
+	void QuicCommunication::initConfiguration() {
+		configurationOpen(nullptr);
+
+		QUIC_CERTIFICATE_FILE certificate {};
+		certificate.CertificateFile = certFile_.c_str();
+		certificate.PrivateKeyFile = keyFile_.c_str();
+
+		QUIC_CREDENTIAL_CONFIG credential {};
+		credential.Type = QUIC_CREDENTIAL_TYPE_CERTIFICATE_FILE;
+		credential.Flags = QUIC_CREDENTIAL_FLAG_CLIENT | QUIC_CREDENTIAL_FLAG_SET_CA_CERTIFICATE_FILE;
+		credential.CertificateFile = &certificate;
+		credential.CaCertificateFile = caFile_.c_str();
+
+		configurationLoadCredential(&credential);
+	}
+
+	void QuicCommunication::configurationOpen(const QUIC_SETTINGS* settings) {
+		const uint32_t settingsSize = settings ? sizeof(*settings) : 0;
+
+		QUIC_STATUS status = quic_->ConfigurationOpen(
+			registration_,
+		   &alpnBuffer_,
+		   1,
+		   settings,
+		   settingsSize,
+		   nullptr,
+		   &config_
+		);
+
+		if (QUIC_FAILED(status)) {
+			settings::Logger::logError("[quic] Failed to open QUIC configuration; QUIC_STATUS => {:x}", status);
+		}
+	}
+
+	void QuicCommunication::configurationLoadCredential(const QUIC_CREDENTIAL_CONFIG* credential) const {
+		const QUIC_STATUS status = quic_->ConfigurationLoadCredential(config_, credential);
+		if (QUIC_FAILED(status)) {
+			settings::Logger::logError("[quic] Failed to load QUIC credential; QUIC_STATUS => {:x}", status);
+		}
+	}
+
+	void QuicCommunication::stop() {
+		// if (!isRunning_.exchange(false)) {
+		// 	return;
+		// }
+
+		if (connection_) {
+			quic_->ConnectionShutdown(connection_, QUIC_CONNECTION_SHUTDOWN_FLAG_NONE, 0);
+			quic_->ConnectionClose(connection_);
+		}
+		if (config_) {
+			quic_->ConfigurationClose(config_);
+		}
+		if (registration_) {
+			quic_->RegistrationClose(registration_);
+		}
+		if (quic_) {
+			MsQuicClose(quic_);
+		}
+
+		settings::Logger::logInfo("[quic] Connection stopped");
+
+		connection_ = nullptr;
+		config_ = nullptr;
+		registration_ = nullptr;
+		quic_ = nullptr;
+	}
+
 	QUIC_STATUS QUIC_API QuicCommunication::connectionCallback(HQUIC connection,
 													void* context,
 													QUIC_CONNECTION_EVENT* event) {
@@ -129,8 +168,7 @@ namespace bringauto::external_client::connection::communication {
 
 		switch (event->Type) {
 			case QUIC_CONNECTION_EVENT_CONNECTED: {
-
-				std::cout << "[quic] Connected\n";
+				settings::Logger::logInfo("[quic] Connected to server");
 
 				// self->connectionState_ = ConnectionState::Connected;
 				// self->tryFlushQueue();
@@ -138,7 +176,7 @@ namespace bringauto::external_client::connection::communication {
 			}
 
 			case QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE: {
-				std::cout << "[quic] Connection shutdown complete\n";
+				settings::Logger::logInfo("[quic] Connection shutdown complete");
 
 				self->quic_->ConnectionClose(connection);
 				self->connection_ = nullptr;
@@ -146,21 +184,8 @@ namespace bringauto::external_client::connection::communication {
 				break;
 			}
 
-			// case QUIC_CONNECTION_EVENT_RESUMPTION_TICKET_RECEIVED: {
-			// 	if (self->zeroRttMode_ == ZeroRttMode::Enabled) {
-			// 		self->resumptionTicket_.assign(
-			// 			event->RESUMPTION_TICKET_RECEIVED.ResumptionTicket,
-			// 			event->RESUMPTION_TICKET_RECEIVED.ResumptionTicket +
-			// 				event->RESUMPTION_TICKET_RECEIVED.ResumptionTicketLength
-			// 		);
-			//
-			// 		std::cout << "[quic] Resumption ticket received!\n";
-			// 	}
-			// 	break;
-			// }
-
 			default: {
-				std::cout << "[quic] Connection event type: 0x" << std::hex << event->Type << std::dec << "\n";
+				settings::Logger::logInfo("[quic] Unexpected connection event 0x{:x}", static_cast<unsigned>(event->Type));
 				break;
 			}
 		}
