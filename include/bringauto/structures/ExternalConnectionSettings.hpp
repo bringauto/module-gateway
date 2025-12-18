@@ -14,6 +14,7 @@ namespace bringauto::structures {
 enum class ProtocolType {
 	INVALID = -1,
 	MQTT,
+	QUIC,
 	DUMMY
 };
 
