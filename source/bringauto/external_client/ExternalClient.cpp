@@ -10,6 +10,7 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include "bringauto/external_client/connection/communication/QuicCommunication.hpp"
 
 
 namespace bringauto::external_client {
@@ -96,6 +97,11 @@ void ExternalClient::initConnections() {
 		switch(connectionSettings.protocolType) {
 			case structures::ProtocolType::MQTT:
 				communicationChannel = std::make_shared<connection::communication::MqttCommunication>(
+					connectionSettings, context_->settings->company, context_->settings->vehicleName
+				);
+				break;
+			case structures::ProtocolType::QUIC:
+				communicationChannel = std::make_shared<connection::communication::QuicCommunication>(
 					connectionSettings, context_->settings->company, context_->settings->vehicleName
 				);
 				break;

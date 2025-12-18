@@ -164,8 +164,10 @@ public:
 	inline static constexpr std::string_view PROTOCOL_TYPE { "protocol-type" };
 
 	inline static constexpr std::string_view MQTT { "MQTT" };
+	inline static constexpr std::string_view QUIC { "QUIC" };
 	inline static constexpr std::string_view DUMMY { "DUMMY" };
 	inline static constexpr std::string_view MQTT_SETTINGS { "mqtt-settings" };
+	inline static constexpr std::string_view QUIC_SETTINGS { "quic-settings" };
 	inline static constexpr std::string_view SSL { "ssl" };
 	inline static constexpr std::string_view CA_FILE { "ca-file" };
 	inline static constexpr std::string_view CLIENT_CERT { "client-cert" };
