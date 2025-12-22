@@ -101,6 +101,16 @@ private:
 	// constexpr static int8_t qos { 1 };
 	// /// Mutex to prevent deadlocks when receiving messages
 	// std::mutex receiveMessageMutex_ {};
+
+	static const char* toString(ConnectionState state) {
+		switch (state) {
+			case ConnectionState::DISCONNECTED: return "Disconnected";
+			case ConnectionState::CONNECTING:   return "Connecting";
+			case ConnectionState::CONNECTED:    return "Connected";
+			case ConnectionState::CLOSING:      return "Closing";
+			default:                            return "Unknown";
+		}
+	}
 };
 
 }
