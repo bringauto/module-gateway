@@ -24,6 +24,8 @@ public:
 	void closeConnection() override;
 
 private:
+	enum class ConnectionState : uint8_t { DISCONNECTED, CONNECTING, CONNECTED, CLOSING };
+
 	const QUIC_API_TABLE* quic_ { nullptr };
 	HQUIC registration_ { nullptr };
 	HQUIC config_ { nullptr };
@@ -35,6 +37,8 @@ private:
     std::string keyFile_;
 	std::string caFile_;
 
+	std::atomic<ConnectionState> connectionState_ { ConnectionState::DISCONNECTED };
+
 	/// ---------- Connection ----------
 	void loadMsQuic();
 	void initRegistration(const char *appName);
@@ -43,7 +47,14 @@ private:
 	void configurationLoadCredential(const QUIC_CREDENTIAL_CONFIG *credential) const;
 	void stop();
 
+	/// ---------- Closing client ----------
+	void closeMsQuic();
+	void closeConfiguration();
+	void closeRegistration();
+
+	/// ---------- Callbacks ----------
 	static QUIC_STATUS QUIC_API connectionCallback(HQUIC connection, void *context, QUIC_CONNECTION_EVENT *event);
+	static unsigned int streamCallback(HQUIC stream, void *context, QUIC_STREAM_EVENT *event);
 
 	/// void connect();
 
