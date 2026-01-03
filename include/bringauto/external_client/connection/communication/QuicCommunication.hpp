@@ -1,8 +1,11 @@
 #pragma once
 
+#include <condition_variable>
 #include <bringauto/external_client/connection/communication/ICommunicationChannel.hpp>
 
 #include <msquic.h>
+#include <queue>
+#include <thread>
 
 namespace bringauto::external_client::connection::communication {
 
@@ -12,8 +15,6 @@ public:
 		const std::string &vehicleName);
 
 	~QuicCommunication() override;
-
-	/// void setProperties(const std::string &company, const std::string &vehicleName);
 
 	void initializeConnection() override;
 
@@ -39,6 +40,18 @@ private:
 
 	std::atomic<ConnectionState> connectionState_ { ConnectionState::DISCONNECTED };
 
+	// inbound (server → client)
+	std::queue<std::shared_ptr<ExternalProtocol::ExternalServer>> inboundQueue_;
+	std::mutex inboundMutex_;
+	std::condition_variable inboundCv_;
+
+	// outbound (client → server)
+	std::queue<std::shared_ptr<ExternalProtocol::ExternalClient>> outboundQueue_;
+	std::mutex outboundMutex_;
+	std::condition_variable outboundCv_;
+
+	std::jthread senderThread_;
+
 	/// ---------- Connection ----------
 	void loadMsQuic();
 	void initRegistration(const char *appName);
@@ -46,6 +59,10 @@ private:
 	void configurationOpen(const QUIC_SETTINGS *settings);
 	void configurationLoadCredential(const QUIC_CREDENTIAL_CONFIG *credential) const;
 	void stop();
+
+	void onMessageDecoded(std::shared_ptr<ExternalProtocol::ExternalServer> msg);
+
+	bool sendViaQuicStream(const std::shared_ptr<ExternalProtocol::ExternalClient> &message);
 
 	/// ---------- Closing client ----------
 	void closeMsQuic();
@@ -55,6 +72,8 @@ private:
 	/// ---------- Callbacks ----------
 	static QUIC_STATUS QUIC_API connectionCallback(HQUIC connection, void *context, QUIC_CONNECTION_EVENT *event);
 	static unsigned int streamCallback(HQUIC stream, void *context, QUIC_STREAM_EVENT *event);
+
+	void senderLoop();
 
 	/// void connect();
 
