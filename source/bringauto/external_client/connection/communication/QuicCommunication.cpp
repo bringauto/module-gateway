@@ -4,6 +4,7 @@
 #include <msquic.h>
 
 #include <fstream>
+#include <thread>
 
 #include "bringauto/settings/LoggerId.hpp"
 
@@ -60,52 +61,37 @@ namespace bringauto::external_client::connection::communication {
 		connectionState_ = ConnectionState::CONNECTING;
 	}
 
-	bool QuicCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
-		HQUIC stream { nullptr };
-		if (QUIC_FAILED(quic_->StreamOpen(connection_, QUIC_STREAM_OPEN_FLAG_NONE, streamCallback, this, &stream))) {
-			settings::Logger::logError("[quic] StreamOpen failed");
-			return false;
+	bool QuicCommunication::sendMessage(ExternalProtocol::ExternalClient* message) {
+		settings::Logger::logInfo("[quic] Enqueueing message");
+		auto copy = std::make_shared<ExternalProtocol::ExternalClient>(*message);
+
+		{
+			std::lock_guard<std::mutex> lock(outboundMutex_);
+			outboundQueue_.push(std::move(copy));
 		}
-
-		const auto size = message->ByteSizeLong();
-		const auto buffer = std::make_unique<uint8_t[]>(size);
-
-		if (!message->SerializeToArray(buffer.get(), static_cast<int>(size))) {
-			settings::Logger::logError("[quic] Message serialization failed");
-			return false;
-		}
-
-		auto* buf = new QUIC_BUFFER{};
-		buf->Length = static_cast<uint32_t>(size);
-		buf->Buffer = new uint8_t[buf->Length];
-
-		std::memcpy(buf->Buffer, buffer.get(), buf->Length);
-
-		const QUIC_STATUS status = quic_->StreamSend(
-			stream,
-			buf,
-			1,
-			QUIC_SEND_FLAG_START | QUIC_SEND_FLAG_FIN,
-			buf
-		);
-
-		if (QUIC_FAILED(status)) {
-			delete[] buf->Buffer;
-			delete buf;
-
-			settings::Logger::logError("[quic] Failed to send QUIC stream; QUIC_STATUS => {:x}", status);
-			return false;
-		}
-
+		settings::Logger::logInfo("[quic] Notifying sender thread");
+		outboundCv_.notify_one();
 		return true;
 	}
 
 	std::shared_ptr<ExternalProtocol::ExternalServer> QuicCommunication::receiveMessage() {
-		return nullptr;
+		std::unique_lock<std::mutex> lock(inboundMutex_);
 
-		// TODO: Implement
+		if (!inboundCv_.wait_for(
+				lock,
+				settings::receive_message_timeout,
+				[this] { return !inboundQueue_.empty() || connectionState_.load() != ConnectionState::CONNECTED; }
+			)) {
+				return nullptr;
+			}
 
-		// Budeme potřebovat?
+		if (connectionState_.load() != ConnectionState::CONNECTED || inboundQueue_.empty()) {
+			return nullptr;
+		}
+
+		auto msg = inboundQueue_.front();
+		inboundQueue_.pop();
+		return msg;
 	}
 
 	/// ---------- Connection ----------
@@ -211,7 +197,70 @@ namespace bringauto::external_client::connection::communication {
 		closeRegistration();
 		closeMsQuic();
 
+		inboundCv_.notify_all();
+		outboundCv_.notify_all();
+
 		settings::Logger::logInfo("[quic] Connection stopped");
+	}
+
+
+	/// ---------- Outgoings ----------
+	void QuicCommunication::onMessageDecoded(
+		std::shared_ptr<ExternalProtocol::ExternalServer> msg
+	) {
+		{
+			std::lock_guard<std::mutex> lock(inboundMutex_);
+			settings::Logger::logInfo("[quic] Moving message to inboundQueue");
+			inboundQueue_.push(std::move(msg));
+		}
+		settings::Logger::logInfo("[quic] Notifying receiver thread");
+		inboundCv_.notify_one();
+	}
+
+	bool QuicCommunication::sendViaQuicStream(const std::shared_ptr<ExternalProtocol::ExternalClient>& message) {
+		settings::Logger::logInfo("[quic] Sending message");
+
+		HQUIC stream { nullptr };
+		if (QUIC_FAILED(quic_->StreamOpen(connection_, QUIC_STREAM_OPEN_FLAG_NONE, streamCallback, this, &stream))) {
+			settings::Logger::logError("[quic] StreamOpen failed");
+			return false;
+		}
+
+		const auto size = message->ByteSizeLong();
+		const auto buffer = std::make_unique<uint8_t[]>(size);
+
+		if (!message->SerializeToArray(buffer.get(), static_cast<int>(size))) {
+			settings::Logger::logError("[quic] Message serialization failed");
+			return false;
+		}
+
+		auto* buf = new QUIC_BUFFER{};
+		buf->Length = static_cast<uint32_t>(size);
+		buf->Buffer = new uint8_t[buf->Length];
+
+		std::memcpy(buf->Buffer, buffer.get(), buf->Length);
+
+		const QUIC_STATUS status = quic_->StreamSend(
+			stream,
+			buf,
+			1,
+			/**
+			 * START => Simulates quic_->StreamStart before send
+			 * FIN => Simulates quic_->StreamShutdown after send
+			 */
+			QUIC_SEND_FLAG_START | QUIC_SEND_FLAG_FIN,
+			buf
+		);
+
+		if (QUIC_FAILED(status)) {
+			delete[] buf->Buffer;
+			delete buf;
+
+			settings::Logger::logError("[quic] Failed to send QUIC stream; QUIC_STATUS => {:x}", status);
+			return false;
+		}
+
+		return true;
 	}
 
 	/// ---------- Callbacks ----------
@@ -223,25 +272,34 @@ namespace bringauto::external_client::connection::communication {
 			case QUIC_CONNECTION_EVENT_CONNECTED: {
 				settings::Logger::logInfo("[quic] Connected to server");
 
-				self->connectionState_ = ConnectionState::CONNECTED;
-				// self->tryFlushQueue();
+				auto expected = ConnectionState::CONNECTING;
+				if (self->connectionState_.compare_exchange_strong(expected, ConnectionState::CONNECTED)) {
+					self->senderThread_ = std::jthread(&QuicCommunication::senderLoop, self);
+					self->outboundCv_.notify_all();
+				}
 				break;
 			}
 
 			case QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE: {
 				settings::Logger::logInfo("[quic] Connection shutdown complete");
 
-				self->quic_->ConnectionClose(connection);
-
-				self->connection_ = nullptr;
 				self->connectionState_ = ConnectionState::DISCONNECTED;
+				self->outboundCv_.notify_all();
+
+				if (self->senderThread_.joinable()) {
+					self->senderThread_.request_stop();
+				}
+
+				self->quic_->ConnectionClose(connection);
+				self->connection_ = nullptr;
 				break;
 			}
 
-			case QUIC_CONNECTION_EVENT_SHUTDOWN_INITIATED_BY_PEER:
+			case QUIC_CONNECTION_EVENT_SHUTDOWN_INITIATED_BY_PEER: {
 				settings::Logger::logWarning("[quic] Connection shutdown initiated");
 				self->connectionState_ = ConnectionState::CLOSING;
 				break;
+			}
 
 			default: {
 				settings::Logger::logInfo("[quic] Unexpected connection event 0x{:x}", static_cast<unsigned>(event->Type));
@@ -256,19 +314,79 @@ namespace bringauto::external_client::connection::communication {
 	    auto* self = static_cast<QuicCommunication*>(context);
 
 	    switch (event->Type) {
-	        case QUIC_STREAM_EVENT_RECEIVE: {
-	        	settings::Logger::logInfo("[quic] Received {:d} bytes", event->RECEIVE.TotalBufferLength);
+	    	case QUIC_STREAM_EVENT_RECEIVE: {
+	    		settings::Logger::logInfo(
+					"[quic] Received {:d} bytes in {:d} buffers",
+					event->RECEIVE.TotalBufferLength,
+					event->RECEIVE.BufferCount
+				);
 
-	            //quicHandle(event->RECEIVE.Buffers, event->RECEIVE.BufferCount);
-	            self->quic_->StreamReceiveComplete(stream, event->RECEIVE.TotalBufferLength);
-	            break;
-	        }
+	    		uint64_t streamId = 0;
+	    		uint32_t streamIdLen = sizeof(streamId);
 
-	        case QUIC_STREAM_EVENT_PEER_SEND_SHUTDOWN: {
+	    		self->quic_->GetParam(
+					stream,
+					QUIC_PARAM_STREAM_ID,
+					&streamIdLen,
+					&streamId
+				);
+
+	    		settings::Logger::logInfo(
+					"[quic] [stream {}] Event RECEIVE",
+					streamId
+				);
+
+	    		std::vector<uint8_t> data;
+	    		data.reserve(event->RECEIVE.TotalBufferLength);
+
+	    		for (uint32_t i = 0; i < event->RECEIVE.BufferCount; ++i) {
+	    			const auto& b = event->RECEIVE.Buffers[i];
+	    			data.insert(data.end(), b.Buffer, b.Buffer + b.Length);
+	    		}
+
+	    		auto msg = std::make_shared<ExternalProtocol::ExternalServer>();
+	    		if (!msg->ParseFromArray(data.data(), static_cast<int>(data.size()))) {
+	    			settings::Logger::logError("[quic] Failed to parse ExternalServer message");
+				} else {
+					self->onMessageDecoded(std::move(msg));
+				}
+
+	    		self->quic_->StreamReceiveComplete(stream, event->RECEIVE.TotalBufferLength);
+
+	    		if (event->RECEIVE.Flags & QUIC_RECEIVE_FLAG_FIN) {
+	    			settings::Logger::logInfo(
+						"[quic] [stream {}] Peer FIN received, shutting down receive",
+						streamId
+					);
+
+	    			QUIC_STATUS status = self->quic_->StreamShutdown(
+						stream,
+						QUIC_STREAM_SHUTDOWN_FLAG_ABORT_RECEIVE,
+						0
+					);
+
+	    			settings::Logger::logInfo(
+						"[quic] [stream {}] StreamShutdown(RECEIVE) -> 0x{:x}",
+						streamId,
+						status
+					);
+	    		}
+
+	    		break;
+	    	}
+
+	    	/// Server send FIN
+ 	        case QUIC_STREAM_EVENT_PEER_SEND_SHUTDOWN: {
 	        	settings::Logger::logInfo("[quic] Peer stream send shutdown");
-	            self->quic_->StreamShutdown(stream, QUIC_STREAM_SHUTDOWN_FLAG_GRACEFUL, 0);
+	            //self->quic_->StreamShutdown(stream, QUIC_STREAM_SHUTDOWN_FLAG_GRACEFUL, 0);
 	            break;
 	        }
+
+	    	/// My FIN was sended to server
+	    	case QUIC_STREAM_EVENT_SEND_SHUTDOWN_COMPLETE: {
+	    		settings::Logger::logInfo("[quic] Stream send shutdown complete");
+	    		break;
+	    	}
 
 	        case QUIC_STREAM_EVENT_START_COMPLETE: {
 	        	settings::Logger::logInfo("[quic] Stream start completed");
@@ -312,6 +430,7 @@ namespace bringauto::external_client::connection::communication {
 	            break;
 	        }
 
+			/// Stream is closed from both sides
 	        case QUIC_STREAM_EVENT_SHUTDOWN_COMPLETE: {
 	        	settings::Logger::logInfo("[quic] Stream shutdown complete");
 	            self->quic_->StreamClose(stream);
@@ -325,5 +444,29 @@ namespace bringauto::external_client::connection::communication {
 	    }
 
 	    return QUIC_STATUS_SUCCESS;
+	}
+
+	void QuicCommunication::senderLoop() {
+		settings::Logger::logInfo("[quic] Sender thread loop started");
+		while (connectionState_.load() == ConnectionState::CONNECTED) {
+			std::unique_lock<std::mutex> lock(outboundMutex_);
+
+			settings::Logger::logInfo("[quic] Sender thread loop waiting for outbound queue");
+			outboundCv_.wait(lock, [this] {
+				return !outboundQueue_.empty() ||
+					   connectionState_.load() != ConnectionState::CONNECTED;
+			});
+
+			if (connectionState_.load() != ConnectionState::CONNECTED) {
+				break;
+			}
+
+			settings::Logger::logInfo("[quic] Sender thread loop sending outbound queue");
+			auto msg = outboundQueue_.front();
+			outboundQueue_.pop();
+			lock.unlock();
+
+			sendViaQuicStream(msg);
+		}
 	}
 }
