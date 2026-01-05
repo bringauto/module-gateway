@@ -234,10 +234,7 @@ namespace bringauto::external_client::connection::communication {
 
 		std::memcpy(buf->Buffer, buffer.get(), buf->Length);
 
-		const QUIC_STATUS status = quic_->StreamSend(
-			stream,
-			buf,
-			1,
+		const QUIC_STATUS status = quic_->StreamSend(stream, buf, 1,
 			/**
 			 * START => Simulates quic_->StreamStart before send
 			 * FIN => Simulates quic_->StreamShutdown after send
@@ -251,13 +248,12 @@ namespace bringauto::external_client::connection::communication {
 			delete buf;
 
 			settings::Logger::logError("[quic] Failed to send QUIC stream; QUIC_STATUS => {:x}", status);
+			quic_->StreamShutdown(stream, QUIC_STREAM_SHUTDOWN_FLAG_ABORT, 0);
 			return false;
 		}
 
 		return true;
 	}
-
-	/// ---------- Callbacks ----------
 
 	QUIC_STATUS QUIC_API QuicCommunication::connectionCallback(HQUIC connection, void* context, QUIC_CONNECTION_EVENT* event) {
 		auto* self = static_cast<QuicCommunication*>(context);
@@ -338,35 +334,12 @@ namespace bringauto::external_client::connection::communication {
 					self->onMessageDecoded(std::move(msg));
 				}
 
-	    		settings::Logger::logInfo("[quic] Approving stream receive completed");
-	    		self->quic_->StreamReceiveComplete(stream, event->RECEIVE.TotalBufferLength);
-
-	    		if (event->RECEIVE.Flags & QUIC_RECEIVE_FLAG_FIN) {
-	    			settings::Logger::logInfo(
-						"[quic] [stream {}] Peer FIN received, shutting down receive",
-						streamId
-					);
-
-	    			QUIC_STATUS status = self->quic_->StreamShutdown(
-						stream,
-						QUIC_STREAM_SHUTDOWN_FLAG_ABORT_RECEIVE,
-						0
-					);
-
-	    			settings::Logger::logInfo(
-						"[quic] [stream {}] StreamShutdown(RECEIVE) -> 0x{:x}",
-						streamId,
-						status
-					);
-	    		}
-
 	    		break;
 	    	}
 
 	    	/// Server send FIN
  	        case QUIC_STREAM_EVENT_PEER_SEND_SHUTDOWN: {
 	        	settings::Logger::logInfo("[quic] Peer stream send shutdown");
-	            //self->quic_->StreamShutdown(stream, QUIC_STREAM_SHUTDOWN_FLAG_GRACEFUL, 0);
 	            break;
 	        }
 
@@ -416,6 +389,7 @@ namespace bringauto::external_client::connection::communication {
 	                delete[] buf->Buffer;
 	                delete buf;
 	            }
+
 	            break;
 	        }
 
