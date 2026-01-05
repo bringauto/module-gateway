@@ -316,19 +316,10 @@ namespace bringauto::external_client::connection::communication {
 				);
 
 	    		/// -------- START - Just for debugging --------
-	    		uint64_t streamId = 0;
-	    		uint32_t streamIdLen = sizeof(streamId);
-
-	    		self->quic_->GetParam(
-					stream,
-					QUIC_PARAM_STREAM_ID,
-					&streamIdLen,
-					&streamId
-				);
-
+	    		auto streamId = self->getStreamId(stream);
 	    		settings::Logger::logInfo(
 					"[quic] [stream {}] Event RECEIVE",
-					streamId
+					streamId ? *streamId : 0
 				);
 	    		/// -------- END - Just for debugging --------
 
@@ -347,6 +338,7 @@ namespace bringauto::external_client::connection::communication {
 					self->onMessageDecoded(std::move(msg));
 				}
 
+	    		settings::Logger::logInfo("[quic] Approving stream receive completed");
 	    		self->quic_->StreamReceiveComplete(stream, event->RECEIVE.TotalBufferLength);
 
 	    		if (event->RECEIVE.Flags & QUIC_RECEIVE_FLAG_FIN) {
@@ -380,7 +372,8 @@ namespace bringauto::external_client::connection::communication {
 
 	    	/// My FIN was sended to server
 	    	case QUIC_STREAM_EVENT_SEND_SHUTDOWN_COMPLETE: {
-	    		settings::Logger::logInfo("[quic] Stream send shutdown complete");
+	    		auto streamId = self->getStreamId(stream);
+	    		settings::Logger::logInfo("[quic] [stream {}] Stream send shutdown complete", streamId ? *streamId : 0);
 	    		break;
 	    	}
 
