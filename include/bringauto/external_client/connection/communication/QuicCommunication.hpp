@@ -297,6 +297,15 @@ private:
 		}
 	}
 
+	/**
+	 * @brief Retrieves the QUIC stream identifier for the given stream handle.
+	 *
+	 * Queries MsQuic for the stream ID associated with the provided HQUIC stream.
+	 * If the parameter query fails, an empty optional is returned.
+	 *
+	 * @param stream Valid QUIC stream handle.
+	 * @return Stream identifier on success, or std::nullopt if the query fails.
+	 */
 	std::optional<uint64_t> getStreamId(HQUIC stream) const {
 		uint64_t streamId = 0;
 		uint32_t streamIdLen = sizeof(streamId);
@@ -307,7 +316,7 @@ private:
 				&streamIdLen,
 				&streamId))) {
 			return std::nullopt;
-				}
+		}
 
 		return streamId;
 	}

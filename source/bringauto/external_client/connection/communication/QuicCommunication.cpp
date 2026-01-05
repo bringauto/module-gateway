@@ -259,17 +259,22 @@ namespace bringauto::external_client::connection::communication {
 		auto* self = static_cast<QuicCommunication*>(context);
 
 		switch (event->Type) {
+			/// Fired when the QUIC handshake is complete and the connection is ready
+			/// for stream creation and data transfer.
 			case QUIC_CONNECTION_EVENT_CONNECTED: {
 				settings::Logger::logInfo("[quic] Connected to server");
 
 				auto expected = ConnectionState::CONNECTING;
 				if (self->connectionState_.compare_exchange_strong(expected, ConnectionState::CONNECTED)) {
+					/// Start sender thread only after connection is fully established
 					self->senderThread_ = std::jthread(&QuicCommunication::senderLoop, self);
 					self->outboundCv_.notify_all();
 				}
 				break;
 			}
 
+			/// Final notification that the connection has been fully shut down.
+			/// This is the last event delivered for the connection handle.
 			case QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE: {
 				settings::Logger::logInfo("[quic] Connection shutdown complete");
 
@@ -285,6 +290,8 @@ namespace bringauto::external_client::connection::communication {
 				break;
 			}
 
+			/// Peer or transport initiated connection shutdown (error or graceful close).
+			/// Further sends may fail after this event.
 			case QUIC_CONNECTION_EVENT_SHUTDOWN_INITIATED_BY_PEER: {
 				settings::Logger::logWarning("[quic] Connection shutdown initiated");
 				self->connectionState_ = ConnectionState::CLOSING;
@@ -292,7 +299,7 @@ namespace bringauto::external_client::connection::communication {
 			}
 
 			default: {
-				settings::Logger::logInfo("[quic] Unexpected connection event 0x{:x}", static_cast<unsigned>(event->Type));
+				settings::Logger::logInfo("[quic] Unhandled connection event 0x{:x}", static_cast<unsigned>(event->Type));
 				break;
 			}
 		}
@@ -302,8 +309,10 @@ namespace bringauto::external_client::connection::communication {
 
 	QUIC_STATUS QUIC_API QuicCommunication::streamCallback(HQUIC stream, void* context, QUIC_STREAM_EVENT* event) {
 	    auto* self = static_cast<QuicCommunication*>(context);
+		auto streamId = self->getStreamId(stream);
 
 	    switch (event->Type) {
+	    	/// Raised when the peer sends stream data and MsQuic delivers received bytes to the application.
 	    	case QUIC_STREAM_EVENT_RECEIVE: {
 	    		settings::Logger::logInfo(
 					"[quic] Received {:d} bytes in {:d} buffers",
@@ -311,13 +320,10 @@ namespace bringauto::external_client::connection::communication {
 					event->RECEIVE.BufferCount
 				);
 
-	    		/// -------- START - Just for debugging --------
-	    		auto streamId = self->getStreamId(stream);
 	    		settings::Logger::logInfo(
 					"[quic] [stream {}] Event RECEIVE",
 					streamId ? *streamId : 0
 				);
-	    		/// -------- END - Just for debugging --------
 
 	    		std::vector<uint8_t> data;
 	    		data.reserve(event->RECEIVE.TotalBufferLength);
@@ -337,24 +343,29 @@ namespace bringauto::external_client::connection::communication {
 	    		break;
 	    	}
 
-	    	/// Server send FIN
+	    	/// Raised when the peer has finished sending on this stream
+	    	/// (peer's FIN has been fully received and processed).
  	        case QUIC_STREAM_EVENT_PEER_SEND_SHUTDOWN: {
 	        	settings::Logger::logInfo("[quic] Peer stream send shutdown");
 	            break;
 	        }
 
-	    	/// My FIN was sended to server
+	    	/// Raised when the local send direction is fully shut down
+	    	/// and the peer has acknowledged the FIN.
 	    	case QUIC_STREAM_EVENT_SEND_SHUTDOWN_COMPLETE: {
-	    		auto streamId = self->getStreamId(stream);
 	    		settings::Logger::logInfo("[quic] [stream {}] Stream send shutdown complete", streamId ? *streamId : 0);
 	    		break;
 	    	}
 
+	    	/// Raised after StreamStart completes successfully
+	    	/// and the stream becomes active with a valid stream ID.
 	        case QUIC_STREAM_EVENT_START_COMPLETE: {
 	        	settings::Logger::logInfo("[quic] Stream start completed");
 	            break;
 	        }
 
+	    	/// Raised when a single StreamSend operation completes
+	    	/// (data was accepted, acknowledged, or the send was canceled).
 	        case QUIC_STREAM_EVENT_SEND_COMPLETE: {
 	            /**
 	             * This event is raised when MsQuic has finished processing
@@ -393,7 +404,8 @@ namespace bringauto::external_client::connection::communication {
 	            break;
 	        }
 
-			/// Stream is closed from both sides
+	    	/// Raised when both send and receive directions are closed
+	    	/// and the stream lifecycle is fully complete.
 	        case QUIC_STREAM_EVENT_SHUTDOWN_COMPLETE: {
 	        	settings::Logger::logInfo("[quic] Stream shutdown complete");
 	            self->quic_->StreamClose(stream);
@@ -401,7 +413,7 @@ namespace bringauto::external_client::connection::communication {
 	        }
 
 	        default: {
-	        	settings::Logger::logInfo("[quic] Unexpected stream event 0x{:x}", static_cast<unsigned>(event->Type));
+	        	settings::Logger::logInfo("[quic] Unhandled stream event 0x{:x}", static_cast<unsigned>(event->Type));
 	            break;
 	        }
 	    }
