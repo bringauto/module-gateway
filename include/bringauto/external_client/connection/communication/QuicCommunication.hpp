@@ -296,6 +296,21 @@ private:
 			default:                            return "Unknown";
 		}
 	}
+
+	std::optional<uint64_t> getStreamId(HQUIC stream) const {
+		uint64_t streamId = 0;
+		uint32_t streamIdLen = sizeof(streamId);
+
+		if (QUIC_FAILED(quic_->GetParam(
+				stream,
+				QUIC_PARAM_STREAM_ID,
+				&streamIdLen,
+				&streamId))) {
+			return std::nullopt;
+				}
+
+		return streamId;
+	}
 };
 
 }
