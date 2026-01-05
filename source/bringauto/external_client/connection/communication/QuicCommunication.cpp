@@ -94,8 +94,6 @@ namespace bringauto::external_client::connection::communication {
 		return msg;
 	}
 
-	/// ---------- Connection ----------
-
 	void QuicCommunication::loadMsQuic() {
 		QUIC_STATUS status = MsQuicOpen2(&quic_);
 		if (QUIC_FAILED(status)) {
@@ -155,8 +153,6 @@ namespace bringauto::external_client::connection::communication {
 		}
 	}
 
-	/// ---------- Closing client ----------
-
 	void QuicCommunication::closeConnection() {
 		if (! connection_) {
 			return;
@@ -164,7 +160,7 @@ namespace bringauto::external_client::connection::communication {
 
 		quic_->ConnectionShutdown(connection_, QUIC_CONNECTION_SHUTDOWN_FLAG_NONE, 0);
 
-		// Waiting for QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE then continue in connectionCallback
+		/// Asynchronously waiting for QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE event, then continue in connectionCallback
 	}
 
 	void QuicCommunication::closeConfiguration() {
@@ -203,8 +199,6 @@ namespace bringauto::external_client::connection::communication {
 		settings::Logger::logInfo("[quic] Connection stopped");
 	}
 
-
-	/// ---------- Outgoings ----------
 	void QuicCommunication::onMessageDecoded(
 		std::shared_ptr<ExternalProtocol::ExternalServer> msg
 	) {
@@ -321,6 +315,7 @@ namespace bringauto::external_client::connection::communication {
 					event->RECEIVE.BufferCount
 				);
 
+	    		/// -------- START - Just for debugging --------
 	    		uint64_t streamId = 0;
 	    		uint32_t streamIdLen = sizeof(streamId);
 
@@ -335,6 +330,7 @@ namespace bringauto::external_client::connection::communication {
 					"[quic] [stream {}] Event RECEIVE",
 					streamId
 				);
+	    		/// -------- END - Just for debugging --------
 
 	    		std::vector<uint8_t> data;
 	    		data.reserve(event->RECEIVE.TotalBufferLength);
