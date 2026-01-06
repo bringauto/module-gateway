@@ -2,10 +2,6 @@
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/settings/LoggerId.hpp>
 
-#include <msquic.h>
-
-#include <fstream>
-
 
 
 namespace bringauto::external_client::connection::communication {
@@ -32,7 +28,7 @@ namespace bringauto::external_client::connection::communication {
 	}
 
 	void QuicCommunication::initializeConnection() {
-		settings::Logger::logInfo("[quic] Connecting to server when {}", toString(connectionState_));
+		settings::Logger::logDebug("[quic] Connecting to server when {}", toString(connectionState_));
 
 
 		ConnectionState expected = ConnectionState::DISCONNECTED;
@@ -61,14 +57,13 @@ namespace bringauto::external_client::connection::communication {
 	}
 
 	bool QuicCommunication::sendMessage(ExternalProtocol::ExternalClient* message) {
-		settings::Logger::logInfo("[quic] Enqueueing message");
 		auto copy = std::make_shared<ExternalProtocol::ExternalClient>(*message);
 
 		{
 			std::lock_guard<std::mutex> lock(outboundMutex_);
 			outboundQueue_.push(std::move(copy));
 		}
-		settings::Logger::logInfo("[quic] Notifying sender thread");
+		settings::Logger::logDebug("[quic] Notifying sender thread about enqueued message");
 		outboundCv_.notify_one();
 		return true;
 	}
@@ -203,16 +198,13 @@ namespace bringauto::external_client::connection::communication {
 	) {
 		{
 			std::lock_guard<std::mutex> lock(inboundMutex_);
-			settings::Logger::logInfo("[quic] Moving message to inboundQueue");
 			inboundQueue_.push(std::move(msg));
 		}
-		settings::Logger::logInfo("[quic] Notifying receiver thread");
+		settings::Logger::logDebug("[quic] Notifying receiver thread about dequeued message");
 		inboundCv_.notify_one();
 	}
 
 	bool QuicCommunication::sendViaQuicStream(const std::shared_ptr<ExternalProtocol::ExternalClient>& message) {
-		settings::Logger::logInfo("[quic] Sending message");
-
 		HQUIC stream { nullptr };
 		if (QUIC_FAILED(quic_->StreamOpen(connection_, QUIC_STREAM_OPEN_FLAG_NONE, streamCallback, this, &stream))) {
 			settings::Logger::logError("[quic] StreamOpen failed");
@@ -241,6 +233,9 @@ namespace bringauto::external_client::connection::communication {
 			QUIC_SEND_FLAG_START | QUIC_SEND_FLAG_FIN,
 			buf
 		);
+
+		auto streamId = getStreamId(stream);
+		settings::Logger::logDebug("[quic] [stream {}] Message sent", streamId ? *streamId : 0);
 
 		if (QUIC_FAILED(status)) {
 			delete[] buf->Buffer;
@@ -292,13 +287,13 @@ namespace bringauto::external_client::connection::communication {
 			/// Peer or transport initiated connection shutdown (error or graceful close).
 			/// Further sends may fail after this event.
 			case QUIC_CONNECTION_EVENT_SHUTDOWN_INITIATED_BY_PEER: {
-				settings::Logger::logWarning("[quic] Connection shutdown initiated");
+				settings::Logger::logWarning("[quic] Connection shutdown initiated by peer");
 				self->connectionState_ = ConnectionState::CLOSING;
 				break;
 			}
 
 			default: {
-				settings::Logger::logInfo("[quic] Unhandled connection event 0x{:x}", static_cast<unsigned>(event->Type));
+				settings::Logger::logDebug("[quic] Unhandled connection event 0x{:x}", static_cast<unsigned>(event->Type));
 				break;
 			}
 		}
@@ -313,15 +308,11 @@ namespace bringauto::external_client::connection::communication {
 	    switch (event->Type) {
 	    	/// Raised when the peer sends stream data and MsQuic delivers received bytes to the application.
 	    	case QUIC_STREAM_EVENT_RECEIVE: {
-	    		settings::Logger::logInfo(
-					"[quic] Received {:d} bytes in {:d} buffers",
+	    		settings::Logger::logDebug(
+					"[quic] [stream {}] Received {:d} bytes in {:d} buffers",
+					streamId ? *streamId : 0,
 					event->RECEIVE.TotalBufferLength,
 					event->RECEIVE.BufferCount
-				);
-
-	    		settings::Logger::logInfo(
-					"[quic] [stream {}] Event RECEIVE",
-					streamId ? *streamId : 0
 				);
 
 	    		std::vector<uint8_t> data;
@@ -345,21 +336,21 @@ namespace bringauto::external_client::connection::communication {
 	    	/// Raised when the peer has finished sending on this stream
 	    	/// (peer's FIN has been fully received and processed).
  	        case QUIC_STREAM_EVENT_PEER_SEND_SHUTDOWN: {
-	        	settings::Logger::logInfo("[quic] Peer stream send shutdown");
+	        	settings::Logger::logDebug("[quic] Peer stream send shutdown");
 	            break;
 	        }
 
 	    	/// Raised when the local send direction is fully shut down
 	    	/// and the peer has acknowledged the FIN.
 	    	case QUIC_STREAM_EVENT_SEND_SHUTDOWN_COMPLETE: {
-	    		settings::Logger::logInfo("[quic] [stream {}] Stream send shutdown complete", streamId ? *streamId : 0);
+	    		settings::Logger::logDebug("[quic] [stream {}] Stream send shutdown complete", streamId ? *streamId : 0);
 	    		break;
 	    	}
 
 	    	/// Raised after StreamStart completes successfully
 	    	/// and the stream becomes active with a valid stream ID.
 	        case QUIC_STREAM_EVENT_START_COMPLETE: {
-	        	settings::Logger::logInfo("[quic] Stream start completed");
+	        	settings::Logger::logDebug("[quic] Stream start completed");
 	            break;
 	        }
 
@@ -387,9 +378,9 @@ namespace bringauto::external_client::connection::communication {
 	             *    passed to StreamSend (via ClientContext)
 	             */
 	            if (event->SEND_COMPLETE.Canceled) {
-	            	settings::Logger::logError("[quic] Stream send canceled");
+	            	settings::Logger::logWarning("[quic] Stream send canceled");
 	            } else {
-	            	settings::Logger::logInfo("[quic] Stream send completed");
+	            	settings::Logger::logDebug("[quic] Stream send completed");
 	            }
 
 	            const auto* buf =
@@ -406,13 +397,13 @@ namespace bringauto::external_client::connection::communication {
 	    	/// Raised when both send and receive directions are closed
 	    	/// and the stream lifecycle is fully complete.
 	        case QUIC_STREAM_EVENT_SHUTDOWN_COMPLETE: {
-	        	settings::Logger::logInfo("[quic] Stream shutdown complete");
+	        	settings::Logger::logDebug("[quic] Stream shutdown complete");
 	            self->quic_->StreamClose(stream);
 	            break;
 	        }
 
 	        default: {
-	        	settings::Logger::logInfo("[quic] Unhandled stream event 0x{:x}", static_cast<unsigned>(event->Type));
+	        	settings::Logger::logDebug("[quic] Unhandled stream event 0x{:x}", static_cast<unsigned>(event->Type));
 	            break;
 	        }
 	    }
@@ -421,11 +412,11 @@ namespace bringauto::external_client::connection::communication {
 	}
 
 	void QuicCommunication::senderLoop() {
-		settings::Logger::logInfo("[quic] Sender thread loop started");
+		settings::Logger::logDebug("[quic] Sender thread loop started");
 		while (connectionState_.load() == ConnectionState::CONNECTED) {
 			std::unique_lock<std::mutex> lock(outboundMutex_);
 
-			settings::Logger::logInfo("[quic] Sender thread loop waiting for outbound queue");
+			settings::Logger::logDebug("[quic] Sender thread loop waiting for outbound queue");
 			outboundCv_.wait(lock, [this] {
 				return !outboundQueue_.empty() ||
 					   connectionState_.load() != ConnectionState::CONNECTED;
@@ -435,7 +426,7 @@ namespace bringauto::external_client::connection::communication {
 				break;
 			}
 
-			settings::Logger::logInfo("[quic] Sender thread loop sending outbound queue");
+			settings::Logger::logDebug("[quic] Sender thread loop sending outbound queue");
 			auto msg = outboundQueue_.front();
 			outboundQueue_.pop();
 			lock.unlock();
