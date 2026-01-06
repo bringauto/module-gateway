@@ -61,12 +61,14 @@ namespace bringauto::external_client::connection::communication {
 	}
 
 	bool QuicCommunication::sendMessage(ExternalProtocol::ExternalClient* message) {
-		settings::Logger::logDebug("[quic] Sending message when {}", toString(connectionState_));
+	    if (connectionState_.load() == ConnectionState::DISCONNECTED) {
+	    	settings::Logger::logWarning("[quic] Connection not established, cannot send message");
+		    return false;
+	    }
 
-		auto copy = std::make_shared<ExternalProtocol::ExternalClient>(*message);
-
-		{
-			std::lock_guard<std::mutex> lock(outboundMutex_);
+	    {
+		    auto copy = std::make_shared<ExternalProtocol::ExternalClient>(*message);
+		    std::lock_guard<std::mutex> lock(outboundMutex_);
 			outboundQueue_.push(std::move(copy));
 		}
 		settings::Logger::logDebug("[quic] Notifying sender thread about enqueued message");
