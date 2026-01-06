@@ -203,13 +203,7 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 		
 		if(!settingsName.empty() && endpoint.find(settingsName) != endpoint.end()) {
 			for(auto &[key, val]: endpoint[settingsName].items()) {
-				if (val.is_string()) {
-					externalConnectionSettings.protocolSettings[key] = val.get<std::string>();
-					std::cout << externalConnectionSettings.protocolSettings[key] << std::endl;
-					continue;
-				}
 				externalConnectionSettings.protocolSettings[key] = to_string(val);
-				std::cout << externalConnectionSettings.protocolSettings[key] << std::endl;
 			}
 		}
 
@@ -261,11 +255,7 @@ std::string SettingsParser::serializeToJson() const {
 				break;
 		}
 		for(const auto &[key, val]: endpoint.protocolSettings) {
-			if (nlohmann::json::accept(val)) {
-				endpointAsJson[settingsName][key] = nlohmann::json::parse(val);
-				continue;
-			}
-			endpointAsJson[settingsName][key] = val;
+			endpointAsJson[settingsName][key] = nlohmann::json::parse(val);
 		}
 		endpoints.push_back(endpointAsJson);
 	}

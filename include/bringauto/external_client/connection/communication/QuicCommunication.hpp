@@ -1,11 +1,15 @@
 #pragma once
 
-#include <condition_variable>
 #include <bringauto/external_client/connection/communication/ICommunicationChannel.hpp>
 
 #include <msquic.h>
+#include <nlohmann/json.hpp>
+
+#include <condition_variable>
 #include <queue>
 #include <thread>
+
+
 
 namespace bringauto::external_client::connection::communication {
 
@@ -282,6 +286,37 @@ private:
 	void senderLoop();
 
 	/**
+	 * @brief Retrieves the QUIC stream identifier for the given stream handle.
+	 *
+	 * Queries MsQuic for the stream ID associated with the provided HQUIC stream.
+	 * If the parameter query fails, an empty optional is returned.
+	 *
+	 * @param stream Valid QUIC stream handle.
+	 * @return Stream identifier on success, or std::nullopt if the query fails.
+	 */
+	std::optional<uint64_t> getStreamId(HQUIC stream);
+
+	/**
+	 * @brief Retrieves a protocol setting value as a plain string.
+	 *
+	 * Extracts a value from ExternalConnectionSettings::protocolSettings and
+	 * transparently handles values stored as JSON-encoded strings.
+	 *
+	 * Allows uniform access to protocol settings regardless of whether
+	 * they were stored as plain strings or JSON-serialized values.
+	 *
+	 * @param settings External connection settings containing protocolSettings.
+	 * @param key Key identifying the protocol setting.
+	 * @return Plain string value suitable for direct use (e.g. file paths).
+	 *
+	 * @throws std::out_of_range if the key is not present in protocolSettings.
+	 */
+	static std::string getProtocolSettingsString(
+		const structures::ExternalConnectionSettings& settings,
+		std::string_view key
+	);
+
+	/**
 	 * @brief Converts a ConnectionState value to a human-readable string.
 	 *
 	 * @param state Connection state to convert.
@@ -295,30 +330,6 @@ private:
 			case ConnectionState::CLOSING:      return "Closing";
 			default:                            return "Unknown";
 		}
-	}
-
-	/**
-	 * @brief Retrieves the QUIC stream identifier for the given stream handle.
-	 *
-	 * Queries MsQuic for the stream ID associated with the provided HQUIC stream.
-	 * If the parameter query fails, an empty optional is returned.
-	 *
-	 * @param stream Valid QUIC stream handle.
-	 * @return Stream identifier on success, or std::nullopt if the query fails.
-	 */
-	std::optional<uint64_t> getStreamId(HQUIC stream) const {
-		uint64_t streamId = 0;
-		uint32_t streamIdLen = sizeof(streamId);
-
-		if (QUIC_FAILED(quic_->GetParam(
-				stream,
-				QUIC_PARAM_STREAM_ID,
-				&streamIdLen,
-				&streamId))) {
-			return std::nullopt;
-		}
-
-		return streamId;
 	}
 };
 
