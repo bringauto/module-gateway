@@ -1,21 +1,20 @@
 #include <bringauto/external_client/connection/communication/QuicCommunication.hpp>
 #include <bringauto/settings/Constants.hpp>
+#include <bringauto/settings/LoggerId.hpp>
 
 #include <msquic.h>
 
 #include <fstream>
-#include <thread>
 
-#include "bringauto/settings/LoggerId.hpp"
 
 
 namespace bringauto::external_client::connection::communication {
 
 	QuicCommunication::QuicCommunication(const structures::ExternalConnectionSettings &settings, const std::string &company,
 		const std::string &vehicleName) : ICommunicationChannel(settings),
-		certFile_(settings.protocolSettings.at(std::string(settings::Constants::CLIENT_CERT))),
-		keyFile_(settings.protocolSettings.at(std::string(settings::Constants::CLIENT_KEY))),
-		caFile_(settings.protocolSettings.at(std::string(settings::Constants::CA_FILE)))
+		certFile_(getProtocolSettingsString(settings, settings::Constants::CLIENT_CERT)),
+		keyFile_(getProtocolSettingsString(settings, settings::Constants::CLIENT_KEY)),
+		caFile_(getProtocolSettingsString(settings, settings::Constants::CA_FILE))
 	{
 		alpn_ = "sample";
 		alpnBuffer_.Buffer = reinterpret_cast<uint8_t*>(alpn_.data());
@@ -133,12 +132,12 @@ namespace bringauto::external_client::connection::communication {
 
 		QUIC_STATUS status = quic_->ConfigurationOpen(
 			registration_,
-		   &alpnBuffer_,
-		   1,
-		   settings,
-		   settingsSize,
-		   nullptr,
-		   &config_
+			&alpnBuffer_,
+			1,
+			settings,
+			settingsSize,
+			nullptr,
+			&config_
 		);
 
 		if (QUIC_FAILED(status)) {
@@ -443,5 +442,35 @@ namespace bringauto::external_client::connection::communication {
 
 			sendViaQuicStream(msg);
 		}
+	}
+
+	std::optional<uint64_t> QuicCommunication::getStreamId(HQUIC stream) {
+		uint64_t streamId = 0;
+		uint32_t streamIdLen = sizeof(streamId);
+
+		if (QUIC_FAILED(quic_->GetParam(
+			stream,
+			QUIC_PARAM_STREAM_ID,
+			&streamIdLen,
+			&streamId))) {
+			return std::nullopt;
+		}
+
+		return streamId;
+	}
+
+	std::string QuicCommunication::getProtocolSettingsString(
+		const structures::ExternalConnectionSettings& settings,
+		std::string_view key
+	) {
+		const auto& raw = settings.protocolSettings.at(std::string(key));
+
+		if (nlohmann::json::accept(raw)) {
+			auto j = nlohmann::json::parse(raw);
+			if (j.is_string()) {
+				return j.get<std::string>();
+			}
+		}
+		return raw;
 	}
 }
