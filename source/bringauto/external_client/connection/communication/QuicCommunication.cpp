@@ -16,11 +16,15 @@ namespace bringauto::external_client::connection::communication {
 		alpnBuffer_.Buffer = reinterpret_cast<uint8_t*>(alpn_.data());
 		alpnBuffer_.Length = static_cast<uint32_t>(alpn_.size());
 
-		settings::Logger::logInfo("[quic] Initialize QUIC connection to {}:{} for {}/{}", settings.serverIp, settings.port, company, vehicleName);
+		settings::Logger::logInfo("[quic] Initialize QUIC communication to {}:{} for {}/{}", settings.serverIp, settings.port, company, vehicleName);
 
-		loadMsQuic();
-		initRegistration("module-gateway-quic-client");
-		initConfiguration();
+		try {
+			loadMsQuic();
+			initRegistration("module-gateway-quic-client");
+			initConfiguration();
+		} catch (const std::exception& e) {
+			settings::Logger::logError("[quic] Failed to initialize QUIC communication; {}", e.what());
+		}
 	}
 
 	QuicCommunication::~QuicCommunication() {
@@ -33,12 +37,12 @@ namespace bringauto::external_client::connection::communication {
 
 		ConnectionState expected = ConnectionState::DISCONNECTED;
 		if (! connectionState_.compare_exchange_strong(expected, ConnectionState::CONNECTING, std::memory_order_acq_rel)) {
-			return;
+			throw std::logic_error("Connection already in progress or established");
 		}
 
 		QUIC_STATUS status = quic_->ConnectionOpen(registration_, connectionCallback, this, &connection_);
 		if (QUIC_FAILED(status)) {
-			settings::Logger::logError("[quic] Failed to open QUIC connection; QUIC_STATUS => {:x}", status);
+			throw std::runtime_error(std::format("ConnectionOpen failed (status=0x{:x})", status));
 		}
 
 		status = quic_->ConnectionStart(
@@ -50,13 +54,15 @@ namespace bringauto::external_client::connection::communication {
 		);
 
 		if (QUIC_FAILED(status)) {
-			settings::Logger::logError("[quic] Failed to start QUIC connection; QUIC_STATUS => {:x}", status);
+			throw std::runtime_error(std::format("ConnectionOpen failed (status=0x{:x})", status));
 		}
 
 		connectionState_ = ConnectionState::CONNECTING;
 	}
 
 	bool QuicCommunication::sendMessage(ExternalProtocol::ExternalClient* message) {
+		settings::Logger::logDebug("[quic] Sending message when {}", toString(connectionState_));
+
 		auto copy = std::make_shared<ExternalProtocol::ExternalClient>(*message);
 
 		{
@@ -91,7 +97,7 @@ namespace bringauto::external_client::connection::communication {
 	void QuicCommunication::loadMsQuic() {
 		QUIC_STATUS status = MsQuicOpen2(&quic_);
 		if (QUIC_FAILED(status)) {
-			settings::Logger::logError("[quic] Failed to open QUIC; QUIC_STATUS => {:x}", status);
+			throw std::runtime_error(std::format("[quic] Failed to open QUIC; QUIC_STATUS => {:x}", status));
 		}
 	}
 
@@ -102,7 +108,7 @@ namespace bringauto::external_client::connection::communication {
 
 		QUIC_STATUS status = quic_->RegistrationOpen(&config, &registration_);
 		if (QUIC_FAILED(status)) {
-			settings::Logger::logError("[quic] Failed to open QUIC registration; QUIC_STATUS => {:x}", status);
+			throw std::runtime_error(std::format("[quic] Failed to open QUIC registration; QUIC_STATUS => {:x}", status));
 		}
 	}
 
@@ -136,14 +142,14 @@ namespace bringauto::external_client::connection::communication {
 		);
 
 		if (QUIC_FAILED(status)) {
-			settings::Logger::logError("[quic] Failed to open QUIC configuration; QUIC_STATUS => {:x}", status);
+			throw std::runtime_error(std::format("[quic] Failed to open QUIC configuration; QUIC_STATUS => {:x}", status));
 		}
 	}
 
 	void QuicCommunication::configurationLoadCredential(const QUIC_CREDENTIAL_CONFIG* credential) const {
 		const QUIC_STATUS status = quic_->ConfigurationLoadCredential(config_, credential);
 		if (QUIC_FAILED(status)) {
-			settings::Logger::logError("[quic] Failed to load QUIC credential; QUIC_STATUS => {:x}", status);
+			throw std::runtime_error(std::format("[quic] Failed to load QUIC credential; QUIC_STATUS => {:x}", status));
 		}
 	}
 
@@ -204,19 +210,17 @@ namespace bringauto::external_client::connection::communication {
 		inboundCv_.notify_one();
 	}
 
-	bool QuicCommunication::sendViaQuicStream(const std::shared_ptr<ExternalProtocol::ExternalClient>& message) {
+	void QuicCommunication::sendViaQuicStream(const std::shared_ptr<ExternalProtocol::ExternalClient>& message) {
 		HQUIC stream { nullptr };
 		if (QUIC_FAILED(quic_->StreamOpen(connection_, QUIC_STREAM_OPEN_FLAG_NONE, streamCallback, this, &stream))) {
-			settings::Logger::logError("[quic] StreamOpen failed");
-			return false;
+			throw std::runtime_error("[quic] StreamOpen failed");
 		}
 
 		const auto size = message->ByteSizeLong();
 		const auto buffer = std::make_unique<uint8_t[]>(size);
 
 		if (!message->SerializeToArray(buffer.get(), static_cast<int>(size))) {
-			settings::Logger::logError("[quic] Message serialization failed");
-			return false;
+			throw std::runtime_error("[quic] Message serialization failed");
 		}
 
 		auto* buf = new QUIC_BUFFER{};
@@ -234,19 +238,16 @@ namespace bringauto::external_client::connection::communication {
 			buf
 		);
 
-		auto streamId = getStreamId(stream);
-		settings::Logger::logDebug("[quic] [stream {}] Message sent", streamId ? *streamId : 0);
-
 		if (QUIC_FAILED(status)) {
 			delete[] buf->Buffer;
 			delete buf;
 
-			settings::Logger::logError("[quic] Failed to send QUIC stream; QUIC_STATUS => {:x}", status);
 			quic_->StreamShutdown(stream, QUIC_STREAM_SHUTDOWN_FLAG_ABORT, 0);
-			return false;
+			throw std::runtime_error(std::format("[quic] Failed to send QUIC stream; QUIC_STATUS => {:x}", status));
 		}
 
-		return true;
+		auto streamId = getStreamId(stream);
+		settings::Logger::logDebug("[quic] [stream {}] Message sent", streamId ? *streamId : 0);
 	}
 
 	QUIC_STATUS QUIC_API QuicCommunication::connectionCallback(HQUIC connection, void* context, QUIC_CONNECTION_EVENT* event) {
@@ -413,7 +414,10 @@ namespace bringauto::external_client::connection::communication {
 
 	void QuicCommunication::senderLoop() {
 		settings::Logger::logDebug("[quic] Sender thread loop started");
+
 		while (connectionState_.load() == ConnectionState::CONNECTED) {
+			std::shared_ptr<ExternalProtocol::ExternalClient> msg;
+
 			std::unique_lock<std::mutex> lock(outboundMutex_);
 
 			settings::Logger::logDebug("[quic] Sender thread loop waiting for outbound queue");
@@ -427,11 +431,15 @@ namespace bringauto::external_client::connection::communication {
 			}
 
 			settings::Logger::logDebug("[quic] Sender thread loop sending outbound queue");
-			auto msg = outboundQueue_.front();
+			msg = outboundQueue_.front();
 			outboundQueue_.pop();
 			lock.unlock();
 
-			sendViaQuicStream(msg);
+			try {
+				sendViaQuicStream(msg);
+			} catch (const std::exception& e) {
+				settings::Logger::logError(std::format("[quic] Message send failed; {}", e.what()));
+			}
 		}
 	}
 

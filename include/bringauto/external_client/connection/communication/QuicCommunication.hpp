@@ -211,9 +211,8 @@ private:
 	 * QUIC_STREAM_EVENT_SEND_COMPLETE callback.
 	 *
 	 * @param message Message to be sent to the peer.
-	 * @return true if the send operation was successfully initiated, false otherwise.
 	 */
-	bool sendViaQuicStream(const std::shared_ptr<ExternalProtocol::ExternalClient> &message);
+	void sendViaQuicStream(const std::shared_ptr<ExternalProtocol::ExternalClient> &message);
 
 	/**
 	 * @brief Closes the active QUIC configuration.
@@ -276,12 +275,11 @@ private:
 	/**
 	 * @brief Sender thread main loop for outbound messages.
 	 *
-	 * Waits for messages to appear in the outbound queue while the
-	 * connection remains in the CONNECTED state.
-	 * When a message becomes available, it is dequeued and sent
-	 * over a newly created QUIC stream.
+	 * Waits for outbound messages while the connection is in the CONNECTED state.
+	 * Messages are dequeued and sent over individual QUIC streams.
 	 *
-	 * The loop exits when the connection state changes from CONNECTED.
+	 * If sending fails, the message is re-enqueued for a later retry.
+	 * The loop terminates when the connection leaves the CONNECTED state.
 	 */
 	void senderLoop();
 
