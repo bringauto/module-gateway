@@ -125,9 +125,13 @@ namespace bringauto::external_client::connection::communication {
 
 		struct SendBuffer {
 			QUIC_BUFFER buffer{};
-			std::unique_ptr<uint8_t[]> storage;
+			std::string storage;
 
-			explicit SendBuffer(size_t size);
+			explicit SendBuffer(size_t size)
+				: storage(size, '\0') {
+				buffer.Length = static_cast<uint32_t>(storage.size());
+				buffer.Buffer = reinterpret_cast<uint8_t *>(storage.data());
+			}
 		};
 
 		/**

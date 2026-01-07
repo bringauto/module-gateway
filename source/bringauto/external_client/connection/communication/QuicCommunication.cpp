@@ -228,11 +228,6 @@ namespace bringauto::external_client::connection::communication {
 		inboundCv_.notify_one();
 	}
 
-	QuicCommunication::SendBuffer::SendBuffer(size_t size) : storage(std::make_unique<uint8_t[]>(size)) {
-		buffer.Length = static_cast<uint32_t>(size);
-		buffer.Buffer = storage.get();
-	}
-
 	void QuicCommunication::sendViaQuicStream(const std::shared_ptr<ExternalProtocol::ExternalClient> &message) {
 		HQUIC stream{nullptr};
 		if (QUIC_FAILED(quic_->StreamOpen(connection_, QUIC_STREAM_OPEN_FLAG_NONE, streamCallback, this, &stream))) {
@@ -243,7 +238,7 @@ namespace bringauto::external_client::connection::communication {
 		const size_t size = message->ByteSizeLong();
 		auto sendBuffer = std::make_unique<SendBuffer>(size);
 
-		if (!message->SerializeToArray(sendBuffer->storage.get(), static_cast<int>(size))) {
+		if (!message->SerializeToArray(sendBuffer->storage.data(), static_cast<int>(size))) {
 			settings::Logger::logError("[quic] Message serialization failed");
 			return;
 		}
