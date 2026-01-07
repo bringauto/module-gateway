@@ -9,6 +9,9 @@ namespace bringauto::external_client::connection::communication {
 	QuicCommunication::QuicCommunication(const structures::ExternalConnectionSettings &settings,
 	                                     const std::string &company,
 	                                     const std::string &vehicleName) : ICommunicationChannel(settings),
+	                                                                       alpn_(getProtocolSettingsString(
+		                                                                       settings,
+		                                                                       settings::Constants::ALPN)),
 	                                                                       certFile_(getProtocolSettingsString(
 		                                                                       settings,
 		                                                                       settings::Constants::CLIENT_CERT)),
@@ -18,7 +21,6 @@ namespace bringauto::external_client::connection::communication {
 	                                                                       caFile_(getProtocolSettingsString(
 		                                                                       settings,
 		                                                                       settings::Constants::CA_FILE)) {
-		alpn_ = "sample";
 		alpnBuffer_.Buffer = reinterpret_cast<uint8_t *>(alpn_.data());
 		alpnBuffer_.Length = static_cast<uint32_t>(alpn_.size());
 
