@@ -11,7 +11,6 @@
 #include <thread>
 
 
-
 namespace bringauto::external_client::connection::communication {
 	class QuicCommunication : public ICommunicationChannel {
 	public:
@@ -124,6 +123,13 @@ namespace bringauto::external_client::connection::communication {
 		std::jthread senderThread_;
 		/// @}
 
+		struct SendBuffer {
+			QUIC_BUFFER buffer{};
+			std::unique_ptr<uint8_t[]> storage;
+
+			explicit SendBuffer(size_t size);
+		};
+
 		/**
 		 * @brief Loads and initializes the MsQuic API.
 		 *
@@ -146,7 +152,7 @@ namespace bringauto::external_client::connection::communication {
 		 *
 		 * @param appName Application name used to identify the QUIC registration.
 		 */
-		void initRegistration(const char *appName);
+		void initRegistration(std::string appName);
 
 		/**
 		 * @brief Initializes the QUIC configuration and loads client credentials.
