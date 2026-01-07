@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bringauto/external_client/connection/ConnectionState.hpp>
 #include <bringauto/structures/ExternalConnectionSettings.hpp>
 #include <bringauto/logging/LoggerVerbosity.hpp>
 #include <bringauto/settings/Constants.hpp>
@@ -70,6 +71,23 @@ public:
 				return settings::Constants::LOG_LEVEL_CRITICAL;
 			default:
 				return settings::Constants::LOG_LEVEL_INVALID;
+		}
+	};
+
+	/**
+	 * @brief Converts connection state to string
+	 *
+	 * @param toString structures::ProtocolType
+	 * @return std::string_view
+	 */
+	static constexpr std::string_view connectionStateToString(external_client::connection::ConnectionState toString) {
+		switch(toString) {
+			case external_client::connection::ConnectionState::NOT_INITIALIZED: return "Not Initialized";
+			case external_client::connection::ConnectionState::NOT_CONNECTED: return "Not Connected";
+			case external_client::connection::ConnectionState::CONNECTING: return "Connecting";
+			case external_client::connection::ConnectionState::CONNECTED: return "Connected";
+			case external_client::connection::ConnectionState::CLOSING: return "Closing";
+			default: return "Unknown";
 		}
 	};
 
