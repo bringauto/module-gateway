@@ -4,13 +4,13 @@
 #include <bringauto/external_client/connection/ConnectionState.hpp>
 #include <bringauto/external_client/connection/communication/MqttCommunication.hpp>
 #include <bringauto/external_client/connection/communication/DummyCommunication.hpp>
+#include <bringauto/external_client/connection/communication/QuicCommunication.hpp>
 #include <bringauto/settings/LoggerId.hpp>
 
 #include <fleet_protocol/common_headers/general_error_codes.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include "bringauto/external_client/connection/communication/QuicCommunication.hpp"
 
 
 namespace bringauto::external_client {
