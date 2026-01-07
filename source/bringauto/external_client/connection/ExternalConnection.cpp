@@ -155,7 +155,6 @@ int ExternalConnection::connectMessageHandle(const std::vector<structures::Devic
 	}
 
 	const auto connectResponseMsg = communicationChannel_->receiveMessage();
-	return OK;
 	if(connectResponseMsg == nullptr) {
 		log::logError("Communication client couldn't receive any message");
 		return NO_MESSAGE_AVAILABLE;
@@ -203,7 +202,6 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 	const auto size = devices.size();
 	for(unsigned int i = 0; i < size; ++i) {
 		const auto statusResponseMsg = communicationChannel_->receiveMessage();
-		return OK;
 		if(statusResponseMsg == nullptr) {
 			log::logError("Communication client couldn't receive any message");
 			return NO_MESSAGE_AVAILABLE;
@@ -229,7 +227,6 @@ int ExternalConnection::commandMessageHandle(const std::vector<structures::Devic
 	const auto size = devices.size();
 	for(unsigned int i = 0; i < size; ++i) {
 		const auto commandMsg = communicationChannel_->receiveMessage();
-		return OK;
 		if(commandMsg == nullptr) {
 			log::logError("Communication client couldn't receive any message");
 			return NO_MESSAGE_AVAILABLE;
