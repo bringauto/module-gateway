@@ -76,7 +76,7 @@ namespace bringauto::external_client::connection::communication {
 
 		{
 			auto copy = std::make_shared<ExternalProtocol::ExternalClient>(*message);
-			std::lock_guard<std::mutex> lock(outboundMutex_);
+			std::scoped_lock lock(outboundMutex_);
 			outboundQueue_.push(std::move(copy));
 		}
 		settings::Logger::logDebug("[quic] Notifying sender thread about enqueued message");
@@ -85,7 +85,7 @@ namespace bringauto::external_client::connection::communication {
 	}
 
 	std::shared_ptr<ExternalProtocol::ExternalServer> QuicCommunication::receiveMessage() {
-		std::unique_lock<std::mutex> lock(inboundMutex_);
+		std::unique_lock lock(inboundMutex_);
 
 		if (!inboundCv_.wait_for(
 			lock,
@@ -217,7 +217,7 @@ namespace bringauto::external_client::connection::communication {
 		std::shared_ptr<ExternalProtocol::ExternalServer> msg
 	) {
 		{
-			std::lock_guard<std::mutex> lock(inboundMutex_);
+			std::scoped_lock lock(inboundMutex_);
 			inboundQueue_.push(std::move(msg));
 		}
 		settings::Logger::logDebug("[quic] Notifying receiver thread about dequeued message");
@@ -445,7 +445,7 @@ namespace bringauto::external_client::connection::communication {
 		while (connectionState_.load() == ConnectionState::CONNECTED) {
 			std::shared_ptr<ExternalProtocol::ExternalClient> msg;
 
-			std::unique_lock<std::mutex> lock(outboundMutex_);
+			std::unique_lock lock(outboundMutex_);
 
 			settings::Logger::logDebug("[quic] Sender thread loop waiting for outbound queue");
 			outboundCv_.wait(lock, [this] {

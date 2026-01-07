@@ -77,20 +77,22 @@ public:
 	/**
 	 * @brief Converts connection state to string
 	 *
-	 * @param toString structures::ProtocolType
+	 * @param state external_client::connection::ConnectionState
 	 * @return std::string_view
 	 */
-	static constexpr std::string_view connectionStateToString(external_client::connection::ConnectionState toString) {
-		switch(toString) {
-			case external_client::connection::ConnectionState::NOT_INITIALIZED: return "Not Initialized";
-			case external_client::connection::ConnectionState::NOT_CONNECTED: return "Not Connected";
-			case external_client::connection::ConnectionState::CONNECTING: return "Connecting";
-			case external_client::connection::ConnectionState::CONNECTED: return "Connected";
-			case external_client::connection::ConnectionState::CLOSING: return "Closing";
+	static constexpr std::string_view connectionStateToString(
+		external_client::connection::ConnectionState state
+	) {
+		using enum external_client::connection::ConnectionState;
+
+		switch (state) {
+			case NOT_INITIALIZED: return "Not Initialized";
+			case NOT_CONNECTED: return "Not Connected";
+			case CONNECTING: return "Connecting";
+			case CONNECTED: return "Connected";
+			case CLOSING: return "Closing";
 			default: return "Unknown";
 		}
+	}
 	};
-
-};
-
 }
