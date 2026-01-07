@@ -1,8 +1,7 @@
+#include <bringauto/common_utils/EnumUtils.hpp>
 #include <bringauto/external_client/connection/communication/QuicCommunication.hpp>
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/settings/LoggerId.hpp>
-
-#include <bringauto/common_utils/EnumUtils.hpp>
 
 
 namespace bringauto::external_client::connection::communication {
