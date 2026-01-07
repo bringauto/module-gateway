@@ -112,9 +112,9 @@ namespace bringauto::external_client::connection::communication {
 		}
 	}
 
-	void QuicCommunication::initRegistration(const char *appName) {
+	void QuicCommunication::initRegistration(std::string appName) {
 		QUIC_REGISTRATION_CONFIG config{};
-		config.AppName = const_cast<char *>(appName);
+		config.AppName = appName.c_str();
 		config.ExecutionProfile = QUIC_EXECUTION_PROFILE_LOW_LATENCY;
 
 		QUIC_STATUS status = quic_->RegistrationOpen(&config, &registration_);
@@ -223,37 +223,50 @@ namespace bringauto::external_client::connection::communication {
 		inboundCv_.notify_one();
 	}
 
+	QuicCommunication::SendBuffer::SendBuffer(size_t size) : storage(std::make_unique<uint8_t[]>(size)) {
+		buffer.Length = static_cast<uint32_t>(size);
+		buffer.Buffer = storage.get();
+	}
+
 	void QuicCommunication::sendViaQuicStream(const std::shared_ptr<ExternalProtocol::ExternalClient> &message) {
 		HQUIC stream{nullptr};
 		if (QUIC_FAILED(quic_->StreamOpen(connection_, QUIC_STREAM_OPEN_FLAG_NONE, streamCallback, this, &stream))) {
 			throw std::runtime_error("[quic] StreamOpen failed");
 		}
 
-		const auto size = message->ByteSizeLong();
-		const auto buffer = std::make_unique<uint8_t[]>(size);
+		const size_t size = message->ByteSizeLong();
+		auto sendBuffer = std::make_unique<SendBuffer>(size);
 
-		if (!message->SerializeToArray(buffer.get(), static_cast<int>(size))) {
+		if (!message->SerializeToArray(sendBuffer->storage.get(), static_cast<int>(size))) {
 			throw std::runtime_error("[quic] Message serialization failed");
 		}
 
-		auto *buf = new QUIC_BUFFER{};
-		buf->Length = static_cast<uint32_t>(size);
-		buf->Buffer = new uint8_t[buf->Length];
+		settings::Logger::logDebug(
+			"[quic][debug] SendBuffer ptr={}, QUIC_BUFFER ptr={}, data ptr={}, size={}",
+			static_cast<void *>(sendBuffer.get()),
+			static_cast<void *>(&sendBuffer->buffer),
+			static_cast<void *>(sendBuffer->buffer.Buffer),
+			sendBuffer->buffer.Length
+		);
 
-		std::memcpy(buf->Buffer, buffer.get(), buf->Length);
+		const SendBuffer *raw = sendBuffer.get();
+		const QUIC_BUFFER *quicBuf = &raw->buffer;
+		SendBuffer *quicBufContext = sendBuffer.release();
 
-		const QUIC_STATUS status = quic_->StreamSend(stream, buf, 1,
-		                                             /**
-		                                              * START => Simulates quic_->StreamStart before send
-		                                              * FIN => Simulates quic_->StreamShutdown after send
-		                                              */
-		                                             QUIC_SEND_FLAG_START | QUIC_SEND_FLAG_FIN,
-		                                             buf
+		const QUIC_STATUS status = quic_->StreamSend(
+			stream,
+			quicBuf,
+			1,
+			/**
+			 * START => Simulates quic_->StreamStart before send
+			 * FIN => Simulates quic_->StreamShutdown after send
+			 */
+			QUIC_SEND_FLAG_START | QUIC_SEND_FLAG_FIN,
+			quicBufContext
 		);
 
 		if (QUIC_FAILED(status)) {
-			delete[] buf->Buffer;
-			delete buf;
+			std::unique_ptr<SendBuffer> reclaim{quicBufContext};
 
 			quic_->StreamShutdown(stream, QUIC_STREAM_SHUTDOWN_FLAG_ABORT, 0);
 			throw std::runtime_error(std::format("[quic] Failed to send QUIC stream; QUIC_STATUS => {:x}", status));
@@ -352,7 +365,7 @@ namespace bringauto::external_client::connection::communication {
 			/// Raised when the peer has finished sending on this stream
 			/// (peer's FIN has been fully received and processed).
 			case QUIC_STREAM_EVENT_PEER_SEND_SHUTDOWN: {
-				settings::Logger::logDebug("[quic] Peer stream send shutdown");
+				settings::Logger::logDebug("[quic] [stream {}] Peer stream send shutdown", streamId ? *streamId : 0);
 				break;
 			}
 
@@ -367,7 +380,7 @@ namespace bringauto::external_client::connection::communication {
 			/// Raised after StreamStart completes successfully
 			/// and the stream becomes active with a valid stream ID.
 			case QUIC_STREAM_EVENT_START_COMPLETE: {
-				settings::Logger::logDebug("[quic] Stream start completed");
+				settings::Logger::logDebug("[quic] [stream {}] Stream start completed", streamId ? *streamId : 0);
 				break;
 			}
 
@@ -395,18 +408,16 @@ namespace bringauto::external_client::connection::communication {
 				 *    passed to StreamSend (via ClientContext)
 				 */
 				if (event->SEND_COMPLETE.Canceled) {
-					settings::Logger::logWarning("[quic] Stream send canceled");
+					settings::Logger::logDebug("[quic] [stream {}] Stream send canceled",
+					                           streamId ? *streamId : 0);
 				} else {
-					settings::Logger::logDebug("[quic] Stream send completed");
+					settings::Logger::logDebug("[quic] [stream {}] Stream send completed",
+					                           streamId ? *streamId : 0);
 				}
 
-				const auto *buf =
-						static_cast<QUIC_BUFFER *>(event->SEND_COMPLETE.ClientContext);
-
-				if (buf) {
-					delete[] buf->Buffer;
-					delete buf;
-				}
+				std::unique_ptr<SendBuffer> sendBuf{
+					static_cast<SendBuffer *>(event->SEND_COMPLETE.ClientContext)
+				};
 
 				break;
 			}
@@ -414,13 +425,14 @@ namespace bringauto::external_client::connection::communication {
 			/// Raised when both send and receive directions are closed
 			/// and the stream lifecycle is fully complete.
 			case QUIC_STREAM_EVENT_SHUTDOWN_COMPLETE: {
-				settings::Logger::logDebug("[quic] Stream shutdown complete");
+				settings::Logger::logDebug("[quic] [stream {}] Stream shutdown complete", streamId ? *streamId : 0);
 				self->quic_->StreamClose(stream);
 				break;
 			}
 
 			default: {
-				settings::Logger::logDebug("[quic] Unhandled stream event 0x{:x}", static_cast<unsigned>(event->Type));
+				settings::Logger::logDebug("[quic] [stream {}] Unhandled stream event 0x{:x}", streamId ? *streamId : 0,
+				                           static_cast<unsigned>(event->Type));
 				break;
 			}
 		}
