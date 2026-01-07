@@ -23,16 +23,12 @@ namespace bringauto::external_client::connection::communication {
 		alpnBuffer_.Buffer = reinterpret_cast<uint8_t *>(alpn_.data());
 		alpnBuffer_.Length = static_cast<uint32_t>(alpn_.size());
 
+		loadMsQuic();
+		initRegistration("module-gateway-quic-client");
+		initConfiguration();
+
 		settings::Logger::logInfo("[quic] Initialize QUIC communication to {}:{} for {}/{}", settings.serverIp,
 		                          settings.port, company, vehicleName);
-
-		try {
-			loadMsQuic();
-			initRegistration("module-gateway-quic-client");
-			initConfiguration();
-		} catch (const std::exception &e) {
-			settings::Logger::logError("[quic] Failed to initialize QUIC communication; {}", e.what());
-		}
 	}
 
 	QuicCommunication::~QuicCommunication() {
