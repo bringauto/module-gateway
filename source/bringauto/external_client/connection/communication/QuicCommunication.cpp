@@ -239,14 +239,6 @@ namespace bringauto::external_client::connection::communication {
 			return;
 		}
 
-		settings::Logger::logDebug(
-			"[quic][debug] SendBuffer ptr={}, QUIC_BUFFER ptr={}, data ptr={}, size={}",
-			static_cast<void *>(sendBuffer.get()),
-			static_cast<void *>(&sendBuffer->buffer),
-			static_cast<void *>(sendBuffer->buffer.Buffer),
-			sendBuffer->buffer.Length
-		);
-
 		const SendBuffer *raw = sendBuffer.get();
 		const QUIC_BUFFER *quicBuf = &raw->buffer;
 		SendBuffer *quicBufContext = sendBuffer.release();
@@ -336,6 +328,14 @@ namespace bringauto::external_client::connection::communication {
 		switch (event->Type) {
 			/// Raised when the peer sends stream data and MsQuic delivers received bytes to the application.
 			case QUIC_STREAM_EVENT_RECEIVE: {
+				if (event->RECEIVE.BufferCount == 0) {
+					settings::Logger::logDebug(
+						"[quic] [stream {}] End of stream received",
+						streamId ? *streamId : 0
+					);
+					break;
+				}
+
 				settings::Logger::logDebug(
 					"[quic] [stream {}] Received {:d} bytes in {:d} buffers",
 					streamId ? *streamId : 0,
