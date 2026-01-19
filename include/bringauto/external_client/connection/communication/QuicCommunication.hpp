@@ -114,7 +114,7 @@ namespace bringauto::external_client::connection::communication {
 		/// @name Outbound (this → peer)
 		/// @{
 		/// Queue of outgoing messages to be sent to the peer
-		std::queue<std::shared_ptr<ExternalProtocol::ExternalClient> > outboundQueue_;
+		std::queue<std::unique_ptr<ExternalProtocol::ExternalClient> > outboundQueue_;
 		/// Mutex protecting access to the outbound message queue
 		std::mutex outboundMutex_;
 		/// Condition variable for signaling outbound message availability
@@ -217,7 +217,7 @@ namespace bringauto::external_client::connection::communication {
 		 *
 		 * @param message Message to be sent to the peer.
 		 */
-		void sendViaQuicStream(const std::shared_ptr<ExternalProtocol::ExternalClient> &message);
+		void sendViaQuicStream(const ExternalProtocol::ExternalClient& message);
 
 		/**
 		 * @brief Closes the active QUIC configuration.

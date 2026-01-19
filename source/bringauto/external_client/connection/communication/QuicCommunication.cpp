@@ -75,8 +75,8 @@ namespace bringauto::external_client::connection::communication {
 		}
 
 		{
-			auto copy = std::make_shared<ExternalProtocol::ExternalClient>(*message);
-			std::scoped_lock lock(outboundMutex_);
+			auto copy = std::make_unique<ExternalProtocol::ExternalClient>(*message);
+			std::lock_guard lock(outboundMutex_);
 			outboundQueue_.push(std::move(copy));
 		}
 		settings::Logger::logDebug("[quic] Notifying sender thread about enqueued message");
@@ -226,17 +226,17 @@ namespace bringauto::external_client::connection::communication {
 		inboundCv_.notify_one();
 	}
 
-	void QuicCommunication::sendViaQuicStream(const std::shared_ptr<ExternalProtocol::ExternalClient> &message) {
+	void QuicCommunication::sendViaQuicStream(const ExternalProtocol::ExternalClient& message) {
 		HQUIC stream{nullptr};
 		if (QUIC_FAILED(quic_->StreamOpen(connection_, QUIC_STREAM_OPEN_FLAG_NONE, streamCallback, this, &stream))) {
 			settings::Logger::logError("[quic] StreamOpen failed");
 			return;
 		}
 
-		const size_t size = message->ByteSizeLong();
+		const size_t size = message.ByteSizeLong();
 		auto sendBuffer = std::make_unique<SendBuffer>(size);
 
-		if (!message->SerializeToArray(sendBuffer->storage.data(), static_cast<int>(size))) {
+		if (!message.SerializeToArray(sendBuffer->storage.data(), static_cast<int>(size))) {
 			settings::Logger::logError("[quic] Message serialization failed");
 			return;
 		}
@@ -445,7 +445,7 @@ namespace bringauto::external_client::connection::communication {
 		settings::Logger::logDebug("[quic] Sender thread loop started");
 
 		while (connectionState_.load() == ConnectionState::CONNECTED) {
-			std::shared_ptr<ExternalProtocol::ExternalClient> msg;
+			std::unique_ptr<ExternalProtocol::ExternalClient> msg;
 
 			std::unique_lock lock(outboundMutex_);
 
@@ -460,11 +460,11 @@ namespace bringauto::external_client::connection::communication {
 			}
 
 			settings::Logger::logDebug("[quic] Sender thread loop sending outbound queue");
-			msg = outboundQueue_.front();
+			msg = std::move(outboundQueue_.front());
 			outboundQueue_.pop();
 			lock.unlock();
 
-			sendViaQuicStream(msg);
+			sendViaQuicStream(*msg);
 		}
 	}
 
