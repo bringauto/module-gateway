@@ -140,6 +140,7 @@ public:
 	inline static constexpr std::string_view LOG_LEVEL { "level" };
 	inline static constexpr std::string_view LOG_USE { "use" };
 	inline static constexpr std::string_view LOG_PATH { "path" };
+	inline static constexpr std::string_view LOG_UNKNOWN { "unknown" };
 
 	inline static constexpr std::string_view LOG_LEVEL_DEBUG { "DEBUG" };
 	inline static constexpr std::string_view LOG_LEVEL_INFO { "INFO" };
@@ -147,6 +148,12 @@ public:
 	inline static constexpr std::string_view LOG_LEVEL_ERROR { "ERROR" };
 	inline static constexpr std::string_view LOG_LEVEL_CRITICAL { "CRITICAL" };
 	inline static constexpr std::string_view LOG_LEVEL_INVALID { "INVALID" };
+
+	inline static constexpr std::string_view LOG_CONNECTION_STATE_NOT_INITIALIZED { "not initialized" };
+	inline static constexpr std::string_view LOG_CONNECTION_STATE_NOT_CONNECTED { "not connected" };
+	inline static constexpr std::string_view LOG_CONNECTION_STATE_CONNECTING { "connecting" };
+	inline static constexpr std::string_view LOG_CONNECTION_STATE_CONNECTED { "connected" };
+	inline static constexpr std::string_view LOG_CONNECTION_STATE_CLOSING { "closing" };
 
 	inline static constexpr std::string_view HELP { "help" };
 	inline static constexpr std::string_view PORT { "port" };

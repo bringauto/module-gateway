@@ -86,12 +86,18 @@ public:
 		using enum external_client::connection::ConnectionState;
 
 		switch (state) {
-			case NOT_INITIALIZED: return "Not Initialized";
-			case NOT_CONNECTED: return "Not Connected";
-			case CONNECTING: return "Connecting";
-			case CONNECTED: return "Connected";
-			case CLOSING: return "Closing";
-			default: return "Unknown";
+			case NOT_INITIALIZED:
+				return settings::Constants::LOG_CONNECTION_STATE_NOT_INITIALIZED;
+			case NOT_CONNECTED:
+				return settings::Constants::LOG_CONNECTION_STATE_NOT_CONNECTED;
+			case CONNECTING:
+				return settings::Constants::LOG_CONNECTION_STATE_CONNECTING;
+			case CONNECTED:
+				return settings::Constants::LOG_CONNECTION_STATE_CONNECTED;
+			case CLOSING:
+				return settings::Constants::LOG_CONNECTION_STATE_CLOSING;
+			default:
+				return settings::Constants::LOG_UNKNOWN;
 		}
 	}
 	};
