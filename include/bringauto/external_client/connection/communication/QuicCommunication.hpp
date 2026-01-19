@@ -123,10 +123,28 @@ namespace bringauto::external_client::connection::communication {
 		std::jthread senderThread_;
 		/// @}
 
+		/**
+		 * @brief Owns memory for a single MsQuic StreamSend operation.
+		 *
+		 * SendBuffer wraps a QUIC_BUFFER together with its backing storage.
+		 * The memory must remain valid until MsQuic signals
+		 * QUIC_STREAM_EVENT_SEND_COMPLETE, at which point it can be safely freed.
+		 *
+		 * Instances of this struct are typically allocated on the heap and passed
+		 * to MsQuic via the StreamSend ClientContext pointer.
+		 */
 		struct SendBuffer {
 			QUIC_BUFFER buffer{};
 			std::string storage;
 
+			/**
+			 * @brief Constructs a SendBuffer with zero-initialized storage.
+			 *
+			 * Allocates storage of the given size, fills it with zero bytes,
+			 * and initializes the QUIC_BUFFER to point to this storage.
+			 *
+			 * @param size Number of bytes to allocate for the send buffer.
+			 */
 			explicit SendBuffer(size_t size)
 				: storage(size, '\0') {
 				buffer.Length = static_cast<uint32_t>(storage.size());
