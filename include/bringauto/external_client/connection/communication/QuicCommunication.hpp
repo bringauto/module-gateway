@@ -153,10 +153,8 @@ namespace bringauto::external_client::connection::communication {
 		 * creating QUIC configurations and connections.
 		 *
 		 * If registration creation fails, an error is logged.
-		 *
-		 * @param appName Application name used to identify the QUIC registration.
 		 */
-		void initRegistration(std::string appName);
+		void initRegistration();
 
 		/**
 		 * @brief Initializes the QUIC configuration and loads client credentials.
