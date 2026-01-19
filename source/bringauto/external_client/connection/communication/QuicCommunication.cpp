@@ -24,7 +24,7 @@ namespace bringauto::external_client::connection::communication {
 		alpnBuffer_.Length = static_cast<uint32_t>(alpn_.size());
 
 		loadMsQuic();
-		initRegistration("module-gateway-quic-client");
+		initRegistration();
 		initConfiguration();
 
 		settings::Logger::logInfo("[quic] Initialize QUIC communication to {}:{} for {}/{}", settings.serverIp,
@@ -112,9 +112,11 @@ namespace bringauto::external_client::connection::communication {
 		}
 	}
 
-	void QuicCommunication::initRegistration(std::string appName) {
+	constexpr auto quicRegistrationAppName = "module-gateway-quic-client";
+
+	void QuicCommunication::initRegistration() {
 		QUIC_REGISTRATION_CONFIG config{};
-		config.AppName = appName.c_str();
+		config.AppName = quicRegistrationAppName;
 		config.ExecutionProfile = QUIC_EXECUTION_PROFILE_LOW_LATENCY;
 
 		QUIC_STATUS status = quic_->RegistrationOpen(&config, &registration_);
