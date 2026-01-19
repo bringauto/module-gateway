@@ -10,6 +10,8 @@ structures::ProtocolType EnumUtils::stringToProtocolType(std::string toEnum) {
 	std::transform(toEnum.begin(), toEnum.end(), toEnum.begin(), ::toupper);
 	if(toEnum == settings::Constants::MQTT) {
 		return structures::ProtocolType::MQTT;
+	} else if(toEnum == settings::Constants::QUIC) {
+		return structures::ProtocolType::QUIC;
 	} else if(toEnum == settings::Constants::DUMMY) {
         return structures::ProtocolType::DUMMY;
     }

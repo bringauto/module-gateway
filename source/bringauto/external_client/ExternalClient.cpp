@@ -4,6 +4,7 @@
 #include <bringauto/external_client/connection/ConnectionState.hpp>
 #include <bringauto/external_client/connection/communication/MqttCommunication.hpp>
 #include <bringauto/external_client/connection/communication/DummyCommunication.hpp>
+#include <bringauto/external_client/connection/communication/QuicCommunication.hpp>
 #include <bringauto/settings/LoggerId.hpp>
 
 #include <fleet_protocol/common_headers/general_error_codes.h>
@@ -96,6 +97,11 @@ void ExternalClient::initConnections() {
 		switch(connectionSettings.protocolType) {
 			case structures::ProtocolType::MQTT:
 				communicationChannel = std::make_shared<connection::communication::MqttCommunication>(
+					connectionSettings, context_->settings->company, context_->settings->vehicleName
+				);
+				break;
+			case structures::ProtocolType::QUIC:
+				communicationChannel = std::make_shared<connection::communication::QuicCommunication>(
 					connectionSettings, context_->settings->company, context_->settings->vehicleName
 				);
 				break;

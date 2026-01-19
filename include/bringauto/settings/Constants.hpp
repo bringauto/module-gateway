@@ -140,6 +140,7 @@ public:
 	inline static constexpr std::string_view LOG_LEVEL { "level" };
 	inline static constexpr std::string_view LOG_USE { "use" };
 	inline static constexpr std::string_view LOG_PATH { "path" };
+	inline static constexpr std::string_view LOG_UNKNOWN { "unknown" };
 
 	inline static constexpr std::string_view LOG_LEVEL_DEBUG { "DEBUG" };
 	inline static constexpr std::string_view LOG_LEVEL_INFO { "INFO" };
@@ -147,6 +148,12 @@ public:
 	inline static constexpr std::string_view LOG_LEVEL_ERROR { "ERROR" };
 	inline static constexpr std::string_view LOG_LEVEL_CRITICAL { "CRITICAL" };
 	inline static constexpr std::string_view LOG_LEVEL_INVALID { "INVALID" };
+
+	inline static constexpr std::string_view LOG_CONNECTION_STATE_NOT_INITIALIZED { "not initialized" };
+	inline static constexpr std::string_view LOG_CONNECTION_STATE_NOT_CONNECTED { "not connected" };
+	inline static constexpr std::string_view LOG_CONNECTION_STATE_CONNECTING { "connecting" };
+	inline static constexpr std::string_view LOG_CONNECTION_STATE_CONNECTED { "connected" };
+	inline static constexpr std::string_view LOG_CONNECTION_STATE_CLOSING { "closing" };
 
 	inline static constexpr std::string_view HELP { "help" };
 	inline static constexpr std::string_view PORT { "port" };
@@ -164,12 +171,15 @@ public:
 	inline static constexpr std::string_view PROTOCOL_TYPE { "protocol-type" };
 
 	inline static constexpr std::string_view MQTT { "MQTT" };
+	inline static constexpr std::string_view QUIC { "QUIC" };
 	inline static constexpr std::string_view DUMMY { "DUMMY" };
 	inline static constexpr std::string_view MQTT_SETTINGS { "mqtt-settings" };
+	inline static constexpr std::string_view QUIC_SETTINGS { "quic-settings" };
 	inline static constexpr std::string_view SSL { "ssl" };
 	inline static constexpr std::string_view CA_FILE { "ca-file" };
 	inline static constexpr std::string_view CLIENT_CERT { "client-cert" };
 	inline static constexpr std::string_view CLIENT_KEY { "client-key" };
+	inline static constexpr std::string_view ALPN { "alpn" };
 
 	inline static constexpr std::string_view MODULES { "modules" };
 	inline static constexpr std::string_view AERON_CONNECTION { "aeron:ipc"};

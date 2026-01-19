@@ -57,6 +57,7 @@ FIND_PACKAGE(ZLIB 1.2.11 REQUIRED)
 FIND_PACKAGE(fleet-protocol-cxx-helpers-static 1.2.0 REQUIRED)
 FIND_PACKAGE(aeron 1.48.6 REQUIRED)
 FIND_PACKAGE(async-function-execution-shared 1.0.0 REQUIRED)
+FIND_PACKAGE(msquic CONFIG REQUIRED)
 
 FILE(GLOB_RECURSE source_files "source/*")
 ADD_LIBRARY(module-gateway-lib STATIC "${source_files}")
@@ -76,6 +77,7 @@ TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         ZLIB::ZLIB
                         fleet-protocol-cxx-helpers-static::fleet-protocol-cxx-helpers-static
                         async-function-execution-shared::async-function-execution-shared
+                        msquic
                         ${CMAKE_DL_LIBS}
 )
 

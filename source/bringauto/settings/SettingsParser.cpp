@@ -186,6 +186,9 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 			case structures::ProtocolType::MQTT:
 				settingsName = std::string(Constants::MQTT_SETTINGS);
 				break;
+			case structures::ProtocolType::QUIC:
+				settingsName = std::string(Constants::QUIC_SETTINGS);
+				break;
 			case structures::ProtocolType::DUMMY:
 				break;
 			case structures::ProtocolType::INVALID:
@@ -240,6 +243,9 @@ std::string SettingsParser::serializeToJson() const {
 		switch (endpoint.protocolType) {
 			case structures::ProtocolType::MQTT:
 				settingsName = std::string(Constants::MQTT_SETTINGS);
+				break;
+			case structures::ProtocolType::QUIC:
+				settingsName = std::string(Constants::QUIC_SETTINGS);
 				break;
 			case structures::ProtocolType::DUMMY:
 				settingsName = std::string(Constants::DUMMY);
