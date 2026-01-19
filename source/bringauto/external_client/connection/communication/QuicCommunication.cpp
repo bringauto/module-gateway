@@ -2,6 +2,7 @@
 #include <bringauto/external_client/connection/communication/QuicCommunication.hpp>
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/settings/LoggerId.hpp>
+#include <bringauto/settings/QuicSettingsParser.hpp>
 
 
 namespace bringauto::external_client::connection::communication {
@@ -127,7 +128,7 @@ namespace bringauto::external_client::connection::communication {
 	}
 
 	void QuicCommunication::initConfiguration() {
-		configurationOpen(nullptr);
+		configurationOpen();
 
 		QUIC_CERTIFICATE_FILE certificate{};
 		certificate.CertificateFile = certFile_.c_str();
@@ -142,14 +143,15 @@ namespace bringauto::external_client::connection::communication {
 		configurationLoadCredential(&credential);
 	}
 
-	void QuicCommunication::configurationOpen(const QUIC_SETTINGS *settings) {
-		const uint32_t settingsSize = settings ? sizeof(*settings) : 0;
+	void QuicCommunication::configurationOpen() {
+		const QUIC_SETTINGS settings = settings::QuicSettingsParser::parse(settings_);
+		const uint32_t settingsSize = sizeof(QUIC_SETTINGS);
 
 		QUIC_STATUS status = quic_->ConfigurationOpen(
 			registration_,
 			&alpnBuffer_,
 			1,
-			settings,
+			&settings,
 			settingsSize,
 			nullptr,
 			&config_

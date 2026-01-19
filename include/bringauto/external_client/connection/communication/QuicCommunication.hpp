@@ -193,10 +193,8 @@ namespace bringauto::external_client::connection::communication {
 		 *
 		 * If settings are not provided, default QUIC settings are used.
 		 * On failure, an error is logged.
-		 *
-		 * @param settings Optional QUIC transport settings.
 		 */
-		void configurationOpen(const QUIC_SETTINGS *settings);
+		void configurationOpen();
 
 		/**
 		 * @brief Loads TLS credentials into the QUIC configuration.
