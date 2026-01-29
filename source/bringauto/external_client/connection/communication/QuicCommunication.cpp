@@ -306,7 +306,7 @@ namespace bringauto::external_client::connection::communication {
 				);
 
 				self->quic_->SetCallbackHandler(event->PEER_STREAM_STARTED.Stream,
-				                                reinterpret_cast<void *>(streamCallback), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+				                                reinterpret_cast<void *>(streamCallback),
 				                                context);
 
 				self->quic_->StreamReceiveSetEnabled(event->PEER_STREAM_STARTED.Stream, TRUE);
