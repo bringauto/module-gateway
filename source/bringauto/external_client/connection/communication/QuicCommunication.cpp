@@ -233,8 +233,8 @@ namespace bringauto::external_client::connection::communication {
 		HQUIC stream{nullptr};
 
 		QUIC_STREAM_OPEN_FLAGS flags = streamMode_ == StreamMode::Unidirectional
-			? QUIC_STREAM_OPEN_FLAG_UNIDIRECTIONAL
-			: QUIC_STREAM_OPEN_FLAG_NONE;
+			                               ? QUIC_STREAM_OPEN_FLAG_UNIDIRECTIONAL
+			                               : QUIC_STREAM_OPEN_FLAG_NONE;
 
 		if (QUIC_FAILED(
 			quic_->StreamOpen(connection_, flags, streamCallback, this, &stream))) {
@@ -306,7 +306,8 @@ namespace bringauto::external_client::connection::communication {
 				);
 
 				self->quic_->SetCallbackHandler(event->PEER_STREAM_STARTED.Stream,
-				                                reinterpret_cast<void *>(streamCallback), context);
+				                                reinterpret_cast<void *>(streamCallback), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+				                                context);
 
 				self->quic_->StreamReceiveSetEnabled(event->PEER_STREAM_STARTED.Stream, TRUE);
 				break;
