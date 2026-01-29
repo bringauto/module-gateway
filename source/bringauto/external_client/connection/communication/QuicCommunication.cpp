@@ -537,7 +537,7 @@ namespace bringauto::external_client::connection::communication {
 	QuicCommunication::StreamMode QuicCommunication::parseStreamMode(
 		const structures::ExternalConnectionSettings &settings
 	) {
-		const std::string mode = getProtocolSettingsString(settings, settings::Constants::QUIC_STREAM_MODE);
+		const std::string mode = getProtocolSettingsString(settings, settings::Constants::STREAM_MODE);
 
 		if (mode == "unidirectional" || mode == "unidir")
 			return StreamMode::Unidirectional;
