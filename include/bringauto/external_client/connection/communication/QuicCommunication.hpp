@@ -334,13 +334,15 @@ namespace bringauto::external_client::connection::communication {
 		 *
 		 * @param settings External connection settings containing protocolSettings.
 		 * @param key Key identifying the protocol setting.
+		 * @param defaultValue Default value if not exists
 		 * @return Plain string value suitable for direct use (e.g. file paths).
 		 *
 		 * @throws std::out_of_range if the key is not present in protocolSettings.
 		 */
 		static std::string getProtocolSettingsString(
 			const structures::ExternalConnectionSettings &settings,
-			std::string_view key
+			std::string_view key,
+			std::string defaultValue = {}
 		);
 
 		static StreamMode parseStreamMode(const structures::ExternalConnectionSettings &settings);
