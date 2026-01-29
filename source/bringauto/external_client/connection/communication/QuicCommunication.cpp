@@ -515,7 +515,7 @@ namespace bringauto::external_client::connection::communication {
 	) {
 		const auto it = settings.protocolSettings.find(std::string(key));
 		if (it == settings.protocolSettings.end()) {
-			settings::Logger::logWarning("[quic] Protocol settings key '{}' not found", key);
+			settings::Logger::logWarning("[quic] Protocol setting '{}' not found, using default", key);
 			return defaultValue;
 		}
 
@@ -531,7 +531,7 @@ namespace bringauto::external_client::connection::communication {
 			return raw;
 		}
 		catch (const nlohmann::json::exception&) {
-			settings::Logger::logWarning("[quic] Protocol settings key '{}' not found", key);
+			settings::Logger::logWarning("[quic] Protocol setting '{}' contains invalid JSON, using default", key);
 			return defaultValue;
 		}
 	}

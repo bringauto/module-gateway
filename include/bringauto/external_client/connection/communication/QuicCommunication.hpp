@@ -326,18 +326,20 @@ namespace bringauto::external_client::connection::communication {
 		/**
 		 * @brief Retrieves a protocol setting value as a plain string.
 		 *
-		 * Extracts a value from ExternalConnectionSettings::protocolSettings and
-		 * transparently handles values stored as JSON-encoded strings.
+		 * Looks up a value in ExternalConnectionSettings::protocolSettings and returns
+		 * it as a plain string. If the stored value is a JSON-encoded string, it is
+		 * transparently parsed and unwrapped.
 		 *
-		 * Allows uniform access to protocol settings regardless of whether
-		 * they were stored as plain strings or JSON-serialized values.
+		 * If the key does not exist or the value cannot be parsed as valid JSON,
+		 * the provided default value is returned and a warning is logged.
+		 *
+		 * This allows uniform access to protocol settings regardless of whether
+		 * they are stored as plain strings or JSON-serialized strings.
 		 *
 		 * @param settings External connection settings containing protocolSettings.
 		 * @param key Key identifying the protocol setting.
-		 * @param defaultValue Default value if not exists
+		 * @param defaultValue Value returned if the key is missing or invalid.
 		 * @return Plain string value suitable for direct use (e.g. file paths).
-		 *
-		 * @throws std::out_of_range if the key is not present in protocolSettings.
 		 */
 		static std::string getProtocolSettingsString(
 			const structures::ExternalConnectionSettings &settings,
@@ -345,6 +347,19 @@ namespace bringauto::external_client::connection::communication {
 			std::string defaultValue = {}
 		);
 
+		/**
+		 * @brief Parses QUIC stream mode from protocol settings.
+		 *
+		 * Reads the stream mode from the external connection settings and determines
+		 * whether QUIC streams should be unidirectional or bidirectional.
+		 *
+		 * Supported values:
+		 *  - "unidirectional", "unidir" → Unidirectional streams
+		 *  - any other value or missing setting → Bidirectional streams (default)
+		 *
+		 * @param settings External connection settings containing QUIC protocol options
+		 * @return StreamMode Parsed stream mode (defaults to Bidirectional)
+		 */
 		static StreamMode parseStreamMode(const structures::ExternalConnectionSettings &settings);
 	};
 }
