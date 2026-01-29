@@ -78,6 +78,12 @@ namespace bringauto::external_client::connection::communication {
 		void closeConnection() override;
 
 	private:
+		enum class StreamMode
+		{
+			Unidirectional,
+			Bidirectional
+		};
+
 		/// Pointer to the MsQuic API function table
 		const QUIC_API_TABLE *quic_{nullptr};
 		/// QUIC registration handle associated with the application
@@ -97,6 +103,8 @@ namespace bringauto::external_client::connection::communication {
 		std::string keyFile_;
 		/// Path to the CA certificate file
 		std::string caFile_;
+
+		StreamMode streamMode_{StreamMode::Bidirectional};
 
 		/// Atomic state of the connection used for synchronization across threads
 		std::atomic<ConnectionState> connectionState_{ConnectionState::NOT_CONNECTED};
@@ -334,5 +342,7 @@ namespace bringauto::external_client::connection::communication {
 			const structures::ExternalConnectionSettings &settings,
 			std::string_view key
 		);
+
+		static StreamMode parseStreamMode(const structures::ExternalConnectionSettings &settings);
 	};
 }

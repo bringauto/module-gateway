@@ -29,6 +29,12 @@ namespace bringauto::settings {
 			quic.IsSet.DisconnectTimeoutMs = TRUE;
 		}
 
+		if (auto value = getOptionalUint(settings, "PeerUnidiStreamCount")) {
+			settings::Logger::logDebug("[quic] [settings] PeerUnidiStreamCount settings loaded");
+			quic.PeerUnidiStreamCount = *value;
+			quic.IsSet.PeerUnidiStreamCount = TRUE;
+		}
+
 		return quic;
 	}
 
