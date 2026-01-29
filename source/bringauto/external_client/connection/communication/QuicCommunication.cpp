@@ -297,16 +297,17 @@ namespace bringauto::external_client::connection::communication {
 				break;
 			}
 
+			/// Fired when peer open new stream on connection, stream handler need to be def
 			case QUIC_CONNECTION_EVENT_PEER_STREAM_STARTED: {
 				auto streamId = self->getStreamId(event->PEER_STREAM_STARTED.Stream);
 
 				settings::Logger::logDebug(
 					"[quic] [stream {}] Peer stream started",
-					streamId ? *streamId : 0
+					streamId.value_or(0)
 				);
 
 				self->quic_->SetCallbackHandler(event->PEER_STREAM_STARTED.Stream,
-				                                reinterpret_cast<void *>(streamCallback),
+				                                reinterpret_cast<void *>(streamCallback), // NOSONAR - MsQuic C API requires passing function pointer as void*
 				                                context);
 
 				self->quic_->StreamReceiveSetEnabled(event->PEER_STREAM_STARTED.Stream, TRUE);
@@ -519,7 +520,7 @@ namespace bringauto::external_client::connection::communication {
 			return defaultValue;
 		}
 
-		const auto& raw = it->second;
+		const auto &raw = it->second;
 
 		try {
 			if (nlohmann::json::accept(raw)) {
@@ -529,8 +530,7 @@ namespace bringauto::external_client::connection::communication {
 				}
 			}
 			return raw;
-		}
-		catch (const nlohmann::json::exception&) {
+		} catch (const nlohmann::json::exception &) {
 			settings::Logger::logWarning("[quic] Protocol setting '{}' contains invalid JSON, using default", key);
 			return defaultValue;
 		}
