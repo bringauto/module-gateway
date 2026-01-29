@@ -510,28 +510,29 @@ namespace bringauto::external_client::connection::communication {
 
 	std::string QuicCommunication::getProtocolSettingsString(
 		const structures::ExternalConnectionSettings &settings,
-		std::string_view key
+		std::string_view key,
+		std::string defaultValue
 	) {
-		try {
-			const auto &raw = settings.protocolSettings.at(std::string(key));
+		const auto it = settings.protocolSettings.find(std::string(key));
+		if (it == settings.protocolSettings.end()) {
+			settings::Logger::logWarning("[quic] Protocol settings key '{}' not found", key);
+			return defaultValue;
+		}
 
+		const auto& raw = it->second;
+
+		try {
 			if (nlohmann::json::accept(raw)) {
 				auto j = nlohmann::json::parse(raw);
 				if (j.is_string()) {
 					return j.get<std::string>();
 				}
 			}
-
 			return raw;
-		} catch (const std::out_of_range &) {
-			throw std::runtime_error(
-				"Missing required QUIC protocol setting: '" + std::string(key) + "'"
-			);
-		} catch (const nlohmann::json::exception &e) {
-			throw std::runtime_error(
-				"Invalid JSON value for QUIC protocol setting '" +
-				std::string(key) + "': " + e.what()
-			);
+		}
+		catch (const nlohmann::json::exception&) {
+			settings::Logger::logWarning("[quic] Protocol settings key '{}' not found", key);
+			return defaultValue;
 		}
 	}
 
@@ -543,9 +544,6 @@ namespace bringauto::external_client::connection::communication {
 		if (mode == "unidirectional" || mode == "unidir")
 			return StreamMode::Unidirectional;
 
-		if (mode == "bidirectional" || mode == "bidir")
-			return StreamMode::Bidirectional;
-
-		throw std::runtime_error("Invalid stream-mode: " + mode);
+		return StreamMode::Bidirectional;
 	}
 }
