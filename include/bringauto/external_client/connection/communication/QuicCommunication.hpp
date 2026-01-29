@@ -78,9 +78,11 @@ namespace bringauto::external_client::connection::communication {
 		void closeConnection() override;
 
 	private:
-		enum class StreamMode
-		{
+		/// Directionality of QUIC streams created or accepted by this connection
+		enum class StreamMode {
+			/// Stream can only send data in one direction
 			Unidirectional,
+			/// Stream supports bidirectional send and receive
 			Bidirectional
 		};
 
@@ -241,7 +243,7 @@ namespace bringauto::external_client::connection::communication {
 		 *
 		 * @param message Message to be sent to the peer.
 		 */
-		void sendViaQuicStream(const ExternalProtocol::ExternalClient& message);
+		void sendViaQuicStream(const ExternalProtocol::ExternalClient &message);
 
 		/**
 		 * @brief Closes the active QUIC configuration.
