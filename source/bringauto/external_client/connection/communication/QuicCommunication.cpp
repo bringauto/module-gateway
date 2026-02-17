@@ -89,15 +89,29 @@ namespace bringauto::external_client::connection::communication {
 	std::shared_ptr<ExternalProtocol::ExternalServer> QuicCommunication::receiveMessage() {
 		std::unique_lock lock(inboundMutex_);
 
+		// Wait for a message or transition out of allowed states
+		// Explicitly allow waiting during CONNECTING, CLOSING, and CONNECTED states
+		// This whitelist approach is safe if new states are added in the future
 		if (!inboundCv_.wait_for(
 			lock,
 			settings::receive_message_timeout,
-			[this] { return !inboundQueue_.empty() || connectionState_.load() != ConnectionState::CONNECTED; }
+			[this] {
+				auto state = connectionState_.load();
+				return !inboundQueue_.empty() ||
+				       (state != ConnectionState::CONNECTING &&
+				        state != ConnectionState::CLOSING &&
+				        state != ConnectionState::CONNECTED);
+			}
 		)) {
 			return nullptr;
 		}
 
-		if (connectionState_.load() != ConnectionState::CONNECTED || inboundQueue_.empty()) {
+		// Check if we stopped waiting due to invalid state or empty queue
+		auto state = connectionState_.load();
+		if ((state != ConnectionState::CONNECTING &&
+		     state != ConnectionState::CLOSING &&
+		     state != ConnectionState::CONNECTED) ||
+		    inboundQueue_.empty()) {
 			return nullptr;
 		}
 
