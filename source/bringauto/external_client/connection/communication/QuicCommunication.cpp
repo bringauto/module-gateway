@@ -20,7 +20,8 @@ namespace bringauto::external_client::connection::communication {
 		                                                                       settings::Constants::CLIENT_KEY)),
 	                                                                       caFile_(getProtocolSettingsString(
 		                                                                       settings,
-		                                                                       settings::Constants::CA_FILE)) {
+		                                                                       settings::Constants::CA_FILE)),
+	                                                                       streamMode_(parseStreamMode(settings)) {
 		alpnBuffer_.Buffer = reinterpret_cast<uint8_t *>(alpn_.data());
 		alpnBuffer_.Length = static_cast<uint32_t>(alpn_.size());
 
@@ -88,15 +89,29 @@ namespace bringauto::external_client::connection::communication {
 	std::shared_ptr<ExternalProtocol::ExternalServer> QuicCommunication::receiveMessage() {
 		std::unique_lock lock(inboundMutex_);
 
+		// Wait for a message or transition out of allowed states
+		// Explicitly allow waiting during CONNECTING, CLOSING, and CONNECTED states
+		// This whitelist approach is safe if new states are added in the future
 		if (!inboundCv_.wait_for(
 			lock,
 			settings::receive_message_timeout,
-			[this] { return !inboundQueue_.empty() || connectionState_.load() != ConnectionState::CONNECTED; }
+			[this] {
+				auto state = connectionState_.load();
+				return !inboundQueue_.empty() ||
+				       (state != ConnectionState::CONNECTING &&
+				        state != ConnectionState::CLOSING &&
+				        state != ConnectionState::CONNECTED);
+			}
 		)) {
 			return nullptr;
 		}
 
-		if (connectionState_.load() != ConnectionState::CONNECTED || inboundQueue_.empty()) {
+		// Check if we stopped waiting due to invalid state or empty queue
+		auto state = connectionState_.load();
+		if ((state != ConnectionState::CONNECTING &&
+		     state != ConnectionState::CLOSING &&
+		     state != ConnectionState::CONNECTED) ||
+		    inboundQueue_.empty()) {
 			return nullptr;
 		}
 
@@ -228,9 +243,15 @@ namespace bringauto::external_client::connection::communication {
 		inboundCv_.notify_one();
 	}
 
-	void QuicCommunication::sendViaQuicStream(const ExternalProtocol::ExternalClient& message) {
+	void QuicCommunication::sendViaQuicStream(const ExternalProtocol::ExternalClient &message) {
 		HQUIC stream{nullptr};
-		if (QUIC_FAILED(quic_->StreamOpen(connection_, QUIC_STREAM_OPEN_FLAG_NONE, streamCallback, this, &stream))) {
+
+		QUIC_STREAM_OPEN_FLAGS flags = streamMode_ == StreamMode::Unidirectional
+			                               ? QUIC_STREAM_OPEN_FLAG_UNIDIRECTIONAL
+			                               : QUIC_STREAM_OPEN_FLAG_NONE;
+
+		if (QUIC_FAILED(
+			quic_->StreamOpen(connection_, flags, streamCallback, this, &stream))) {
 			settings::Logger::logError("[quic] StreamOpen failed");
 			return;
 		}
@@ -287,6 +308,23 @@ namespace bringauto::external_client::connection::communication {
 					self->senderThread_ = std::jthread(&QuicCommunication::senderLoop, self);
 					self->outboundCv_.notify_all();
 				}
+				break;
+			}
+
+			/// Fired when peer open new stream on connection, stream handler need to be def
+			case QUIC_CONNECTION_EVENT_PEER_STREAM_STARTED: {
+				auto streamId = self->getStreamId(event->PEER_STREAM_STARTED.Stream);
+
+				settings::Logger::logDebug(
+					"[quic] [stream {}] Peer stream started",
+					streamId.value_or(0)
+				);
+
+				self->quic_->SetCallbackHandler(event->PEER_STREAM_STARTED.Stream,
+				                                reinterpret_cast<void *>(streamCallback), // NOSONAR - MsQuic C API requires passing function pointer as void*
+				                                context);
+
+				self->quic_->StreamReceiveSetEnabled(event->PEER_STREAM_STARTED.Stream, TRUE);
 				break;
 			}
 
@@ -487,16 +525,39 @@ namespace bringauto::external_client::connection::communication {
 
 	std::string QuicCommunication::getProtocolSettingsString(
 		const structures::ExternalConnectionSettings &settings,
-		std::string_view key
+		std::string_view key,
+		std::string defaultValue
 	) {
-		const auto &raw = settings.protocolSettings.at(std::string(key));
-
-		if (nlohmann::json::accept(raw)) {
-			auto j = nlohmann::json::parse(raw);
-			if (j.is_string()) {
-				return j.get<std::string>();
-			}
+		const auto it = settings.protocolSettings.find(std::string(key));
+		if (it == settings.protocolSettings.end()) {
+			settings::Logger::logWarning("[quic] Protocol setting '{}' not found, using default", key);
+			return defaultValue;
 		}
-		return raw;
+
+		const auto &raw = it->second;
+
+		try {
+			if (nlohmann::json::accept(raw)) {
+				auto j = nlohmann::json::parse(raw);
+				if (j.is_string()) {
+					return j.get<std::string>();
+				}
+			}
+			return raw;
+		} catch (const nlohmann::json::exception &) {
+			settings::Logger::logWarning("[quic] Protocol setting '{}' contains invalid JSON, using default", key);
+			return defaultValue;
+		}
+	}
+
+	QuicCommunication::StreamMode QuicCommunication::parseStreamMode(
+		const structures::ExternalConnectionSettings &settings
+	) {
+		const std::string mode = getProtocolSettingsString(settings, settings::Constants::STREAM_MODE);
+
+		if (mode == "unidirectional" || mode == "unidir")
+			return StreamMode::Unidirectional;
+
+		return StreamMode::Bidirectional;
 	}
 }

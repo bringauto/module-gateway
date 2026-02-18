@@ -27,7 +27,9 @@
           "client-cert" : "build/certs/client.pem",
           "client-key" : "build/certs/client-key.pem",
 	      "alpn" : "sample",
-          "DisconnectTimeoutMs" : 800
+          "stream-mode": "unidirectional",
+          "DisconnectTimeoutMs" : 800,
+          "PeerUnidiStreamCount" : 100
         },
         "modules": [1,2,3]
       }

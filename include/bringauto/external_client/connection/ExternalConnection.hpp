@@ -177,10 +177,6 @@ private:
 
 	std::shared_ptr <structures::AtomicQueue<structures::ReconnectQueueItem>>
 	reconnectQueue_ {};
-	/// Name of the vehicle
-	std::string vehicleName_ {};
-	/// Name of the company
-	std::string company_ {};
 };
 
 }
