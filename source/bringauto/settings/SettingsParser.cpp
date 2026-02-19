@@ -226,7 +226,7 @@ std::string SettingsParser::serializeToJson() const {
 				settingsName = std::string(Constants::MQTT_SETTINGS);
 				break;
 			case structures::ProtocolType::DUMMY:
-				settingsName = std::string(Constants::DUMMY);
+				// DUMMY has no protocol-specific settings; settingsName stays empty
 				break;
 			case structures::ProtocolType::INVALID:
 				settingsName = "INVALID";

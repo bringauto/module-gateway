@@ -148,7 +148,7 @@ public:
 	 * @param device device unique key, obtained from getId function in ProtobufUtils
 	 * @return number of timeouts
 	 */
-	int getDeviceTimeoutCount(const structures::DeviceIdentification& device);
+	int getDeviceTimeoutCount(const structures::DeviceIdentification& device) const;
 
 private:
 

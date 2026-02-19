@@ -22,11 +22,7 @@ protected:
 	void initLogger() {
 		bringauto::settings::Logger::destroy();
 		bringauto::settings::Logger::addSink<bringauto::logging::ConsoleSink>();
-		bringauto::logging::LoggerSettings params {
-			"InternalServerTests",
-			bringauto::settings::toLoggerVerbosity(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY),
-		};
-		bringauto::settings::Logger::init(params);
+		bringauto::settings::Logger::init("InternalServerTests");
 	}
 	void SetUp() override {
 		initLogger();

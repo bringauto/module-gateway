@@ -2,8 +2,8 @@
 
 #include <bringauto/settings/LoggerWrapper.hpp>
 
-#ifndef MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY
-#define MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY "DEBUG"
+#ifndef BRINGAUTO_MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY
+#define BRINGAUTO_MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY "DEBUG"
 #endif
 
 
@@ -30,6 +30,6 @@ constexpr bringauto::logging::LoggerVerbosity toLoggerVerbosity(std::string_view
 constexpr logging::LoggerId logId = {.id = "ModuleGateway"};
 using BaseLogger = logging::Logger<logId, logging::LoggerImpl>;
 
-using Logger = LoggerWrapper<BaseLogger, toLoggerVerbosity(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY)>;
+using Logger = LoggerWrapper<BaseLogger, toLoggerVerbosity(BRINGAUTO_MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY)>;
 
 }

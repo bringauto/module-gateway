@@ -11,8 +11,8 @@ structures::ProtocolType EnumUtils::stringToProtocolType(std::string toEnum) {
 	if(toEnum == settings::Constants::MQTT) {
 		return structures::ProtocolType::MQTT;
 	} else if(toEnum == settings::Constants::DUMMY) {
-        return structures::ProtocolType::DUMMY;
-    }
+		return structures::ProtocolType::DUMMY;
+	}
 	return structures::ProtocolType::INVALID;
 }
 

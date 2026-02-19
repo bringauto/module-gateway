@@ -19,11 +19,14 @@ public:
 		BaseLogger::template addSink<T>(std::forward<Args>(args)...);
 	}
 
-	static void init(const logging::LoggerSettings &settings) {
-		if (settings.verbosity != verbosity) {
-			throw std::runtime_error("LoggerWrapper verbosity is different than the provided settings verbosity.");
-		}
-		BaseLogger::init(settings);
+	/**
+	 * @brief Initialize the logger with the given name.
+	 * The verbosity is always set to the compile-time template parameter — it is not
+	 * configurable at runtime. Sink-level verbosity filters are set separately via addSink().
+	 * @param loggerName name of the logger instance
+	 */
+	static void init(std::string_view loggerName) {
+		BaseLogger::init(logging::LoggerSettings{ std::string(loggerName), verbosity });
 	}
 
 	static void destroy() {
@@ -34,7 +37,7 @@ public:
 	template <typename... LogArgs>
 	static void logDebug(LogArgs &&...args) {
 		if constexpr (verbosity > logging::LoggerVerbosity::Debug) {
-			return; // Skip logging if verbosity is lower than Debug
+			return; // compile-time minimum exceeds Debug; call eliminated by optimizer
 		}
 		BaseLogger::log(logging::LoggerVerbosity::Debug, std::forward<LogArgs>(args)...);
 	}
@@ -42,7 +45,7 @@ public:
 	template <typename... LogArgs>
 	static void logInfo(LogArgs &&...args) {
 		if constexpr (verbosity > logging::LoggerVerbosity::Info) {
-			return; // Skip logging if verbosity is lower than Info
+			return; // compile-time minimum exceeds Info; call eliminated by optimizer
 		}
 		BaseLogger::log(logging::LoggerVerbosity::Info, std::forward<LogArgs>(args)...);
 	}
@@ -50,7 +53,7 @@ public:
 	template <typename... LogArgs>
 	static void logWarning(LogArgs &&...args) {
 		if constexpr (verbosity > logging::LoggerVerbosity::Warning) {
-			return; // Skip logging if verbosity is lower than Warning
+			return; // compile-time minimum exceeds Warning; call eliminated by optimizer
 		}
 		BaseLogger::log(logging::LoggerVerbosity::Warning, std::forward<LogArgs>(args)...);
 	}
@@ -58,7 +61,7 @@ public:
 	template <typename... LogArgs>
 	static void logError(LogArgs &&...args) {
 		if constexpr (verbosity > logging::LoggerVerbosity::Error) {
-			return; // Skip logging if verbosity is lower than Error
+			return; // compile-time minimum exceeds Error; call eliminated by optimizer
 		}
 		BaseLogger::log(logging::LoggerVerbosity::Error, std::forward<LogArgs>(args)...);
 	}
@@ -66,7 +69,7 @@ public:
 	template <typename... LogArgs>
 	static void logCritical(LogArgs &&...args) {
 		if constexpr (verbosity > logging::LoggerVerbosity::Critical) {
-			return; // Skip logging if verbosity is lower than Critical
+			return; // compile-time minimum exceeds Critical; call eliminated by optimizer
 		}
 		BaseLogger::log(logging::LoggerVerbosity::Critical, std::forward<LogArgs>(args)...);
 	}
@@ -74,7 +77,7 @@ public:
 	template <typename... LogArgs>
 	static void log(logging::LoggerVerbosity dynVerbosity, LogArgs &&...args) {
 		if (verbosity > dynVerbosity) {
-			return; // Skip logging if verbosity is lower than Critical
+			return; // runtime check: message level is below compile-time minimum
 		}
 		BaseLogger::log(dynVerbosity, std::forward<LogArgs>(args)...);
 	}
