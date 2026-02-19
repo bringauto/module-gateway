@@ -20,7 +20,7 @@ namespace bringauto::internal_server {
  * Receives messages on these connections. The message needs to begin with 4 bytes header.
  * Header's format is 32 bit unsigned int with little endian endianness.
  * Header represents size of the remaining part of the message.
- * Messaged is send through queue to ModuleHandler, and when answer is given resends it to Internal client.
+ * Message is sent through queue to ModuleHandler, and when answer is given resent to Internal client.
  */
 class InternalServer {
 

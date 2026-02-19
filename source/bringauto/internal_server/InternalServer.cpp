@@ -2,6 +2,7 @@
 #include <bringauto/settings/LoggerId.hpp>
 
 #include <algorithm>
+#include <cstring>
 
 
 
@@ -33,12 +34,16 @@ void InternalServer::addAsyncAccept() {
 			log::logError("Error in addAsyncAccept(): {}", error.message());
 			return;
 		}
-		
-		const boost::asio::socket_base::keep_alive keepAliveOption(true);
-		connection->socket.set_option(keepAliveOption);
-		const boost::asio::ip::tcp::no_delay noDelayOption(true);
-		connection->socket.set_option(noDelayOption);
 
+		boost::system::error_code optEc;
+		connection->socket.set_option(boost::asio::socket_base::keep_alive(true), optEc);
+		if(optEc) {
+			log::logWarning("Failed to set keep_alive on socket: {}", optEc.message());
+		}
+		connection->socket.set_option(boost::asio::ip::tcp::no_delay(true), optEc);
+		if(optEc) {
+			log::logWarning("Failed to set no_delay on socket: {}", optEc.message());
+		}
 		log::logInfo("Accepted connection with Internal Client, "
 					 "connection's ip address is {}",
 					 connection->remoteEndpointAddress());
@@ -125,7 +130,7 @@ bool InternalServer::processBufferData(
 
 		uint32_t size { 0 };
 
-		std::copy_n(dataBegin, headerSize, reinterpret_cast<uint8_t *>(&size));
+		std::memcpy(&size, std::to_address(dataBegin), headerSize);
 		completeMessageSize = size;
 
 		dataBegin = dataBegin + headerSize;

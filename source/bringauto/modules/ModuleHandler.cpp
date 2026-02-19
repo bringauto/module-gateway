@@ -13,10 +13,6 @@ namespace ip = InternalProtocol;
 
 void ModuleHandler::destroy() const {
 	while(not fromInternalQueue_->empty()) {
-		auto &message = fromInternalQueue_->front();
-		if(message.disconnected()) {
-			auto deviceId = message.getDeviceId();
-		}
 		fromInternalQueue_->pop();
 	}
 	settings::Logger::logInfo("Module handler stopped");
@@ -50,7 +46,6 @@ void ModuleHandler::handleMessages() const {
 
 void ModuleHandler::checkTimeoutedMessages() const {
 	for (const auto& [key, statusAggregator] : moduleLibrary_.statusAggregators) {
-		auto moduleLibraryHandler = moduleLibrary_.moduleLibraryHandlers.at(key);
 		if(statusAggregator->getTimeoutedMessageReady()){
 			std::list<structures::DeviceIdentification> unique_devices {};
 			const int ret = statusAggregator->get_unique_devices(unique_devices);

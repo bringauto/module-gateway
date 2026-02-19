@@ -78,11 +78,7 @@ protected:
 	static void SetUpTestSuite() {
 		bringauto::settings::Logger::destroy();
 		bringauto::settings::Logger::addSink<bringauto::logging::ConsoleSink>();
-		bringauto::logging::LoggerSettings settings {
-			"ExternalConnectionTests",
-			bringauto::settings::toLoggerVerbosity(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY)
-		};
-		bringauto::settings::Logger::init(settings);
+		bringauto::settings::Logger::init("ExternalConnectionTests");
 	};
 
 	bringauto::modules::Buffer create_buffer(const char* string) {

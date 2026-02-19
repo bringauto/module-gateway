@@ -530,7 +530,7 @@ TEST_F(InternalServerTests, RejectMessageWhereConnectionIsSentAfterAlreadyBeingC
 }
 
 /**
- * @brief tests if server correctly disconnects if it does not receive response to connect from module hanlder in itme
+ * @brief tests if server correctly disconnects if it does not receive response to connect from module handler in time
  */
 TEST_F(InternalServerTests, TestForBehaviorWhereModuleHandlerDoesntRespondToConnect) {
 	std::vector<InternalProtocol::DeviceConnectResponse_ResponseType> responseType {
@@ -556,7 +556,7 @@ TEST_F(InternalServerTests, TestForBehaviorWhereModuleHandlerDoesntRespondToConn
 }
 
 /**
- * @brief tests if server correctly disconnects if it does not receive command to status from module hanlder in time
+ * @brief tests if server correctly disconnects if it does not receive command to status from module handler in time
  */
 TEST_F(InternalServerTests, TestForBehaviorWhereModuleHandlerDoesntRespondToStatus) {
 	std::vector<InternalProtocol::DeviceConnectResponse_ResponseType> responseType {

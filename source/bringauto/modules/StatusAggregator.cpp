@@ -13,9 +13,6 @@ int StatusAggregator::clear_device(const structures::DeviceIdentification &devic
 	if(is_device_valid(device) == NOT_OK) {
 		return DEVICE_NOT_REGISTERED;
 	}
-	if (not devices.contains(device)) {
-		return NOT_OK;
-	}
 	auto &deviceState = devices.at(device);
 	auto &aggregatedMessages = deviceState.aggregatedMessages();
 	while(not aggregatedMessages.empty()) {
@@ -31,6 +28,7 @@ StatusAggregator::aggregateStatus(const structures::StatusAggregatorDeviceState 
 	Buffer aggregatedStatusBuff {};
 	if (module_->aggregateStatus(aggregatedStatusBuff, currStatus, status, device_type) != OK) {
 		log::logWarning("Error occurred while aggregating status, returning current status buffer");
+		return currStatus;
 	}
 	return aggregatedStatusBuff;
 }
@@ -224,8 +222,11 @@ bool StatusAggregator::getTimeoutedMessageReady() const {
 	return timeoutedMessageReady_.load();
 }
 
-int StatusAggregator::getDeviceTimeoutCount(const structures::DeviceIdentification &device) {
-	return deviceTimeouts_[device];
+int StatusAggregator::getDeviceTimeoutCount(const structures::DeviceIdentification &device) const {
+	if(const auto it = deviceTimeouts_.find(device); it != deviceTimeouts_.end()) {
+		return it->second;
+	}
+	return 0;
 }
 
 }

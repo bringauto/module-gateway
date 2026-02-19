@@ -9,7 +9,6 @@
 #include <bringauto/structures/InternalClientMessage.hpp>
 #include <bringauto/structures/ModuleHandlerMessage.hpp>
 #include <bringauto/settings/LoggerId.hpp>
-#include <bringauto/common_utils/EnumUtils.hpp>
 
 #include <InternalProtocol.pb.h>
 #include <libbringauto_logger/bringauto/logging/Logger.hpp>
@@ -37,11 +36,7 @@ void initLogger(const bringauto::structures::LoggingSettings &settings) {
 		bringauto::settings::Logger::addSink<FileSink>(paramFileSink);
 	}
 
-	const bringauto::logging::LoggerSettings params {
-		"ModuleGateway",
-		bringauto::settings::toLoggerVerbosity(MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY)
-	};
-	bringauto::settings::Logger::init(params);
+	bringauto::settings::Logger::init("ModuleGateway");
 }
 
 int main(int argc, char **argv) {
@@ -49,10 +44,6 @@ int main(int argc, char **argv) {
 	namespace bas = bringauto::structures;
 	namespace baset = bringauto::settings;
 	auto context = std::make_shared<bas::GlobalContext>();
-
-	// Disable synchronization with stdio to improve performance
-	std::ios_base::sync_with_stdio(false);
-	std::cin.tie(nullptr);
 
 	try {
 		baset::SettingsParser settingsParser;

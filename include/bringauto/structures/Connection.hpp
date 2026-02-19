@@ -21,15 +21,22 @@ struct Connection {
 	explicit Connection(boost::asio::io_context &io_context_): socket(io_context_) {}
 
 	/**
-	 * @brief Get the remote endpoint address as a string.
-	 * @return remote endpoint address as a string
+	 * @brief Format the remote endpoint address as a string.
+	 * Uses the non-throwing remote_endpoint() overload so it is safe to call
+	 * from error-handling paths where the peer may no longer be reachable.
+	 * @return remote endpoint address, or a diagnostic string on failure
 	 */
 	[[nodiscard]]
 	std::string remoteEndpointAddress() const {
 		if (!socket.is_open()) {
 			return "(N/A, socket is not open)";
 		}
-		return socket.remote_endpoint().address().to_string();
+		boost::system::error_code ec;
+		const auto ep = socket.remote_endpoint(ec);
+		if (ec) {
+			return "(N/A, no remote endpoint: " + ec.message() + ")";
+		}
+		return ep.address().to_string();
 	}
 
 	/**
