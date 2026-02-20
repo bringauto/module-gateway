@@ -106,7 +106,7 @@ bool InternalServer::processBufferData(
 		log::logError(
 				"Error in processBufferData(...): bufferOffset: {} is greater than bytesTransferred: {}, "
 				"Invalid bufferOffset: {} received from Internal Client, "
-				"connection's ip address is {}", bufferOffset, bytesTransferred, 
+				"connection's ip address is {}", bufferOffset, bytesTransferred, bufferOffset,
 				connection->remoteEndpointAddress());
 		return false;
 	}
@@ -267,8 +267,11 @@ bool InternalServer::handleConnection(const std::shared_ptr<structures::Connecti
 }
 
 void InternalServer::handleDisconnect(const structures::DeviceIdentification& deviceId) {
+	std::lock_guard<std::mutex> lock(serverMutex_);
 	const auto connection = findConnection(deviceId);
-	removeConnFromMap(connection);
+	if(connection) {
+		removeConnFromMap(connection);
+	}
 }
 
 void InternalServer::connectNewDevice(const std::shared_ptr<structures::Connection> &connection,
@@ -339,29 +342,15 @@ bool InternalServer::sendResponse(const std::shared_ptr<structures::Connection> 
 	}
 	auto data = message.SerializeAsString();
 	const uint32_t header = data.size();
-	const auto headerWSize = connection->socket.write_some(boost::asio::buffer(&header, sizeof(uint32_t)));
-	if(headerWSize != sizeof(uint32_t)) {
-		log::logError("Error in sendResponse(...): "
-					  "Cannot write message header to Internal Client, "
-					  "connection's ip address is {}",
-					  connection->remoteEndpointAddress());
-		return false;
-	}
 	try {
+		boost::asio::write(connection->socket, boost::asio::buffer(&header, sizeof(uint32_t)));
 		log::logDebug("Sending response to Internal Client, "
 					  "connection's ip address is {}",
 					  connection->remoteEndpointAddress());
-		const auto dataWSize = connection->socket.write_some(boost::asio::buffer(data));
-		if(dataWSize != header) {
-			log::logError("Error in sendResponse(...): "
-						  "Cannot write data to Internal Client, "
-						  "connection's ip address is {}",
-						  connection->remoteEndpointAddress());
-			return false;
-		}
-	} catch(const boost::exception &) {
+		boost::asio::write(connection->socket, boost::asio::buffer(data));
+	} catch(const std::exception &ex) {
 		log::logError("Error in sendResponse(...): "
-					  "Cannot write data to Internal Client");
+					  "Cannot write to Internal Client: {}", ex.what());
 		return false;
 	}
 	return true;

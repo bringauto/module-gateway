@@ -54,14 +54,14 @@ void ModuleHandler::checkTimeoutedMessages() const {
 				return;
 			}
 			
-			for (auto &device: unique_devices) {
+			for (const auto &device: unique_devices) {
 				while(true) {
 					Buffer aggregatedStatusBuffer {};
 					const int remainingMessages = statusAggregator->get_aggregated_status(aggregatedStatusBuffer, device);
 					if(remainingMessages < 0) {
 						break;
 					}
-					auto internalProtocolDevice = device.convertToIPDevice();
+					const auto internalProtocolDevice = device.convertToIPDevice();
 					auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(internalProtocolDevice,
 																										aggregatedStatusBuffer);
 					toExternalQueue_->pushAndNotify(structures::InternalClientMessage(false, statusMessage));
@@ -90,7 +90,7 @@ void ModuleHandler::handleDisconnect(const structures::DeviceIdentification& dev
 		return;
 	}
 
-	auto &statusAggregator = statusAggregators.at(moduleNumber);
+	const auto &statusAggregator = statusAggregators.at(moduleNumber);
 	if(statusAggregator->is_device_valid(deviceId) == NOT_OK) {
 		settings::Logger::logWarning("Trying to disconnect invalid device");
 		return;
@@ -101,8 +101,7 @@ void ModuleHandler::handleDisconnect(const structures::DeviceIdentification& dev
 		settings::Logger::logWarning("Force aggregation failed on device: {} with error code: {}", deviceName, ret);
 		return;
 	}
-	const auto device = structures::DeviceIdentification(deviceId);
-	const auto internalProtocolDevice = device.convertToIPDevice();
+	const auto internalProtocolDevice = deviceId.convertToIPDevice();
 	sendAggregatedStatus(deviceId, internalProtocolDevice, true);
 
 	statusAggregator->remove_device(deviceId);
@@ -135,7 +134,7 @@ void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) const {
 		return;
 	}
 
-	auto &statusAggregator = statusAggregators.at(moduleNumber);
+	const auto &statusAggregator = statusAggregators.at(moduleNumber);
 	if(statusAggregator->is_device_type_supported(device.devicetype()) == NOT_OK) {
 		sendConnectResponse(device,
 							ip::DeviceConnectResponse_ResponseType::DeviceConnectResponse_ResponseType_DEVICE_NOT_SUPPORTED);
@@ -161,15 +160,15 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) const {
 	const auto &device = status.device();
 	const auto &moduleNumber = device.module();
 	const auto &deviceName = device.devicename();
-	auto &statusAggregators = moduleLibrary_.statusAggregators;
+	const auto &statusAggregators = moduleLibrary_.statusAggregators;
 	settings::Logger::logDebug("Module handler received status from device: {}", deviceName);
 
 	if(not statusAggregators.contains(moduleNumber)) {
 		settings::Logger::logWarning("Module number: {} is not supported", static_cast<int>(moduleNumber));
 		return;
 	}
-	const auto statusAggregator = statusAggregators[moduleNumber];
-	const auto moduleHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
+	const auto &statusAggregator = statusAggregators.at(moduleNumber);
+	const auto &moduleHandler = moduleLibrary_.moduleLibraryHandlers.at(moduleNumber);
 
 	const auto &statusData = status.statusdata();
 	const auto statusBuffer = moduleHandler->constructBuffer(statusData.size());

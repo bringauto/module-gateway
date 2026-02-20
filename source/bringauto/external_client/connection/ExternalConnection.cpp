@@ -373,8 +373,13 @@ void ExternalConnection::fillErrorAggregatorWithNotAckedStatuses() {
 			common_utils::ProtobufUtils::copyStatusToBuffer(notAckedStatus->getStatus().devicestatus(), statusBuffer);
 		}
 
+		const auto aggIt = errorAggregators_.find(device.module());
+		if(aggIt == errorAggregators_.end()) {
+			log::logError("Not-acked status references unknown module {}", static_cast<int>(device.module()));
+			continue;
+		}
 		auto deviceId = structures::DeviceIdentification(device);
-		errorAggregators_[device.module()].add_status_to_error_aggregator(statusBuffer, deviceId);
+		aggIt->second.add_status_to_error_aggregator(statusBuffer, deviceId);
 	}
 	sentMessagesHandler_->clearAll();
 }

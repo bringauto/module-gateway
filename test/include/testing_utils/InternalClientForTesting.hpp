@@ -39,7 +39,6 @@ public:
 
 	void insteadOfMessageExpectError();
 
-	void insteadOfMessageExpectTimeoutThenError();
 };
 
 }

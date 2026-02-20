@@ -2,12 +2,15 @@
 
 #include <libbringauto_logger/bringauto/logging/Logger.hpp>
 
+#include <string>
+#include <string_view>
+
 
 
 namespace bringauto::settings {
 
 /**
- * @brief Custom Logger wrapper, which optimises out logging calls bellow the set verbosity level at compile time.
+ * @brief Custom Logger wrapper, which optimises out logging calls below the set verbosity level at compile time.
  *
  */
 template <typename BaseLogger, logging::LoggerVerbosity verbosity>
