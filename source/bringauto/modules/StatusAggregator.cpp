@@ -92,10 +92,10 @@ int StatusAggregator::add_status_to_aggregator(const Buffer& status,
 			return COMMAND_INVALID;
 		}
 
-		const std::function<int(const structures::DeviceIdentification&)> timeouted_force_aggregation = [device, this](
+		const std::function<int(const structures::DeviceIdentification&)> timeouted_force_aggregation = [this](
 				const structures::DeviceIdentification& deviceId) {
 					timeoutedMessageReady_.store(true);
-					deviceTimeouts_[device]++;
+					deviceTimeouts_[deviceId]++;
 					return force_aggregation_on_device(deviceId);
 		};
 		devices.emplace(

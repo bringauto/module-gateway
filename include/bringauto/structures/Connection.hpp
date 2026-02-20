@@ -5,6 +5,7 @@
 #include <boost/asio.hpp>
 
 #include <condition_variable>
+#include <string>
 
 
 

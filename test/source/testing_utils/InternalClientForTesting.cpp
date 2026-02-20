@@ -116,23 +116,4 @@ void ClientForTesting::insteadOfMessageExpectError() {
 	ASSERT_TRUE(er);
 }
 
-void ClientForTesting::insteadOfMessageExpectTimeoutThenError() {
-	boost::system::error_code er {};
-	bool readFinished = false;
-	auto timeStart = std::chrono::steady_clock::now();
-	std::jthread timeoutCountThread([this, timeStart, &readFinished]() {
-		while(std::chrono::duration<double>(std::chrono::steady_clock::now() - timeStart) <
-			  timeoutLengthDefinedInFleetProtocol) {
-			if(readFinished) {
-				disconnectSocket();
-				ASSERT_TRUE(false);
-			}
-		}
-	});
-	std::array<uint8_t, bufferLength> buffer {};
-	socket->read_some(boost::asio::buffer(buffer), er);
-	readFinished = true;
-	ASSERT_TRUE(er);
-
-}
 }

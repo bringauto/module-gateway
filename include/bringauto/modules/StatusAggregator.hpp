@@ -145,7 +145,7 @@ public:
 	/**
 	 * @brief Get the device timeout count
 	 *
-	 * @param device device unique key, obtained from getId function in ProtobufUtils
+	 * @param device DeviceIdentification of the device (module, type, role, name)
 	 * @return number of timeouts
 	 */
 	int getDeviceTimeoutCount(const structures::DeviceIdentification& device) const;
@@ -194,7 +194,7 @@ private:
 	std::unordered_map<structures::DeviceIdentification, structures::StatusAggregatorDeviceState> devices {};
 
 	/**
-	 * @brief Map of devices timeouts, key is device identification converted to string
+	 * @brief Map of devices timeouts, key is DeviceIdentification
 	 */
 	std::unordered_map<structures::DeviceIdentification, int> deviceTimeouts_ {};
 
