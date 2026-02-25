@@ -16,77 +16,66 @@ public:
 	~ModuleManagerLibraryHandlerLocal() override;
 
 	/**
-	 * @brief Load library created by a module maintainer
-	 *
-	 * @param path path to the library
+	 * @brief Loads the module shared library from the given path using dlopen
 	 */
 	void loadLibrary(const std::filesystem::path &path) override;
 
+	/**
+	 * @brief Returns the module number by calling the module's getModuleNumber function
+	 */
 	int getModuleNumber() override;
 
+	/**
+	 * @brief Calls the module's isDeviceTypeSupported function synchronously
+	 */
 	int isDeviceTypeSupported(unsigned int device_type) override;
 
-	int	sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) override;
+	/**
+	 * @brief Calls the module's sendStatusCondition function synchronously
+	 */
+	int sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) override;
 
 	/**
-	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
-	 * 
-	 * @see fleet-protocol/lib/module_maintainer/module_gateway/include/module_manager.h
+	 * @brief Calls the module's generateCommand function synchronously
 	 */
 	int generateCommand(Buffer &generated_command, const Buffer &new_status,
 						const Buffer &current_status, const Buffer &current_command,
 						unsigned int device_type) override;
 
 	/**
-	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
-	 * 
-	 * @see fleet-protocol/lib/module_maintainer/module_gateway/include/module_manager.h
+	 * @brief Calls the module's aggregateStatus function synchronously
 	 */
 	int aggregateStatus(Buffer &aggregated_status, const Buffer &current_status,
 						const Buffer &new_status, unsigned int device_type) override;
 
 	/**
-	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
-	 * 
-	 * @see fleet-protocol/lib/module_maintainer/module_gateway/include/module_manager.h
+	 * @brief Calls the module's aggregateError function synchronously
 	 */
-	int	aggregateError(Buffer &error_message, const Buffer &current_error_message, const Buffer &status,
+	int aggregateError(Buffer &error_message, const Buffer &current_error_message, const Buffer &status,
 					   unsigned int device_type) override;
 
 	/**
-	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
-	 * 
-	 * @see fleet-protocol/lib/module_maintainer/module_gateway/include/module_manager.h
+	 * @brief Calls the module's generateFirstCommand function synchronously
 	 */
 	int generateFirstCommand(Buffer &default_command, unsigned int device_type) override;
 
+	/**
+	 * @brief Calls the module's statusDataValid function synchronously
+	 */
 	int statusDataValid(const Buffer &status, unsigned int device_type) override;
 
-	int commandDataValid(const Buffer &command, unsigned int device_type) override;
-
 	/**
-	 * @brief Constructs a buffer with the given size
-	 * 
-	 * @param size size of the buffer
-	 * @return a new Buffer object
+	 * @brief Calls the module's commandDataValid function synchronously
 	 */
-	Buffer constructBuffer(std::size_t size = 0) override;
+	int commandDataValid(const Buffer &command, unsigned int device_type) override;
 
 private:
 
-	int allocate(struct buffer *buffer_pointer, size_t size_in_bytes) const;
+	int allocate(struct buffer *buffer_pointer, size_t size_in_bytes) const override;
 
 	void deallocate(struct buffer *buffer) const;
 
 	void *checkFunction(const char *functionName) const;
-
-	/**
-	 * @brief Constructs a buffer with the same raw c buffer as provided
-	 * 
-	 * @param buffer c buffer to be used
-	 * @return a new Buffer object
-	 */
-	Buffer constructBufferByTakeOwnership(struct ::buffer& buffer);
 
 	void *module_ {};
 
@@ -103,7 +92,6 @@ private:
 					  unsigned int device_type)> aggregateError_ {};
 	std::function<int(struct buffer *, struct buffer, struct buffer, struct buffer, unsigned int)> generateCommand_ {};
 	std::function<int(struct buffer *, size_t)> allocate_ {};
-	std::function<void(struct buffer *)> deallocate_ {};
 };
 
 }
