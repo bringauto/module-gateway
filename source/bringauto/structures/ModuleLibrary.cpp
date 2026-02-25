@@ -22,7 +22,7 @@ void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem:
 			settings::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path.string(), key, handler->getModuleNumber());
 			throw std::runtime_error {"Module numbers from config are not corresponding to binaries. Unable to continue. Fix configuration file."};
 		}
-		moduleLibraryHandlers.emplace(key, handler);
+		moduleLibraryHandlers.try_emplace(key, handler);
 	}
 }
 
@@ -35,7 +35,7 @@ void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem:
 			settings::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path.string(), key, handler->getModuleNumber());
 			throw std::runtime_error {"Module numbers from config are not corresponding to binaries. Unable to continue. Fix configuration file."};
 		}
-		moduleLibraryHandlers.emplace(key, handler);
+		moduleLibraryHandlers.try_emplace(key, handler);
 	}
 }
 
@@ -54,7 +54,7 @@ void ModuleLibrary::initStatusAggregators(std::shared_ptr<GlobalContext> &contex
 		for(const auto &connection: context->settings->externalConnectionSettingsList) {
 			const auto &modules = connection.modules;
 			if(std::find(modules.cbegin(), modules.cend(), moduleNumber) != modules.cend()) {
-				statusAggregators.emplace(moduleNumber, statusAggregator);
+				statusAggregators.try_emplace(moduleNumber, statusAggregator);
 				settings::Logger::logInfo("Module with number: {} started", moduleNumber);
 				found = true;
 				break;

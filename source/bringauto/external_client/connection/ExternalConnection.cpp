@@ -430,7 +430,7 @@ std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnecte
 			continue;
 		}
 
-		const int ret = (*statusAggregatorItr).second->get_unique_devices(unique_devices);
+		const int ret = statusAggregatorItr->second->get_unique_devices(unique_devices);
 		if(ret <= 0) {
 			log::logWarning("Module {} does not have any connected devices", moduleNumber);
 			continue;

@@ -125,6 +125,18 @@ struct AeronClientConstants {
 	 * @brief default timeout for Aeron client function calls
 	 */
 	static constexpr std::chrono::milliseconds aeron_client_default_timeout { 1000 };
+	/**
+	 * @brief maximum time to wait for the module binary to become ready after launch
+	 */
+	static constexpr std::chrono::seconds aeron_client_startup_timeout { 10 };
+	/**
+	 * @brief Aeron IPC channel URI used for local module communication
+	 */
+	static constexpr std::string_view aeron_connection { "aeron:ipc" };
+	/**
+	 * @brief separator used in Aeron channel/stream identifier strings
+	 */
+	static constexpr std::string_view separator { ":::" };
 };
 
 /**
@@ -172,8 +184,6 @@ public:
 	inline static constexpr std::string_view CLIENT_KEY { "client-key" };
 
 	inline static constexpr std::string_view MODULES { "modules" };
-	inline static constexpr std::string_view AERON_CONNECTION { "aeron:ipc"};
-	inline static constexpr std::string_view SEPARATOR { ":::" };
 };
 
 }
