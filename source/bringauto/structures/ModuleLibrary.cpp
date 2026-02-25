@@ -22,7 +22,7 @@ void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem:
 			settings::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path.string(), key, handler->getModuleNumber());
 			throw std::runtime_error {"Module numbers from config are not corresponding to binaries. Unable to continue. Fix configuration file."};
 		}
-		moduleLibraryHandlers.emplace(key, handler);
+		moduleLibraryHandlers.try_emplace(key, handler);
 	}
 }
 
@@ -35,8 +35,7 @@ void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem:
 			settings::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path.string(), key, handler->getModuleNumber());
 			throw std::runtime_error {"Module numbers from config are not corresponding to binaries. Unable to continue. Fix configuration file."};
 		}
-		auto [it, inserted] = moduleLibraryHandlers.try_emplace(key, handler);
-		if(!inserted) {
+		if(auto [it, inserted] = moduleLibraryHandlers.try_emplace(key, handler); !inserted) {
 			settings::Logger::logWarning("Module with number: {} is already registered, skipping duplicate", key);
 		}
 	}

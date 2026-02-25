@@ -176,7 +176,9 @@ void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) const {
 	if(file.contains(std::string(Constants::MODULE_BINARY_PATH))) {
 		file.at(std::string(Constants::MODULE_BINARY_PATH)).get_to(settings_->moduleBinaryPath);
 	}
-	file.at(std::string(Constants::MODULE_BINARY_PATH)).get_to(settings_->moduleBinaryPath);
+	if(file.contains(std::string(Constants::MODULE_BINARY_PATH))) {
+		file.at(std::string(Constants::MODULE_BINARY_PATH)).get_to(settings_->moduleBinaryPath);
+	}
 }
 
 void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) const {
