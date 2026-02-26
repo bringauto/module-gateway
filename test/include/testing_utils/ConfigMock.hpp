@@ -30,7 +30,7 @@ public:
 		std::unordered_map<int, std::filesystem::path> module_paths { {1, "/path/to/lib1.so"}, {2, "/path/to/lib2.so"}, {3, "/path/to/lib3.so"} };
 		std::string modulePathsToString() const {
 			std::string result = "";
-			for (auto [key, value] : module_paths) {
+			for (const auto& [key, value] : module_paths) {
 				result += std::format("\"{}\": \"{}\",\n", key, value.string());
 			}
 			if (!result.empty()) {

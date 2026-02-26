@@ -109,17 +109,15 @@ bool SettingsParser::areSettingsCorrect() const {
 		isCorrect = false;
 	}
 
-	isCorrect &= !std::ranges::any_of(settings_->externalConnectionSettingsList, [&](auto& externalConnectionSettings){
-		return std::ranges::any_of(externalConnectionSettings.modules, [&](auto const& externalModuleId) {
-			bool isMissing = !settings_->modulePaths.contains(externalModuleId);
-			if (isMissing)
-			{
+	for(auto& externalConnectionSettings: settings_->externalConnectionSettingsList) {
+		for(auto const& externalModuleId: externalConnectionSettings.modules) {
+			if(!settings_->modulePaths.contains(externalModuleId)) {
 				std::cerr << "Module " << externalModuleId <<
 				" is defined in external-connection endpoint modules but is not specified in module-paths" << std::endl;
+				isCorrect = false;
 			}
-			return isMissing;
-		});
-	});
+		}
+	}
 
 	return isCorrect;
 }
@@ -165,7 +163,13 @@ void SettingsParser::fillInternalServerSettings(const nlohmann::json &file) cons
 
 void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) const {
 	for(auto &[key, val]: file[std::string(Constants::MODULE_PATHS)].items()) {
-		val.get_to(settings_->modulePaths[stoi(key)]);
+		try {
+			val.get_to(settings_->modulePaths[stoi(key)]);
+		} catch(const std::invalid_argument &) {
+			throw std::invalid_argument { "Module path key '" + key + "' is not a valid integer module number" };
+		} catch(const std::out_of_range &) {
+			throw std::out_of_range { "Module path key '" + key + "' is out of integer range" };
+		}
 	}
 	if(file.contains(std::string(Constants::MODULE_BINARY_PATH))) {
 		file.at(std::string(Constants::MODULE_BINARY_PATH)).get_to(settings_->moduleBinaryPath);

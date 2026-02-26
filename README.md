@@ -37,10 +37,10 @@ connection is broken and as soon as the connection is up, then error aggregated 
 - [zlib](https://github.com/madler/zlib) >= v1.2.11
 - [ba-logger](https://github.com/bringauto/ba-logger) >= v2.0.0
 - [fleet-protocol-interface](https://github.com/bringauto/fleet-protocol) >= v2.0.0
-- [fleet-protocol-cpp](https://github.com/bringauto/fleet-protocol-cpp) >= v1.1.1
+- [fleet-protocol-cpp](https://github.com/bringauto/fleet-protocol-cpp) >= v1.2.0
 - [aeron](https://github.com/aeron-io/aeron) >= v1.48.6
 - [async-function-execution](https://github.com/bringauto/async-function-execution) >= 0.1.0
-- g++ >= 10 or other compiler with c++20 support
+- g++ >= 10 or other compiler with c++23 support
 
 ## Build
 ```

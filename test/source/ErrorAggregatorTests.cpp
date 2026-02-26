@@ -85,3 +85,45 @@ TEST_F(ErrorAggregatorTests, is_device_type_supported) {
 	const int ret = errorAggregator_.is_device_type_supported(SUPPORTED_DEVICE_TYPE);
 	EXPECT_EQ(ret, OK);
 }
+
+TEST_F(ErrorAggregatorTests, get_error_device_not_registered) {
+	bringauto::modules::Buffer error {};
+	const auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE,
+		SUPPORTED_DEVICE_TYPE, "button", "name", 10);
+	const int ret = errorAggregator_.get_error(error, deviceId);
+	EXPECT_EQ(ret, DEVICE_NOT_REGISTERED);
+}
+
+TEST_F(ErrorAggregatorTests, get_error_after_add_status_device_registered) {
+	const auto status = init_status_buffer();
+	const auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE,
+		SUPPORTED_DEVICE_TYPE, "button", "name", 10);
+	int ret = errorAggregator_.add_status_to_error_aggregator(status, deviceId);
+	ASSERT_EQ(ret, OK);
+	bringauto::modules::Buffer error {};
+	ret = errorAggregator_.get_error(error, deviceId);
+	EXPECT_NE(ret, DEVICE_NOT_REGISTERED);
+}
+
+TEST_F(ErrorAggregatorTests, clear_error_aggregator_ok) {
+	const auto status = init_status_buffer();
+	const auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE,
+		SUPPORTED_DEVICE_TYPE, "button", "name", 10);
+	int ret = errorAggregator_.add_status_to_error_aggregator(status, deviceId);
+	ASSERT_EQ(ret, OK);
+	ret = errorAggregator_.clear_error_aggregator();
+	EXPECT_EQ(ret, OK);
+}
+
+TEST_F(ErrorAggregatorTests, get_error_not_available_after_clear) {
+	const auto status = init_status_buffer();
+	const auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE,
+		SUPPORTED_DEVICE_TYPE, "button", "name", 10);
+	int ret = errorAggregator_.add_status_to_error_aggregator(status, deviceId);
+	ASSERT_EQ(ret, OK);
+	ret = errorAggregator_.clear_error_aggregator();
+	ASSERT_EQ(ret, OK);
+	bringauto::modules::Buffer error {};
+	ret = errorAggregator_.get_error(error, deviceId);
+	EXPECT_EQ(ret, NO_MESSAGE_AVAILABLE);
+}

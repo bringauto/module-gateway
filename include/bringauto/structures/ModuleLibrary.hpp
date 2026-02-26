@@ -39,9 +39,9 @@ struct ModuleLibrary {
 	 */
 	void initStatusAggregators(std::shared_ptr<GlobalContext> &context);
 	/// Map of module handlers, key is module id
-	std::unordered_map<unsigned int, std::shared_ptr<modules::IModuleManagerLibraryHandler>> moduleLibraryHandlers {};
+	std::unordered_map<int, std::shared_ptr<modules::IModuleManagerLibraryHandler>> moduleLibraryHandlers {};
 	/// Map of status aggregators, key is module id
-	std::unordered_map<unsigned int, std::shared_ptr<modules::StatusAggregator>> statusAggregators {};
+	std::unordered_map<int, std::shared_ptr<modules::StatusAggregator>> statusAggregators {};
 };
 
 }
