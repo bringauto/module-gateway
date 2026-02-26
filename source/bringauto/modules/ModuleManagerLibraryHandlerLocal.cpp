@@ -30,7 +30,7 @@ ModuleManagerLibraryHandlerLocal::~ModuleManagerLibraryHandlerLocal() {
 void ModuleManagerLibraryHandlerLocal::loadLibrary(const std::filesystem::path &path) {
 	module_ = dlmopen(LM_ID_NEWLM, path.c_str(), RTLD_LAZY);
 	if(module_ == nullptr) {
-		throw std::runtime_error {"Unable to load library " + path.string() + dlerror()};
+		throw std::runtime_error {"Unable to load library " + path.string() + ": " + dlerror()};
 	}
 	isDeviceTypeSupported_ = reinterpret_cast<FunctionTypeDeducer<decltype(isDeviceTypeSupported_)>::fncptr>(checkFunction(
 			"is_device_type_supported"));

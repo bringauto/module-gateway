@@ -28,57 +28,30 @@ public:
 	ModuleManagerLibraryHandlerAsync &operator=(ModuleManagerLibraryHandlerAsync &&) = delete;
 
 	/**
-	 * @brief Spawns the module binary process and waits for it to be ready
+	 * @brief Spawns the module binary process and waits for it to be ready via Aeron IPC.
 	 */
 	void loadLibrary(const std::filesystem::path &path) override;
 
-	/**
-	 * @brief Returns the module number via an asynchronous Aeron call
-	 */
 	int getModuleNumber() override;
 
-	/**
-	 * @brief Checks device type support via an asynchronous Aeron call
-	 */
 	int isDeviceTypeSupported(unsigned int device_type) override;
 
-	/**
-	 * @brief Evaluates the status aggregation condition via an asynchronous Aeron call
-	 */
 	int sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) override;
 
-	/**
-	 * @brief Generates a command via an asynchronous Aeron call
-	 */
 	int generateCommand(Buffer &generated_command, const Buffer &new_status,
 						const Buffer &current_status, const Buffer &current_command,
 						unsigned int device_type) override;
 
-	/**
-	 * @brief Aggregates status via an asynchronous Aeron call
-	 */
 	int aggregateStatus(Buffer &aggregated_status, const Buffer &current_status,
 						const Buffer &new_status, unsigned int device_type) override;
 
-	/**
-	 * @brief Aggregates error via an asynchronous Aeron call
-	 */
 	int aggregateError(Buffer &error_message, const Buffer &current_error_message, const Buffer &status,
 					   unsigned int device_type) override;
 
-	/**
-	 * @brief Generates the first command via an asynchronous Aeron call
-	 */
 	int generateFirstCommand(Buffer &default_command, unsigned int device_type) override;
 
-	/**
-	 * @brief Validates status data via an asynchronous Aeron call
-	 */
 	int statusDataValid(const Buffer &status, unsigned int device_type) override;
 
-	/**
-	 * @brief Validates command data via an asynchronous Aeron call
-	 */
 	int commandDataValid(const Buffer &command, unsigned int device_type) override;
 
 private:

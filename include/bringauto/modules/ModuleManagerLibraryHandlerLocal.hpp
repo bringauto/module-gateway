@@ -11,62 +11,35 @@ namespace bringauto::modules {
  */
 class ModuleManagerLibraryHandlerLocal : public IModuleManagerLibraryHandler {
 public:
-	explicit ModuleManagerLibraryHandlerLocal() = default;
+	ModuleManagerLibraryHandlerLocal() = default;
 
 	~ModuleManagerLibraryHandlerLocal() override;
 
 	/**
-	 * @brief Loads the module shared library from the given path using dlopen
+	 * @brief Loads the module shared library from the given path using dlmopen.
 	 */
 	void loadLibrary(const std::filesystem::path &path) override;
 
-	/**
-	 * @brief Returns the module number by calling the module's getModuleNumber function
-	 */
 	int getModuleNumber() override;
 
-	/**
-	 * @brief Calls the module's isDeviceTypeSupported function synchronously
-	 */
 	int isDeviceTypeSupported(unsigned int device_type) override;
 
-	/**
-	 * @brief Calls the module's sendStatusCondition function synchronously
-	 */
 	int sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) override;
 
-	/**
-	 * @brief Calls the module's generateCommand function synchronously
-	 */
 	int generateCommand(Buffer &generated_command, const Buffer &new_status,
 						const Buffer &current_status, const Buffer &current_command,
 						unsigned int device_type) override;
 
-	/**
-	 * @brief Calls the module's aggregateStatus function synchronously
-	 */
 	int aggregateStatus(Buffer &aggregated_status, const Buffer &current_status,
 						const Buffer &new_status, unsigned int device_type) override;
 
-	/**
-	 * @brief Calls the module's aggregateError function synchronously
-	 */
 	int aggregateError(Buffer &error_message, const Buffer &current_error_message, const Buffer &status,
 					   unsigned int device_type) override;
 
-	/**
-	 * @brief Calls the module's generateFirstCommand function synchronously
-	 */
 	int generateFirstCommand(Buffer &default_command, unsigned int device_type) override;
 
-	/**
-	 * @brief Calls the module's statusDataValid function synchronously
-	 */
 	int statusDataValid(const Buffer &status, unsigned int device_type) override;
 
-	/**
-	 * @brief Calls the module's commandDataValid function synchronously
-	 */
 	int commandDataValid(const Buffer &command, unsigned int device_type) override;
 
 private:

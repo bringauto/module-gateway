@@ -3,6 +3,8 @@
 #include <bringauto/structures/ExternalConnectionSettings.hpp>
 #include <bringauto/structures/LoggingSettings.hpp>
 
+#include <filesystem>
+#include <unordered_map>
 #include <vector>
 #include <string>
 

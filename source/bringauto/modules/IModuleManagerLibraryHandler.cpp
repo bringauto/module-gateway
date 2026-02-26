@@ -19,7 +19,7 @@ Buffer IModuleManagerLibraryHandler::constructBuffer(std::size_t size) {
 }
 
 Buffer IModuleManagerLibraryHandler::constructBufferByTakeOwnership(struct ::buffer &buffer) {
-	if (buffer.data == nullptr) {
+	if (buffer.data == nullptr || buffer.size_in_bytes == 0) {
 		throw Buffer::BufferNotAllocated { "Buffer not allocated - cannot take ownership" };
 	}
 	return { buffer, deallocate_ };
