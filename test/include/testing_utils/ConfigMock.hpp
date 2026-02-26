@@ -27,11 +27,11 @@ public:
 			int port { 1636 };
 		} internal_server_settings;
 
-		std::unordered_map<int, std::string> module_paths { {1, "/path/to/lib1.so"}, {2, "/path/to/lib2.so"}, {3, "/path/to/lib3.so"} };
+		std::unordered_map<int, std::filesystem::path> module_paths { {1, "/path/to/lib1.so"}, {2, "/path/to/lib2.so"}, {3, "/path/to/lib3.so"} };
 		std::string modulePathsToString() const {
 			std::string result = "";
-			for (auto [key, value] : module_paths) {
-				result += std::format("\"{}\": \"{}\",\n", key, value);
+			for (const auto& [key, value] : module_paths) {
+				result += std::format("\"{}\": \"{}\",\n", key, value.string());
 			}
 			if (!result.empty()) {
 				result.pop_back();
@@ -105,6 +105,7 @@ public:
 				"\"module-paths\": {{\n"
 					"{}\n"
 				"}},\n"
+				"\"module-binary-path\": \"\",\n"
 				"\"external-connection\": {{\n"
 					"\"company\": \"{}\",\n"
 					"\"vehicle-name\": \"{}\",\n"

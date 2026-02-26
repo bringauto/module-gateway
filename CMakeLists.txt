@@ -1,15 +1,25 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.25 FATAL_ERROR)
 PROJECT(ModuleGateway)
 
+SET(BRINGAUTO_MODULE_GATEWAY_VERSION 1.4.0)
+
+SET(BRINGAUTO_MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY "DEBUG" CACHE STRING "Minimum logger verbosity level for module-gateway")
+SET_PROPERTY(CACHE BRINGAUTO_MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY PROPERTY STRINGS "DEBUG" "INFO" "WARNING" "ERROR" "CRITICAL")
+
+OPTION(BRINGAUTO_TESTS             "Enable tests" OFF)
+OPTION(BRINGAUTO_PACKAGE           "Package creation" OFF)
+OPTION(BRINGAUTO_INSTALL           "Enable install" OFF)
+OPTION(BRINGAUTO_SYSTEM_DEP        "Enable system dependencies" OFF)
+OPTION(BRINGAUTO_SAMPLES           "Enable build of sample app, not used in project" OFF)
+OPTION(BRINGAUTO_GET_PACKAGES_ONLY "Only download packages for this project" OFF)
+
+FIND_PACKAGE(CMLIB COMPONENTS CMCONF REQUIRED)
+CMCONF_INIT_SYSTEM(FLEET_PROTOCOL)
+
 FIND_PACKAGE(CMLIB
         COMPONENTS CMDEF CMUTIL STORAGE
         REQUIRED
 )
-
-SET(BRINGAUTO_MODULE_GATEWAY_VERSION 1.3.5)
-
-SET(BRINGAUTO_MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY "DEBUG" CACHE STRING "Minimum logger verbosity level for module-gateway")
-SET_PROPERTY(CACHE BRINGAUTO_MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY PROPERTY STRINGS "DEBUG" "INFO" "WARNING" "ERROR" "CRITICAL")
 
 CMDEF_COMPILE_DEFINITIONS(
         ALL
@@ -17,18 +27,11 @@ CMDEF_COMPILE_DEFINITIONS(
         "BRINGAUTO_MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY=\"${BRINGAUTO_MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY}\""
 )
 SET(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMDEF_LIBRARY_INSTALL_DIR}")
-SET(CMAKE_CXX_STANDARD 20)
+SET(CMAKE_CXX_STANDARD 23)
 
 INCLUDE(CheckPIESupported)
 CHECK_PIE_SUPPORTED()
 SET(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-OPTION(BRINGAUTO_TESTS             "Disable tests" OFF)
-OPTION(BRINGAUTO_PACKAGE           "Package creation" OFF)
-OPTION(BRINGAUTO_INSTALL           "Disable install" OFF)
-OPTION(BRINGAUTO_SYSTEM_DEP        "Enable system dependencies" OFF)
-OPTION(BRINGAUTO_SAMPLES           "Enable build of sample app, not used in project" OFF)
-OPTION(BRINGAUTO_GET_PACKAGES_ONLY "Only download packages for this project" OFF)
 
 IF(BRINGAUTO_PACKAGE)
     IF(NOT BRINGAUTO_INSTALL)
@@ -55,6 +58,9 @@ FIND_PACKAGE(eclipse-paho-mqtt-c REQUIRED)
 FIND_PACKAGE(libbringauto_logger 2.0.0 REQUIRED)
 FIND_PACKAGE(fleet-protocol-interface 2.0.0 REQUIRED)
 FIND_PACKAGE(ZLIB 1.2.11 REQUIRED)
+FIND_PACKAGE(fleet-protocol-cxx-helpers-static 1.2.0 REQUIRED)
+FIND_PACKAGE(aeron 1.48.6 REQUIRED)
+FIND_PACKAGE(async-function-execution-shared 1.0.0 REQUIRED)
 
 FILE(GLOB_RECURSE source_files "source/*")
 ADD_LIBRARY(module-gateway-lib STATIC "${source_files}")
@@ -72,6 +78,8 @@ TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         eclipse-paho-mqtt-c::paho-mqtt3as
                         PahoMqttCpp::paho-mqttpp3
                         ZLIB::ZLIB
+                        fleet-protocol-cxx-helpers-static::fleet-protocol-cxx-helpers-static
+                        async-function-execution-shared::async-function-execution-shared
                         ${CMAKE_DL_LIBS}
 )
 

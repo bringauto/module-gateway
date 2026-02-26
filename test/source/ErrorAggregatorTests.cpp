@@ -1,5 +1,7 @@
 #include <ErrorAggregatorTests.hpp>
 #include <testing_utils/DeviceIdentificationHelper.h>
+#include <bringauto/modules/ModuleManagerLibraryHandlerLocal.hpp>
+
 #include <fleet_protocol/module_gateway/error_codes.h>
 
 
@@ -15,7 +17,7 @@ bam::Buffer ErrorAggregatorTests::init_status_buffer() {
 }
 
 void ErrorAggregatorTests::SetUp(){
-	libHandler_ = std::make_shared<bam::ModuleManagerLibraryHandler>();
+	libHandler_ = std::make_shared<bam::ModuleManagerLibraryHandlerLocal>();
 	libHandler_->loadLibrary(PATH_TO_MODULE);
 	errorAggregator_.init_error_aggregator(libHandler_);
 }
@@ -26,14 +28,14 @@ void ErrorAggregatorTests::TearDown(){
 
 TEST_F(ErrorAggregatorTests, init_error_aggregator_ok) {
 	external_client::ErrorAggregator errorAggregatorTest {};
-	const auto libHandler = std::make_shared<bam::ModuleManagerLibraryHandler>();
+	const auto libHandler = std::make_shared<bam::ModuleManagerLibraryHandlerLocal>();
 	const int ret = errorAggregatorTest.init_error_aggregator(libHandler);
 	EXPECT_EQ(ret, OK);
 }
 
 TEST_F(ErrorAggregatorTests, destroy_error_aggregator_ok) {
 	external_client::ErrorAggregator errorAggregatorTest {};
-	const auto libHandler = std::make_shared<bam::ModuleManagerLibraryHandler>();
+	const auto libHandler = std::make_shared<bam::ModuleManagerLibraryHandlerLocal>();
 	errorAggregatorTest.init_error_aggregator(libHandler);
 	const int ret = errorAggregatorTest.destroy_error_aggregator();
 	EXPECT_EQ(ret, OK);
@@ -82,4 +84,46 @@ TEST_F(ErrorAggregatorTests, get_module_number) {
 TEST_F(ErrorAggregatorTests, is_device_type_supported) {
 	const int ret = errorAggregator_.is_device_type_supported(SUPPORTED_DEVICE_TYPE);
 	EXPECT_EQ(ret, OK);
+}
+
+TEST_F(ErrorAggregatorTests, get_error_device_not_registered) {
+	bringauto::modules::Buffer error {};
+	const auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE,
+		SUPPORTED_DEVICE_TYPE, "button", "name", 10);
+	const int ret = errorAggregator_.get_error(error, deviceId);
+	EXPECT_EQ(ret, DEVICE_NOT_REGISTERED);
+}
+
+TEST_F(ErrorAggregatorTests, get_error_after_add_status_device_registered) {
+	const auto status = init_status_buffer();
+	const auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE,
+		SUPPORTED_DEVICE_TYPE, "button", "name", 10);
+	int ret = errorAggregator_.add_status_to_error_aggregator(status, deviceId);
+	ASSERT_EQ(ret, OK);
+	bringauto::modules::Buffer error {};
+	ret = errorAggregator_.get_error(error, deviceId);
+	EXPECT_NE(ret, DEVICE_NOT_REGISTERED);
+}
+
+TEST_F(ErrorAggregatorTests, clear_error_aggregator_ok) {
+	const auto status = init_status_buffer();
+	const auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE,
+		SUPPORTED_DEVICE_TYPE, "button", "name", 10);
+	int ret = errorAggregator_.add_status_to_error_aggregator(status, deviceId);
+	ASSERT_EQ(ret, OK);
+	ret = errorAggregator_.clear_error_aggregator();
+	EXPECT_EQ(ret, OK);
+}
+
+TEST_F(ErrorAggregatorTests, get_error_not_available_after_clear) {
+	const auto status = init_status_buffer();
+	const auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE,
+		SUPPORTED_DEVICE_TYPE, "button", "name", 10);
+	int ret = errorAggregator_.add_status_to_error_aggregator(status, deviceId);
+	ASSERT_EQ(ret, OK);
+	ret = errorAggregator_.clear_error_aggregator();
+	ASSERT_EQ(ret, OK);
+	bringauto::modules::Buffer error {};
+	ret = errorAggregator_.get_error(error, deviceId);
+	EXPECT_EQ(ret, NO_MESSAGE_AVAILABLE);
 }

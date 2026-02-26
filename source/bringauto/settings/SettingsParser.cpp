@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <ranges>
 
 
 
@@ -37,8 +38,6 @@ void SettingsParser::parseCmdArguments(int argc, char **argv) {
 					cxxopts::value<std::string>());
 	options.add_options("Internal Server")(std::string(Constants::PORT), "Port on which Server listens",
 										   cxxopts::value<int>());
-	options.add_options("Module Handler")(std::string(Constants::MODULE_PATHS), "Paths to shared module libraries",
-										  cxxopts::value<std::vector<std::string >>());
 
 	options.allow_unrecognised_options();
 	cmdArguments_ = options.parse(argc, argv);
@@ -55,8 +54,7 @@ bool SettingsParser::areCmdArgumentsCorrect() const {
 	};
 	std::vector<std::string> allParameters = {
 			std::string(Constants::CONFIG_PATH),
-			std::string(Constants::PORT),
-			std::string(Constants::MODULE_PATHS)
+			std::string(Constants::PORT)
 	};
 	allParameters.insert(allParameters.end(), requiredParams.begin(), requiredParams.end());
 
@@ -98,6 +96,10 @@ bool SettingsParser::areSettingsCorrect() const {
 		std::cerr << "No shared module library provided." << std::endl;
 		isCorrect = false;
 	}
+	if(!settings_->moduleBinaryPath.empty() && !std::filesystem::exists(settings_->moduleBinaryPath)) {
+		std::cerr << "Given module binary path (" << settings_->moduleBinaryPath << ") does not exist." << std::endl;
+		isCorrect = false;
+	}
 	if(!std::regex_match(settings_->company, std::regex("^[a-z0-9_]+$"))) {
 		std::cerr << "Company name (" << settings_->company << ") is not valid." << std::endl;
 		isCorrect = false;
@@ -105,6 +107,16 @@ bool SettingsParser::areSettingsCorrect() const {
 	if(!std::regex_match(settings_->vehicleName, std::regex("^[a-z0-9_]+$"))) {
 		std::cerr << "Vehicle name (" << settings_->vehicleName << ") is not valid." << std::endl;
 		isCorrect = false;
+	}
+
+	for(auto& externalConnectionSettings: settings_->externalConnectionSettingsList) {
+		for(auto const& externalModuleId: externalConnectionSettings.modules) {
+			if(!settings_->modulePaths.contains(externalModuleId)) {
+				std::cerr << "Module " << externalModuleId <<
+				" is defined in external-connection endpoint modules but is not specified in module-paths" << std::endl;
+				isCorrect = false;
+			}
+		}
 	}
 
 	return isCorrect;
@@ -151,14 +163,24 @@ void SettingsParser::fillInternalServerSettings(const nlohmann::json &file) cons
 
 void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) const {
 	for(auto &[key, val]: file[std::string(Constants::MODULE_PATHS)].items()) {
-		settings_->modulePaths[stoi(key)] = val;
+		try {
+			val.get_to(settings_->modulePaths[stoi(key)]);
+		} catch(const std::invalid_argument &) {
+			throw std::invalid_argument { "Module path key '" + key + "' is not a valid integer module number" };
+		} catch(const std::out_of_range &) {
+			throw std::out_of_range { "Module path key '" + key + "' is out of integer range" };
+		}
+	}
+	if(file.contains(std::string(Constants::MODULE_BINARY_PATH))) {
+		file.at(std::string(Constants::MODULE_BINARY_PATH)).get_to(settings_->moduleBinaryPath);
 	}
 }
 
 void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) const {
-	settings_->vehicleName = file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(
-			Constants::VEHICLE_NAME)];
-	settings_->company = file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(Constants::COMPANY)];
+	file.at(std::string(Constants::EXTERNAL_CONNECTION)).at(std::string(Constants::VEHICLE_NAME)).get_to(
+			settings_->vehicleName);
+	file.at(std::string(Constants::EXTERNAL_CONNECTION)).at(std::string(Constants::COMPANY)).get_to(
+			settings_->company);
 
 	for(const auto &endpoint: file[std::string(Constants::EXTERNAL_CONNECTION)][std::string(
 			Constants::EXTERNAL_ENDPOINTS)]) {
@@ -178,7 +200,7 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 				continue;
 		}
 
-		externalConnectionSettings.serverIp = endpoint[std::string(Constants::SERVER_IP)];
+		endpoint.at(std::string(Constants::SERVER_IP)).get_to(externalConnectionSettings.serverIp);
 		externalConnectionSettings.port = endpoint[std::string(Constants::PORT)];
 		externalConnectionSettings.modules = endpoint[std::string(Constants::MODULES)].get<std::vector<int >>();
 		

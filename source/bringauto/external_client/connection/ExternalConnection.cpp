@@ -421,7 +421,16 @@ std::vector<structures::DeviceIdentification> ExternalConnection::getAllConnecte
 	std::vector<structures::DeviceIdentification> devices {};
 	for(const auto &moduleNumber: settings_.modules) {
 		std::list<structures::DeviceIdentification> unique_devices {};
-		const int ret = moduleLibrary_.statusAggregators.at(moduleNumber)->get_unique_devices(unique_devices);
+		auto statusAggregatorItr = moduleLibrary_.statusAggregators.find(moduleNumber);
+
+		if (statusAggregatorItr == moduleLibrary_.statusAggregators.end())
+		{
+			log::logWarning("Module {} is defined in external-connection endpoint but is not specified in module-paths",
+							moduleNumber);
+			continue;
+		}
+
+		const int ret = statusAggregatorItr->second->get_unique_devices(unique_devices);
 		if(ret <= 0) {
 			log::logWarning("Module {} does not have any connected devices", moduleNumber);
 			continue;

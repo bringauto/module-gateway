@@ -1,6 +1,6 @@
 #pragma once
 
-#include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
+#include <bringauto/modules/IModuleManagerLibraryHandler.hpp>
 #include <bringauto/structures/StatusAggregatorDeviceState.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
 
@@ -20,9 +20,9 @@ class StatusAggregator {
 public:
 
 	explicit StatusAggregator(const std::shared_ptr<structures::GlobalContext> &context,
-							  const std::shared_ptr<ModuleManagerLibraryHandler> &libraryHandler): context_ { context },
-																								   module_ {
-																										   libraryHandler } {};
+							  const std::shared_ptr<IModuleManagerLibraryHandler> &libraryHandler): context_ { context },
+																								   	module_ {
+																									libraryHandler } {};
 
 	StatusAggregator() = default;
 
@@ -186,7 +186,7 @@ private:
 
 	std::shared_ptr<structures::GlobalContext> context_ {};
 
-	const std::shared_ptr<ModuleManagerLibraryHandler> module_ {};
+	const std::shared_ptr<IModuleManagerLibraryHandler> module_ {};
 
 	/**
 	 * @brief Map of devices states, key is device identification

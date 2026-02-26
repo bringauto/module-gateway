@@ -88,33 +88,55 @@ constexpr unsigned int max_external_queue_size { 500 };
 
 /**
  * @brief Constants for Mqtt communication
-*/
+ */
 struct MqttConstants {
 	/**
 	 * @brief keep alive interval in seconds;
 	 *        value reasoning: keepalive is half of the default timeout in Fleet protocol
 	 *        The value is chosen based on empiric measurement.
-	*/
+	 */
 	static constexpr std::chrono::seconds keepalive { status_response_timeout / 2U };
 
 	/**
 	 * @brief automatic reconnection of mqtt client option
-	*/
+	 */
 	static constexpr bool automatic_reconnect { true };
 
 	/**
 	 * @brief max time that the mqtt client will wait for a connection before failing;
 	 *        value reasoning: TCP timeout for retransmission when TCP packet is dropped is 200ms,
 	 *        this value is multiple of three of this value
-	*/
+	 */
 	static constexpr std::chrono::milliseconds connect_timeout { 600 };
 
 	/**
 	 * @brief max messages that can be in the process of transmission simultaneously;
 	 *        value reasoning: How many MQTT inflight messages can be open at one time.
 	 *        The value is chosen as a recommendation from a MQTT community.
-	*/
+	 */
 	static constexpr size_t max_inflight { 20 };
+};
+
+/**
+ * @brief Constants for Aeron client communication
+ */
+struct AeronClientConstants {
+	/**
+	 * @brief default timeout for Aeron client function calls
+	 */
+	static constexpr std::chrono::milliseconds aeron_client_default_timeout { 1000 };
+	/**
+	 * @brief maximum time to wait for the module binary to become ready after launch
+	 */
+	static constexpr std::chrono::seconds aeron_client_startup_timeout { 10 };
+	/**
+	 * @brief Aeron IPC channel URI used for local module communication
+	 */
+	static constexpr std::string_view aeron_connection { "aeron:ipc" };
+	/**
+	 * @brief separator used in Aeron channel/stream identifier strings
+	 */
+	static constexpr std::string_view separator { ":::" };
 };
 
 /**
@@ -142,6 +164,7 @@ public:
 	inline static constexpr std::string_view PORT { "port" };
 
 	inline static constexpr std::string_view MODULE_PATHS { "module-paths" };
+	inline static constexpr std::string_view MODULE_BINARY_PATH { "module-binary-path" };
 
 	inline static constexpr std::string_view INTERNAL_SERVER_SETTINGS { "internal-server-settings" };
 

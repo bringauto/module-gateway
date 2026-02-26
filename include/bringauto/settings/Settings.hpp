@@ -3,6 +3,8 @@
 #include <bringauto/structures/ExternalConnectionSettings.hpp>
 #include <bringauto/structures/LoggingSettings.hpp>
 
+#include <filesystem>
+#include <unordered_map>
 #include <vector>
 #include <string>
 
@@ -31,7 +33,12 @@ struct Settings {
 	/**
 	 * @brief paths to shared module libraries
 	 */
-	std::unordered_map<int, std::string> modulePaths {};
+	std::unordered_map<int, std::filesystem::path> modulePaths {};
+
+	/**
+	 * @brief path to module binary
+	 */
+	std::filesystem::path moduleBinaryPath {};
 
 	/**
 	 * @brief Setting of external connection endpoints and protocols
