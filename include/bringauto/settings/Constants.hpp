@@ -130,6 +130,10 @@ struct AeronClientConstants {
 	 */
 	static constexpr std::chrono::seconds aeron_client_startup_timeout { 10 };
 	/**
+	 * @brief polling interval when waiting for the module binary to become ready
+	 */
+	static constexpr std::chrono::milliseconds module_binary_poll_interval { 10 };
+	/**
 	 * @brief Aeron IPC channel URI used for local module communication
 	 */
 	static constexpr std::string_view aeron_connection { "aeron:ipc" };

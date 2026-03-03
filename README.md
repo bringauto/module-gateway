@@ -28,19 +28,21 @@ connection is broken and as soon as the connection is up, then error aggregated 
 
 - [cmlib](https://github.com/cmakelib/cmakelib)
 
-- [protobuf](https://github.com/protocolbuffers/protobuf/tree/main/src) >= v3.21.12
-- [cxxopts](https://github.com/jarro2783/cxxopts) >= v3.1.1
-- [boost](https://github.com/boostorg/boost) >= v1.86.0
-- [nlohmann-json](https://github.com/nlohmann/json) >= v3.10.5/
-- [pahomqtt](https://github.com/eclipse-paho/paho.mqtt.c) >= v1.3.9
-- [pahomqttcpp](https://github.com/eclipse-paho/paho.mqtt.cpp) >= v1.3.2
-- [zlib](https://github.com/madler/zlib) >= v1.2.11
-- [ba-logger](https://github.com/bringauto/ba-logger) >= v2.0.0
-- [fleet-protocol-interface](https://github.com/bringauto/fleet-protocol) >= v2.0.0
-- [fleet-protocol-cpp](https://github.com/bringauto/fleet-protocol-cpp) >= v1.2.0
-- [aeron](https://github.com/aeron-io/aeron) >= v1.48.6
-- [async-function-execution](https://github.com/bringauto/async-function-execution) >= 0.1.0
+- [protobuf](https://github.com/protocolbuffers/protobuf/tree/main/src)
+- [cxxopts](https://github.com/jarro2783/cxxopts)
+- [boost](https://github.com/boostorg/boost)
+- [nlohmann-json](https://github.com/nlohmann/json)
+- [pahomqtt](https://github.com/eclipse-paho/paho.mqtt.c)
+- [pahomqttcpp](https://github.com/eclipse-paho/paho.mqtt.cpp)
+- [zlib](https://github.com/madler/zlib)
+- [ba-logger](https://github.com/bringauto/ba-logger)
+- [fleet-protocol-interface](https://github.com/bringauto/fleet-protocol)
+- [fleet-protocol-cpp](https://github.com/bringauto/fleet-protocol-cpp)
+- [aeron](https://github.com/aeron-io/aeron)
+- [async-function-execution](https://github.com/bringauto/async-function-execution)
 - g++ >= 10 or other compiler with c++23 support
+
+For exact dependency versions used in the build, see [cmake/Dependencies.cmake](cmake/Dependencies.cmake).
 
 ## Build
 ```

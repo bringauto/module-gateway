@@ -48,7 +48,7 @@ void ModuleManagerLibraryHandlerAsync::loadLibrary(const std::filesystem::path &
 		if(aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::getModuleNumberAsync).has_value()) {
 			return;
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds { 10 });
+		std::this_thread::sleep_for(settings::AeronClientConstants::module_binary_poll_interval);
 	}
 	throw std::runtime_error { "Module binary " + moduleBinaryPath_.string() + " did not become ready within startup timeout" };
 }
