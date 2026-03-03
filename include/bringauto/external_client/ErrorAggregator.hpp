@@ -1,6 +1,6 @@
 #pragma once
 
-#include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
+#include <bringauto/modules/IModuleManagerLibraryHandler.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
 
 #include <filesystem>
@@ -25,7 +25,7 @@ public:
 	 * @return OK if initialization was successful
 	 * @return NOT_OK if an error occurred
 	 */
-	int init_error_aggregator(const std::shared_ptr <modules::ModuleManagerLibraryHandler> &library);
+	int init_error_aggregator(const std::shared_ptr <modules::IModuleManagerLibraryHandler> &library);
 
 	/**
 	 * @short Clean up.
@@ -111,7 +111,7 @@ private:
 		modules::Buffer lastStatus {};
 	};
 
-	std::shared_ptr <modules::ModuleManagerLibraryHandler> module_ {};
+	std::shared_ptr <modules::IModuleManagerLibraryHandler> module_ {};
 
 	/**
 	 * @brief Map of devices states, key is device identification converted to string

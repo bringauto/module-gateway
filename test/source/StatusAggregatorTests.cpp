@@ -1,5 +1,7 @@
 #include <StatusAggregatorTests.hpp>
 #include <testing_utils/DeviceIdentificationHelper.h>
+#include <bringauto/modules/ModuleManagerLibraryHandlerLocal.hpp>
+
 #include <fleet_protocol/module_gateway/error_codes.h>
 
 
@@ -41,7 +43,7 @@ void StatusAggregatorTests::remove_device_from_status_aggregator(){
 
 void StatusAggregatorTests::SetUp(){
 	context_ = std::make_shared<structures::GlobalContext>();
-	libHandler_ = std::make_shared<modules::ModuleManagerLibraryHandler>();
+	libHandler_ = std::make_shared<modules::ModuleManagerLibraryHandlerLocal>();
 	libHandler_->loadLibrary(PATH_TO_MODULE);
 	statusAggregator_ = std::make_unique<modules::StatusAggregator>(context_, libHandler_);
 	statusAggregator_->init_status_aggregator();
@@ -59,7 +61,7 @@ TEST_F(StatusAggregatorTests, init_status_aggregator_ok) {
 }
 
 TEST_F(StatusAggregatorTests, init_status_aggregator_bad_path) {
-	auto libHandler = std::make_shared<modules::ModuleManagerLibraryHandler>();
+	auto libHandler = std::make_shared<modules::ModuleManagerLibraryHandlerLocal>();
 	EXPECT_THROW(libHandler->loadLibrary(WRONG_PATH_TO_MODULE), std::runtime_error);
 }
 
@@ -94,7 +96,7 @@ TEST_F(StatusAggregatorTests, add_status_to_aggregator_status_register_device){
 }
 
 TEST_F(StatusAggregatorTests, add_status_to_aggregator_without_aggregation){
-	auto libHandler = std::make_shared<modules::ModuleManagerLibraryHandler>();
+	auto libHandler = std::make_shared<modules::ModuleManagerLibraryHandlerLocal>();
 	libHandler->loadLibrary(PATH_TO_MODULE);
 	add_status_to_aggregator();
 	auto size = std::string(BUTTON_PRESSED).size();

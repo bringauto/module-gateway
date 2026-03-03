@@ -20,6 +20,7 @@
     "1000": "./libmission-module-gateway-shared.so"
 
   },
+  "module-binary-path": "",
   "external-connection" : {
     "company" : "bringauto",
     "vehicle-name" : "virtual_vehicle",

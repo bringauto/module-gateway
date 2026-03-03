@@ -58,9 +58,15 @@ int main(int argc, char **argv) {
 		std::cerr << "[ERROR] Error occurred during reading configuration: " << e.what() << std::endl;
 		return 1;
 	}
+
 	bas::ModuleLibrary moduleLibrary {};
+
 	try {
-		moduleLibrary.loadLibraries(context->settings->modulePaths);
+		if(context->settings->moduleBinaryPath.empty()) {
+			moduleLibrary.loadLibraries(context->settings->modulePaths);
+		} else {
+			moduleLibrary.loadLibraries(context->settings->modulePaths, context->settings->moduleBinaryPath);
+		}
 		moduleLibrary.initStatusAggregators(context);
 	} catch(std::exception &e) {
 		std::cerr << "[ERROR] Error occurred during module initialization: " << e.what() << std::endl;

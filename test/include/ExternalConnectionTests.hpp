@@ -2,7 +2,6 @@
 
 #include <bringauto/external_client/connection/ExternalConnection.hpp>
 #include <bringauto/common_utils/ProtobufUtils.hpp>
-#include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
 #include <bringauto/settings/LoggerId.hpp>
 #include <testing_utils/CommunicationMock.hpp>
 

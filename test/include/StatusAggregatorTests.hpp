@@ -4,7 +4,7 @@
 #include <bringauto/settings/LoggerId.hpp>
 #include <libbringauto_logger/bringauto/logging/Logger.hpp>
 #include <libbringauto_logger/bringauto/logging/ConsoleSink.hpp>
-#include <bringauto/modules/ModuleManagerLibraryHandler.hpp>
+#include <bringauto/modules/IModuleManagerLibraryHandler.hpp>
 
 #include <gtest/gtest.h>
 
@@ -39,7 +39,7 @@ protected:
 
 	std::unique_ptr <bringauto::modules::StatusAggregator> statusAggregator_ {};
 
-	std::shared_ptr<bringauto::modules::ModuleManagerLibraryHandler> libHandler_ {};
+	std::shared_ptr<bringauto::modules::IModuleManagerLibraryHandler> libHandler_ {};
 
 #ifdef DEBUG
 	static constexpr const char* PATH_TO_MODULE { "./test/lib/example-module/libexample-module-gateway-sharedd.so" };

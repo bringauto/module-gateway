@@ -28,12 +28,21 @@ connection is broken and as soon as the connection is up, then error aggregated 
 
 - [cmlib](https://github.com/cmakelib/cmakelib)
 
-- [protobuf](https://github.com/protocolbuffers/protobuf/tree/main/src) >= v3.21.12
-- [cxxopts](https://github.com/jarro2783/cxxopts) >= v3.0.0
-- [boost](https://github.com/boostorg/boost) >= v1.74.0
-- [nlohmann-json](https://github.com/nlohmann/json) >= v3.2.0
-- [ba-logger](https://github.com/bringauto/ba-logger) >= v1.2.0
-- g++ >= 10 or other compiler with c++20 support
+- [protobuf](https://github.com/protocolbuffers/protobuf/tree/main/src)
+- [cxxopts](https://github.com/jarro2783/cxxopts)
+- [boost](https://github.com/boostorg/boost)
+- [nlohmann-json](https://github.com/nlohmann/json)
+- [pahomqtt](https://github.com/eclipse-paho/paho.mqtt.c)
+- [pahomqttcpp](https://github.com/eclipse-paho/paho.mqtt.cpp)
+- [zlib](https://github.com/madler/zlib)
+- [ba-logger](https://github.com/bringauto/ba-logger)
+- [fleet-protocol-interface](https://github.com/bringauto/fleet-protocol)
+- [fleet-protocol-cpp](https://github.com/bringauto/fleet-protocol-cpp)
+- [aeron](https://github.com/aeron-io/aeron)
+- [async-function-execution](https://github.com/bringauto/async-function-execution)
+- g++ >= 10 or other compiler with c++23 support
+
+For exact dependency versions used in the build, see [cmake/Dependencies.cmake](cmake/Dependencies.cmake).
 
 ## Build
 ```
@@ -50,7 +59,7 @@ make
 
 ### Arguments
 
-* required arguments:
+* Required arguments:
   * `-c <string> | --config-path=<string>`path to json configuration file ([Configs Readme](./configs/README.md))
 * All arguments:
   * `-h | --help` print help

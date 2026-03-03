@@ -185,3 +185,21 @@ TEST_F(SettingsParserTests, InvalidProtocol){
 	EXPECT_TRUE(result);
 	EXPECT_TRUE(settingsParser.getSettings()->externalConnectionSettingsList.empty());
 }
+
+/**
+ * @brief Test if modules specified in endpoint missing in module-paths are handled correctly
+ */
+TEST_F(SettingsParserTests, MissingModules){
+	testing_utils::ConfigMock::Config config {};
+	config.module_paths = { {1, "/path/to/lib1.so"}, {2, "/path/to/lib2.so"}, {3, "/path/to/lib3.so"} };
+	config.external_connection.endpoint.modules = { 1, 2, 3, 4};
+
+	bool failed = false;
+	try {
+		parseConfig(config);
+	}catch (std::invalid_argument &e){
+		EXPECT_STREQ(e.what(), "Arguments are not correct.");
+		failed = true;
+	}
+	EXPECT_TRUE(failed);
+}
