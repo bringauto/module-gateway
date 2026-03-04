@@ -22,9 +22,15 @@ void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::string> &li
 			handler = std::make_shared<modules::ModuleManagerLibraryHandlerAsync>(moduleBinaryPath);
 		}
 		handler->loadLibrary(path);
-		if(handler->getModuleNumber() != key) {
-			settings::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path, key, handler->getModuleNumber());
-			throw std::runtime_error {"Module numbers from config are not corresponding to binaries. Unable to continue. Fix configuration file."};
+		if (handler->getModuleNumber() != key)
+		{
+			settings::Logger::logError(
+				"Module number from shared library {} does not match the module number from config. Config: {},"
+				" binary: {}.", path, key, handler->getModuleNumber());
+			throw std::runtime_error{
+				"Module numbers from config are not corresponding to binaries. Unable to continue."
+				" Fix configuration file."
+			};
 		}
 		if(auto [it, inserted] = moduleLibraryHandlers.try_emplace(key, handler); !inserted) {
 			settings::Logger::logWarning("Module with number: {} is already registered, skipping duplicate", key);
