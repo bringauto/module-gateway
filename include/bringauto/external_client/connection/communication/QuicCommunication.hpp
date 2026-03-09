@@ -275,7 +275,7 @@ namespace bringauto::external_client::connection::communication {
 		 * @param event Connection event information provided by MsQuic.
 		 * @return QUIC_STATUS_SUCCESS to indicate successful event handling.
 		 */
-		static QUIC_STATUS QUIC_API connectionCallback(HQUIC connection, void *context, QUIC_CONNECTION_EVENT *event);
+		static QUIC_STATUS QUIC_API connectionCallback(HQUIC connection, void *context, QUIC_CONNECTION_EVENT *event); // NOSONAR - void* required by QUIC_CONNECTION_CALLBACK C API
 
 		/**
 		 * @brief Handles QUIC stream-level events.
@@ -291,7 +291,7 @@ namespace bringauto::external_client::connection::communication {
 		 * @param event Stream event information provided by MsQuic.
 		 * @return QUIC_STATUS_SUCCESS to indicate successful event handling.
 		 */
-		static QUIC_STATUS QUIC_API streamCallback(HQUIC stream, void *context, QUIC_STREAM_EVENT *event);
+		static QUIC_STATUS QUIC_API streamCallback(HQUIC stream, void *context, QUIC_STREAM_EVENT *event); // NOSONAR - void* required by QUIC_STREAM_CALLBACK C API
 
 		/**
 		 * @brief Sender thread main loop for outbound messages.

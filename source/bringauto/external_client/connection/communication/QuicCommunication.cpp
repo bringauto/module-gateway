@@ -206,7 +206,7 @@ namespace bringauto::external_client::connection::communication {
 	}
 
 	void QuicCommunication::stop() {
-		closeConnection();
+		QuicCommunication::closeConnection();
 		closeConfiguration();
 		closeRegistration();
 		closeMsQuic();
@@ -271,7 +271,7 @@ namespace bringauto::external_client::connection::communication {
 		settings::Logger::logDebug("[quic] [stream {}] Message sent", streamId ? *streamId : 0);
 	}
 
-	QUIC_STATUS QUIC_API QuicCommunication::connectionCallback(HQUIC connection, void *context,
+	QUIC_STATUS QUIC_API QuicCommunication::connectionCallback(HQUIC connection, void *context, // NOSONAR - void* required by QUIC_CONNECTION_CALLBACK C API
 	                                                           QUIC_CONNECTION_EVENT *event) {
 		auto *self = static_cast<QuicCommunication *>(context);
 
@@ -325,7 +325,7 @@ namespace bringauto::external_client::connection::communication {
 		return QUIC_STATUS_SUCCESS;
 	}
 
-	QUIC_STATUS QUIC_API QuicCommunication::streamCallback(HQUIC stream, void *context, QUIC_STREAM_EVENT *event) {
+	QUIC_STATUS QUIC_API QuicCommunication::streamCallback(HQUIC stream, void *context, QUIC_STREAM_EVENT *event) { // NOSONAR - void* required by QUIC_STREAM_CALLBACK C API
 		auto *self = static_cast<QuicCommunication *>(context);
 		auto streamId = self->getStreamId(stream);
 

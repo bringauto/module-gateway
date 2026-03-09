@@ -66,7 +66,6 @@ FIND_PACKAGE(msquic CONFIG REQUIRED)
 FILE(GLOB_RECURSE source_files "source/*")
 ADD_LIBRARY(module-gateway-lib STATIC "${source_files}")
 TARGET_INCLUDE_DIRECTORIES(module-gateway-lib PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
-ADD_SUBDIRECTORY(source/bringauto/modules/memory_management)
 TARGET_LINK_LIBRARIES(module-gateway-lib PUBLIC
                         Boost::headers
                         protobuf::libprotobuf

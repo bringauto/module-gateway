@@ -5,7 +5,11 @@
 #include <bringauto/async_function_execution/AsyncFunctionExecutor.hpp>
 #include <boost/process.hpp>
 
+#include <cstdint>
+#include <cstring>
 #include <mutex>
+#include <span>
+#include <vector>
 
 
 
@@ -14,40 +18,49 @@ namespace bringauto::modules {
 
 struct ConvertibleBufferReturn final {
 	int returnCode {};
-	struct ::buffer buffer {};
+	std::vector<uint8_t> data {};
+
 	ConvertibleBufferReturn() = default;
-	ConvertibleBufferReturn(int code, struct ::buffer buff) : returnCode(code), buffer(buff) {}
+	ConvertibleBufferReturn(int code, struct ::buffer buff)
+		: returnCode(code),
+		  data(static_cast<uint8_t *>(buff.data),
+			   static_cast<uint8_t *>(buff.data) + buff.size_in_bytes) {}
 
 	std::span<const uint8_t> serialize() const {
-		size_t total_size = sizeof(int) + buffer.size_in_bytes;
-		uint8_t* data = new uint8_t[total_size];
-		std::memcpy(data, &returnCode, sizeof(int));
-		std::memcpy(data + sizeof(int), buffer.data, buffer.size_in_bytes);
-		return {data, total_size};
+		serialized_.resize(sizeof(int) + data.size());
+		std::memcpy(serialized_.data(), &returnCode, sizeof(int));
+		if(!data.empty()) {
+			std::memcpy(serialized_.data() + sizeof(int), data.data(), data.size());
+		}
+		return serialized_;
 	}
 	void deserialize(std::span<const uint8_t> bytes) {
-		auto size = bytes.size();
-		if (size < sizeof(int)) return;
+		if(bytes.size() < sizeof(int)) { return; }
 		std::memcpy(&returnCode, bytes.data(), sizeof(int));
-		size -= sizeof(int);
-		allocate(&buffer, size);
-		std::memcpy(buffer.data, bytes.data() + sizeof(int), size);
-		buffer.size_in_bytes = size;
+		auto payload = bytes.subspan(sizeof(int));
+		data.assign(payload.begin(), payload.end());
 	}
+
+private:
+	mutable std::vector<uint8_t> serialized_ {};
 };
 
 struct ConvertibleBuffer final {
 	struct ::buffer buffer {};
 	ConvertibleBuffer() = default;
-	ConvertibleBuffer(struct ::buffer buff) : buffer(buff) {}
-	
+	explicit ConvertibleBuffer(struct ::buffer buff) : buffer(buff) {}
+
 	std::span<const uint8_t> serialize() const {
 		return std::span {reinterpret_cast<const uint8_t *>(buffer.data), buffer.size_in_bytes};
 	}
 	void deserialize(std::span<const uint8_t> bytes) {
-		buffer.data = const_cast<uint8_t *>(bytes.data());
-		buffer.size_in_bytes = bytes.size();
+		data_.assign(bytes.begin(), bytes.end());
+		buffer.data = data_.data();
+		buffer.size_in_bytes = data_.size();
 	}
+
+private:
+	std::vector<uint8_t> data_ {};
 };
 
 inline static const async_function_execution::FunctionDefinition getModuleNumberAsync {
@@ -177,19 +190,13 @@ public:
 
 private:
 
-	int allocate(struct buffer *buffer_pointer, size_t size_in_bytes) const;
-
-	void deallocate(struct buffer *buffer) const;
-
 	/**
-	 * @brief Constructs a buffer with the same raw c buffer as provided
+	 * @brief Constructs a buffer containing a copy of the given data
 	 *
-	 * @param buffer c buffer to be used
+	 * @param data span of bytes to copy into the buffer
 	 * @return a new Buffer object
 	 */
-	Buffer constructBufferByTakeOwnership(struct ::buffer& buffer);
-
-	std::function<void(struct buffer *)> deallocate_ {};
+	Buffer constructBuffer(std::span<const uint8_t> data);
 
 	/// Path to the module binary
 	std::string moduleBinaryPath_ {};

@@ -11,19 +11,19 @@ namespace bringauto::settings {
 	) {
 		QUIC_SETTINGS quic{};
 
-		if (auto value = getOptionalUint(settings, "IdleTimeoutMs")) {
+		if (auto value = getOptionalUint(settings, "IdleTimeoutMs"); value.has_value()) {
 			settings::Logger::logDebug("[quic] [settings] IdleTimeoutMs settings loaded");
 			quic.IdleTimeoutMs = *value;
 			quic.IsSet.IdleTimeoutMs = TRUE;
 		}
 
-		if (auto value = getOptionalUint(settings, "HandshakeIdleTimeoutMs")) {
+		if (auto value = getOptionalUint(settings, "HandshakeIdleTimeoutMs"); value.has_value()) {
 			settings::Logger::logDebug("[quic] [settings] HandshakeIdleTimeoutMs settings loaded");
 			quic.HandshakeIdleTimeoutMs = *value;
 			quic.IsSet.HandshakeIdleTimeoutMs = TRUE;
 		}
 
-		if (auto value = getOptionalUint(settings, "DisconnectTimeoutMs")) {
+		if (auto value = getOptionalUint(settings, "DisconnectTimeoutMs"); value.has_value()) {
 			settings::Logger::logDebug("[quic] [settings] DisconnectTimeoutMs settings loaded");
 			quic.DisconnectTimeoutMs = *value;
 			quic.IsSet.DisconnectTimeoutMs = TRUE;
