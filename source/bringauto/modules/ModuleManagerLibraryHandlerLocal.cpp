@@ -28,7 +28,7 @@ ModuleManagerLibraryHandlerLocal::~ModuleManagerLibraryHandlerLocal() {
 }
 
 void ModuleManagerLibraryHandlerLocal::loadLibrary(const std::filesystem::path &path) {
-	module_ = dlmopen(LM_ID_NEWLM, path.c_str(), RTLD_LAZY);
+	module_ = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
 	if(module_ == nullptr) {
 		throw std::runtime_error {"Unable to load library " + path.string() + ": " + dlerror()};
 	}
