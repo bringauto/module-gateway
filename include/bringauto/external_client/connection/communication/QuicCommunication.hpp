@@ -7,6 +7,7 @@
 #include <nlohmann/json.hpp>
 
 #include <condition_variable>
+#include <filesystem>
 #include <queue>
 #include <thread>
 
@@ -92,11 +93,11 @@ namespace bringauto::external_client::connection::communication {
 		QUIC_BUFFER alpnBuffer_{};
 
 		/// Path to the client certificate file
-		std::string certFile_;
+		std::filesystem::path certFile_;
 		/// Path to the client private key file
-		std::string keyFile_;
+		std::filesystem::path keyFile_;
 		/// Path to the CA certificate file
-		std::string caFile_;
+		std::filesystem::path caFile_;
 
 		/// Atomic state of the connection used for synchronization across threads
 		std::atomic<ConnectionState> connectionState_{ConnectionState::NOT_CONNECTED};

@@ -164,7 +164,7 @@ void SettingsParser::fillInternalServerSettings(const nlohmann::json &file) cons
 void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) const {
 	for(auto &[key, val]: file[std::string(Constants::MODULE_PATHS)].items()) {
 		try {
-			val.get_to(settings_->modulePaths[stoi(key)]);
+			settings_->modulePaths[stoi(key)] = val.get<std::string>();
 		} catch(const std::invalid_argument &) {
 			throw std::invalid_argument { "Module path key '" + key + "' is not a valid integer module number" };
 		} catch(const std::out_of_range &) {
@@ -172,9 +172,9 @@ void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) const {
 		}
 	}
 	if(file.contains(std::string(Constants::MODULE_BINARY_PATH))) {
-		file.at(std::string(Constants::MODULE_BINARY_PATH)).get_to(settings_->moduleBinaryPath);
+		settings_->moduleBinaryPath = file.at(std::string(Constants::MODULE_BINARY_PATH)).get<std::string>();
 	}
-	file.at(std::string(Constants::MODULE_BINARY_PATH)).get_to(settings_->moduleBinaryPath);
+	settings_->moduleBinaryPath = file.at(std::string(Constants::MODULE_BINARY_PATH)).get<std::string>();
 }
 
 void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) const {
@@ -234,7 +234,7 @@ std::string SettingsParser::serializeToJson() const {
 
 	settingsAsJson[std::string(Constants::INTERNAL_SERVER_SETTINGS)][std::string(Constants::PORT)] = settings_->port;
 	for(const auto &[key, val]: settings_->modulePaths) {
-		settingsAsJson[std::string(Constants::MODULE_PATHS)][std::to_string(key)] = val;
+		settingsAsJson[std::string(Constants::MODULE_PATHS)][std::to_string(key)] = val.string();
 	}
 
 	settingsAsJson[std::string(Constants::EXTERNAL_CONNECTION)][std::string(Constants::COMPANY)] = settings_->company;

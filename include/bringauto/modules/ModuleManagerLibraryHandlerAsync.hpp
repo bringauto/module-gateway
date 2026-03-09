@@ -122,7 +122,7 @@ inline static const async_function_execution::FunctionDefinition commandDataVali
  */
 class ModuleManagerLibraryHandlerAsync : public IModuleManagerLibraryHandler {
 public:
-	explicit ModuleManagerLibraryHandlerAsync(const std::string &moduleBinaryPath);
+	explicit ModuleManagerLibraryHandlerAsync(const std::filesystem::path &moduleBinaryPath);
 
 	~ModuleManagerLibraryHandlerAsync() override;
 
@@ -199,7 +199,7 @@ private:
 	Buffer constructBuffer(std::span<const uint8_t> data);
 
 	/// Path to the module binary
-	std::string moduleBinaryPath_ {};
+	std::filesystem::path moduleBinaryPath_ {};
 	/// Process of the module binary
 	boost::process::child moduleBinaryProcess_ {};
 	/// TODO find a way to not need this

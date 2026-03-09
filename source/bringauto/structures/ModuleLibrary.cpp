@@ -13,7 +13,7 @@ ModuleLibrary::~ModuleLibrary() {
 				  [](auto &pair) { pair.second->destroy_status_aggregator(); });
 }
 
-void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::string> &libPaths, const std::string &moduleBinaryPath) {
+void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem::path> &libPaths, const std::filesystem::path &moduleBinaryPath) {
 	std::shared_ptr<modules::IModuleManagerLibraryHandler> handler;
 	for(auto const &[key, path]: libPaths) {
 		if (moduleBinaryPath.empty()) {
@@ -26,7 +26,7 @@ void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::string> &li
 		{
 			settings::Logger::logError(
 				"Module number from shared library {} does not match the module number from config. Config: {},"
-				" binary: {}.", path, key, handler->getModuleNumber());
+				" binary: {}.", path.string(), key, handler->getModuleNumber());
 			throw std::runtime_error{ // NOSONAR - generic exception is sufficient, error is unrecoverable and always propagates to top level
 				"Module numbers from config are not corresponding to binaries. Unable to continue."
 				" Fix configuration file."
