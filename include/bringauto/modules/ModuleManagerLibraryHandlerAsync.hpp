@@ -9,6 +9,7 @@
 #include <cstring>
 #include <mutex>
 #include <span>
+#include <stdexcept>
 #include <vector>
 
 
@@ -51,7 +52,7 @@ struct ConvertibleBuffer final {
 	explicit ConvertibleBuffer(struct ::buffer buff) : buffer(buff) {}
 
 	std::span<const uint8_t> serialize() const {
-		return std::span {reinterpret_cast<const uint8_t *>(buffer.data), buffer.size_in_bytes};
+		return std::span {static_cast<const uint8_t *>(buffer.data), buffer.size_in_bytes};
 	}
 	void deserialize(std::span<const uint8_t> bytes) {
 		data_.assign(bytes.begin(), bytes.end());
@@ -115,6 +116,14 @@ inline static const async_function_execution::FunctionDefinition commandDataVali
 	async_function_execution::FunctionId { 8 },
 	async_function_execution::Return { int {} },
 	async_function_execution::Arguments { ConvertibleBuffer {}, uint32_t {} }
+};
+
+/**
+ * @brief Exception thrown when the module binary fails to start or become ready
+ */
+class ModuleBinaryException : public std::runtime_error {
+public:
+	using std::runtime_error::runtime_error;
 };
 
 /**
