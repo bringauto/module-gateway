@@ -2,7 +2,6 @@
 
 #include <bringauto/modules/IModuleManagerLibraryHandler.hpp>
 
-#include <bringauto/async_function_execution/AsyncFunctionExecutor.hpp>
 #include <boost/process.hpp>
 
 #include <cstdint>
@@ -62,60 +61,6 @@ struct ConvertibleBuffer final {
 
 private:
 	std::vector<uint8_t> data_ {};
-};
-
-inline static const async_function_execution::FunctionDefinition getModuleNumberAsync {
-	async_function_execution::FunctionId { 0 },
-	async_function_execution::Return { int {} },
-	async_function_execution::Arguments {}
-};
-
-inline static const async_function_execution::FunctionDefinition isDeviceTypeSupportedAsync {
-	async_function_execution::FunctionId { 1 },
-	async_function_execution::Return { int {} },
-	async_function_execution::Arguments { uint32_t {} }
-};
-
-inline static const async_function_execution::FunctionDefinition sendStatusConditionAsync {
-	async_function_execution::FunctionId { 2 },
-	async_function_execution::Return { int {} },
-	async_function_execution::Arguments { ConvertibleBuffer {}, ConvertibleBuffer {}, uint32_t {} }
-};
-
-inline static const async_function_execution::FunctionDefinition generateCommandAsync {
-	async_function_execution::FunctionId { 3 },
-	async_function_execution::Return { ConvertibleBufferReturn {} },
-	async_function_execution::Arguments { ConvertibleBuffer {}, ConvertibleBuffer {}, uint32_t {} }
-};
-
-inline static const async_function_execution::FunctionDefinition aggregateStatusAsync {
-	async_function_execution::FunctionId { 4 },
-	async_function_execution::Return { ConvertibleBufferReturn {} },
-	async_function_execution::Arguments { ConvertibleBuffer {}, ConvertibleBuffer {}, uint32_t {} }
-};
-
-inline static const async_function_execution::FunctionDefinition aggregateErrorAsync {
-	async_function_execution::FunctionId { 5 },
-	async_function_execution::Return { ConvertibleBufferReturn {} },
-	async_function_execution::Arguments { ConvertibleBuffer {}, ConvertibleBuffer {}, uint32_t {} }
-};
-
-inline static const async_function_execution::FunctionDefinition generateFirstCommandAsync {
-	async_function_execution::FunctionId { 6 },
-	async_function_execution::Return { ConvertibleBufferReturn {} },
-	async_function_execution::Arguments { uint32_t {} }
-};
-
-inline static const async_function_execution::FunctionDefinition statusDataValidAsync {
-	async_function_execution::FunctionId { 7 },
-	async_function_execution::Return { int {} },
-	async_function_execution::Arguments { ConvertibleBuffer {}, uint32_t {} }
-};
-
-inline static const async_function_execution::FunctionDefinition commandDataValidAsync {
-	async_function_execution::FunctionId { 8 },
-	async_function_execution::Return { int {} },
-	async_function_execution::Arguments { ConvertibleBuffer {}, uint32_t {} }
 };
 
 /**
