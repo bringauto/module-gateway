@@ -1,4 +1,5 @@
 #include <bringauto/modules/ModuleManagerLibraryHandlerLocal.hpp>
+#include <bringauto/modules/library_loader.hpp>
 #include <bringauto/settings/LoggerId.hpp>
 
 #include <fleet_protocol/common_headers/general_error_codes.h>
@@ -28,7 +29,7 @@ ModuleManagerLibraryHandlerLocal::~ModuleManagerLibraryHandlerLocal() {
 }
 
 void ModuleManagerLibraryHandlerLocal::loadLibrary(const std::filesystem::path &path) {
-	module_ = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
+	module_ = library_loader::load(path);
 	if(module_ == nullptr) {
 		throw std::runtime_error {"Unable to load library " + path.string() + ": " + dlerror()};
 	}
