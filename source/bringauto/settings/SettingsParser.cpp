@@ -118,7 +118,6 @@ bool SettingsParser::areSettingsCorrect() const {
 			}
 		}
 	}
-
 	return isCorrect;
 }
 
@@ -174,7 +173,6 @@ void SettingsParser::fillModulePathsSettings(const nlohmann::json &file) const {
 	if(file.contains(std::string(Constants::MODULE_BINARY_PATH))) {
 		settings_->moduleBinaryPath = file.at(std::string(Constants::MODULE_BINARY_PATH)).get<std::string>();
 	}
-	settings_->moduleBinaryPath = file.at(std::string(Constants::MODULE_BINARY_PATH)).get<std::string>();
 }
 
 void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) const {
@@ -210,6 +208,10 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 		
 		if(!settingsName.empty() && endpoint.find(settingsName) != endpoint.end()) {
 			for(auto &[key, val]: endpoint[settingsName].items()) {
+				if (val.is_string()) {
+					externalConnectionSettings.protocolSettings[key] = val.get<std::string>();
+					continue;
+				}
 				externalConnectionSettings.protocolSettings[key] = to_string(val);
 			}
 		}
@@ -262,7 +264,11 @@ std::string SettingsParser::serializeToJson() const {
 				break;
 		}
 		for(const auto &[key, val]: endpoint.protocolSettings) {
-			endpointAsJson[settingsName][key] = nlohmann::json::parse(val);
+			if (nlohmann::json::accept(val)) {
+				endpointAsJson[settingsName][key] = nlohmann::json::parse(val);
+				continue;
+			}
+			endpointAsJson[settingsName][key] = val;
 		}
 		endpoints.push_back(endpointAsJson);
 	}
