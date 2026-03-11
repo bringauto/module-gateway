@@ -24,7 +24,8 @@ public:
 
 	int isDeviceTypeSupported(unsigned int device_type) override;
 
-	int	sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) const override;
+	int	sendStatusCondition(const Buffer& current_status, const Buffer& new_status,
+	                        unsigned int device_type) const override;
 
 	int generateCommand(Buffer &generated_command, const Buffer &new_status,
 						const Buffer &current_status, const Buffer &current_command,
@@ -35,7 +36,7 @@ public:
 
 	/**
 	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
-	 * 
+	 *
 	 * @see fleet-protocol/lib/module_maintainer/module_gateway/include/module_manager.h
 	 */
 	int	aggregateError(Buffer &error_message, const Buffer &current_error_message, const Buffer &status,
@@ -43,7 +44,7 @@ public:
 
 	/**
 	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
-	 * 
+	 *
 	 * @see fleet-protocol/lib/module_maintainer/module_gateway/include/module_manager.h
 	 */
 	int generateFirstCommand(Buffer &default_command, unsigned int device_type) override;

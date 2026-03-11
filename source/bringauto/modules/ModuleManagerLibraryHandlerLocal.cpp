@@ -76,7 +76,8 @@ int ModuleManagerLibraryHandlerLocal::isDeviceTypeSupported(unsigned int device_
 
 int ModuleManagerLibraryHandlerLocal::sendStatusCondition(const Buffer &current_status,
 														  const Buffer &new_status,
-														  unsigned int device_type) const {
+														  unsigned int device_type)
+const {
 	struct ::buffer current_status_raw_buffer {};
 	struct ::buffer new_status_raw_buffer {};
 

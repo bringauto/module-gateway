@@ -29,31 +29,38 @@ static fp_async::ModuleFunctionExecutor aeronClient {
 	fp_async::moduleFunctionList
 };
 
-ModuleManagerLibraryHandlerAsync::ModuleManagerLibraryHandlerAsync(const std::filesystem::path &moduleBinaryPath) :
+ModuleManagerLibraryHandlerAsync::ModuleManagerLibraryHandlerAsync(const std::filesystem::path &moduleBinaryPath, int moduleNumber) :
 		moduleBinaryPath_ { moduleBinaryPath } {
-	aeronClient.connect();
+	aeronClient.connect(moduleNumber);
 }
 
 ModuleManagerLibraryHandlerAsync::~ModuleManagerLibraryHandlerAsync() {
+	if (!moduleBinaryProcess_.valid()) {
+		return;
+	}
+	::kill(moduleBinaryProcess_.id(), SIGTERM);
 	try {
-		if (moduleBinaryProcess_.valid()) {
-			::kill(moduleBinaryProcess_.id(), SIGTERM);
-			moduleBinaryProcess_.wait();
-		}
-	} catch (...) { /* destructor must not throw */ }
+		moduleBinaryProcess_.wait();
+	} catch (const boost::process::process_error&) {
+		// wait() failed — process already reaped or unreachable. Nothing to do.
+	}
 }
 
 void ModuleManagerLibraryHandlerAsync::loadLibrary(const std::filesystem::path &path) {
-	moduleBinaryProcess_ = boost::process::child { moduleBinaryPath_.string(), "-m", path.string() };
+	try {
+		moduleBinaryProcess_ = boost::process::child { moduleBinaryPath_.string(), "-m", path.string() };
+	} catch (const boost::process::process_error& e) {
+		throw ModuleBinaryException { "Failed to start module binary " + moduleBinaryPath_.string() + ": " + e.what() };
+	}
 	if (!moduleBinaryProcess_.valid()) {
 		throw ModuleBinaryException { "Failed to start module binary " + moduleBinaryPath_.string() };
 	}
 	const auto deadline = std::chrono::steady_clock::now() + settings::AeronClientConstants::aeron_client_startup_timeout;
-	while(!aeronClient.callFunc(fp_async::getModuleNumberAsync).has_value()) {
-		if(!moduleBinaryProcess_.running()) {
+	while (!aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::getModuleNumberAsync).has_value()) {
+		if (!moduleBinaryProcess_.running()) {
 			throw ModuleBinaryException { "Module binary terminated before becoming ready: " + moduleBinaryPath_.string() };
 		}
-		if(std::chrono::steady_clock::now() >= deadline) {
+		if (std::chrono::steady_clock::now() >= deadline) {
 			throw ModuleBinaryException { "Module binary did not respond within startup timeout: " + moduleBinaryPath_.string() };
 		}
 		std::this_thread::sleep_for(settings::AeronClientConstants::module_binary_poll_interval);
@@ -72,8 +79,9 @@ int ModuleManagerLibraryHandlerAsync::isDeviceTypeSupported(unsigned int device_
 int ModuleManagerLibraryHandlerAsync::sendStatusCondition(const Buffer &current_status,
 														  const Buffer &new_status,
 													 	  unsigned int device_type) const {
-	ConvertibleBuffer current_status_raw_buffer;
-	ConvertibleBuffer new_status_raw_buffer;
+	std::lock_guard lock { tmpMutex_ };
+	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer current_status_raw_buffer;
+	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer new_status_raw_buffer;
 
 	if (current_status.isAllocated()) {
 		current_status_raw_buffer = ConvertibleBuffer{current_status.getStructBuffer()};
