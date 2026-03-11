@@ -50,15 +50,15 @@ public:
 				int port { 1883 };
 				
 				std::unordered_map<std::string, std::string> mqtt_settings {
-					{ "ssl", "\"false\"" },
-					{ "ca-file", "\"ca.pem\"" },
-					{ "client-cert", "\"client.pem\"" },
-					{ "client", "\"key.pem\"" }
+					{ "ssl", "false" },
+					{ "ca-file", "ca.pem" },
+					{ "client-cert", "client.pem" },
+					{ "client", "key.pem" }
 				};
 				std::string mqttSettingsToString() const {
 					std::string result = "";
 					for (auto [key, value] : mqtt_settings) {
-						result += std::format("\"{}\": {},\n", key, value);
+						result += std::format("\"{}\": \"{}\",\n", key, value);
 					}
 					if (!result.empty()) {
 						result.pop_back();
