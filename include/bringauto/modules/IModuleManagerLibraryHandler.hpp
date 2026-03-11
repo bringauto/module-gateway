@@ -6,7 +6,6 @@
 
 #include <functional>
 #include <filesystem>
-#include <functional>
 
 
 
@@ -51,7 +50,8 @@ public:
 	 * @param device_type device type
 	 * @return OK if the new status should be aggregated, NOT_OK otherwise
 	 */
-	virtual int sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) const = 0;
+	virtual int sendStatusCondition(const Buffer& current_status, const Buffer& new_status,
+	                                unsigned int device_type) const = 0;
 
 	/**
 	 * @brief After executing the respective module function, an error might be thrown when allocating the buffer.
