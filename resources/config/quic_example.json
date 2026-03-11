@@ -1,0 +1,36 @@
+{
+  "logging": {
+    "console": { "level": "DEBUG", "use": true },
+    "file": { "level": "DEBUG", "use": false, "path": "./log" }
+  },
+
+  "internal-server-settings": { "port": 1636 },
+
+  "module-paths": {
+    "1": "/home/bringauto/modules/mission_module/lib/libmission-module-gateway-shared.so",
+    "2": "/home/bringauto/modules/io_module/lib/libio-module-gateway-shared.so",
+    "3": "/home/bringauto/modules/transparent_module/lib/libtransparent-module-gateway-shared.so"
+  },
+
+  "module-binary-path": "",
+
+  "external-connection" : {
+    "company" : "bringauto",
+    "vehicle-name" : "virtual_vehicle",
+    "endpoints" : [
+      {
+        "protocol-type" : "QUIC",
+        "server-ip": "127.0.0.1",
+        "port": 6121,
+        "quic-settings": {
+          "ca-file" : "build/certs/ca.pem",
+          "client-cert" : "build/certs/client.pem",
+          "client-key" : "build/certs/client-key.pem",
+	      "alpn" : "sample",
+          "DisconnectTimeoutMs" : 800
+        },
+        "modules": [1,2,3]
+      }
+    ]
+  }
+}

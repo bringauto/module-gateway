@@ -11,7 +11,6 @@
 #include <bringauto/settings/LoggerId.hpp>
 
 #include <InternalProtocol.pb.h>
-#include <libbringauto_logger/bringauto/logging/Logger.hpp>
 #include <libbringauto_logger/bringauto/logging/FileSink.hpp>
 #include <libbringauto_logger/bringauto/logging/ConsoleSink.hpp>
 

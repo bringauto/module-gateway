@@ -17,6 +17,8 @@ enum class ProtocolType {
 	INVALID = -1,
 	/// MQTT protocol via Paho client
 	MQTT,
+	/// QUIC protocol
+	QUIC,
 	/// Dummy protocol for testing; simulates a connection without real I/O.
 	/// NOTE: receiveMessage() always returns nullptr, so any ExternalConnection
 	/// using DUMMY will never complete a connect sequence and will loop reconnecting.

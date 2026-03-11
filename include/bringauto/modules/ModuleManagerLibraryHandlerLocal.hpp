@@ -20,11 +20,11 @@ public:
 	 */
 	void loadLibrary(const std::filesystem::path &path) override;
 
-	int getModuleNumber() override;
+	int getModuleNumber() const override;
 
 	int isDeviceTypeSupported(unsigned int device_type) override;
 
-	int sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) override;
+	int	sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) const override;
 
 	int generateCommand(Buffer &generated_command, const Buffer &new_status,
 						const Buffer &current_status, const Buffer &current_command,
@@ -33,14 +33,24 @@ public:
 	int aggregateStatus(Buffer &aggregated_status, const Buffer &current_status,
 						const Buffer &new_status, unsigned int device_type) override;
 
-	int aggregateError(Buffer &error_message, const Buffer &current_error_message, const Buffer &status,
+	/**
+	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
+	 * 
+	 * @see fleet-protocol/lib/module_maintainer/module_gateway/include/module_manager.h
+	 */
+	int	aggregateError(Buffer &error_message, const Buffer &current_error_message, const Buffer &status,
 					   unsigned int device_type) override;
 
+	/**
+	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
+	 * 
+	 * @see fleet-protocol/lib/module_maintainer/module_gateway/include/module_manager.h
+	 */
 	int generateFirstCommand(Buffer &default_command, unsigned int device_type) override;
 
-	int statusDataValid(const Buffer &status, unsigned int device_type) override;
+	int statusDataValid(const Buffer &status, unsigned int device_type) const override;
 
-	int commandDataValid(const Buffer &command, unsigned int device_type) override;
+	int commandDataValid(const Buffer &command, unsigned int device_type) const override;
 
 	/**
 	 * @brief Constructs a buffer with the given size
