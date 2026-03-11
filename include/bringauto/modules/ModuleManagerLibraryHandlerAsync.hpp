@@ -17,7 +17,7 @@ namespace bringauto::modules {
  */
 class ModuleManagerLibraryHandlerAsync : public IModuleManagerLibraryHandler {
 public:
-	explicit ModuleManagerLibraryHandlerAsync(const std::filesystem::path &moduleBinaryPath);
+	explicit ModuleManagerLibraryHandlerAsync(const std::filesystem::path &moduleBinaryPath, int moduleNumber);
 
 	~ModuleManagerLibraryHandlerAsync() override;
 
@@ -37,7 +37,8 @@ public:
 
 	int isDeviceTypeSupported(unsigned int device_type) override;
 
-	int	sendStatusCondition(const Buffer &current_status, const Buffer &new_status, unsigned int device_type) const override;
+	int	sendStatusCondition(const Buffer& current_status, const Buffer& new_status,
+	                        unsigned int device_type) const override;
 
 	/**
 	 * @short After executing the respective module function, an error might be thrown when allocating the buffer.
@@ -98,7 +99,7 @@ private:
 	/// Process of the module binary
 	boost::process::child moduleBinaryProcess_ {};
 	/// TODO find a way to not need this
-	std::mutex tmpMutex_ {};
+	mutable std::mutex tmpMutex_ {};
 };
 
 }

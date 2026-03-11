@@ -19,7 +19,7 @@ void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem:
 		if (moduleBinaryPath.empty()) {
 			handler = std::make_shared<modules::ModuleManagerLibraryHandlerLocal>();
 		} else {
-			handler = std::make_shared<modules::ModuleManagerLibraryHandlerAsync>(moduleBinaryPath);
+			handler = std::make_shared<modules::ModuleManagerLibraryHandlerAsync>(moduleBinaryPath, key);
 		}
 		handler->loadLibrary(path);
 		if (handler->getModuleNumber() != key)
