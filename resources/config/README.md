@@ -28,18 +28,27 @@ Note: at least one logging sink needs to be used
 * company : company name used as identification in external connection (string)
 * vehicle-name : vehicle name used as identification in external connection (string)
 * endpoints : array of objects listing possible ways to connect to external server
-  - protocol-type : string (only mqtt is supported)
+  - protocol-type : string (only mqtt and quic are supported)
   - server-ip : ip of the external connection (string)
   - port : port of the external connection (int)
   - modules : array of integers that represent module numbers to be used on this connection
-  - mqtt-settings : **only for mqtt**
-    - ssl : if connection requires ssl, bool
-    - ca-file : public trusted certificate file name (string)
-    - client-cert : public certificate chain file name (string)
-    - client-key : private key file name (string)
 
-## Example
+#### mqtt-settings (only for MQTT)
+* ssl : if connection requires ssl, bool
+* ca-file : public trusted certificate file name (string)
+* client-cert : public certificate chain file name (string)
+* client-key : private key file name (string)
 
-[Example](./example.json)
+#### quic-settings (only for QUIC)
+* ca-file : path to the trusted CA certificate file (string)
+* client-cert : path to the client certificate file (string)
+* client-key : path to the client private key file (string)
+* alpn : Application-Layer Protocol Negotiation identifier (string), must match the ALPN configured on the server
+  
+Note: QUIC uses TLS 1.3 internally. All certificate files must be provided in a format supported by MsQuic/OpenSSL.
 
+## Examples
+
+[MQTT Example](./example.json)
+[QUIC Example](./quic_example.json)
 

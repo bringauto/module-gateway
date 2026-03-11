@@ -21,16 +21,9 @@ struct ModuleLibrary {
 	 * @brief Load libraries from paths
 	 *
 	 * @param libPaths paths to the libraries
-	 */
-	void loadLibraries(const std::unordered_map<int, std::filesystem::path> &libPaths);
-
-	/**
-	 * @brief Load libraries from paths
-	 *
-	 * @param libPaths paths to the libraries
 	 * @param moduleBinaryPath path to module binary for async function execution over shared memory
 	 */
-	void loadLibraries(const std::unordered_map<int, std::filesystem::path> &libPaths, const std::filesystem::path &moduleBinaryPath);
+	void loadLibraries(const std::unordered_map<int, std::filesystem::path> &libPaths, const std::filesystem::path &moduleBinaryPath = "");
 
 	/**
 	 * @brief Initialize status aggregators with context

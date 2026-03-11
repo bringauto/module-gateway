@@ -1,4 +1,5 @@
 #include <bringauto/modules/ModuleManagerLibraryHandlerLocal.hpp>
+#include <bringauto/modules/library_loader.hpp>
 #include <bringauto/settings/LoggerId.hpp>
 
 #include <fleet_protocol/common_headers/general_error_codes.h>
@@ -28,7 +29,7 @@ ModuleManagerLibraryHandlerLocal::~ModuleManagerLibraryHandlerLocal() {
 }
 
 void ModuleManagerLibraryHandlerLocal::loadLibrary(const std::filesystem::path &path) {
-	module_ = dlmopen(LM_ID_NEWLM, path.c_str(), RTLD_LAZY);
+	module_ = library_loader::load(path);
 	if(module_ == nullptr) {
 		throw std::runtime_error {"Unable to load library " + path.string() + ": " + dlerror()};
 	}
@@ -65,7 +66,7 @@ void *ModuleManagerLibraryHandlerLocal::checkFunction(const char *functionName) 
 	return function;
 }
 
-int ModuleManagerLibraryHandlerLocal::getModuleNumber() {
+int ModuleManagerLibraryHandlerLocal::getModuleNumber() const {
 	return getModuleNumber_();
 }
 
@@ -75,7 +76,7 @@ int ModuleManagerLibraryHandlerLocal::isDeviceTypeSupported(unsigned int device_
 
 int ModuleManagerLibraryHandlerLocal::sendStatusCondition(const Buffer &current_status,
 														  const Buffer &new_status,
-														  unsigned int device_type) {
+														  unsigned int device_type) const {
 	struct ::buffer current_status_raw_buffer {};
 	struct ::buffer new_status_raw_buffer {};
 
@@ -176,7 +177,7 @@ int ModuleManagerLibraryHandlerLocal::generateFirstCommand(Buffer &default_comma
 	return ret;
 }
 
-int ModuleManagerLibraryHandlerLocal::statusDataValid(const Buffer &status, unsigned int device_type) {
+int ModuleManagerLibraryHandlerLocal::statusDataValid(const Buffer &status, unsigned int device_type) const {
 	struct ::buffer raw_buffer {};
 	if (status.isAllocated()) {
 		raw_buffer = status.getStructBuffer();
@@ -184,7 +185,7 @@ int ModuleManagerLibraryHandlerLocal::statusDataValid(const Buffer &status, unsi
 	return statusDataValid_(raw_buffer, device_type);
 }
 
-int ModuleManagerLibraryHandlerLocal::commandDataValid(const Buffer &command, unsigned int device_type) {
+int ModuleManagerLibraryHandlerLocal::commandDataValid(const Buffer &command, unsigned int device_type) const {
 	struct ::buffer raw_buffer {};
 	if (command.isAllocated()) {
 		raw_buffer = command.getStructBuffer();

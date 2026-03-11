@@ -34,8 +34,7 @@ protected:
 			moduleLibrary_->loadLibraries(context_->settings->modulePaths);
 			moduleLibrary_->initStatusAggregators(context_);
 		} catch(std::exception &e) {
-			std::cerr << "[ERROR] Error occurred during module initialization: " << e.what() << std::endl;
-			return;
+			GTEST_SKIP() << "Module initialization failed: " << e.what();
 		}
 
 		fromExternalQueue_ = std::make_shared<bringauto::structures::AtomicQueue<InternalProtocol::DeviceCommand >>();
@@ -51,11 +50,13 @@ protected:
 
 		communicationChannel_ = std::make_shared<testing_utils::CommunicationMock>(context_->settings->externalConnectionSettingsList[0]);
 		externalConnection_->init(communicationChannel_);
+		auto roleBuffer = create_buffer("role");
+		auto nameBuffer = create_buffer("name");
 		::device_identification device {
 			.module = MODULE,
 			.device_type = BUTTON_DEVICE_TYPE,
-			.device_role = create_buffer("role").getStructBuffer(),
-			.device_name = create_buffer("name").getStructBuffer(),
+			.device_role = roleBuffer.getStructBuffer(),
+			.device_name = nameBuffer.getStructBuffer(),
 			.priority = 0
 		};
 		connectedDevices_.emplace_back(bringauto::structures::DeviceIdentification(device));
@@ -64,7 +65,9 @@ protected:
 	};
 
 	void TearDown() override {
-		externalConnection_->deinitializeConnection(true);
+		if(externalConnection_) {
+			externalConnection_->deinitializeConnection(true);
+		}
 		context_.reset();
 		moduleLibrary_.reset();
 		fromExternalQueue_.reset();

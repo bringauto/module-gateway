@@ -100,7 +100,7 @@ TEST_F(StatusAggregatorTests, add_status_to_aggregator_without_aggregation){
 	libHandler->loadLibrary(PATH_TO_MODULE);
 	add_status_to_aggregator();
 	auto size = std::string(BUTTON_PRESSED).size();
-	auto status_buffer = libHandler->constructBuffer(size);
+	auto status_buffer = libHandler->constructBuffer(size + 1);
 	strcpy(static_cast<char *>(status_buffer.getStructBuffer().data), BUTTON_PRESSED);
 	auto deviceId = testing_utils::DeviceIdentificationHelper::createDeviceIdentification(MODULE, SUPPORTED_DEVICE_TYPE, DEVICE_ROLE, DEVICE_NAME, 10);
 	int ret = statusAggregator_->add_status_to_aggregator(status_buffer, deviceId);

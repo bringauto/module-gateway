@@ -13,33 +13,26 @@ ModuleLibrary::~ModuleLibrary() {
 				  [](auto &pair) { pair.second->destroy_status_aggregator(); });
 }
 
-void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem::path> &libPaths) {
-	std::shared_ptr<modules::IModuleManagerLibraryHandler> handler;
-	for(auto const &[key, path]: libPaths) {
-		handler = std::make_shared<modules::ModuleManagerLibraryHandlerLocal>();
-		handler->loadLibrary(path);
-		if(handler->getModuleNumber() != key) {
-			settings::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path.string(), key, handler->getModuleNumber());
-			throw std::runtime_error {"Module numbers from config are not corresponding to binaries. Unable to continue. Fix configuration file."};
-		}
-		auto [it, inserted] = moduleLibraryHandlers.try_emplace(key, handler);
-		if(!inserted) {
-			settings::Logger::logWarning("Module with number: {} is already registered, skipping duplicate", key);
-		}
-	}
-}
-
 void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem::path> &libPaths, const std::filesystem::path &moduleBinaryPath) {
 	std::shared_ptr<modules::IModuleManagerLibraryHandler> handler;
 	for(auto const &[key, path]: libPaths) {
-		handler = std::make_shared<modules::ModuleManagerLibraryHandlerAsync>(moduleBinaryPath, key);
-		handler->loadLibrary(path);
-		if(handler->getModuleNumber() != key) {
-			settings::Logger::logError("Module number from shared library {} does not match the module number from config. Config: {}, binary: {}.", path.string(), key, handler->getModuleNumber());
-			throw std::runtime_error {"Module numbers from config are not corresponding to binaries. Unable to continue. Fix configuration file."};
+		if (moduleBinaryPath.empty()) {
+			handler = std::make_shared<modules::ModuleManagerLibraryHandlerLocal>();
+		} else {
+			handler = std::make_shared<modules::ModuleManagerLibraryHandlerAsync>(moduleBinaryPath);
 		}
-		auto [it, inserted] = moduleLibraryHandlers.try_emplace(key, handler);
-		if(!inserted) {
+		handler->loadLibrary(path);
+		if (handler->getModuleNumber() != key)
+		{
+			settings::Logger::logError(
+				"Module number from shared library {} does not match the module number from config. Config: {},"
+				" binary: {}.", path.string(), key, handler->getModuleNumber());
+			throw std::runtime_error{ // NOSONAR - generic exception is sufficient, error is unrecoverable and always propagates to top level
+				"Module numbers from config are not corresponding to binaries. Unable to continue."
+				" Fix configuration file."
+			};
+		}
+		if(auto [it, inserted] = moduleLibraryHandlers.try_emplace(key, handler); !inserted) {
 			settings::Logger::logWarning("Module with number: {} is already registered, skipping duplicate", key);
 		}
 	}

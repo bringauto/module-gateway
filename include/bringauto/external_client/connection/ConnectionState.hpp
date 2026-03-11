@@ -18,6 +18,10 @@ enum class ConnectionState {
 	/**
 	 * CONNECTED - Client is connected to the External server
 	 */
-	CONNECTED
+	CONNECTED,
+	/**
+	 * CLOSING - Client closing connection to the External server
+	 */
+	CLOSING
 };
 }
