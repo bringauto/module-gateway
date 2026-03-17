@@ -81,7 +81,12 @@ namespace bringauto::external_client::connection::communication {
 	private:
 		/// Directionality of QUIC streams created or accepted by this connection
 		enum class StreamMode {
-			/// Stream can only send data in one direction
+			/// Stream can only send data in one direction.
+			/// In this mode each sendMessage() call opens a new outbound stream that is
+			/// immediately closed after the send (START | FIN flags). The peer opens
+			/// separate streams in the opposite direction for responses. Many short-lived
+			/// streams are created over the connection lifetime, but QUIC stream creation
+			/// is lightweight and has no significant impact on performance.
 			Unidirectional,
 			/// Stream supports bidirectional send and receive
 			Bidirectional
