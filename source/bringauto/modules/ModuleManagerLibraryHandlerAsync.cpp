@@ -211,6 +211,9 @@ Buffer ModuleManagerLibraryHandlerAsync::constructBuffer(std::size_t size) {
 }
 
 Buffer ModuleManagerLibraryHandlerAsync::constructBuffer(std::span<const uint8_t> data) {
+	if (data.empty()) {
+		return constructBuffer();
+	}
 	auto buff = constructBuffer(data.size());
 	std::memcpy(buff.getStructBuffer().data, data.data(), data.size());
 	return buff;
