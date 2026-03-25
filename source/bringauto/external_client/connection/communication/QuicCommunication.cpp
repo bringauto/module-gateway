@@ -38,6 +38,8 @@ namespace bringauto::external_client::connection::communication {
 	}
 
 	void QuicCommunication::initializeConnection() {
+		cancelReceive_.store(false, std::memory_order_release);
+
 		settings::Logger::logDebug("[quic] Connecting to server when {}",
 		                           common_utils::EnumUtils::connectionStateToString(connectionState_));
 
@@ -98,6 +100,7 @@ namespace bringauto::external_client::connection::communication {
 			[this] {
 				auto state = connectionState_.load();
 				return !inboundQueue_.empty() ||
+				       cancelReceive_.load(std::memory_order_acquire) ||
 				       (state != ConnectionState::CONNECTING &&
 				        state != ConnectionState::CLOSING &&
 				        state != ConnectionState::CONNECTED);
@@ -194,6 +197,11 @@ namespace bringauto::external_client::connection::communication {
 		quic_->ConnectionShutdown(connection_, QUIC_CONNECTION_SHUTDOWN_FLAG_NONE, 0);
 
 		/// Asynchronously waiting for QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE event, then continue in connectionCallback
+	}
+
+	void QuicCommunication::cancelReceive() {
+		cancelReceive_.store(true, std::memory_order_release);
+		inboundCv_.notify_all();
 	}
 
 	void QuicCommunication::closeConfiguration() {
@@ -334,7 +342,6 @@ namespace bringauto::external_client::connection::communication {
 				settings::Logger::logInfo("[quic] Connection shutdown complete");
 
 				self->connectionState_ = ConnectionState::NOT_CONNECTED;
-				self->inboundCv_.notify_all();
 				self->outboundCv_.notify_all();
 
 				if (self->senderThread_.joinable()) {
