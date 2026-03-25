@@ -100,6 +100,13 @@ public:
 	void setNotInitialized();
 
 	/**
+	 * @brief Abort an in-progress connection attempt by closing the channel.
+	 * Fires SHUTDOWN_COMPLETE which wakes up any blocked receiveMessage() call.
+	 * Does NOT call fillErrorAggregatorWithNotAckedStatuses — safe to call during shutdown.
+	 */
+	void cancelPendingConnect();
+
+	/**
 	 * @brief Check if module type is supported
 	 *
 	 * @param moduleNum module type number
