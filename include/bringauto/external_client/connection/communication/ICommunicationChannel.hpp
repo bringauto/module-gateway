@@ -47,6 +47,13 @@ public:
 	 */
 	virtual void closeConnection() = 0;
 
+	/**
+	 * @brief Unblock any pending receiveMessage() call immediately.
+	 * Used during shutdown to abort an in-progress connect attempt without
+	 * the full receive_message_timeout delay.
+	 */
+	virtual void cancelReceive() = 0;
+
 protected:
 	/// Instance of the specific settings for the communication channel
 	structures::ExternalConnectionSettings settings_ {};

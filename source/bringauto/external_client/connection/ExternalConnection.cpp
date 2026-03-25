@@ -264,6 +264,7 @@ u_int32_t ExternalConnection::getNextStatusCounter() {
 }
 
 void ExternalConnection::cancelPendingConnect() {
+	communicationChannel_->cancelReceive();
 	communicationChannel_->closeConnection();
 }
 
