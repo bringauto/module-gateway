@@ -78,6 +78,8 @@ namespace bringauto::external_client::connection::communication {
 		 */
 		void closeConnection() override;
 
+		void cancelReceive() override;
+
 	private:
 		/// Directionality of QUIC streams created or accepted by this connection
 		enum class StreamMode {
@@ -116,6 +118,9 @@ namespace bringauto::external_client::connection::communication {
 
 		/// Atomic state of the connection used for synchronization across threads
 		std::atomic<ConnectionState> connectionState_{ConnectionState::NOT_CONNECTED};
+
+		/// Set by cancelReceive() to unblock a pending receiveMessage() call immediately
+		std::atomic<bool> cancelReceive_{false};
 
 		/// @name Inbound (peer → this)
 		/// @{
