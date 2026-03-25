@@ -263,6 +263,10 @@ u_int32_t ExternalConnection::getNextStatusCounter() {
 	return ++clientMessageCounter_;
 }
 
+void ExternalConnection::cancelPendingConnect() {
+	communicationChannel_->closeConnection();
+}
+
 void ExternalConnection::deinitializeConnection(bool completeDisconnect = false) {
 	state_.exchange(ConnectionState::NOT_INITIALIZED);
 	clientMessageCounter_ = 0;
