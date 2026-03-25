@@ -334,6 +334,7 @@ namespace bringauto::external_client::connection::communication {
 				settings::Logger::logInfo("[quic] Connection shutdown complete");
 
 				self->connectionState_ = ConnectionState::NOT_CONNECTED;
+				self->inboundCv_.notify_all();
 				self->outboundCv_.notify_all();
 
 				if (self->senderThread_.joinable()) {
