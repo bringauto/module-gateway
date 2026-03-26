@@ -38,7 +38,7 @@ namespace bringauto::external_client::connection::communication {
 	}
 
 	void QuicCommunication::initializeConnection() {
-		cancelReceive_.store(false, std::memory_order_release);
+		cancelReceive_.store(false);
 
 		settings::Logger::logDebug("[quic] Connecting to server when {}",
 		                           common_utils::EnumUtils::connectionStateToString(connectionState_));
@@ -100,7 +100,7 @@ namespace bringauto::external_client::connection::communication {
 			[this] {
 				auto state = connectionState_.load();
 				return !inboundQueue_.empty() ||
-				       cancelReceive_.load(std::memory_order_acquire) ||
+				       cancelReceive_.load() ||
 				       (state != ConnectionState::CONNECTING &&
 				        state != ConnectionState::CLOSING &&
 				        state != ConnectionState::CONNECTED);
@@ -200,7 +200,7 @@ namespace bringauto::external_client::connection::communication {
 	}
 
 	void QuicCommunication::cancelReceive() {
-		cancelReceive_.store(true, std::memory_order_release);
+		cancelReceive_.store(true);
 		inboundCv_.notify_all();
 	}
 
