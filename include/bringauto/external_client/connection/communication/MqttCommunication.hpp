@@ -27,7 +27,7 @@ public:
 
 	void closeConnection() override;
 
-	void cancelReceive() override {}  // MQTT receive cancellation handled by its own timeout
+	void cancelReceive() override { /* MQTT receive cancellation handled by its own timeout */ }
 
 private:
 	void connect();
