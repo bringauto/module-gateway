@@ -22,6 +22,8 @@ public:
 
 	void closeConnection() override;
 
+	void cancelReceive() override { /* no-op: mock receiveMessage() is controlled via queued messages */ }
+
 	std::string getSessionId() const;
 
 	void setFailOnInitConnection(bool failOnInitConnection);
