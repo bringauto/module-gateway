@@ -34,7 +34,7 @@ public:
 
 	void closeConnection() override;
 
-	void cancelReceive() override {}  // DummyCommunication always returns nullptr from receiveMessage
+	void cancelReceive() override { /* receiveMessage() always returns nullptr — nothing to unblock */ }
 
 private:
 	/// Flag to indicate if the fake connection is established

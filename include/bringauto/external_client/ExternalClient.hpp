@@ -50,6 +50,17 @@ private:
 	void startExternalConnectSequence(connection::ExternalConnection &connection);
 
 	/**
+	 * @brief Drain toExternalQueue while a background connect attempt is in progress.
+	 * Feeds arriving statuses through fillErrorAggregator so the aggregate error count
+	 * stays in sync with the module's predictive check in sendStatusCondition.
+	 *
+	 * @param connection connection being initialised
+	 * @param connectDone atomic flag set to true by the background thread on completion
+	 */
+	void drainQueueDuringConnect(connection::ExternalConnection &connection,
+	                             std::atomic<bool> &connectDone);
+
+	/**
 	 * @brief Handle aggregated status messages from a module handler
 	 */
 	void handleAggregatedMessages();

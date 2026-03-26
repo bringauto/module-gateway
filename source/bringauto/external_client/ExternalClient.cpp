@@ -186,6 +186,26 @@ bool ExternalClient::sendStatus(const structures::InternalClientMessage &interna
 	return true;
 }
 
+void ExternalClient::drainQueueDuringConnect(connection::ExternalConnection &connection,
+                                              std::atomic<bool> &connectDone) {
+	while (!connectDone.load() && !context_->ioContext.stopped()) {
+		if (connection.getState() == connection::ConnectionState::CONNECTED) {
+			break;  // success path: stop filling to avoid racing with clear_error_aggregator
+		}
+		if (toExternalQueue_->waitForValueWithTimeout(std::chrono::seconds(1))) {
+			continue;
+		}
+		const auto internalMessage = std::move(toExternalQueue_->front());
+		toExternalQueue_->pop();
+		const auto &deviceStatus = internalMessage.getMessage().devicestatus();
+		if (connection.isModuleSupported(deviceStatus.device().module())) {
+			connection.fillErrorAggregator(deviceStatus);
+		} else {
+			sendStatus(internalMessage);
+		}
+	}
+}
+
 void ExternalClient::startExternalConnectSequence(connection::ExternalConnection &connection) {
 	settings::Logger::logInfo("Initializing new connection");
 	insideConnectSequence_ = true;
@@ -240,30 +260,16 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	// continue to be fed through fillErrorAggregator. Without this, the
 	// aggregate_error invoke count falls out of sync with the module's predictive
 	// check in sendStatusCondition, causing spurious test failures.
-	std::atomic<bool> connectDone { false };
+	std::atomic connectDone { false };
 	int connectResult = NOT_OK;
 	std::jthread connectThread([&]() {
 		connectResult = connection.initializeConnection(connectedDevices);
-		connectDone.store(true, std::memory_order_release);
+		connectDone.store(true);
 	});
 
-	while (!connectDone.load(std::memory_order_acquire) && not context_->ioContext.stopped()) {
-		if (connection.getState() == connection::ConnectionState::CONNECTED) {
-			break;  // success path: stop filling to avoid racing with clear_error_aggregator
-		}
-		if (toExternalQueue_->waitForValueWithTimeout(std::chrono::seconds(1))) {
-			continue;
-		}
-		const auto internalMessage = std::move(toExternalQueue_->front());
-		toExternalQueue_->pop();
-		const auto &deviceStatus = internalMessage.getMessage().devicestatus();
-		if (connection.isModuleSupported(deviceStatus.device().module())) {
-			connection.fillErrorAggregator(deviceStatus);
-		} else {
-			sendStatus(internalMessage);
-		}
-	}
-	if (context_->ioContext.stopped() && !connectDone.load(std::memory_order_acquire)) {
+	drainQueueDuringConnect(connection, connectDone);
+
+	if (context_->ioContext.stopped() && !connectDone.load()) {
 		// Interrupt initializeConnection() so the thread can finish promptly.
 		// closeConnection() fires SHUTDOWN_COMPLETE which notifies inboundCv_,
 		// waking any blocked receiveMessage() call.
@@ -271,7 +277,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	}
 	connectThread.join();
 
-	if(connectResult != 0 && not context_->ioContext.stopped()) {
+	if(connectResult != 0 && !context_->ioContext.stopped()) {
 		settings::Logger::logDebug("Waiting for reconnect timer to expire");
 		timer_.expires_from_now(boost::posix_time::seconds(settings::reconnect_delay));
 		timer_.async_wait([this, &connection](const boost::system::error_code&) {
