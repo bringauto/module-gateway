@@ -11,6 +11,7 @@
 #include <bringauto/structures/DeviceIdentification.hpp>
 #include <bringauto/structures/ReconnectQueueItem.hpp>
 
+#include <mutex>
 #include <string>
 #include <vector>
 #include <thread>
@@ -152,6 +153,13 @@ private:
 	 * Loop is receiving messages from external server and processes them.
 	 */
 	void receivingHandlerLoop();
+
+	/**
+	 * @brief Implementation of fillErrorAggregatorWithNotAckedStatuses without locking.
+	 * Must be called with errorAggregatorsMutex_ already held.
+	 */
+	void fillErrorAggregatorWithNotAckedStatusesImpl();
+
 	/// Indication if receiving loop should be stopped
 	std::atomic<bool> stopReceiving { false };
 	/// Length of the key used for identification
@@ -177,6 +185,8 @@ private:
 	const structures::ExternalConnectionSettings &settings_ {};
 	/// Class handling sent messages - timers, not acknowledged statuses etc.
 	std::unique_ptr <messages::SentMessagesHandler> sentMessagesHandler_ {};
+	/// Mutex guarding errorAggregators_ against concurrent access during the connect sequence
+	std::mutex errorAggregatorsMutex_ {};
 	/// @brief Map of error aggregators, key is module number
 	std::unordered_map<unsigned int, ErrorAggregator> errorAggregators_ {};
 	/// Queue of commands received from external server, commands are processed by aggregator
