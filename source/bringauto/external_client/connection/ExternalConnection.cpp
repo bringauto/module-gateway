@@ -137,8 +137,11 @@ int ExternalConnection::initializeConnection(const std::vector<structures::Devic
 	}
 	listeningThread = std::jthread(&ExternalConnection::receivingHandlerLoop, this);
 	state_.exchange(ConnectionState::CONNECTED);
-	for(auto &[moduleNum, errorAggregator]: errorAggregators_) {
-		errorAggregator.clear_error_aggregator();
+	{
+		std::lock_guard lock(errorAggregatorsMutex_);
+		for(auto &[moduleNum, errorAggregator]: errorAggregators_) {
+			errorAggregator.clear_error_aggregator();
+		}
 	}
 	log::logInfo("Connect sequence successful. Server {}:{}", settings_.serverIp, settings_.port);
 	return OK;
@@ -182,21 +185,25 @@ int ExternalConnection::statusMessageHandle(const std::vector<structures::Device
 		modules::Buffer errorBuffer {};
 		modules::Buffer statusBuffer {};
 
-		const auto &lastErrorStatusRc = errorAggregators_[deviceModule].get_error(errorBuffer, deviceIdentification);
-		if(lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
-			log::logError("Device is not registered in error aggregator: {} {}",
-				deviceIdentification.getDeviceRole(),
-				deviceIdentification.getDeviceName());
-			return DEVICE_NOT_REGISTERED;
+		{
+			std::lock_guard lock(errorAggregatorsMutex_);
+			const auto &lastErrorStatusRc = errorAggregators_[deviceModule].get_error(errorBuffer, deviceIdentification);
+			if(lastErrorStatusRc == DEVICE_NOT_REGISTERED) {
+				log::logError("Device is not registered in error aggregator: {} {}",
+					deviceIdentification.getDeviceRole(),
+					deviceIdentification.getDeviceName());
+				return DEVICE_NOT_REGISTERED;
+			}
+
+			const int lastStatusRc = errorAggregators_[deviceModule].get_last_status(statusBuffer, deviceIdentification);
+			if(lastStatusRc != OK) {
+				log::logError("Cannot obtain status for device: {} {}",
+					deviceIdentification.getDeviceRole(),
+					deviceIdentification.getDeviceName());
+				return NO_MESSAGE_AVAILABLE;
+			}
 		}
 
-		const int lastStatusRc = errorAggregators_[deviceModule].get_last_status(statusBuffer, deviceIdentification);
-		if(lastStatusRc != OK) {
-			log::logError("Cannot obtain status for device: {} {}",
-				deviceIdentification.getDeviceRole(),
-				deviceIdentification.getDeviceName());
-			return NO_MESSAGE_AVAILABLE;
-		}
 		auto deviceStatus = common_utils::ProtobufUtils::createDeviceStatus(deviceIdentification, statusBuffer);
 		sendStatus(deviceStatus, ExternalProtocol::Status_DeviceState_CONNECTING, errorBuffer);
 	}
@@ -369,7 +376,7 @@ u_int32_t ExternalConnection::getCommandCounter(const ExternalProtocol::Command 
 	return command.messagecounter();
 }
 
-void ExternalConnection::fillErrorAggregatorWithNotAckedStatuses() {
+void ExternalConnection::fillErrorAggregatorWithNotAckedStatusesImpl() {
 	for(const auto &notAckedStatus: sentMessagesHandler_->getNotAckedStatuses()) {
 		const auto &device = notAckedStatus->getDevice();
 
@@ -391,14 +398,20 @@ void ExternalConnection::fillErrorAggregatorWithNotAckedStatuses() {
 	sentMessagesHandler_->clearAll();
 }
 
+void ExternalConnection::fillErrorAggregatorWithNotAckedStatuses() {
+	std::lock_guard lock(errorAggregatorsMutex_);
+	fillErrorAggregatorWithNotAckedStatusesImpl();
+}
+
 void ExternalConnection::fillErrorAggregator(const InternalProtocol::DeviceStatus &deviceStatus) {
 	int moduleNum = deviceStatus.device().module();
+	std::lock_guard lock(errorAggregatorsMutex_);
 	const auto it = errorAggregators_.find(moduleNum);
 	if(it == errorAggregators_.end()) {
 		log::logError("Module with module number {} does no exists", moduleNum);
 		return;
 	}
-	fillErrorAggregatorWithNotAckedStatuses();
+	fillErrorAggregatorWithNotAckedStatusesImpl();
 	const auto &statusData = deviceStatus.statusdata();
 	const auto statusBuffer = moduleLibrary_.moduleLibraryHandlers.at(moduleNum)->constructBuffer(
 		statusData.size());

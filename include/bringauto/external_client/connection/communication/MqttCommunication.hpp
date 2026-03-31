@@ -27,7 +27,8 @@ public:
 
 	void closeConnection() override;
 
-	void cancelReceive() override { /* MQTT receive cancellation handled by its own timeout */ }
+	// Paho MQTT does not expose a blocking-consumer interrupt; shutdown waits up to receive_message_timeout.
+	void cancelReceive() override {}
 
 private:
 	void connect();
