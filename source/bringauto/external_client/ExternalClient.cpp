@@ -188,12 +188,15 @@ bool ExternalClient::sendStatus(const structures::InternalClientMessage &interna
 
 void ExternalClient::drainQueueDuringConnect(connection::ExternalConnection &connection,
                                               std::atomic<bool> &connectDone) {
-	while (!connectDone.load() && !context_->ioContext.stopped()) {
-		if (connection.getState() == connection::ConnectionState::CONNECTED) {
-			break;  // success path: stop filling to avoid racing with clear_error_aggregator
-		}
+	while (!connectDone.load() && !context_->ioContext.stopped() &&
+	       connection.getState() != connection::ConnectionState::CONNECTED) {
 		if (toExternalQueue_->waitForValueWithTimeout(std::chrono::seconds(1))) {
 			continue;
+		}
+		// Re-check after unblocking: connection may have finished while we were waiting.
+		// Without this, we could pop and feed fillErrorAggregator after clear_error_aggregator already ran.
+		if (connectDone.load() || connection.getState() == connection::ConnectionState::CONNECTED) {
+			break;
 		}
 		const auto internalMessage = std::move(toExternalQueue_->front());
 		toExternalQueue_->pop();

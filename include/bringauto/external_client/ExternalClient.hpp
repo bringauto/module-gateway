@@ -9,6 +9,7 @@
 
 #include <InternalProtocol.pb.h>
 
+#include <atomic>
 #include <list>
 #include <memory>
 #include <unordered_map>
