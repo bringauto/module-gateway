@@ -47,6 +47,13 @@ public:
 	 */
 	virtual void closeConnection() = 0;
 
+	/**
+	 * @brief Check if the communication channel is currently connected
+	 *
+	 * @return bool true if connected, false otherwise
+	 */
+	virtual bool isConnected() const = 0;
+
 protected:
 	/// Instance of the specific settings for the communication channel
 	structures::ExternalConnectionSettings settings_ {};

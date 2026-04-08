@@ -332,7 +332,15 @@ void ExternalConnection::receivingHandlerLoop() {
 			continue;
 		}
 		const auto serverMessage = communicationChannel_->receiveMessage();
-		if(serverMessage == nullptr || state_.load() == ConnectionState::NOT_CONNECTED) {
+		if(serverMessage == nullptr) {
+			if(!communicationChannel_->isConnected()) {
+				log::logWarning("Connection to external server lost, triggering reconnect");
+				reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), true));
+				return;
+			}
+			continue;
+		}
+		if(state_.load() == ConnectionState::NOT_CONNECTED) {
 			continue;
 		}
 		if(serverMessage->has_command()) {

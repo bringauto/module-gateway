@@ -111,6 +111,10 @@ std::shared_ptr<ExternalProtocol::ExternalServer> CommunicationMock::receiveMess
 void CommunicationMock::closeConnection() {
 }
 
+bool CommunicationMock::isConnected() const {
+	return true;
+}
+
 std::string CommunicationMock::getSessionId() const {
 	return sessionId_;
 }

@@ -27,6 +27,8 @@ public:
 
 	void closeConnection() override;
 
+	bool isConnected() const override;
+
 private:
 	void connect();
 

@@ -33,6 +33,10 @@ std::shared_ptr<ExternalProtocol::ExternalServer> DummyCommunication::receiveMes
     return nullptr;
 }
 
+bool DummyCommunication::isConnected() const {
+    return isConnected_;
+}
+
 void DummyCommunication::closeConnection() {
     settings::Logger::logDebug("Closing DummyCommunication connection");
     isConnected_ = false;

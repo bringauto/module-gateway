@@ -22,6 +22,8 @@ public:
 
 	void closeConnection() override;
 
+	bool isConnected() const override;
+
 	std::string getSessionId() const;
 
 	void setFailOnInitConnection(bool failOnInitConnection);
