@@ -120,6 +120,7 @@ std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMess
 }
 
 bool MqttCommunication::isConnected() const {
+	std::lock_guard<std::mutex> lock(receiveMessageMutex_);
 	return client_ != nullptr && client_->is_connected();
 }
 
