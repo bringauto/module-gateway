@@ -10,6 +10,8 @@
 
 namespace bringauto::modules {
 
+using ConvertibleBuffer = fleet_protocol::async_function_execution_definitions::ConvertibleBuffer;
+
 ModuleManagerLibraryHandlerAsync::ModuleManagerLibraryHandlerAsync(const std::filesystem::path &moduleBinaryPath, const int moduleNumber) :
 		moduleBinaryPath_ { moduleBinaryPath } {
 	aeronClient.connect(moduleNumber);
@@ -72,10 +74,10 @@ int ModuleManagerLibraryHandlerAsync::sendStatusCondition(const Buffer &current_
 	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer new_status_raw_buffer;
 
 	if (current_status.isAllocated()) {
-		current_status_raw_buffer = current_status.getStructBuffer();
+		current_status_raw_buffer = ConvertibleBuffer{current_status.getStructBuffer()};
 	}
 	if (new_status.isAllocated()) {
-		new_status_raw_buffer = new_status.getStructBuffer();
+		new_status_raw_buffer = ConvertibleBuffer{new_status.getStructBuffer()};
 	}
 
 	return aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::sendStatusConditionAsync,
@@ -94,13 +96,13 @@ int ModuleManagerLibraryHandlerAsync::generateCommand(Buffer &generated_command,
 	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer current_command_raw_buffer;
 
 	if (new_status.isAllocated()) {
-		new_status_raw_buffer = new_status.getStructBuffer();
+		new_status_raw_buffer = ConvertibleBuffer{new_status.getStructBuffer()};
 	}
 	if (current_status.isAllocated()) {
-		current_status_raw_buffer = current_status.getStructBuffer();
+		current_status_raw_buffer = ConvertibleBuffer{current_status.getStructBuffer()};
 	}
 	if (current_command.isAllocated()) {
-		current_command_raw_buffer = current_command.getStructBuffer();
+		current_command_raw_buffer = ConvertibleBuffer{current_command.getStructBuffer()};
 	}
 
 	auto ret = aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::generateCommandAsync,
@@ -129,10 +131,10 @@ int ModuleManagerLibraryHandlerAsync::aggregateStatus(Buffer &aggregated_status,
 	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer new_status_raw_buffer;
 
 	if (current_status.isAllocated()) {
-		current_status_raw_buffer = current_status.getStructBuffer();
+		current_status_raw_buffer = ConvertibleBuffer{current_status.getStructBuffer()};
 	}
 	if (new_status.isAllocated()) {
-		new_status_raw_buffer = new_status.getStructBuffer();
+		new_status_raw_buffer = ConvertibleBuffer{new_status.getStructBuffer()};
 	}
 
 	auto ret = aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::aggregateStatusAsync,
@@ -162,10 +164,10 @@ int ModuleManagerLibraryHandlerAsync::aggregateError(Buffer &error_message,
 	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer status_raw_buffer;
 
 	if (current_error_message.isAllocated()) {
-		current_error_raw_buffer = current_error_message.getStructBuffer();
+		current_error_raw_buffer = ConvertibleBuffer{current_error_message.getStructBuffer()};
 	}
 	if (status.isAllocated()) {
-		status_raw_buffer = status.getStructBuffer();
+		status_raw_buffer = ConvertibleBuffer{status.getStructBuffer()};
 	}
 
 	auto ret = aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::aggregateErrorAsync,
@@ -201,7 +203,7 @@ int ModuleManagerLibraryHandlerAsync::statusDataValid(const Buffer &status, unsi
 	std::lock_guard lock { statusDataValidMutex_ };
 	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer status_raw_buffer;
 	if (status.isAllocated()) {
-		status_raw_buffer = status.getStructBuffer();
+		status_raw_buffer = ConvertibleBuffer{status.getStructBuffer()};
 	}
 
 	return aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::statusDataValidAsync,
@@ -213,7 +215,7 @@ int ModuleManagerLibraryHandlerAsync::commandDataValid(const Buffer &command, un
 	std::lock_guard lock { commandDataValidMutex_ };
 	fleet_protocol::async_function_execution_definitions::ConvertibleBuffer command_raw_buffer;
 	if (command.isAllocated()) {
-		command_raw_buffer = command.getStructBuffer();
+		command_raw_buffer = ConvertibleBuffer{command.getStructBuffer()};
 	}
 
 	return aeronClient.callFunc(fleet_protocol::async_function_execution_definitions::commandDataValidAsync,
