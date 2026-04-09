@@ -272,6 +272,7 @@ void ExternalConnection::deinitializeConnection(bool completeDisconnect = false)
 	if(listeningThread.joinable()) {
 		listeningThread.join();
 	}
+	stopReceiving.store(false);
 
 	if(not completeDisconnect) {
 		fillErrorAggregatorWithNotAckedStatuses();

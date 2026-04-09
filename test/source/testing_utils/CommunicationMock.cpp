@@ -35,6 +35,12 @@ bool CommunicationMock::sendMessage(ExternalProtocol::ExternalClient* message) {
 }
 
 std::shared_ptr<ExternalProtocol::ExternalServer> CommunicationMock::receiveMessage() {
+	++receiveMessageCallCount_;
+
+	if (!connected_) {
+		return nullptr;
+	}
+
 	auto ptr = std::make_shared<ExternalProtocol::ExternalServer>();
 
 	switch (nextMessageType_) {
@@ -112,7 +118,7 @@ void CommunicationMock::closeConnection() {
 }
 
 bool CommunicationMock::isConnected() const {
-	return true;
+	return connected_;
 }
 
 std::string CommunicationMock::getSessionId() const {
@@ -173,6 +179,14 @@ void CommunicationMock::setCommandMsgBadSessionId(bool commandMsgBadSessionId) {
 
 void CommunicationMock::setCommandMsgModuleNotExists(bool commandMsgModuleNotExists) {
 	commandMsgModuleNotExists_ = commandMsgModuleNotExists;
+}
+
+void CommunicationMock::setConnected(bool connected) {
+	connected_ = connected;
+}
+
+int CommunicationMock::receiveMessageCallCount() const {
+	return receiveMessageCallCount_;
 }
 
 }

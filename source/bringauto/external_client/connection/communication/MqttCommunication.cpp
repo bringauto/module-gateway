@@ -108,6 +108,10 @@ std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMess
 	}
 
 	if(!msg) {
+		// NOTE: TOCTOU — between returning nullptr here and the caller's subsequent
+		// isConnected() check, MQTT auto-reconnect may fire. A spurious reconnect
+		// notification is possible but harmless; the caller will simply re-establish
+		// the connection.
 		return nullptr;
 	}
 

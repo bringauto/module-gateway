@@ -138,6 +138,84 @@ TEST_F(ExternalConnectionTests, FailedConnectionSequenceOnCommandModuleNotExists
 
 
 /**
+ * @brief Trigger a server-side disconnect after a successful handshake.
+ * Verify that the receiving loop detects the disconnect and pushes an item
+ * onto the reconnect queue.
+ */
+TEST_F(ExternalConnectionTests, DisconnectDetectionPushesToReconnectQueue) {
+	ASSERT_EQ(externalConnection_->initializeConnection(connectedDevices_), 0);
+	ASSERT_EQ(externalConnection_->getState(), bringauto::external_client::connection::ConnectionState::CONNECTED);
+
+	communicationChannel_->setConnected(false);
+
+	// The receiving loop calls receiveMessage() -> nullptr, then isConnected() -> false,
+	// and pushes to reconnectQueue_ via pushAndNotify. Wait up to 5 seconds.
+	const bool queueStillEmpty = reconnectQueue_->waitForValueWithTimeout(std::chrono::seconds(5));
+	ASSERT_FALSE(queueStillEmpty);
+}
+
+
+/**
+ * @brief When receiveMessage() returns nullptr but isConnected() is still true (timeout path),
+ * the receiving loop must NOT push anything onto the reconnect queue.
+ */
+TEST_F(ExternalConnectionTests, ReceiveTimeoutWithConnectedDoesNotTriggerReconnect) {
+	ASSERT_EQ(externalConnection_->initializeConnection(connectedDevices_), 0);
+	ASSERT_EQ(externalConnection_->getState(), bringauto::external_client::connection::ConnectionState::CONNECTED);
+
+	// After the handshake, nextMessageType_ is CONNECT_RESPONSE.
+	// setConnectMsgNullptr(true) makes receiveMessage() return nullptr while isConnected() stays true.
+	communicationChannel_->setConnectMsgNullptr(true);
+
+	// Wait a short time and verify nothing was pushed to the reconnect queue.
+	const bool queueStillEmpty = reconnectQueue_->waitForValueWithTimeout(std::chrono::seconds(2));
+	ASSERT_TRUE(queueStillEmpty);
+}
+
+
+/**
+ * @brief Regression test for the stopReceiving reset race fixed in deinitializeConnection.
+ * Simulate: successful connect -> disconnect detection -> deinitializeConnection -> initializeConnection.
+ * Verify the new listening thread is actually running by triggering a second disconnect detection.
+ */
+TEST_F(ExternalConnectionTests, ReinitializationAfterDisconnectTriggeredExit) {
+	ASSERT_EQ(externalConnection_->initializeConnection(connectedDevices_), 0);
+	ASSERT_EQ(externalConnection_->getState(), bringauto::external_client::connection::ConnectionState::CONNECTED);
+
+	// First disconnect: loop sees nullptr + isConnected()==false and exits via return.
+	communicationChannel_->setConnected(false);
+	const bool firstQueueEmpty = reconnectQueue_->waitForValueWithTimeout(std::chrono::seconds(5));
+	ASSERT_FALSE(firstQueueEmpty);
+
+	// Drain the reconnect queue item from the first disconnect.
+	reconnectQueue_->pop();
+
+	// Deinitialize. The fix in deinitializeConnection ensures stopReceiving is cleared after join,
+	// eliminating the race where the new thread could see stopReceiving==true on startup.
+	externalConnection_->deinitializeConnection(false);
+
+	// Restore mock to a working state for the second handshake.
+	communicationChannel_->setConnected(true);
+
+	// Re-populate the error aggregator: initializeConnection's statusMessageHandle requires
+	// a last status for each device. The first run cleared it via clear_error_aggregator().
+	externalConnection_->fillErrorAggregator(bringauto::common_utils::ProtobufUtils::createDeviceStatus(
+		connectedDevices_[0], create_buffer("status")));
+
+	ASSERT_EQ(externalConnection_->initializeConnection(connectedDevices_), 0);
+	ASSERT_EQ(externalConnection_->getState(), bringauto::external_client::connection::ConnectionState::CONNECTED);
+
+	// Trigger a second disconnect. If the new listening thread is running, it will detect
+	// the disconnect and push onto reconnectQueue_. If stopReceiving were stuck true,
+	// the thread would have exited without ever polling receiveMessage() and nothing would
+	// be pushed.
+	communicationChannel_->setConnected(false);
+	const bool secondQueueEmpty = reconnectQueue_->waitForValueWithTimeout(std::chrono::seconds(5));
+	ASSERT_FALSE(secondQueueEmpty);
+}
+
+
+/**
  * @brief Test the changing of the session id.
  * The session id should change every time the connection is initialized, and its length should be 8.
  */

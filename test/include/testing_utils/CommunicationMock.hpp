@@ -44,6 +44,10 @@ public:
 	void setCommandMsgBadSessionId(bool commandMsgBadSessionId);
 	void setCommandMsgModuleNotExists(bool commandMsgModuleNotExists);
 
+	void setConnected(bool connected);
+
+	int receiveMessageCallCount() const;
+
 private:
 	enum NextMessageType {
 		CONNECT_RESPONSE,
@@ -69,6 +73,9 @@ private:
 	bool commandMsgNoType_ { false };
 	bool commandMsgBadSessionId_ { false };
 	bool commandMsgModuleNotExists_ { false };
+
+	bool connected_ { true };
+	int receiveMessageCallCount_ { 0 };
 };
 
 }
