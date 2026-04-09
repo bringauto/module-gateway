@@ -80,6 +80,8 @@ namespace bringauto::external_client::connection::communication {
 
 		void cancelReceive() override;
 
+		bool consumeServerDisconnectNotification() override { return false; }
+
 	private:
 		/// Directionality of QUIC streams created or accepted by this connection
 		enum class StreamMode {
