@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 			return 0;
 		}
 		context->settings = settingsParser.getSettings();
-		initLogger(context->settings->loggingSettings);
+		initLogger(context->settings.loggingSettings);
 		baset::Logger::logInfo("Version: {}", MODULE_GATEWAY_VERSION);
 		baset::Logger::logInfo("Loaded config:\n{}", settingsParser.serializeToJson());
 	} catch(std::exception &e) {
@@ -61,10 +61,10 @@ int main(int argc, char **argv) {
 	bas::ModuleLibrary moduleLibrary {};
 
 	try {
-		if(context->settings->moduleBinaryPath.empty()) {
-			moduleLibrary.loadLibraries(context->settings->modulePaths);
+		if(context->settings.moduleBinaryPath.empty()) {
+			moduleLibrary.loadLibraries(context->settings.modulePaths);
 		} else {
-			moduleLibrary.loadLibraries(context->settings->modulePaths, context->settings->moduleBinaryPath);
+			moduleLibrary.loadLibraries(context->settings.modulePaths, context->settings.moduleBinaryPath);
 		}
 		moduleLibrary.initStatusAggregators(context);
 	} catch(std::exception &e) {

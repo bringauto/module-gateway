@@ -28,9 +28,9 @@ public:
 
 	/**
 	 * @brief Can be used after calling parseSettings(...) to get settings
-	 * @return shared ptr to settings
+	 * @return settings
 	 */
-	std::shared_ptr<Settings> getSettings();
+	const Settings& getSettings();
 
 	/**
 	 * @brief Serializes settings to json
@@ -40,7 +40,7 @@ public:
 
 private:
 	cxxopts::ParseResult cmdArguments_ {};
-	std::shared_ptr<Settings> settings_ {};
+	Settings settings_ {};
 
 	void parseCmdArguments(int argc, char **argv);
 
@@ -50,12 +50,12 @@ private:
 
 	void fillSettings();
 
-	void fillLoggingSettings(const nlohmann::json &file) const;
+	void fillLoggingSettings(const nlohmann::json &file);
 
-	void fillInternalServerSettings(const nlohmann::json &file) const;
+	void fillInternalServerSettings(const nlohmann::json &file);
 
-	void fillModulePathsSettings(const nlohmann::json &file) const;
+	void fillModulePathsSettings(const nlohmann::json &file);
 
-	void fillExternalConnectionSettings(const nlohmann::json &file) const;
+	void fillExternalConnectionSettings(const nlohmann::json &file);
 };
 }

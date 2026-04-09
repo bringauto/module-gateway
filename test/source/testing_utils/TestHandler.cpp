@@ -15,8 +15,7 @@ namespace structures = bringauto::structures;
 
 
 TestHandler::TestHandler(const std::vector <InternalProtocol::Device> &devices, const std::vector <std::string> &data) {
-	settings = std::make_shared<settings::Settings>();
-	settings->port = port;
+	settings = {.port = port};
 
 	toInternalQueue = std::make_shared < structures::AtomicQueue < structures::ModuleHandlerMessage >> ();
 	fromInternalQueue = std::make_shared < structures::AtomicQueue < structures::InternalClientMessage >> ();
@@ -29,9 +28,7 @@ TestHandler::TestHandler(const std::vector <InternalProtocol::Device> &devices, 
 			InternalProtocol::DeviceConnectResponse_ResponseType_OK
 		));
 
-		contexts.push_back(std::make_shared<structures::GlobalContext>());
-		contexts[i]->settings = std::make_shared<settings::Settings>();
-		contexts[i]->settings->port = (port);
+		contexts.push_back(std::make_shared<structures::GlobalContext>(settings::Settings{.port = port}));
 		clients.emplace_back(contexts[i]);
 		expectedMessageNumber += numberOfMessages;
 		for(size_t y = 0; y < i; ++y) {
@@ -49,8 +46,7 @@ TestHandler::TestHandler(
 		const std::vector <InternalProtocol::Device> &devices,
 		const std::vector <InternalProtocol::DeviceConnectResponse_ResponseType> &responseTypes,
 		const std::vector <std::string> &data) {
-	settings = std::make_shared<settings::Settings>();
-	settings->port = port;
+	settings = {.port = port};
 
 	toInternalQueue = std::make_shared < structures::AtomicQueue < structures::ModuleHandlerMessage >> ();
 	fromInternalQueue = std::make_shared < structures::AtomicQueue < structures::InternalClientMessage >> ();
@@ -60,9 +56,7 @@ TestHandler::TestHandler(
 		commands.push_back(ProtobufUtils::CreateServerMessage(devices[i], data[i]));
 		responses.push_back(ProtobufUtils::CreateServerMessage(devices[i], responseTypes[i]));
 
-		contexts.push_back(std::make_shared<structures::GlobalContext>());
-		contexts[i]->settings = std::make_shared<settings::Settings>();
-		contexts[i]->settings->port = (port);
+		contexts.push_back(std::make_shared<structures::GlobalContext>(settings::Settings{.port = port}));
 		clients.emplace_back(contexts[i]);
 		if(responseTypes[i] == InternalProtocol::DeviceConnectResponse_ResponseType_OK) {
 			expectedMessageNumber += numberOfMessages;
@@ -126,6 +120,7 @@ void TestHandler::runTestsParallelConnections() {
 	internalServer.run();
 
 	std::vector <std::jthread> clientThreads {};
+	clientThreads.reserve(responses.size());
 	for(size_t i = 0; i < responses.size(); ++i) {
 		clientThreads.emplace_back([this, i]() { (ParallelRun(i)); });
 	}
@@ -175,8 +170,8 @@ void TestHandler::runStatuses() {
 }
 
 void TestHandler::disconnectAll() {
-	for(size_t i = 0; i < clients.size(); ++i) {
-		clients[i].disconnectSocket();
+	for(auto & client : clients) {
+		client.disconnectSocket();
 	}
 }
 
