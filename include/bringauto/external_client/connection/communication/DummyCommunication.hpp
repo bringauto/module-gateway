@@ -36,6 +36,8 @@ public:
 
 	void cancelReceive() override { /* receiveMessage() always returns nullptr — nothing to unblock */ }
 
+	bool consumeServerDisconnectNotification() override { return false; }
+
 private:
 	/// Flag to indicate if the fake connection is established
 	bool isConnected_ { false };

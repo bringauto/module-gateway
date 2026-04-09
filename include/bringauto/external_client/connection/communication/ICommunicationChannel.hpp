@@ -54,6 +54,16 @@ public:
 	 */
 	virtual void cancelReceive() = 0;
 
+	/**
+	 * @brief Check whether the external server sent a disconnect notification.
+	 *
+	 * Returns true and clears the internal flag if a disconnect notification has
+	 * been received since the last call. Returns false otherwise.
+	 * Used by ExternalConnection to trigger an immediate reconnect instead of
+	 * waiting for the status_response_timeout to expire.
+	 */
+	virtual bool consumeServerDisconnectNotification() = 0;
+
 protected:
 	/// Instance of the specific settings for the communication channel
 	structures::ExternalConnectionSettings settings_ {};
