@@ -32,6 +32,8 @@ public:
 
 	InternalClientMessage(const InternalClientMessage& copy) = default;
 
+	InternalClientMessage& operator=(InternalClientMessage&&) noexcept = default;
+
 	/**
 	 * @brief Get internal client message
 	 *
