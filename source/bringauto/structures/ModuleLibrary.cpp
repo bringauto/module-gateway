@@ -50,7 +50,7 @@ void ModuleLibrary::initStatusAggregators(std::shared_ptr<GlobalContext> &contex
 		}
 
 		bool found = false;
-		for(const auto &connection: context->settings->externalConnectionSettingsList) {
+		for(const auto &connection: context->settings.externalConnectionSettingsList) {
 			const auto &modules = connection.modules;
 			if(std::find(modules.cbegin(), modules.cend(), moduleNumber) != modules.cend()) {
 				statusAggregators.try_emplace(moduleNumber, statusAggregator);

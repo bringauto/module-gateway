@@ -10,7 +10,7 @@ namespace testing_utils {
 void ClientForTesting::connectSocket() {
 	boost::system::error_code er {};
 	boost::asio::ip::tcp::resolver resolver(context->ioContext);
-	boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), context->settings->port);
+	boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), context->settings.port);
 	socket = std::make_shared<boost::asio::ip::tcp::socket>(context->ioContext);
 	socket->connect(endpoint, er);
 	ASSERT_FALSE(er);

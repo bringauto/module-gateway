@@ -5,7 +5,6 @@
 #include <bringauto/settings/LoggerId.hpp>
 #include <testing_utils/CommunicationMock.hpp>
 
-#include <libbringauto_logger/bringauto/logging/Logger.hpp>
 #include <libbringauto_logger/bringauto/logging/FileSink.hpp>
 #include <libbringauto_logger/bringauto/logging/ConsoleSink.hpp>
 #include <gtest/gtest.h>
@@ -15,8 +14,7 @@
 class ExternalConnectionTests: public ::testing::Test {
 protected:
 	void SetUp() override {
-		context_ = std::make_shared<bringauto::structures::GlobalContext>();
-		bringauto::settings::Settings settings = {
+		context_ = std::make_shared<bringauto::structures::GlobalContext>(bringauto::settings::Settings {
 			.port = 0,
 			.modulePaths = {{ MODULE, PATH_TO_MODULE }},
 			.externalConnectionSettingsList = {{
@@ -26,12 +24,11 @@ protected:
 				0,                                            // port
 				{ MODULE }                                    // module numbers
 			}}
-		};
-		context_->settings = std::make_shared<bringauto::settings::Settings>(settings);
+		});
 
 		moduleLibrary_ = std::make_shared<bringauto::structures::ModuleLibrary>();
 		try {
-			moduleLibrary_->loadLibraries(context_->settings->modulePaths);
+			moduleLibrary_->loadLibraries(context_->settings.modulePaths);
 			moduleLibrary_->initStatusAggregators(context_);
 		} catch(std::exception &e) {
 			GTEST_SKIP() << "Module initialization failed: " << e.what();
@@ -43,12 +40,12 @@ protected:
 		externalConnection_ = std::make_unique<bringauto::external_client::connection::ExternalConnection>(
 			context_,
 			*moduleLibrary_,
-			context_->settings->externalConnectionSettingsList[0],
+			context_->settings.externalConnectionSettingsList[0],
 			fromExternalQueue_,
 			reconnectQueue_
 		);
 
-		communicationChannel_ = std::make_shared<testing_utils::CommunicationMock>(context_->settings->externalConnectionSettingsList[0]);
+		communicationChannel_ = std::make_shared<testing_utils::CommunicationMock>(context_->settings.externalConnectionSettingsList[0]);
 		externalConnection_->init(communicationChannel_);
 		auto roleBuffer = create_buffer("role");
 		auto nameBuffer = create_buffer("name");
@@ -59,7 +56,7 @@ protected:
 			.device_name = nameBuffer.getStructBuffer(),
 			.priority = 0
 		};
-		connectedDevices_.emplace_back(bringauto::structures::DeviceIdentification(device));
+		connectedDevices_.emplace_back(device);
 		externalConnection_->fillErrorAggregator(bringauto::common_utils::ProtobufUtils::createDeviceStatus(
 			connectedDevices_[0], create_buffer("status")));
 	};

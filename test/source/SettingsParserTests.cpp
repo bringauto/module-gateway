@@ -15,21 +15,21 @@ TEST_F(SettingsParserTests, ValidConfig) {
 	EXPECT_TRUE(result);
 
 	auto settings = settingsParser.getSettings();
-	EXPECT_EQ(settings->port, config.internal_server_settings.port);
-	EXPECT_EQ(settings->modulePaths, config.module_paths);
+	EXPECT_EQ(settings.port, config.internal_server_settings.port);
+	EXPECT_EQ(settings.modulePaths, config.module_paths);
 
 	auto logging = config.logging;
-	EXPECT_EQ(bacu::EnumUtils::loggerVerbosityToString(settings->loggingSettings.console.level), logging.console.level);
-	EXPECT_EQ(settings->loggingSettings.console.use, logging.console.use);
-	EXPECT_EQ(bacu::EnumUtils::loggerVerbosityToString(settings->loggingSettings.file.level), logging.file.level);
-	EXPECT_EQ(settings->loggingSettings.file.use, logging.file.use);
-	EXPECT_EQ(settings->loggingSettings.file.path, logging.file.path);
+	EXPECT_EQ(bacu::EnumUtils::loggerVerbosityToString(settings.loggingSettings.console.level), logging.console.level);
+	EXPECT_EQ(settings.loggingSettings.console.use, logging.console.use);
+	EXPECT_EQ(bacu::EnumUtils::loggerVerbosityToString(settings.loggingSettings.file.level), logging.file.level);
+	EXPECT_EQ(settings.loggingSettings.file.use, logging.file.use);
+	EXPECT_EQ(settings.loggingSettings.file.path, logging.file.path);
 
-	EXPECT_EQ(settings->company, config.external_connection.company);
-	EXPECT_EQ(settings->vehicleName, config.external_connection.vehicle_name);
+	EXPECT_EQ(settings.company, config.external_connection.company);
+	EXPECT_EQ(settings.vehicleName, config.external_connection.vehicle_name);
 
 	auto endpoint = config.external_connection.endpoint;
-	auto externalConnectionSettings = settings->externalConnectionSettingsList.front();
+	auto externalConnectionSettings = settings.externalConnectionSettingsList.front();
 	EXPECT_EQ(externalConnectionSettings.protocolType, bacu::EnumUtils::stringToProtocolType(endpoint.protocol_type));
 	EXPECT_EQ(externalConnectionSettings.serverIp, endpoint.server_ip);
 	EXPECT_EQ(externalConnectionSettings.port, endpoint.port);
@@ -49,7 +49,7 @@ TEST_F(SettingsParserTests, CmdOptionsPriority){
 	EXPECT_TRUE(result);
 
 	auto settings = settingsParser.getSettings();
-	EXPECT_EQ(settings->port, 2000);
+	EXPECT_EQ(settings.port, 2000);
 }
 
 
@@ -183,7 +183,7 @@ TEST_F(SettingsParserTests, InvalidProtocol){
 	config.external_connection.endpoint.protocol_type = "INVALID";
 	auto result = parseConfig(config);
 	EXPECT_TRUE(result);
-	EXPECT_TRUE(settingsParser.getSettings()->externalConnectionSettingsList.empty());
+	EXPECT_TRUE(settingsParser.getSettings().externalConnectionSettingsList.empty());
 }
 
 /**

@@ -44,7 +44,8 @@ void ExternalClient::handleCommands() {
 	}
 }
 
-void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &deviceCommand) {
+void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &deviceCommand) const
+{
 	const auto &device = deviceCommand.device();
 	const auto &moduleNumber = device.module();
 	auto &statusAggregators = moduleLibrary_.statusAggregators;
@@ -89,7 +90,7 @@ void ExternalClient::run() {
 }
 
 void ExternalClient::initConnections() {
-	for(auto const &connectionSettings: context_->settings->externalConnectionSettingsList) {
+	for(auto const &connectionSettings: context_->settings.externalConnectionSettingsList) {
 		externalConnectionsList_.emplace_back(context_, moduleLibrary_, connectionSettings, fromExternalQueue_,
 											  reconnectQueue_);
 		auto &newConnection = externalConnectionsList_.back();
@@ -98,12 +99,12 @@ void ExternalClient::initConnections() {
 		switch(connectionSettings.protocolType) {
 			case structures::ProtocolType::MQTT:
 				communicationChannel = std::make_shared<connection::communication::MqttCommunication>(
-					connectionSettings, context_->settings->company, context_->settings->vehicleName
+					connectionSettings, context_->settings.company, context_->settings.vehicleName
 				);
 				break;
 			case structures::ProtocolType::QUIC:
 				communicationChannel = std::make_shared<connection::communication::QuicCommunication>(
-					connectionSettings, context_->settings->company, context_->settings->vehicleName
+					connectionSettings, context_->settings.company, context_->settings.vehicleName
 				);
 				break;
 			case structures::ProtocolType::DUMMY:

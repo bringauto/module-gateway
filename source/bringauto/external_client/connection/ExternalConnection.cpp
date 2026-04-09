@@ -151,8 +151,8 @@ int ExternalConnection::connectMessageHandle(const std::vector<structures::Devic
 	generateSessionId();
 
 	auto connectMessage = common_utils::ProtobufUtils::createExternalClientConnect(sessionId_,
-																				   context_->settings->company,
-																				   context_->settings->vehicleName,
+																				   context_->settings.company,
+																				   context_->settings.vehicleName,
 																				   devices);
 	if(not communicationChannel_->sendMessage(&connectMessage)){
 		log::logError("Communication client couldn't send any message");

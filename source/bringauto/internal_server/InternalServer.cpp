@@ -15,7 +15,7 @@ void InternalServer::run() {
 	log::logInfo("Internal server started, constants used: fleet_protocol_timeout_length: {}, queue_timeout_length: {}",
 				 settings::fleet_protocol_timeout_length.count(),
 				 settings::queue_timeout_length.count());
-	const boost::asio::ip::tcp::endpoint endpoint { boost::asio::ip::tcp::v4(), context_->settings->port };
+	const boost::asio::ip::tcp::endpoint endpoint { boost::asio::ip::tcp::v4(), context_->settings.port };
 	acceptor_.open(endpoint.protocol());
 	acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
 	acceptor_.bind(endpoint);

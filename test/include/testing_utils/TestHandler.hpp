@@ -17,7 +17,7 @@ const size_t numberOfMessages { 100 };
 const unsigned short port { 8888 };
 
 class TestHandler {
-	std::shared_ptr<bringauto::settings::Settings> settings {};
+	bringauto::settings::Settings settings {};
 
 	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage>> toInternalQueue {};
 	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>> fromInternalQueue {};

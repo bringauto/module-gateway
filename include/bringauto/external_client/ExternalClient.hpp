@@ -76,7 +76,7 @@ private:
 	 *
 	 * @param deviceCommand new command which replaces the old one
 	 */
-	void handleCommand(const InternalProtocol::DeviceCommand &deviceCommand);
+	void handleCommand(const InternalProtocol::DeviceCommand &deviceCommand) const;
 
 	/**
 	 * @brief Send aggregated status message to the external server

@@ -23,13 +23,8 @@ public:
 	 */
 	explicit DeviceIdentification(const ::device_identification &device);
 
-	DeviceIdentification(const DeviceIdentification& device) {
-		module_ = device.module_;
-		deviceType_ = device.deviceType_;
-		priority_ = device.priority_;
-		deviceRole_ = device.deviceRole_;
-		deviceName_ = device.deviceName_;
-	}
+	DeviceIdentification(const DeviceIdentification&) = default;
+	DeviceIdentification& operator=(const DeviceIdentification&) = default;
 
 	DeviceIdentification() = default;
 
