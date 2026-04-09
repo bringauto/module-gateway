@@ -49,6 +49,7 @@ For exact dependency versions used in the build, see [cmake/Dependencies.cmake](
 mkdir -p _build && cd _build
 cmake ../ -DCMLIB_DIR=</absolute/path/cmakelib>
 make
+cmake --install . [--prefix <custom path>] # sets up runtime library paths; running the binary directly from the build directory is not supported
 ```
 
 ## Run
