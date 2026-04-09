@@ -12,6 +12,7 @@ OPTION(BRINGAUTO_INSTALL           "Enable install" OFF)
 OPTION(BRINGAUTO_SYSTEM_DEP        "Enable system dependencies" OFF)
 OPTION(BRINGAUTO_SAMPLES           "Enable build of sample app, not used in project" OFF)
 OPTION(BRINGAUTO_GET_PACKAGES_ONLY "Only download packages for this project" OFF)
+OPTION(BRINGAUTO_SANITIZERS        "Enable address, undefined and leak sanitizers" ON)
 
 FIND_PACKAGE(CMLIB COMPONENTS CMCONF REQUIRED)
 CMCONF_INIT_SYSTEM(FLEET_PROTOCOL)
@@ -91,7 +92,7 @@ CMDEF_ADD_EXECUTABLE(
         VERSION ${BRINGAUTO_MODULE_GATEWAY_VERSION}
 )
 
-IF(CMAKE_BUILD_TYPE STREQUAL "Debug" OR BRINGAUTO_TESTS)
+IF((CMAKE_BUILD_TYPE STREQUAL "Debug" OR BRINGAUTO_TESTS) AND BRINGAUTO_SANITIZERS)
     TARGET_COMPILE_OPTIONS(module-gateway-app PRIVATE -Wall -Wextra -Wpedantic
             -fsanitize=address,undefined,leak -fno-sanitize-recover )
     TARGET_LINK_OPTIONS(module-gateway-app PUBLIC -fsanitize=undefined,leak,address)
