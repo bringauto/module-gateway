@@ -188,6 +188,7 @@ bool ExternalClient::sendStatus(const structures::InternalClientMessage &interna
 
 void ExternalClient::drainQueueDuringConnect(connection::ExternalConnection &connection,
                                               std::atomic<bool> &connectDone) {
+	std::optional<structures::InternalClientMessage> deferredDisconnect;
 	while (!connectDone.load() && !context_->ioContext.stopped() &&
 	       connection.getState() != connection::ConnectionState::CONNECTED) {
 		if (toExternalQueue_->waitForValueWithTimeout(std::chrono::seconds(1))) {
@@ -196,6 +197,17 @@ void ExternalClient::drainQueueDuringConnect(connection::ExternalConnection &con
 		// Re-check after unblocking: connection may have finished while we were waiting.
 		// Without this, we could pop and feed fillErrorAggregator after clear_error_aggregator already ran.
 		if (connectDone.load() || connection.getState() == connection::ConnectionState::CONNECTED) {
+			break;
+		}
+		// Do not drain disconnect messages — they must reach handleAggregatedMessages
+		// so the device is properly removed from connectedDevices_ via deleteConnectedDevice().
+		// Consuming a disconnect here would leave the device in connectedDevices_ after the
+		// connect sequence, causing the gateway and server to lose sync on device state.
+		// Pop it into deferredDisconnect so any messages after it can still be processed,
+		// then re-push it after the loop so handleAggregatedMessages sees it.
+		if (toExternalQueue_->front().disconnected()) {
+			deferredDisconnect = std::move(toExternalQueue_->front());
+			toExternalQueue_->pop();
 			break;
 		}
 		const auto internalMessage = std::move(toExternalQueue_->front());
@@ -207,6 +219,9 @@ void ExternalClient::drainQueueDuringConnect(connection::ExternalConnection &con
 			sendStatus(internalMessage);
 		}
 	}
+	if (deferredDisconnect.has_value()) {
+		toExternalQueue_->pushAndNotify(std::move(*deferredDisconnect));
+	}
 }
 
 void ExternalClient::startExternalConnectSequence(connection::ExternalConnection &connection) {
@@ -214,6 +229,11 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	insideConnectSequence_ = true;
 
 	while(not toExternalQueue_->empty()) {
+		// Do not consume disconnect messages — they must reach handleAggregatedMessages
+		// so the device is properly removed via sendStatus(..., DISCONNECT).
+		if(toExternalQueue_->front().disconnected()) {
+			break;
+		}
 		auto internalMessage = std::move(toExternalQueue_->front());
 		toExternalQueue_->pop();
 		const auto &deviceStatus = internalMessage.getMessage().devicestatus();
