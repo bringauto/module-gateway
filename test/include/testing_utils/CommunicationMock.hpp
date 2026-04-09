@@ -24,6 +24,8 @@ public:
 
 	void cancelReceive() override { /* no-op: mock receiveMessage() is controlled via queued messages */ }
 
+	bool consumeServerDisconnectNotification() override { return false; }
+
 	std::string getSessionId() const;
 
 	void setFailOnInitConnection(bool failOnInitConnection);

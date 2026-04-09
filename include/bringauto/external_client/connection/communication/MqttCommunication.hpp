@@ -30,6 +30,8 @@ public:
 	// Paho MQTT does not expose a blocking-consumer interrupt; shutdown waits up to receive_message_timeout.
 	void cancelReceive() override {}
 
+	bool consumeServerDisconnectNotification() override;
+
 private:
 	void connect();
 
@@ -60,6 +62,8 @@ private:
 	 */
 	static std::string createSubscribeTopic(const std::string &company, const std::string &vehicleName);
 
+	static std::string createServerDisconnectTopic(const std::string &company, const std::string &vehicleName);
+
 	/// MQTT client handling the connection
 	std::unique_ptr<mqtt::async_client> client_ { nullptr };
 	/// Unique ID of the client, changes with every connection
@@ -68,6 +72,10 @@ private:
 	std::string publishTopic_ {};
 	/// Topic to subscribe to, sender is external server, receiver is external client
 	std::string subscribeTopic_ {};
+	/// Topic to subscribe to for server disconnect notifications
+	std::string serverDisconnectTopic_ {};
+	/// Set to true when a disconnect notification has been received from the external server
+	std::atomic<bool> serverDisconnectPending_ { false };
 	/// MQTT library connection options
 	mqtt::connect_options connopts_ {};
 	/// Address of the MQTT server

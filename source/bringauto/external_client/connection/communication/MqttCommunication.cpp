@@ -29,6 +29,7 @@ MqttCommunication::~MqttCommunication() {
 void MqttCommunication::setProperties(const std::string& company, const std::string& vehicleName) {
 	publishTopic_ = createPublishTopic(company, vehicleName);
 	subscribeTopic_ = createSubscribeTopic(company, vehicleName);
+	serverDisconnectTopic_ = createServerDisconnectTopic(company, vehicleName);
 	clientId_ = createClientId(company, vehicleName);
 
 	serverAddress_ = {
@@ -82,6 +83,8 @@ void MqttCommunication::connect() {
 
 	const auto substok = client_->subscribe(subscribeTopic_, qos);
 	substok->wait();
+	const auto disctok = client_->subscribe(serverDisconnectTopic_, qos);
+	disctok->wait();
 }
 
 bool MqttCommunication::sendMessage(ExternalProtocol::ExternalClient* message) {
@@ -111,6 +114,12 @@ std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMess
 		return nullptr;
 	}
 
+	if(msg->get_topic() == serverDisconnectTopic_) {
+		settings::Logger::logInfo("Received server disconnect notification on topic '{}'", serverDisconnectTopic_);
+		serverDisconnectPending_.store(true);
+		return nullptr;
+	}
+
 	auto ptr = std::make_shared<ExternalProtocol::ExternalServer>();
 	if (!ptr->ParseFromArray(msg->get_payload_str().c_str(), static_cast<int>(msg->get_payload_str().size()))) {
 		settings::Logger::logError("Failed to parse protobuf message from external server");
@@ -119,13 +128,19 @@ std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMess
 	return ptr;
 }
 
+bool MqttCommunication::consumeServerDisconnectNotification() {
+	return serverDisconnectPending_.exchange(false);
+}
+
 void MqttCommunication::closeConnection() {
 	std::lock_guard<std::mutex> lock(receiveMessageMutex_);
+	serverDisconnectPending_.store(false);
 	if(not client_) {
 		return;
 	}
 	if(client_->is_connected()) {
 		client_->unsubscribe(subscribeTopic_);
+		client_->unsubscribe(serverDisconnectTopic_);
 		client_->disconnect();
 	}
 	client_.reset();
@@ -141,6 +156,10 @@ std::string MqttCommunication::createPublishTopic(const std::string &company, co
 
 std::string MqttCommunication::createSubscribeTopic(const std::string &company, const std::string &vehicleName) {
 	return createClientId(company, vehicleName) + std::string("/external_server");
+}
+
+std::string MqttCommunication::createServerDisconnectTopic(const std::string &company, const std::string &vehicleName) {
+	return createClientId(company, vehicleName) + std::string("/external_server_disconnect");
 }
 
 
