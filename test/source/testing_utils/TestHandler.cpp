@@ -28,8 +28,8 @@ TestHandler::TestHandler(const std::vector <InternalProtocol::Device> &devices, 
 			InternalProtocol::DeviceConnectResponse_ResponseType_OK
 		));
 
-		contexts.push_back(std::make_shared<structures::GlobalContext>(settings::Settings{.port = port}));
-		clients.emplace_back(contexts[i]);
+		contexts.push_back(std::make_unique<structures::GlobalContext>(settings::Settings{.port = port}));
+		clients.emplace_back(*contexts[i]);
 		expectedMessageNumber += numberOfMessages;
 		for(size_t y = 0; y < i; ++y) {
 			auto a = std::make_shared<structures::DeviceIdentification>(devices[y]);
@@ -56,8 +56,8 @@ TestHandler::TestHandler(
 		commands.push_back(ProtobufUtils::CreateServerMessage(devices[i], data[i]));
 		responses.push_back(ProtobufUtils::CreateServerMessage(devices[i], responseTypes[i]));
 
-		contexts.push_back(std::make_shared<structures::GlobalContext>(settings::Settings{.port = port}));
-		clients.emplace_back(contexts[i]);
+		contexts.push_back(std::make_unique<structures::GlobalContext>(settings::Settings{.port = port}));
+		clients.emplace_back(*contexts[i]);
 		if(responseTypes[i] == InternalProtocol::DeviceConnectResponse_ResponseType_OK) {
 			expectedMessageNumber += numberOfMessages;
 			for(size_t y = 0; y < i; ++y) {
@@ -106,17 +106,17 @@ void TestHandler::ParallelRun(size_t index) {
 }
 
 void TestHandler::runTestsParallelConnections() {
-	auto context = std::make_shared<structures::GlobalContext>(settings);
+	structures::GlobalContext context { settings };
 
-	boost::asio::signal_set signals(context->ioContext, SIGINT, SIGTERM);
-	signals.async_wait([context](auto, auto) { context->ioContext.stop(); });
+	boost::asio::signal_set signals(context.ioContext, SIGINT, SIGTERM);
+	signals.async_wait([&context](auto, auto) { context.ioContext.stop(); });
 
 	internal_server::InternalServer internalServer { context, fromInternalQueue, toInternalQueue };
 	testing_utils::ModuleHandlerForTesting moduleHandler(context, fromInternalQueue, toInternalQueue,
 		expectedMessageNumber);
 
 	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
-	std::jthread contextThread([&context]() { context->ioContext.run(); });
+	std::jthread contextThread([&context]() { context.ioContext.run(); });
 	internalServer.run();
 
 	std::vector <std::jthread> clientThreads {};
@@ -128,8 +128,8 @@ void TestHandler::runTestsParallelConnections() {
 		clientThreads[i].join();
 	}
 
-	if(!context->ioContext.stopped()) {
-		context->ioContext.stop();
+	if(!context.ioContext.stopped()) {
+		context.ioContext.stop();
 	}
 	internalServer.destroy();
 }
@@ -182,10 +182,10 @@ void TestHandler::serialRun() {
 }
 
 void TestHandler::runTestsSerialConnections() {
-	auto context = std::make_shared<structures::GlobalContext>(settings);
+	structures::GlobalContext context { settings };
 
-	boost::asio::signal_set signals(context->ioContext, SIGINT, SIGTERM);
-	signals.async_wait([context](auto, auto) { context->ioContext.stop(); });
+	boost::asio::signal_set signals(context.ioContext, SIGINT, SIGTERM);
+	signals.async_wait([&context](auto, auto) { context.ioContext.stop(); });
 
 	internal_server::InternalServer internalServer { context, fromInternalQueue, toInternalQueue };
 
@@ -193,13 +193,13 @@ void TestHandler::runTestsSerialConnections() {
 		expectedMessageNumber);
 
 	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
-	std::jthread contextThread([&context]() { context->ioContext.run(); });
+	std::jthread contextThread([&context]() { context.ioContext.run(); });
 	internalServer.run();
 
 	serialRun();
 
-	if(!context->ioContext.stopped()) {
-		context->ioContext.stop();
+	if(!context.ioContext.stopped()) {
+		context.ioContext.stop();
 	}
 	internalServer.destroy();
 }
@@ -264,10 +264,10 @@ void TestHandler::serialRunWithExpectedError(size_t index, size_t header, std::s
 
 void TestHandler::runTestsWithWrongMessage(size_t index, uint32_t header, std::string data, bool onConnect,
 		bool recastHeader) {
-	auto context = std::make_shared<structures::GlobalContext>(settings);
+	structures::GlobalContext context { settings };
 
-	boost::asio::signal_set signals(context->ioContext, SIGINT, SIGTERM);
-	signals.async_wait([context](auto, auto) { context->ioContext.stop(); });
+	boost::asio::signal_set signals(context.ioContext, SIGINT, SIGTERM);
+	signals.async_wait([&context](auto, auto) { context.ioContext.stop(); });
 
 	internal_server::InternalServer internalServer { context, fromInternalQueue, toInternalQueue };
 
@@ -280,13 +280,13 @@ void TestHandler::runTestsWithWrongMessage(size_t index, uint32_t header, std::s
 		expectedMessageNumber);
 
 	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.start(); });
-	std::jthread contextThread([&context]() { context->ioContext.run(); });
+	std::jthread contextThread([&context]() { context.ioContext.run(); });
 	internalServer.run();
 
 	serialRunWithExpectedError(index, header, data, onConnect, recastHeader);
 
-	if(!context->ioContext.stopped()) {
-		context->ioContext.stop();
+	if(!context.ioContext.stopped()) {
+		context.ioContext.stop();
 	}
 	internalServer.destroy();
 }
@@ -349,10 +349,10 @@ void TestHandler::serialRunWithExpectedError(bool onConnect, size_t numberOfErro
 }
 
 void TestHandler::runTestsWithModuleHandlerTimeout(bool onConnect, size_t timeoutNumber) {
-	auto context = std::make_shared<structures::GlobalContext>(settings);
+	structures::GlobalContext context { settings };
 
-	boost::asio::signal_set signals(context->ioContext, SIGINT, SIGTERM);
-	signals.async_wait([context](auto, auto) { context->ioContext.stop(); });
+	boost::asio::signal_set signals(context.ioContext, SIGINT, SIGTERM);
+	signals.async_wait([&context](auto, auto) { context.ioContext.stop(); });
 
 	internal_server::InternalServer internalServer { context, fromInternalQueue, toInternalQueue };
 
@@ -367,14 +367,14 @@ void TestHandler::runTestsWithModuleHandlerTimeout(bool onConnect, size_t timeou
 	std::jthread moduleHandlerThread([&moduleHandler, onConnect, timeoutNumber]() {
 		moduleHandler.startWithTimeout(onConnect, timeoutNumber);
 	});
-	std::jthread contextThread([&context]() { context->ioContext.run(); });
+	std::jthread contextThread([&context]() { context.ioContext.run(); });
 	internalServer.run();
 
 	serialRunWithExpectedError(onConnect, timeoutNumber);
 
 
-	if(!context->ioContext.stopped()) {
-		context->ioContext.stop();
+	if(!context.ioContext.stopped()) {
+		context.ioContext.stop();
 	}
 	internalServer.destroy();
 }

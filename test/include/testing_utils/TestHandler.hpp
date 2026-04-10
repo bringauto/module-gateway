@@ -26,7 +26,7 @@ class TestHandler {
 	std::vector<InternalProtocol::InternalClient> statuses {};
 	std::vector<InternalProtocol::InternalServer> commands {};
 	std::vector<InternalProtocol::InternalServer> responses {};
-	std::vector<std::shared_ptr<bringauto::structures::GlobalContext>> contexts {};
+	std::vector<std::unique_ptr<bringauto::structures::GlobalContext>> contexts {};
 
 	std::vector<testing_utils::ClientForTesting> clients {};
 	size_t expectedMessageNumber { 0 };

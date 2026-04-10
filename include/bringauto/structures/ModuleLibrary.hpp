@@ -30,7 +30,7 @@ struct ModuleLibrary {
 	 *
 	 * @param context global context
 	 */
-	void initStatusAggregators(std::shared_ptr<GlobalContext> &context);
+	void initStatusAggregators(GlobalContext &context);
 	/// Map of module handlers, key is module id
 	std::unordered_map<int, std::shared_ptr<modules::IModuleManagerLibraryHandler>> moduleLibraryHandlers {};
 	/// Map of status aggregators, key is module id

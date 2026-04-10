@@ -7,7 +7,7 @@
 namespace bringauto::structures {
 
 StatusAggregatorDeviceState::StatusAggregatorDeviceState(
-		std::shared_ptr<GlobalContext> &context,
+		GlobalContext &context,
 		std::function<int(const DeviceIdentification&)> fun, const DeviceIdentification &deviceId,
 		const modules::Buffer& command, const modules::Buffer& status
 		): status_ { status } {

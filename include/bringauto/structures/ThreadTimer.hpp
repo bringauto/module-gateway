@@ -28,9 +28,9 @@ public:
 	 * @param function Function which should be executed
 	 * @param deviceId DeviceIdentification
 	 */
-	explicit ThreadTimer(const std::shared_ptr<GlobalContext> &context,
+	explicit ThreadTimer(GlobalContext &context,
 						 const std::function<int(const DeviceIdentification&)> &function,
-						 const DeviceIdentification& deviceId): timer_ { context->ioContext },
+						 const DeviceIdentification& deviceId): timer_ { context.ioContext },
 																fun_ { function },
 																deviceId_ { deviceId } {}
 

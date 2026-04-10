@@ -34,8 +34,8 @@ bool CommunicationMock::sendMessage(ExternalProtocol::ExternalClient* message) {
 	}
 }
 
-std::shared_ptr<ExternalProtocol::ExternalServer> CommunicationMock::receiveMessage() {
-	auto ptr = std::make_shared<ExternalProtocol::ExternalServer>();
+std::unique_ptr<ExternalProtocol::ExternalServer> CommunicationMock::receiveMessage() {
+	auto ptr = std::make_unique<ExternalProtocol::ExternalServer>();
 
 	switch (nextMessageType_) {
 		case CONNECT_RESPONSE:
