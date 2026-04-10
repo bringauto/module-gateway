@@ -78,7 +78,7 @@ int StatusAggregator::remove_device(const structures::DeviceIdentification& devi
 	}
 	clearDeviceUnlocked(device);
 
-	boost::asio::post(context_->ioContext, [this, device]() {
+	boost::asio::post(context_.ioContext, [this, device]() {
 		std::lock_guard postLock(devicesMutex_);
 		devices.erase(device);
 	});

@@ -16,7 +16,7 @@ namespace bringauto::modules {
 class ModuleHandler {
 public:
 	ModuleHandler(
-			const std::shared_ptr <structures::GlobalContext> &context,
+			structures::GlobalContext &context,
 			structures::ModuleLibrary &moduleLibrary,
 			const std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &fromInternalQueue,
 			const std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &commandForwardingQueue,
@@ -111,7 +111,7 @@ private:
 	 */
 	void checkExternalQueueSize() const;
 
-	std::shared_ptr <structures::GlobalContext> context_ {};
+	structures::GlobalContext& context_;
 
 	structures::ModuleLibrary &moduleLibrary_;
 	/// Queue for incoming messages from internal server (connect/status/disconnect)

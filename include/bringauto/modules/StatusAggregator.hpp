@@ -20,12 +20,10 @@ namespace bringauto::modules {
 class StatusAggregator {
 public:
 
-	explicit StatusAggregator(const std::shared_ptr<structures::GlobalContext> &context,
+	explicit StatusAggregator(structures::GlobalContext &context,
 							  const std::shared_ptr<IModuleManagerLibraryHandler> &libraryHandler): context_ { context },
 																								   	module_ {
 																									libraryHandler } {};
-
-	StatusAggregator() = default;
 
 	/**
 	 * @short Status aggregator init.
@@ -230,7 +228,7 @@ private:
 	void aggregateSetSendStatus(structures::StatusAggregatorDeviceState &deviceState, const Buffer &status,
 								const unsigned int &device_type) const;
 
-	std::shared_ptr<structures::GlobalContext> context_ {};
+	structures::GlobalContext& context_;
 
 	const std::shared_ptr<IModuleManagerLibraryHandler> module_ {};
 

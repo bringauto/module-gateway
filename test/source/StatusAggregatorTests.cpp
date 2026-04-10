@@ -42,10 +42,10 @@ void StatusAggregatorTests::remove_device_from_status_aggregator(){
 }
 
 void StatusAggregatorTests::SetUp(){
-	context_ = std::make_shared<structures::GlobalContext>();
+	context_ = std::make_unique<structures::GlobalContext>(bringauto::settings::Settings{});
 	libHandler_ = std::make_shared<modules::ModuleManagerLibraryHandlerLocal>();
 	libHandler_->loadLibrary(PATH_TO_MODULE);
-	statusAggregator_ = std::make_unique<modules::StatusAggregator>(context_, libHandler_);
+	statusAggregator_ = std::make_unique<modules::StatusAggregator>(*context_, libHandler_);
 	statusAggregator_->init_status_aggregator();
 }
 
@@ -54,7 +54,7 @@ void StatusAggregatorTests::TearDown(){
 }
 
 TEST_F(StatusAggregatorTests, init_status_aggregator_ok) {
-	modules::StatusAggregator statusAggregatorTest {};
+	modules::StatusAggregator statusAggregatorTest { *context_, libHandler_ };
 	int ret = statusAggregatorTest.init_status_aggregator();
 	EXPECT_TRUE(ret == OK);
 	statusAggregatorTest.destroy_status_aggregator();
@@ -66,7 +66,7 @@ TEST_F(StatusAggregatorTests, init_status_aggregator_bad_path) {
 }
 
 TEST_F(StatusAggregatorTests, destroy_status_aggregator_ok) {
-	modules::StatusAggregator statusAggregatorTest {};
+	modules::StatusAggregator statusAggregatorTest { *context_, libHandler_ };
 	int ret = statusAggregatorTest.init_status_aggregator();
 	EXPECT_TRUE(ret == OK);
 	ret = statusAggregatorTest.destroy_status_aggregator();

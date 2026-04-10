@@ -37,9 +37,9 @@ public:
 	/**
 	 * @brief Receive message
 	 *
-	 * @return std::shared_ptr<ExternalProtocol::ExternalServer>
+	 * @return std::unique_ptr<ExternalProtocol::ExternalServer>
 	 */
-	virtual std::shared_ptr<ExternalProtocol::ExternalServer> receiveMessage() = 0;
+	virtual std::unique_ptr<ExternalProtocol::ExternalServer> receiveMessage() = 0;
 
 	/**
 	 * @brief Stop and destroy connection

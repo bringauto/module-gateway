@@ -9,7 +9,7 @@
 namespace bringauto::external_client::connection::messages {
 
 
-SentMessagesHandler::SentMessagesHandler(const std::shared_ptr<structures::GlobalContext> &context,
+SentMessagesHandler::SentMessagesHandler(structures::GlobalContext &context,
 										 const std::function<void()> &endConnectionFunc): context_ { context },
 																						 endConnectionFunc_ {
 																								 endConnectionFunc } {}
@@ -17,7 +17,7 @@ SentMessagesHandler::SentMessagesHandler(const std::shared_ptr<structures::Globa
 void SentMessagesHandler::addNotAckedStatus(const ExternalProtocol::Status &status) {
 	std::scoped_lock lock {ackMutex_};
 	notAckedStatuses_.emplace_back(
-			std::make_shared<NotAckedStatus>(status, context_->ioContext, responseHandled_, responseHandledMutex_));
+			std::make_shared<NotAckedStatus>(status, context_.ioContext, responseHandled_, responseHandledMutex_));
 	notAckedStatuses_.back()->startTimer(endConnectionFunc_);
 }
 
