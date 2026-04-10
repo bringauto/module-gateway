@@ -9,7 +9,7 @@ namespace structures = bringauto::structures;
 
 void ModuleHandlerForTesting::start() {
 	size_t messageCounter { 0 };
-	while(!context->ioContext.stopped()) {
+	while(!context.ioContext.stopped()) {
 		if(!fromInternalQueue_->waitForValueWithTimeout(queue_timeout_length)) {
 			if(fromInternalQueue_->front().disconnected()){
 				fromInternalQueue_->pop();
@@ -41,7 +41,7 @@ void ModuleHandlerForTesting::start() {
 
 void ModuleHandlerForTesting::startWithTimeout(bool onConnect, size_t timeoutNumber) {
 	size_t messageCounter { 0 };
-	while(!context->ioContext.stopped()) {
+	while(!context.ioContext.stopped()) {
 		if(!fromInternalQueue_->waitForValueWithTimeout(queue_timeout_length)) {
 			if(fromInternalQueue_->front().disconnected()){
 				fromInternalQueue_->pop();

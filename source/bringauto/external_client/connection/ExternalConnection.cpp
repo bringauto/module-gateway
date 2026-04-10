@@ -12,7 +12,7 @@
 namespace bringauto::external_client::connection {
 using log = settings::Logger;
 
-ExternalConnection::ExternalConnection(const std::shared_ptr<structures::GlobalContext> &context,
+ExternalConnection::ExternalConnection(structures::GlobalContext &context,
 									   structures::ModuleLibrary &moduleLibrary,
 									   const structures::ExternalConnectionSettings &settings,
 									   const std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
@@ -23,7 +23,7 @@ ExternalConnection::ExternalConnection(const std::shared_ptr<structures::GlobalC
 		settings_ { settings },
 		commandQueue_ { commandQueue },
 		reconnectQueue_ { reconnectQueue } {
-	sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context, [this]() {
+	sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context_, [this]() {
 		reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), true));
 	});
 }
@@ -151,8 +151,8 @@ int ExternalConnection::connectMessageHandle(const std::vector<structures::Devic
 	generateSessionId();
 
 	auto connectMessage = common_utils::ProtobufUtils::createExternalClientConnect(sessionId_,
-																				   context_->settings.company,
-																				   context_->settings.vehicleName,
+																				   context_.settings.company,
+																				   context_.settings.vehicleName,
 																				   devices);
 	if(not communicationChannel_->sendMessage(&connectMessage)){
 		log::logError("Communication client couldn't send any message");

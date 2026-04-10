@@ -15,7 +15,7 @@ void InternalServer::run() {
 	log::logInfo("Internal server started, constants used: fleet_protocol_timeout_length: {}, queue_timeout_length: {}",
 				 settings::fleet_protocol_timeout_length.count(),
 				 settings::queue_timeout_length.count());
-	const boost::asio::ip::tcp::endpoint endpoint { boost::asio::ip::tcp::v4(), context_->settings.port };
+	const boost::asio::ip::tcp::endpoint endpoint { boost::asio::ip::tcp::v4(), context_.settings.port };
 	acceptor_.open(endpoint.protocol());
 	acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
 	acceptor_.bind(endpoint);
@@ -25,10 +25,10 @@ void InternalServer::run() {
 }
 
 void InternalServer::addAsyncAccept() {
-	if(context_->ioContext.stopped()) {
+	if(context_.ioContext.stopped()) {
 		return;
 	}
-	auto connection = std::make_shared<structures::Connection>(context_->ioContext);
+	auto connection = std::make_shared<structures::Connection>(context_.ioContext);
 	acceptor_.async_accept(connection->socket, [this, connection](const boost::system::error_code &error) {
 		if(error) {
 			log::logError("Error in addAsyncAccept(): {}", error.message());
@@ -207,7 +207,7 @@ bool InternalServer::handleMessage(const std::shared_ptr<structures::Connection>
 	std::unique_lock<std::mutex> lk(connection->connectionMutex);
 	connection->conditionVariable.wait_for(lk, settings::fleet_protocol_timeout_length,
 										   [this, connection]() {
-											   return connection->ready || context_->ioContext.stopped();
+											   return connection->ready || context_.ioContext.stopped();
 										   });
 	if(!connection->ready) {
 		log::logError("Error in handleMessage(...): "
@@ -216,7 +216,7 @@ bool InternalServer::handleMessage(const std::shared_ptr<structures::Connection>
 					  connection->remoteEndpointAddress());
 		return false;
 	}
-	return !context_->ioContext.stopped();
+	return !context_.ioContext.stopped();
 }
 
 bool InternalServer::handleStatus(const std::shared_ptr<structures::Connection> &connection,
@@ -357,7 +357,7 @@ bool InternalServer::sendResponse(const std::shared_ptr<structures::Connection> 
 }
 
 void InternalServer::listenToQueue() {
-	while(!context_->ioContext.stopped()) {
+	while(!context_.ioContext.stopped()) {
 		if(!toInternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			auto &message = toInternalQueue_->front();
 			if(message.disconnected()) {

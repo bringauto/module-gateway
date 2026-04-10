@@ -72,7 +72,7 @@ int StatusAggregator::remove_device(const structures::DeviceIdentification& devi
 	clear_device(device);
 
 	// WUT, maybe becose there can be multiple context running so by this we ensure no rece condition?
-	boost::asio::post(context_->ioContext, [this, device]() { devices.erase(device); });
+	boost::asio::post(context_.ioContext, [this, device]() { devices.erase(device); });
 	return OK;
 }
 

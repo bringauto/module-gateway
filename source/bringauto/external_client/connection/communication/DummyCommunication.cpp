@@ -28,7 +28,7 @@ bool DummyCommunication::sendMessage(ExternalProtocol::ExternalClient *message) 
     return true;
 }
 
-std::shared_ptr<ExternalProtocol::ExternalServer> DummyCommunication::receiveMessage() {
+std::unique_ptr<ExternalProtocol::ExternalServer> DummyCommunication::receiveMessage() {
     settings::Logger::logDebug("Receiving message in DummyCommunication");
     return nullptr;
 }

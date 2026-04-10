@@ -18,7 +18,7 @@ const std::chrono::seconds queue_timeout_length { 3 };
 class ModuleHandlerForTesting {
 public:
 	ModuleHandlerForTesting(
-		const std::shared_ptr<bringauto::structures::GlobalContext> &context_,
+		bringauto::structures::GlobalContext &context_,
 		const std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>> &fromInternalQueue,
 		const std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage>> &toInternalQueue,
 		size_t num)
@@ -30,7 +30,7 @@ public:
 	void startWithTimeout(bool onConnect, size_t timeoutNumber);
 
 private:
-	std::shared_ptr<bringauto::structures::GlobalContext> context {};
+	bringauto::structures::GlobalContext& context;
 	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>> fromInternalQueue_ {};
 	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage>> toInternalQueue_ {};
 	size_t expectedMessageNumber;

@@ -88,7 +88,7 @@ namespace bringauto::external_client::connection::communication {
 		return true;
 	}
 
-	std::shared_ptr<ExternalProtocol::ExternalServer> QuicCommunication::receiveMessage() {
+	std::unique_ptr<ExternalProtocol::ExternalServer> QuicCommunication::receiveMessage() {
 		std::unique_lock lock(inboundMutex_);
 
 		// Wait for a message or transition out of allowed states
@@ -118,7 +118,7 @@ namespace bringauto::external_client::connection::communication {
 			return nullptr;
 		}
 
-		auto msg = inboundQueue_.front();
+		auto msg = std::make_unique<ExternalProtocol::ExternalServer>(*inboundQueue_.front());
 		inboundQueue_.pop();
 		return msg;
 	}

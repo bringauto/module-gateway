@@ -42,15 +42,15 @@ int main(int argc, char **argv) {
 	namespace bais = bringauto::internal_server;
 	namespace bas = bringauto::structures;
 	namespace baset = bringauto::settings;
-	auto context = std::make_shared<bas::GlobalContext>();
 
+	baset::Settings settings {};
 	try {
 		baset::SettingsParser settingsParser;
 		if(!settingsParser.parseSettings(argc, argv)) {
 			return 0;
 		}
-		context->settings = settingsParser.getSettings();
-		initLogger(context->settings.loggingSettings);
+		settings = settingsParser.getSettings();
+		initLogger(settings.loggingSettings);
 		baset::Logger::logInfo("Version: {}", MODULE_GATEWAY_VERSION);
 		baset::Logger::logInfo("Loaded config:\n{}", settingsParser.serializeToJson());
 	} catch(std::exception &e) {
@@ -58,13 +58,15 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
+	bas::GlobalContext context { std::move(settings) };
+
 	bas::ModuleLibrary moduleLibrary {};
 
 	try {
-		if(context->settings.moduleBinaryPath.empty()) {
-			moduleLibrary.loadLibraries(context->settings.modulePaths);
+		if(context.settings.moduleBinaryPath.empty()) {
+			moduleLibrary.loadLibraries(context.settings.modulePaths);
 		} else {
-			moduleLibrary.loadLibraries(context->settings.modulePaths, context->settings.moduleBinaryPath);
+			moduleLibrary.loadLibraries(context.settings.modulePaths, context.settings.moduleBinaryPath);
 		}
 		moduleLibrary.initStatusAggregators(context);
 	} catch(std::exception &e) {
@@ -72,8 +74,8 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	boost::asio::signal_set signals(context->ioContext, SIGINT, SIGTERM);
-	signals.async_wait([context](auto, auto) { context->ioContext.stop(); });
+	boost::asio::signal_set signals(context.ioContext, SIGINT, SIGTERM);
+	signals.async_wait([&context](auto, auto) { context.ioContext.stop(); });
 
 	auto toInternalQueue = std::make_shared<bas::AtomicQueue<bas::ModuleHandlerMessage >>();
 	auto fromInternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
@@ -86,13 +88,13 @@ int main(int argc, char **argv) {
 
 	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.run(); });
 	std::jthread externalClientThread([&externalClient]() { externalClient.run(); });
-	std::jthread contextThread2([&context]() { context->ioContext.run(); });
-	std::jthread contextThread1([&context]() { context->ioContext.run(); });
+	std::jthread contextThread2([&context]() { context.ioContext.run(); });
+	std::jthread contextThread1([&context]() { context.ioContext.run(); });
 	try {
 		internalServer.run();
 	} catch(boost::system::system_error &e) {
 		baset::Logger::logError("Error during run {}", e.what());
-		context->ioContext.stop();
+		context.ioContext.stop();
 	}
 
 	contextThread2.join();

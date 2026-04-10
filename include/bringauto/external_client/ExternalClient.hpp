@@ -22,7 +22,7 @@ namespace bringauto::external_client {
 class ExternalClient {
 public:
 
-	ExternalClient(const std::shared_ptr<structures::GlobalContext> &context,
+	ExternalClient(structures::GlobalContext &context,
 				   structures::ModuleLibrary &moduleLibrary,
 				   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue);
 
@@ -104,7 +104,7 @@ private:
 
 	std::jthread fromExternalClientThread_ {};
 
-	std::shared_ptr<structures::GlobalContext> context_;
+	structures::GlobalContext& context_;
 
 	structures::ModuleLibrary &moduleLibrary_;
 

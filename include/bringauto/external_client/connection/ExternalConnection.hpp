@@ -24,7 +24,7 @@ namespace bringauto::external_client::connection {
  */
 class ExternalConnection {
 public:
-	ExternalConnection(const std::shared_ptr <structures::GlobalContext> &context,
+	ExternalConnection(structures::GlobalContext &context,
 					   structures::ModuleLibrary &moduleLibrary,
 					   const structures::ExternalConnectionSettings &settings,
 					   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
@@ -178,7 +178,7 @@ private:
 	/// State of the external connection - thread safe
 	std::atomic <ConnectionState> state_ { ConnectionState::NOT_INITIALIZED };
 
-	std::shared_ptr <structures::GlobalContext> context_ {};
+	structures::GlobalContext& context_;
 
 	structures::ModuleLibrary &moduleLibrary_;
 

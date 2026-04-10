@@ -14,7 +14,7 @@
 class ExternalConnectionTests: public ::testing::Test {
 protected:
 	void SetUp() override {
-		context_ = std::make_shared<bringauto::structures::GlobalContext>(bringauto::settings::Settings {
+		context_ = std::make_unique<bringauto::structures::GlobalContext>(bringauto::settings::Settings {
 			.port = 0,
 			.modulePaths = {{ MODULE, PATH_TO_MODULE }},
 			.externalConnectionSettingsList = {{
@@ -29,7 +29,7 @@ protected:
 		moduleLibrary_ = std::make_shared<bringauto::structures::ModuleLibrary>();
 		try {
 			moduleLibrary_->loadLibraries(context_->settings.modulePaths);
-			moduleLibrary_->initStatusAggregators(context_);
+			moduleLibrary_->initStatusAggregators(*context_);
 		} catch(std::exception &e) {
 			GTEST_SKIP() << "Module initialization failed: " << e.what();
 		}
@@ -38,7 +38,7 @@ protected:
 		reconnectQueue_ = std::make_shared<bringauto::structures::AtomicQueue<bringauto::structures::ReconnectQueueItem >>();
 
 		externalConnection_ = std::make_unique<bringauto::external_client::connection::ExternalConnection>(
-			context_,
+			*context_,
 			*moduleLibrary_,
 			context_->settings.externalConnectionSettingsList[0],
 			fromExternalQueue_,
@@ -65,13 +65,13 @@ protected:
 		if(externalConnection_) {
 			externalConnection_->deinitializeConnection(true);
 		}
-		context_.reset();
+		externalConnection_.reset();   // must be before context_.reset()
 		moduleLibrary_.reset();
 		fromExternalQueue_.reset();
 		reconnectQueue_.reset();
 		communicationChannel_.reset();
 		connectedDevices_.clear();
-		externalConnection_.reset();
+		context_.reset();              // context outlives connection
 	};
 
 	static void SetUpTestSuite() {
@@ -93,7 +93,7 @@ protected:
 		ASSERT_EQ(externalConnection_->getState(), bringauto::external_client::connection::ConnectionState::NOT_CONNECTED);
 	}
 
-	std::shared_ptr<bringauto::structures::GlobalContext> context_ {};
+	std::unique_ptr<bringauto::structures::GlobalContext> context_ {};
 	std::shared_ptr<bringauto::structures::ModuleLibrary> moduleLibrary_ {};
 	std::shared_ptr<bringauto::structures::AtomicQueue<InternalProtocol::DeviceCommand>> fromExternalQueue_ {};
 	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ReconnectQueueItem>> reconnectQueue_ {};

@@ -38,7 +38,7 @@ void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem:
 	}
 }
 
-void ModuleLibrary::initStatusAggregators(std::shared_ptr<GlobalContext> &context) {
+void ModuleLibrary::initStatusAggregators(GlobalContext &context) {
 	for(auto const &[key, libraryHandler]: moduleLibraryHandlers) {
 		auto statusAggregator = std::make_shared<modules::StatusAggregator>(context, libraryHandler);
 		statusAggregator->init_status_aggregator();
@@ -50,7 +50,7 @@ void ModuleLibrary::initStatusAggregators(std::shared_ptr<GlobalContext> &contex
 		}
 
 		bool found = false;
-		for(const auto &connection: context->settings.externalConnectionSettingsList) {
+		for(const auto &connection: context.settings.externalConnectionSettingsList) {
 			const auto &modules = connection.modules;
 			if(std::find(modules.cbegin(), modules.cend(), moduleNumber) != modules.cend()) {
 				statusAggregators.try_emplace(moduleNumber, statusAggregator);

@@ -64,7 +64,7 @@ namespace bringauto::external_client::connection::communication {
 		 * @return A shared pointer to the received ExternalServer message,
 		 *         or nullptr if no message is available or the connection is not active.
 		 */
-		std::shared_ptr<ExternalProtocol::ExternalServer> receiveMessage() override;
+		std::unique_ptr<ExternalProtocol::ExternalServer> receiveMessage() override;
 
 		/**
 		 * @brief Initiates a graceful shutdown of the QUIC connection.

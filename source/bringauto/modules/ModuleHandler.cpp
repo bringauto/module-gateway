@@ -25,7 +25,7 @@ void ModuleHandler::run() const {
 }
 
 void ModuleHandler::handleMessages() const {
-	while(not context_->ioContext.stopped()) {
+	while(not context_.ioContext.stopped()) {
 		if(fromInternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			checkTimeoutedMessages();
 			continue;

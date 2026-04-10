@@ -20,7 +20,7 @@ public:
 
 	StatusAggregatorDeviceState() = default;
 
-	StatusAggregatorDeviceState(std::shared_ptr<GlobalContext> &context,
+	StatusAggregatorDeviceState(GlobalContext &context,
 								std::function<int(const DeviceIdentification&)> fun,
 								const DeviceIdentification &deviceId,
 								const modules::Buffer& command, const modules::Buffer& status);

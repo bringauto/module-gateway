@@ -100,7 +100,7 @@ bool MqttCommunication::sendMessage(ExternalProtocol::ExternalClient* message) {
 	return true;
 }
 
-std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMessage() {
+std::unique_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMessage() {
 	std::lock_guard<std::mutex> lock(receiveMessageMutex_);
 	if(client_ == nullptr) {
 		return nullptr;
@@ -120,7 +120,7 @@ std::shared_ptr<ExternalProtocol::ExternalServer> MqttCommunication::receiveMess
 		return nullptr;
 	}
 
-	auto ptr = std::make_shared<ExternalProtocol::ExternalServer>();
+	auto ptr = std::make_unique<ExternalProtocol::ExternalServer>();
 	if (!ptr->ParseFromArray(msg->get_payload_str().c_str(), static_cast<int>(msg->get_payload_str().size()))) {
 		settings::Logger::logError("Failed to parse protobuf message from external server");
 		return nullptr;

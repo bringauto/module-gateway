@@ -35,7 +35,7 @@ protected:
 
 	void remove_device_from_status_aggregator();
 
-	std::shared_ptr<bringauto::structures::GlobalContext> context_ {};
+	std::unique_ptr<bringauto::structures::GlobalContext> context_ {};
 
 	std::unique_ptr <bringauto::modules::StatusAggregator> statusAggregator_ {};
 

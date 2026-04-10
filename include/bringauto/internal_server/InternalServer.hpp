@@ -31,10 +31,10 @@ public:
 	 * @param fromInternalQueue queue for sending data from Server to Module Handler
 	 * @param toInternalQueue queue for sending data from Module Handler to Server
 	 */
-	InternalServer(const std::shared_ptr<structures::GlobalContext> &context,
+	InternalServer(structures::GlobalContext &context,
 				   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &fromInternalQueue,
 				   const std::shared_ptr<structures::AtomicQueue<structures::ModuleHandlerMessage>> &toInternalQueue)
-			: context_ { context }, acceptor_(context->ioContext), fromInternalQueue_ { fromInternalQueue },
+			: context_ { context }, acceptor_(context.ioContext), fromInternalQueue_ { fromInternalQueue },
 			  toInternalQueue_ { toInternalQueue } {}
 
 	~InternalServer() = default;
@@ -198,7 +198,7 @@ private:
 	 */
 	std::shared_ptr<structures::Connection> findConnection(const structures::DeviceIdentification &deviceId);
 
-	std::shared_ptr<structures::GlobalContext> context_ {};
+	structures::GlobalContext& context_;
 	boost::asio::ip::tcp::acceptor acceptor_;
 	/// Queue for messages from Module Handler to Internal Client
 	std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> fromInternalQueue_ {};

@@ -18,13 +18,13 @@ namespace bringauto::external_client {
 
 namespace ip = InternalProtocol;
 
-ExternalClient::ExternalClient(const std::shared_ptr<structures::GlobalContext> &context,
+ExternalClient::ExternalClient(structures::GlobalContext &context,
 							   structures::ModuleLibrary &moduleLibrary,
 							   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue):
 		toExternalQueue_ { toExternalQueue },
 		context_ { context },
 		moduleLibrary_ { moduleLibrary },
-		timer_ { context->ioContext } {
+		timer_ { context.ioContext } {
 	fromExternalQueue_ = std::make_shared<structures::AtomicQueue<InternalProtocol::DeviceCommand >>();
 	reconnectQueue_ =
 			std::make_shared<structures::AtomicQueue<structures::ReconnectQueueItem >>();
@@ -32,7 +32,7 @@ ExternalClient::ExternalClient(const std::shared_ptr<structures::GlobalContext> 
 }
 
 void ExternalClient::handleCommands() {
-	while(not context_->ioContext.stopped()) {
+	while(not context_.ioContext.stopped()) {
 		if(fromExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
@@ -90,7 +90,7 @@ void ExternalClient::run() {
 }
 
 void ExternalClient::initConnections() {
-	for(auto const &connectionSettings: context_->settings.externalConnectionSettingsList) {
+	for(auto const &connectionSettings: context_.settings.externalConnectionSettingsList) {
 		externalConnectionsList_.emplace_back(context_, moduleLibrary_, connectionSettings, fromExternalQueue_,
 											  reconnectQueue_);
 		auto &newConnection = externalConnectionsList_.back();
@@ -99,12 +99,12 @@ void ExternalClient::initConnections() {
 		switch(connectionSettings.protocolType) {
 			case structures::ProtocolType::MQTT:
 				communicationChannel = std::make_shared<connection::communication::MqttCommunication>(
-					connectionSettings, context_->settings.company, context_->settings.vehicleName
+					connectionSettings, context_.settings.company, context_.settings.vehicleName
 				);
 				break;
 			case structures::ProtocolType::QUIC:
 				communicationChannel = std::make_shared<connection::communication::QuicCommunication>(
-					connectionSettings, context_->settings.company, context_->settings.vehicleName
+					connectionSettings, context_.settings.company, context_.settings.vehicleName
 				);
 				break;
 			case structures::ProtocolType::DUMMY:
@@ -126,7 +126,7 @@ void ExternalClient::initConnections() {
 }
 
 void ExternalClient::handleAggregatedMessages() {
-	while(not context_->ioContext.stopped()) {
+	while(not context_.ioContext.stopped()) {
 		if(not reconnectQueue_->empty()) {
 			auto &reconnectItem = reconnectQueue_->front();
 			auto &connection = reconnectItem.connection_.get();
@@ -189,7 +189,7 @@ bool ExternalClient::sendStatus(const structures::InternalClientMessage &interna
 
 void ExternalClient::drainQueueDuringConnect(connection::ExternalConnection &connection,
                                               std::atomic<bool> &connectDone) {
-	while (!connectDone.load() && !context_->ioContext.stopped() &&
+	while (!connectDone.load() && !context_.ioContext.stopped() &&
 	       connection.getState() != connection::ConnectionState::CONNECTED) {
 		if (toExternalQueue_->waitForValueWithTimeout(std::chrono::seconds(1))) {
 			continue;
@@ -238,7 +238,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	auto connectedDevices = connection.getAllConnectedDevices();
 	auto forcedDevices = connection.forceAggregationOnAllDevices(connectedDevices);
 
-	while(not forcedDevices.empty() && not context_->ioContext.stopped()) {
+	while(not forcedDevices.empty() && not context_.ioContext.stopped()) {
 		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
@@ -281,7 +281,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 
 	drainQueueDuringConnect(connection, connectDone);
 
-	if (context_->ioContext.stopped() && !connectDone.load()) {
+	if (context_.ioContext.stopped() && !connectDone.load()) {
 		// Interrupt initializeConnection() so the thread can finish promptly.
 		// closeConnection() fires SHUTDOWN_COMPLETE which notifies inboundCv_,
 		// waking any blocked receiveMessage() call.
@@ -289,7 +289,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	}
 	connectThread.join();
 
-	if(connectResult != 0 && !context_->ioContext.stopped()) {
+	if(connectResult != 0 && !context_.ioContext.stopped()) {
 		settings::Logger::logDebug("Waiting for reconnect timer to expire");
 		timer_.expires_from_now(boost::posix_time::seconds(settings::reconnect_delay));
 		timer_.async_wait([this, &connection](const boost::system::error_code&) {

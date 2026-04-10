@@ -12,7 +12,7 @@ namespace bringauto::external_client::connection::messages {
 
 class SentMessagesHandler {
 public:
-	explicit SentMessagesHandler(const std::shared_ptr <structures::GlobalContext> &context,
+	explicit SentMessagesHandler(structures::GlobalContext &context,
 								 const std::function<void()> &endConnectionFunc);
 
 	/**
@@ -100,7 +100,7 @@ private:
 	/// Vector of connected devices, the value is device id - @see ProtobufUtils::getId()
 	std::vector <structures::DeviceIdentification> connectedDevices_ {};
 	/// Global context of module gateway
-	std::shared_ptr <structures::GlobalContext> context_ {};
+	structures::GlobalContext& context_;
 	/// Callback called by timer when status does not get response, registered by constructor
 	std::function<void()> endConnectionFunc_ {};
 	/// Returns true if status response was already handled. Used in NotAckedStatus
