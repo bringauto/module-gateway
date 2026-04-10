@@ -58,6 +58,12 @@ cmake --install . [--prefix <custom path>] # sets up runtime library paths; runn
 ./module-gateway-app --config-path=../resources/config/default.json
 ```
 
+## Debug
+Without the install step dynamic libraies are not found directly. This is not tested properly, but it is most probably necessary to pass LD_LIBRARY_PATH while running the executable. Tested only with release build without the install step.
+```
+LD_LIBRARY_PATH=../_tmp/cache/dir/EXTRACTED/BACPACK/AERON/DEBUG/lib:$LD_LIBRARY_PATH ./module-gateway-app
+```
+
 ### Arguments
 
 * Required arguments:
