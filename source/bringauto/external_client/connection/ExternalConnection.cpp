@@ -347,8 +347,8 @@ void ExternalConnection::receivingHandlerLoop() {
 		}
 		const auto serverMessage = communicationChannel_->receiveMessage();
 		if(communicationChannel_->consumeServerDisconnectNotification()) {
-			log::logInfo("External server sent disconnect notification, triggering immediate reconnect");
-			reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), true));
+			log::logInfo("External server sent disconnect notification, dropping connection until new device connects");
+			reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), false));
 			return;
 		}
 		if(serverMessage == nullptr || state_.load() == ConnectionState::NOT_CONNECTED) {
