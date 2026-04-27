@@ -23,6 +23,7 @@ Key CMake options:
 - `BRINGAUTO_INSTALL` — enable install target
 - `BRINGAUTO_PACKAGE` — enable packaging (forces INSTALL=ON)
 - `BRINGAUTO_SYSTEM_DEP` — use system deps instead of fetching
+- `BRINGAUTO_SANITIZERS` — enable AddressSanitizer/UBSan/LeakSanitizer (default ON; set OFF for cross-compilation, e.g. aarch64)
 - `BRINGAUTO_MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY` — compile-time log level (DEBUG/INFO/WARNING/ERROR/CRITICAL)
 
 ## Tests
