@@ -24,7 +24,7 @@ ExternalConnection::ExternalConnection(const std::shared_ptr<structures::GlobalC
 		commandQueue_ { commandQueue },
 		reconnectQueue_ { reconnectQueue } {
 	sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context, [this]() {
-		reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(*this), true));
+		reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), true));
 	});
 }
 
@@ -348,7 +348,7 @@ void ExternalConnection::receivingHandlerLoop() {
 		const auto serverMessage = communicationChannel_->receiveMessage();
 		if(communicationChannel_->consumeServerDisconnectNotification()) {
 			log::logInfo("External server sent disconnect notification, triggering immediate reconnect");
-			reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(*this), true));
+			reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), true));
 			return;
 		}
 		if(serverMessage == nullptr || state_.load() == ConnectionState::NOT_CONNECTED) {
@@ -358,7 +358,7 @@ void ExternalConnection::receivingHandlerLoop() {
 			const auto &command = serverMessage->command();
 			log::logDebug("Handling COMMAND messageCounter={}", command.messagecounter());
 			if(handleCommand(command) != OK) {
-				reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(*this), true));
+				reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), true));
 				return;
 			}
 		} else if(serverMessage->has_statusresponse()) {
@@ -370,7 +370,7 @@ void ExternalConnection::receivingHandlerLoop() {
 			}
 		} else {
 			log::logError("Received message with unexpected type(connect response), closing connection");
-			reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(*this), true));
+			reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), true));
 			return;
 		}
 

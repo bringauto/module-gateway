@@ -304,7 +304,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		settings::Logger::logDebug("Waiting for reconnect timer to expire");
 		timer_.expires_from_now(boost::posix_time::seconds(settings::reconnect_delay));
 		timer_.async_wait([this, &connection](const boost::system::error_code&) {
-			reconnectQueue_->push(structures::ReconnectQueueItem(std::ref(connection), true));
+			reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(connection), true));
 			settings::Logger::logDebug("Reconnect timer expired");
 		});
 	}
