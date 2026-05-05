@@ -11,10 +11,7 @@ namespace bringauto::modules {
 
 namespace ip = InternalProtocol;
 
-void ModuleHandler::destroy() const {
-	while(not fromInternalQueue_.empty()) {
-		fromInternalQueue_.pop();
-	}
+ModuleHandler::~ModuleHandler() {
 	settings::Logger::logInfo("Module handler stopped");
 }
 

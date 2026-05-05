@@ -70,10 +70,6 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 }
 
 ExternalClient::~ExternalClient() {
-	destroy();
-}
-
-void ExternalClient::destroy() {
 	for(auto &externalConnection: externalConnectionsList_) {
 		externalConnection.deinitializeConnection(true);
 	}

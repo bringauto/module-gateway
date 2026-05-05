@@ -127,7 +127,6 @@ void TestHandler::runTestsParallelConnections() {
 	if(!context.ioContext.stopped()) {
 		context.ioContext.stop();
 	}
-	internalServer.destroy();
 }
 
 void TestHandler::runConnects() {
@@ -197,7 +196,6 @@ void TestHandler::runTestsSerialConnections() {
 	if(!context.ioContext.stopped()) {
 		context.ioContext.stop();
 	}
-	internalServer.destroy();
 }
 
 void TestHandler::runConnects(size_t index, size_t header, std::string data, bool recastHeader) {
@@ -284,7 +282,6 @@ void TestHandler::runTestsWithWrongMessage(size_t index, uint32_t header, std::s
 	if(!context.ioContext.stopped()) {
 		context.ioContext.stop();
 	}
-	internalServer.destroy();
 }
 
 void TestHandler::runConnects(size_t numberOfErrors) {
@@ -372,7 +369,6 @@ void TestHandler::runTestsWithModuleHandlerTimeout(bool onConnect, size_t timeou
 	if(!context.ioContext.stopped()) {
 		context.ioContext.stop();
 	}
-	internalServer.destroy();
 }
 
 

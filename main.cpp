@@ -102,10 +102,6 @@ int main(int argc, char **argv) {
 	externalClientThread.join();
 	moduleHandlerThread.join();
 
-	internalServer.destroy();
-	moduleHandler.destroy();
-	externalClient.destroy();
-
 	google::protobuf::ShutdownProtobufLibrary();
 
 	return 0;

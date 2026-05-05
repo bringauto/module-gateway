@@ -25,6 +25,8 @@ public:
 			  toInternalQueue_ { toInternalQueue },
 			  toExternalQueue_ { toExternalQueue } {}
 
+	~ModuleHandler();
+
 	/**
 	 * @brief Start Module handler
 	 *
@@ -32,12 +34,6 @@ public:
 	 *
 	 */
 	void run() const;
-
-	/**
-	 * @brief Stop Module handler and clean all initialized modules
-	 *
-	 */
-	void destroy() const;
 
 private:
 
