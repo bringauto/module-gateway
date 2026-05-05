@@ -5,6 +5,7 @@
 #include <boost/asio.hpp>
 
 #include <condition_variable>
+#include <optional>
 #include <string>
 
 
@@ -47,7 +48,7 @@ struct Connection {
 	/**
 	 * @brief identification of connected device
 	 */
-	std::shared_ptr <DeviceIdentification> deviceId {};
+	std::optional<DeviceIdentification> deviceId {};
 	/**
 	 * @brief Context for connection
 	 */
