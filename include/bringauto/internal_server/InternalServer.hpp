@@ -37,7 +37,7 @@ public:
 			: context_ { context }, acceptor_(context.ioContext), fromInternalQueue_ { fromInternalQueue },
 			  toInternalQueue_ { toInternalQueue } {}
 
-	~InternalServer() = default;
+	~InternalServer();
 
 	/**
 	 * Starts the server.
@@ -45,15 +45,6 @@ public:
 	 * - Starts Thread that listens to data coming from ModuleHandler
 	 */
 	void run();
-
-	/**
-	 * Stop the server.
-	 * - Stops Acceptor.
-	 * - Notifies all running threads to end.
-	 * Must be called at the end of the Server instance lifetime.
-	 * After the stop() the start() can be called to reinitialized the Server instance.
-	 */
-	void destroy();
 
 private:
 	/**

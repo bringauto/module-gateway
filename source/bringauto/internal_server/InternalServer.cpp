@@ -427,11 +427,11 @@ InternalServer::findConnection(const structures::DeviceIdentification &deviceId)
 	return connectionFound;
 }
 
-void InternalServer::destroy() {
-	log::logInfo("Internal server stopped");
+InternalServer::~InternalServer() {
 	boost::system::error_code error {};
 	acceptor_.cancel(error);
 	acceptor_.close(error);
+	log::logInfo("Internal server stopped");
 }
 
 

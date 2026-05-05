@@ -52,7 +52,7 @@ void ModuleHandler::handleMessages() const {
 }
 
 void ModuleHandler::handleCommandForwards() const {
-	while(not context_->ioContext.stopped()) {
+	while(not context_.ioContext.stopped()) {
 		if(commandForwardingQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
@@ -195,7 +195,7 @@ void ModuleHandler::handleCommandForward(const structures::DeviceIdentification 
 
 	const auto device = deviceId.convertToIPDevice();
 	const auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device, commandBuffer);
-	toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false, deviceCommandMessage));
+	toInternalQueue_.pushAndNotify(structures::ModuleHandlerMessage(false, deviceCommandMessage));
 	settings::Logger::logDebug("Module handler forwarded command immediately for device: {}", deviceId.getDeviceName());
 }
 
