@@ -18,13 +18,13 @@ public:
 	ModuleHandler(
 			structures::GlobalContext &context,
 			structures::ModuleLibrary &moduleLibrary,
-			const std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &fromInternalQueue,
+			structures::AtomicQueue<structures::InternalClientMessage>& fromInternalQueue,
 			const std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &commandForwardingQueue,
-			const std::shared_ptr <structures::AtomicQueue<structures::ModuleHandlerMessage>> &toInternalQueue,
-			const std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue)
-			: context_ { context }, moduleLibrary_ { moduleLibrary },
-			  fromInternalQueue_ { fromInternalQueue }, commandForwardingQueue_ { commandForwardingQueue },
-			  toInternalQueue_ { toInternalQueue }, toExternalQueue_ { toExternalQueue } {}
+			structures::AtomicQueue<structures::ModuleHandlerMessage>& toInternalQueue,
+			structures::AtomicQueue<structures::InternalClientMessage>& toExternalQueue)
+			: context_ { context }, moduleLibrary_ { moduleLibrary }, fromInternalQueue_ { fromInternalQueue },
+			  toInternalQueue_ { toInternalQueue }, commandForwardingQueue_ { commandForwardingQueue },
+			  toExternalQueue_ { toExternalQueue } {}
 
 	/**
 	 * @brief Start Module handler
@@ -115,13 +115,13 @@ private:
 
 	structures::ModuleLibrary &moduleLibrary_;
 	/// Queue for incoming messages from internal server (connect/status/disconnect)
-	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> fromInternalQueue_ {};
+	structures::AtomicQueue<structures::InternalClientMessage>& fromInternalQueue_;
 	/// Queue for command-forward events from external client
 	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> commandForwardingQueue_ {};
 	/// Queue for outgoing messages to internal server to be forwarded to devices
-	std::shared_ptr <structures::AtomicQueue<structures::ModuleHandlerMessage>> toInternalQueue_ {};
+	structures::AtomicQueue<structures::ModuleHandlerMessage>& toInternalQueue_;
 	/// Queue for outgoing messages to external server to be forwarded to external server
-	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> toExternalQueue_ {};
+	structures::AtomicQueue<structures::InternalClientMessage>& toExternalQueue_;
 };
 
 }
