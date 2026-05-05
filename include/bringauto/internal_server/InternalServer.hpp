@@ -93,7 +93,7 @@ private:
 	 * @param client message to be checked and sent
 	 * @return true if status is valid.
 	 */
-	bool handleStatus(const std::shared_ptr<structures::Connection> &connection,
+	bool handleStatus(structures::Connection &connection,
 					  const InternalProtocol::InternalClient &client) const;
 
 	/**
@@ -127,7 +127,7 @@ private:
 	 * @param connect message containing data for response message
 	 * @param deviceId unique device identification
 	 */
-	void respondWithHigherPriorityConnected(const std::shared_ptr<structures::Connection> &connection,
+	void respondWithHigherPriorityConnected(structures::Connection &connection,
 											const InternalProtocol::InternalClient &connect,
 											const structures::DeviceIdentification &deviceId);
 
@@ -137,7 +137,7 @@ private:
 	 * @param connect message containing data for response message
 	 * @param deviceId unique device identification
 	 */
-	void respondWithAlreadyConnected(const std::shared_ptr<structures::Connection> &connection,
+	void respondWithAlreadyConnected(structures::Connection &connection,
 									 const InternalProtocol::InternalClient &connect,
 									 const structures::DeviceIdentification &deviceId);
 
@@ -159,14 +159,14 @@ private:
 	 * @param message message to be sent
 	 * @return true if writes are successful
 	 */
-	bool sendResponse(const std::shared_ptr<structures::Connection> &connection,
+	bool sendResponse(structures::Connection &connection,
 					  const InternalProtocol::InternalServer &message);
 
 	/**
 	 * @brief Removes Connection from the map of active connections and clean up/closes its socket
 	 * @param connection connection to be removed
 	 */
-	void removeConnFromMap(const std::shared_ptr<structures::Connection> &connection);
+	void removeConnFromMap(structures::Connection &connection);
 
 	/**
 	 * Periodically checks for new messages received from module handler through queue.
@@ -185,9 +185,9 @@ private:
 	/**
 	 * @brief Searches for connection in connectedDevices_ vector with deviceId, which is "same" as given deviceId.
 	 * @param deviceId that will be searched for in the vector
-	 * @return connection in connectedDevices_ vector
+	 * @return pointer to connection in connectedDevices_ vector, or nullptr if not found (caller must hold serverMutex_)
 	 */
-	std::shared_ptr<structures::Connection> findConnection(const structures::DeviceIdentification &deviceId);
+	structures::Connection* findConnection(const structures::DeviceIdentification &deviceId);
 
 	structures::GlobalContext& context_;
 	boost::asio::ip::tcp::acceptor acceptor_;
