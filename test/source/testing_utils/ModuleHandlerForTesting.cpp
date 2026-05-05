@@ -10,20 +10,20 @@ namespace structures = bringauto::structures;
 void ModuleHandlerForTesting::start() {
 	size_t messageCounter { 0 };
 	while(!context.ioContext.stopped()) {
-		if(!fromInternalQueue_->waitForValueWithTimeout(queue_timeout_length)) {
-			if(fromInternalQueue_->front().disconnected()){
-				fromInternalQueue_->pop();
+		if(!fromInternalQueue_.waitForValueWithTimeout(queue_timeout_length)) {
+			if(fromInternalQueue_.front().disconnected()){
+				fromInternalQueue_.pop();
 				continue;
 			}
-			auto message = fromInternalQueue_->front().getMessage();
-			fromInternalQueue_->pop();
+			auto message = fromInternalQueue_.front().getMessage();
+			fromInternalQueue_.pop();
 			if(message.has_deviceconnect()) {
 				auto res = ProtobufUtils::CreateServerMessage(
 					message.deviceconnect().device(),
 					InternalProtocol::DeviceConnectResponse_ResponseType_OK
 				);
 				auto resModuleHandlerMessage = structures::ModuleHandlerMessage(false, res);
-				toInternalQueue_->pushAndNotify(resModuleHandlerMessage);
+				toInternalQueue_.pushAndNotify(resModuleHandlerMessage);
 			}
 			if(message.has_devicestatus()) {
 				auto com = ProtobufUtils::CreateServerMessage(
@@ -31,7 +31,7 @@ void ModuleHandlerForTesting::start() {
 					message.devicestatus().statusdata()
 				);
 				auto comModuleHandlerMessage = structures::ModuleHandlerMessage(false, com);
-				toInternalQueue_->pushAndNotify(comModuleHandlerMessage);
+				toInternalQueue_.pushAndNotify(comModuleHandlerMessage);
 			}
 			++messageCounter;
 		}
@@ -42,13 +42,13 @@ void ModuleHandlerForTesting::start() {
 void ModuleHandlerForTesting::startWithTimeout(bool onConnect, size_t timeoutNumber) {
 	size_t messageCounter { 0 };
 	while(!context.ioContext.stopped()) {
-		if(!fromInternalQueue_->waitForValueWithTimeout(queue_timeout_length)) {
-			if(fromInternalQueue_->front().disconnected()){
-				fromInternalQueue_->pop();
+		if(!fromInternalQueue_.waitForValueWithTimeout(queue_timeout_length)) {
+			if(fromInternalQueue_.front().disconnected()){
+				fromInternalQueue_.pop();
 				continue;
 			}
-			auto message = fromInternalQueue_->front().getMessage();
-			fromInternalQueue_->pop();
+			auto message = fromInternalQueue_.front().getMessage();
+			fromInternalQueue_.pop();
 			if(message.has_deviceconnect()) {
 				if(onConnect && timeoutNumber > 0) {
 					--timeoutNumber;
@@ -59,7 +59,7 @@ void ModuleHandlerForTesting::startWithTimeout(bool onConnect, size_t timeoutNum
 					InternalProtocol::DeviceConnectResponse_ResponseType_OK
 				);
 				auto resModuleHandlerMessage = structures::ModuleHandlerMessage(false, res);
-				toInternalQueue_->pushAndNotify(resModuleHandlerMessage);
+				toInternalQueue_.pushAndNotify(resModuleHandlerMessage);
 			}
 			if(message.has_devicestatus()) {
 				if(!onConnect && timeoutNumber > 0) {
@@ -71,7 +71,7 @@ void ModuleHandlerForTesting::startWithTimeout(bool onConnect, size_t timeoutNum
 					message.devicestatus().statusdata()
 				);
 				auto comModuleHandlerMessage = structures::ModuleHandlerMessage(false, com);
-				toInternalQueue_->pushAndNotify(comModuleHandlerMessage);
+				toInternalQueue_.pushAndNotify(comModuleHandlerMessage);
 			}
 			++messageCounter;
 		}

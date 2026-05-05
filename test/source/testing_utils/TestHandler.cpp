@@ -17,8 +17,6 @@ namespace structures = bringauto::structures;
 TestHandler::TestHandler(const std::vector <InternalProtocol::Device> &devices, const std::vector <std::string> &data) {
 	settings = {.port = port};
 
-	toInternalQueue = std::make_shared < structures::AtomicQueue < structures::ModuleHandlerMessage >> ();
-	fromInternalQueue = std::make_shared < structures::AtomicQueue < structures::InternalClientMessage >> ();
 	for(size_t i = 0; i < devices.size(); ++i) {
 		connects.push_back(ProtobufUtils::CreateClientMessage(devices[i]));
 		statuses.push_back(ProtobufUtils::CreateClientMessage(devices[i], data[i]));
@@ -48,8 +46,6 @@ TestHandler::TestHandler(
 		const std::vector <std::string> &data) {
 	settings = {.port = port};
 
-	toInternalQueue = std::make_shared < structures::AtomicQueue < structures::ModuleHandlerMessage >> ();
-	fromInternalQueue = std::make_shared < structures::AtomicQueue < structures::InternalClientMessage >> ();
 	for(size_t i = 0; i < devices.size(); ++i) {
 		connects.push_back(ProtobufUtils::CreateClientMessage(devices[i]));
 		statuses.push_back(ProtobufUtils::CreateClientMessage(devices[i], data[i]));

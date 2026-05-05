@@ -24,7 +24,9 @@ public:
 
 	ExternalClient(structures::GlobalContext &context,
 				   structures::ModuleLibrary &moduleLibrary,
-				   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue);
+				   structures::AtomicQueue<structures::InternalClientMessage>& toExternalQueue);
+
+	~ExternalClient();
 
 	/**
 	 * @brief Initialize connections, error aggregators
@@ -96,11 +98,11 @@ private:
 	/// List of external connections, each device can have its own connection or multiple devices can share one connection
 	std::list<connection::ExternalConnection> externalConnectionsList_ {};
 	/// Queue for  messages from module handler to external client to be sent to external server
-	std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> toExternalQueue_;
+	structures::AtomicQueue<structures::InternalClientMessage>& toExternalQueue_;
 	/// Queue for device commands received by external client to module handler
-	std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>> fromExternalQueue_ {};
+	structures::AtomicQueue<InternalProtocol::DeviceCommand> fromExternalQueue_;
 
-	std::shared_ptr<structures::AtomicQueue<structures::ReconnectQueueItem>> reconnectQueue_ {};
+	structures::AtomicQueue<structures::ReconnectQueueItem> reconnectQueue_;
 
 	std::jthread fromExternalClientThread_ {};
 

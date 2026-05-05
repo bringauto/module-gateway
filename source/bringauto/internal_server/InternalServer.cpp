@@ -229,7 +229,7 @@ bool InternalServer::handleStatus(const std::shared_ptr<structures::Connection> 
 		return false;
 	}
 	std::lock_guard<std::mutex> lk(connection->connectionMutex);
-	fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(false, client));
+	fromInternalQueue_.pushAndNotify(structures::InternalClientMessage(false, client));
 	connection->ready = false;
 	return true;
 }
@@ -279,7 +279,7 @@ void InternalServer::connectNewDevice(const std::shared_ptr<structures::Connecti
 									  const structures::DeviceIdentification &deviceId) {
 	connection->deviceId = std::make_shared<structures::DeviceIdentification>(deviceId);
 	connectedDevices_.push_back(connection);
-	fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(false, connect));
+	fromInternalQueue_.pushAndNotify(structures::InternalClientMessage(false, connect));
 	log::logInfo(
 			"Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
 			"has been added into the vector of active connections",
@@ -358,14 +358,14 @@ bool InternalServer::sendResponse(const std::shared_ptr<structures::Connection> 
 
 void InternalServer::listenToQueue() {
 	while(!context_.ioContext.stopped()) {
-		if(!toInternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
-			auto &message = toInternalQueue_->front();
+		if(!toInternalQueue_.waitForValueWithTimeout(settings::queue_timeout_length)) {
+			auto &message = toInternalQueue_.front();
 			if(message.disconnected()) {
 				handleDisconnect(message.getDeviceId());
 			} else {
 				validateResponse(message.getMessage());
 			}
-			toInternalQueue_->pop();
+			toInternalQueue_.pop();
 		}
 	}
 }
@@ -410,7 +410,7 @@ void InternalServer::removeConnFromMap(const std::shared_ptr<structures::Connect
 				" has been closed and erased", connection->deviceId->getModule(),
 				connection->deviceId->getDeviceType(), connection->deviceId->getDeviceRole(),
 				connection->deviceId->getDeviceName(), connection->deviceId->getPriority());
-		fromInternalQueue_->pushAndNotify(structures::InternalClientMessage(*connection->deviceId));
+		fromInternalQueue_.pushAndNotify(structures::InternalClientMessage(*connection->deviceId));
 	}
 
 }

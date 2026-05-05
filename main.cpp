@@ -77,9 +77,9 @@ int main(int argc, char **argv) {
 	boost::asio::signal_set signals(context.ioContext, SIGINT, SIGTERM);
 	signals.async_wait([&context](auto, auto) { context.ioContext.stop(); });
 
-	auto toInternalQueue = std::make_shared<bas::AtomicQueue<bas::ModuleHandlerMessage >>();
-	auto fromInternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
-	auto toExternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
+	bas::AtomicQueue<bas::ModuleHandlerMessage> toInternalQueue;
+	bas::AtomicQueue<bas::InternalClientMessage> fromInternalQueue;
+	bas::AtomicQueue<bas::InternalClientMessage> toExternalQueue;
 
 	bais::InternalServer internalServer { context, fromInternalQueue, toInternalQueue };
 	bringauto::modules::ModuleHandler moduleHandler { context, moduleLibrary, fromInternalQueue, toInternalQueue,

@@ -15,16 +15,15 @@ using log = settings::Logger;
 ExternalConnection::ExternalConnection(structures::GlobalContext &context,
 									   structures::ModuleLibrary &moduleLibrary,
 									   const structures::ExternalConnectionSettings &settings,
-									   const std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
-									   const std::shared_ptr<structures::AtomicQueue<
-											   structures::ReconnectQueueItem>> &reconnectQueue):
+									   structures::AtomicQueue<InternalProtocol::DeviceCommand>& commandQueue,
+									   structures::AtomicQueue<structures::ReconnectQueueItem>& reconnectQueue):
 		context_ { context },
 		moduleLibrary_ { moduleLibrary },
 		settings_ { settings },
 		commandQueue_ { commandQueue },
 		reconnectQueue_ { reconnectQueue } {
 	sentMessagesHandler_ = std::make_unique<messages::SentMessagesHandler>(context_, [this]() {
-		reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), true));
+		reconnectQueue_.pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), true));
 	});
 }
 
@@ -324,7 +323,7 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command &commandMe
 	const auto &errorAggregator = it->second;
 	if(sentMessagesHandler_->isDeviceConnected(deviceId)) {
 		responseType = ExternalProtocol::CommandResponse_Type_OK;
-		commandQueue_->pushAndNotify(commandMessage.devicecommand());
+		commandQueue_.pushAndNotify(commandMessage.devicecommand());
 	} else if(errorAggregator.is_device_type_supported(deviceId.getDeviceType()) != OK) {
 		responseType = ExternalProtocol::CommandResponse_Type_DEVICE_NOT_SUPPORTED;
 	} else {
@@ -348,7 +347,7 @@ void ExternalConnection::receivingHandlerLoop() {
 		const auto serverMessage = communicationChannel_->receiveMessage();
 		if(communicationChannel_->consumeServerDisconnectNotification()) {
 			log::logInfo("External server sent disconnect notification, dropping connection until new device connects");
-			reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), false));
+			reconnectQueue_.pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), false));
 			return;
 		}
 		if(serverMessage == nullptr || state_.load() == ConnectionState::NOT_CONNECTED) {
@@ -358,19 +357,19 @@ void ExternalConnection::receivingHandlerLoop() {
 			const auto &command = serverMessage->command();
 			log::logDebug("Handling COMMAND messageCounter={}", command.messagecounter());
 			if(handleCommand(command) != OK) {
-				reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), true));
+				reconnectQueue_.pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), true));
 				return;
 			}
 		} else if(serverMessage->has_statusresponse()) {
 			const auto &statusResponse = serverMessage->statusresponse();
 			log::logDebug("Handling STATUS_RESPONSE messageCounter={}", statusResponse.messagecounter());
 			if(sentMessagesHandler_->acknowledgeStatus(statusResponse) != OK) {
-				reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), false));
+				reconnectQueue_.pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), false));
 				return;
 			}
 		} else {
 			log::logError("Received message with unexpected type(connect response), closing connection");
-			reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), true));
+			reconnectQueue_.pushAndNotify(structures::ReconnectQueueItem(std::ref(*this), true));
 			return;
 		}
 

@@ -32,8 +32,8 @@ public:
 	 * @param toInternalQueue queue for sending data from Module Handler to Server
 	 */
 	InternalServer(structures::GlobalContext &context,
-				   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &fromInternalQueue,
-				   const std::shared_ptr<structures::AtomicQueue<structures::ModuleHandlerMessage>> &toInternalQueue)
+				   structures::AtomicQueue<structures::InternalClientMessage>& fromInternalQueue,
+				   structures::AtomicQueue<structures::ModuleHandlerMessage>& toInternalQueue)
 			: context_ { context }, acceptor_(context.ioContext), fromInternalQueue_ { fromInternalQueue },
 			  toInternalQueue_ { toInternalQueue } {}
 
@@ -201,9 +201,9 @@ private:
 	structures::GlobalContext& context_;
 	boost::asio::ip::tcp::acceptor acceptor_;
 	/// Queue for messages from Module Handler to Internal Client
-	std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> fromInternalQueue_ {};
+	structures::AtomicQueue<structures::InternalClientMessage>& fromInternalQueue_;
 	/// Queue for messages from Internal Client to Module Handler
-	std::shared_ptr<structures::AtomicQueue<structures::ModuleHandlerMessage>> toInternalQueue_ {};
+	structures::AtomicQueue<structures::ModuleHandlerMessage>& toInternalQueue_;
 
 	std::mutex serverMutex_ {};
 	/// Vector of all active connections of devices

@@ -34,15 +34,15 @@ protected:
 			GTEST_SKIP() << "Module initialization failed: " << e.what();
 		}
 
-		fromExternalQueue_ = std::make_shared<bringauto::structures::AtomicQueue<InternalProtocol::DeviceCommand >>();
-		reconnectQueue_ = std::make_shared<bringauto::structures::AtomicQueue<bringauto::structures::ReconnectQueueItem >>();
+		fromExternalQueue_ = std::make_unique<bringauto::structures::AtomicQueue<InternalProtocol::DeviceCommand>>();
+		reconnectQueue_ = std::make_unique<bringauto::structures::AtomicQueue<bringauto::structures::ReconnectQueueItem>>();
 
 		externalConnection_ = std::make_unique<bringauto::external_client::connection::ExternalConnection>(
 			*context_,
 			*moduleLibrary_,
 			context_->settings.externalConnectionSettingsList[0],
-			fromExternalQueue_,
-			reconnectQueue_
+			*fromExternalQueue_,
+			*reconnectQueue_
 		);
 
 		communicationChannel_ = std::make_shared<testing_utils::CommunicationMock>(context_->settings.externalConnectionSettingsList[0]);
@@ -95,8 +95,8 @@ protected:
 
 	std::unique_ptr<bringauto::structures::GlobalContext> context_ {};
 	std::shared_ptr<bringauto::structures::ModuleLibrary> moduleLibrary_ {};
-	std::shared_ptr<bringauto::structures::AtomicQueue<InternalProtocol::DeviceCommand>> fromExternalQueue_ {};
-	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ReconnectQueueItem>> reconnectQueue_ {};
+	std::unique_ptr<bringauto::structures::AtomicQueue<InternalProtocol::DeviceCommand>> fromExternalQueue_;
+	std::unique_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ReconnectQueueItem>> reconnectQueue_;
 	std::shared_ptr<testing_utils::CommunicationMock> communicationChannel_ {};
 	std::vector<bringauto::structures::DeviceIdentification> connectedDevices_ {};
 	std::unique_ptr<bringauto::external_client::connection::ExternalConnection> externalConnection_ {};

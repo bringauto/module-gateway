@@ -27,8 +27,8 @@ public:
 	ExternalConnection(structures::GlobalContext &context,
 					   structures::ModuleLibrary &moduleLibrary,
 					   const structures::ExternalConnectionSettings &settings,
-					   const std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> &commandQueue,
-					   const std::shared_ptr <structures::AtomicQueue<structures::ReconnectQueueItem>>& reconnectQueue);
+					   structures::AtomicQueue<InternalProtocol::DeviceCommand> &commandQueue,
+					   structures::AtomicQueue<structures::ReconnectQueueItem>& reconnectQueue);
 
 	/**
 	 * @brief Initialize the external connection
@@ -190,10 +190,9 @@ private:
 	/// @brief Map of error aggregators, key is module number
 	std::unordered_map<unsigned int, ErrorAggregator> errorAggregators_ {};
 	/// Queue of commands received from external server, commands are processed by aggregator
-	std::shared_ptr <structures::AtomicQueue<InternalProtocol::DeviceCommand>> commandQueue_ {};
+	structures::AtomicQueue<InternalProtocol::DeviceCommand>& commandQueue_;
 
-	std::shared_ptr <structures::AtomicQueue<structures::ReconnectQueueItem>>
-	reconnectQueue_ {};
+	structures::AtomicQueue<structures::ReconnectQueueItem>& reconnectQueue_;
 };
 
 }
