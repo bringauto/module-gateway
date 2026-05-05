@@ -21,29 +21,26 @@ namespace ip = InternalProtocol;
 
 ExternalClient::ExternalClient(structures::GlobalContext &context,
 							   structures::ModuleLibrary &moduleLibrary,
-							   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue,
+							   structures::AtomicQueue<structures::InternalClientMessage>& toExternalQueue,
 							   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &commandForwardingQueue):
 		toExternalQueue_ { toExternalQueue },
 		commandForwardingQueue_ { commandForwardingQueue },
 		context_ { context },
 		moduleLibrary_ { moduleLibrary },
 		timer_ { context.ioContext } {
-	fromExternalQueue_ = std::make_shared<structures::AtomicQueue<InternalProtocol::DeviceCommand >>();
-	reconnectQueue_ =
-			std::make_shared<structures::AtomicQueue<structures::ReconnectQueueItem >>();
 	fromExternalClientThread_ = std::jthread(&ExternalClient::handleCommands, this);
 }
 
 void ExternalClient::handleCommands() {
 	while(not context_.ioContext.stopped()) {
-		if(fromExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
+		if(fromExternalQueue_.waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
 		settings::Logger::logInfo("External client received command");
 
-		auto &message = fromExternalQueue_->front();
+		auto &message = fromExternalQueue_.front();
 		handleCommand(message);
-		fromExternalQueue_->pop();
+		fromExternalQueue_.pop();
 	}
 }
 
@@ -80,11 +77,19 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 	}
 }
 
+ExternalClient::~ExternalClient() {
+	destroy();
+}
+
 void ExternalClient::destroy() {
 	for(auto &externalConnection: externalConnectionsList_) {
 		externalConnection.deinitializeConnection(true);
 	}
-	fromExternalClientThread_.join();
+	externalConnectionsList_.clear();
+	externalConnectionMap_.clear();
+	if(fromExternalClientThread_.joinable()) {
+		fromExternalClientThread_.join();
+	}
 	settings::Logger::logInfo("External client stopped");
 }
 
@@ -135,8 +140,8 @@ void ExternalClient::initConnections() {
 
 void ExternalClient::handleAggregatedMessages() {
 	while(not context_.ioContext.stopped()) {
-		if(not reconnectQueue_->empty()) {
-			auto &reconnectItem = reconnectQueue_->front();
+		if(not reconnectQueue_.empty()) {
+			auto &reconnectItem = reconnectQueue_.front();
 			auto &connection = reconnectItem.connection_.get();
 			connection.deinitializeConnection(false);
 			if(reconnectItem.reconnect) {
@@ -145,17 +150,17 @@ void ExternalClient::handleAggregatedMessages() {
 				settings::Logger::logInfo("External connection is disconnected from external server");
 				connection.setNotInitialized();
 			}
-			reconnectQueue_->pop();
+			reconnectQueue_.pop();
 		}
-		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
+		if(toExternalQueue_.waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
 		settings::Logger::logInfo("External client received aggregated status, number of aggregated statuses in queue {}",
-					 toExternalQueue_->size());
-		auto message = std::move(toExternalQueue_->front());
-		toExternalQueue_->pop();
+					 toExternalQueue_.size());
+		auto message = std::move(toExternalQueue_.front());
+		toExternalQueue_.pop();
 		if(not sendStatus(message)) {
-			reconnectQueue_->waitForValueWithTimeout(std::chrono::seconds(settings::immediate_disconnect_timeout));
+			reconnectQueue_.waitForValueWithTimeout(std::chrono::seconds(settings::immediate_disconnect_timeout));
 		}
 	}
 }
@@ -199,7 +204,7 @@ void ExternalClient::drainQueueDuringConnect(connection::ExternalConnection &con
                                               std::atomic<bool> &connectDone) {
 	while (!connectDone.load() && !context_.ioContext.stopped() &&
 	       connection.getState() != connection::ConnectionState::CONNECTED) {
-		if (toExternalQueue_->waitForValueWithTimeout(std::chrono::seconds(1))) {
+		if (toExternalQueue_.waitForValueWithTimeout(std::chrono::seconds(1))) {
 			continue;
 		}
 		// Re-check after unblocking, and do not consume disconnect messages —
@@ -207,11 +212,11 @@ void ExternalClient::drainQueueDuringConnect(connection::ExternalConnection &con
 		// fillErrorAggregator after clear_error_aggregator ran; the latter so the
 		// device is properly removed via deleteConnectedDevice()).
 		if (connectDone.load() || connection.getState() == connection::ConnectionState::CONNECTED ||
-		    toExternalQueue_->front().disconnected()) {
+		    toExternalQueue_.front().disconnected()) {
 			break;
 		}
-		const auto internalMessage = std::move(toExternalQueue_->front());
-		toExternalQueue_->pop();
+		const auto internalMessage = std::move(toExternalQueue_.front());
+		toExternalQueue_.pop();
 		const auto &deviceStatus = internalMessage.getMessage().devicestatus();
 		if (connection.isModuleSupported(deviceStatus.device().module())) {
 			connection.fillErrorAggregator(deviceStatus);
@@ -225,14 +230,14 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	settings::Logger::logInfo("Initializing new connection");
 	insideConnectSequence_ = true;
 
-	while(not toExternalQueue_->empty()) {
+	while(not toExternalQueue_.empty()) {
 		// Do not consume disconnect messages — they must reach handleAggregatedMessages
 		// so the device is properly removed via sendStatus(..., DISCONNECT).
-		if(toExternalQueue_->front().disconnected()) {
+		if(toExternalQueue_.front().disconnected()) {
 			break;
 		}
-		auto internalMessage = std::move(toExternalQueue_->front());
-		toExternalQueue_->pop();
+		auto internalMessage = std::move(toExternalQueue_.front());
+		toExternalQueue_.pop();
 		const auto &deviceStatus = internalMessage.getMessage().devicestatus();
 		if(connection.isModuleSupported(deviceStatus.device().module())) {
 			connection.fillErrorAggregator(deviceStatus);
@@ -247,11 +252,11 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 	auto forcedDevices = connection.forceAggregationOnAllDevices(connectedDevices);
 
 	while(not forcedDevices.empty() && not context_.ioContext.stopped()) {
-		if(toExternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
+		if(toExternalQueue_.waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
-		const auto internalMessage = std::move(toExternalQueue_->front());
-		toExternalQueue_->pop();
+		const auto internalMessage = std::move(toExternalQueue_.front());
+		toExternalQueue_.pop();
 
 		const auto &deviceStatus = internalMessage.getMessage().devicestatus();
 		const auto &device = deviceStatus.device();
@@ -261,7 +266,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 			if(it == forcedDevices.cend()) {
 				settings::Logger::logDebug("Cannot fill error aggregator for same device: {} {}", device.devicerole(),
 							  device.devicename());
-				toExternalQueue_->pushAndNotify(internalMessage);
+				toExternalQueue_.pushAndNotify(internalMessage);
 			} else {
 				settings::Logger::logDebug("Filling error aggregator of device: {} {}", device.devicerole(), device.devicename());
 				connection.fillErrorAggregator(deviceStatus);
@@ -301,7 +306,7 @@ void ExternalClient::startExternalConnectSequence(connection::ExternalConnection
 		settings::Logger::logDebug("Waiting for reconnect timer to expire");
 		timer_.expires_from_now(boost::posix_time::seconds(settings::reconnect_delay));
 		timer_.async_wait([this, &connection](const boost::system::error_code&) {
-			reconnectQueue_->pushAndNotify(structures::ReconnectQueueItem(std::ref(connection), true));
+			reconnectQueue_.pushAndNotify(structures::ReconnectQueueItem(std::ref(connection), true));
 			settings::Logger::logDebug("Reconnect timer expired");
 		});
 	}

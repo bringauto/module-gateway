@@ -15,8 +15,8 @@ namespace bringauto::modules {
 namespace ip = InternalProtocol;
 
 void ModuleHandler::destroy() const {
-	while(not fromInternalQueue_->empty()) {
-		fromInternalQueue_->pop();
+	while(not fromInternalQueue_.empty()) {
+		fromInternalQueue_.pop();
 	}
 	while(not commandForwardingQueue_->empty()) {
 		commandForwardingQueue_->pop();
@@ -33,13 +33,13 @@ void ModuleHandler::run() const {
 
 void ModuleHandler::handleMessages() const {
 	while(not context_.ioContext.stopped()) {
-		if(fromInternalQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
+		if(fromInternalQueue_.waitForValueWithTimeout(settings::queue_timeout_length)) {
 			checkTimeoutedMessages();
 			continue;
 		}
 		checkTimeoutedMessages();
 
-		auto &message = fromInternalQueue_->front();
+		auto &message = fromInternalQueue_.front();
 		if(message.disconnected()) {
 			handleDisconnect(message.getDeviceId());
 		} else if(message.getMessage().has_deviceconnect()) {
@@ -47,7 +47,7 @@ void ModuleHandler::handleMessages() const {
 		} else if(message.getMessage().has_devicestatus()) {
 			handleStatus(message.getMessage().devicestatus());
 		}
-		fromInternalQueue_->pop();
+		fromInternalQueue_.pop();
 	}
 }
 
@@ -81,15 +81,15 @@ void ModuleHandler::checkTimeoutedMessages() const {
 					const auto internalProtocolDevice = device.convertToIPDevice();
 					auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(internalProtocolDevice,
 																										aggregatedStatusBuffer);
-					toExternalQueue_->pushAndNotify(structures::InternalClientMessage(false, statusMessage));
+					toExternalQueue_.pushAndNotify(structures::InternalClientMessage(false, statusMessage));
 					settings::Logger::logDebug("Module handler pushed a timed out aggregated status, number of aggregated statuses in queue {}",
-								  toExternalQueue_->size());
+								  toExternalQueue_.size());
 					checkExternalQueueSize();
 				}
 
 				if(statusAggregator->getDeviceTimeoutCount(device) >= settings::status_aggregation_timeout_max_count){
 					settings::Logger::logWarning("Device {} not sending statuses for too long, disconnecting it", device.convertToString());
-					toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(device));
+					toInternalQueue_.pushAndNotify(structures::ModuleHandlerMessage(device));
 				}
 			}
 			statusAggregator->unsetTimeoutedMessageReady();
@@ -132,9 +132,9 @@ void ModuleHandler::sendAggregatedStatus(const structures::DeviceIdentification 
 	Buffer aggregatedStatusBuffer {};
 	statusAggregator->get_aggregated_status(aggregatedStatusBuffer, deviceId);
 	const auto statusMessage = common_utils::ProtobufUtils::createInternalClientStatusMessage(device, aggregatedStatusBuffer);
-	toExternalQueue_->pushAndNotify(structures::InternalClientMessage(disconnected, statusMessage));
+	toExternalQueue_.pushAndNotify(structures::InternalClientMessage(disconnected, statusMessage));
 	settings::Logger::logDebug("Module handler pushed aggregated status, number of aggregated statuses in queue {}",
-				  toExternalQueue_->size());
+				  toExternalQueue_.size());
 	checkExternalQueueSize();
 }
 
@@ -169,7 +169,7 @@ void ModuleHandler::handleConnect(const ip::DeviceConnect &connect) const {
 void
 ModuleHandler::sendConnectResponse(const ip::Device &device, ip::DeviceConnectResponse_ResponseType response_type) const {
 	const auto response = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(device, response_type);
-	toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false,response));
+	toInternalQueue_.pushAndNotify(structures::ModuleHandlerMessage(false,response));
 	settings::Logger::logInfo("New device {} is trying to connect, sending response {}", device.devicename(), static_cast<int>(response_type));
 }
 
@@ -237,7 +237,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) const {
 	if(getCommandRc == OK) {
 		const auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device,
 																									commandBuffer);
-		toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false, deviceCommandMessage));
+		toInternalQueue_.pushAndNotify(structures::ModuleHandlerMessage(false, deviceCommandMessage));
 		settings::Logger::logDebug("Module handler successfully retrieved command and sent it to device: {}", deviceName);
 	} else if(getCommandRc == NO_MESSAGE_AVAILABLE) {
 		// Push-only device with no fresh command from ES. Send an empty DeviceCommand to
@@ -260,7 +260,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) const {
 }
 
 void ModuleHandler::checkExternalQueueSize() const {
-	if(toExternalQueue_->size() > settings::max_external_queue_size) {
+	if(toExternalQueue_.size() > settings::max_external_queue_size) {
 		settings::Logger::logError("External queue size is too big, external client is not handling messages");
 		//temporarily disabled to verify if the bug related to deadlocks is fixed
 		//destroy();

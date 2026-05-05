@@ -19,8 +19,8 @@ const unsigned short port { 8888 };
 class TestHandler {
 	bringauto::settings::Settings settings {};
 
-	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage>> toInternalQueue {};
-	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>> fromInternalQueue {};
+	bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage> toInternalQueue {};
+	bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage> fromInternalQueue {};
 
 	std::vector<InternalProtocol::InternalClient> connects {};
 	std::vector<InternalProtocol::InternalClient> statuses {};

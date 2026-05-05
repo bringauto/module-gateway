@@ -19,8 +19,8 @@ class ModuleHandlerForTesting {
 public:
 	ModuleHandlerForTesting(
 		bringauto::structures::GlobalContext &context_,
-		const std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>> &fromInternalQueue,
-		const std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage>> &toInternalQueue,
+		bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>& fromInternalQueue,
+		bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage>& toInternalQueue,
 		size_t num)
 		: context(context_), fromInternalQueue_ { fromInternalQueue }, toInternalQueue_ { toInternalQueue },
 		expectedMessageNumber(num) {}
@@ -31,8 +31,8 @@ public:
 
 private:
 	bringauto::structures::GlobalContext& context;
-	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>> fromInternalQueue_ {};
-	std::shared_ptr<bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage>> toInternalQueue_ {};
+	bringauto::structures::AtomicQueue<bringauto::structures::InternalClientMessage>& fromInternalQueue_;
+	bringauto::structures::AtomicQueue<bringauto::structures::ModuleHandlerMessage>& toInternalQueue_;
 	size_t expectedMessageNumber;
 };
 
