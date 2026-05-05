@@ -34,11 +34,6 @@ public:
 	 */
 	void run();
 
-	/**
-	 * @brief Stops connections and joins thread for command handling
-	 */
-	void destroy();
-
 private:
 
 	/**
