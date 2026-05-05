@@ -30,9 +30,9 @@ TestHandler::TestHandler(const std::vector <InternalProtocol::Device> &devices, 
 		clients.emplace_back(*contexts[i]);
 		expectedMessageNumber += numberOfMessages;
 		for(size_t y = 0; y < i; ++y) {
-			auto a = std::make_shared<structures::DeviceIdentification>(devices[y]);
-			auto b = std::make_shared<structures::DeviceIdentification>(devices[i]);
-			if(a->isSame(b)) {
+			const structures::DeviceIdentification a { devices[y] };
+			const structures::DeviceIdentification b { devices[i] };
+			if(a.isSame(b)) {
 				expectedMessageNumber -= (numberOfMessages - 1);
 				break;
 			}
@@ -57,9 +57,9 @@ TestHandler::TestHandler(
 		if(responseTypes[i] == InternalProtocol::DeviceConnectResponse_ResponseType_OK) {
 			expectedMessageNumber += numberOfMessages;
 			for(size_t y = 0; y < i; ++y) {
-				auto a = std::make_shared<structures::DeviceIdentification>(devices[y]);
-				auto b = std::make_shared<structures::DeviceIdentification>(devices[i]);
-				if(a->isSame(b)) {
+				const structures::DeviceIdentification a { devices[y] };
+				const structures::DeviceIdentification b { devices[i] };
+				if(a.isSame(b)) {
 					expectedMessageNumber -= (numberOfMessages - 1);
 					break;
 				}
@@ -141,11 +141,9 @@ void TestHandler::runConnects() {
 			clients[i].disconnectSocket();
 		} else {
 			for(size_t y = 0; y < i; ++y) {
-				auto a = std::make_shared<structures::DeviceIdentification>(
-					connects[y].deviceconnect().device());
-				auto b = std::make_shared<structures::DeviceIdentification>(
-					connects[i].deviceconnect().device());
-				if(a->isSame(b)) {
+				const structures::DeviceIdentification a { connects[y].deviceconnect().device() };
+				const structures::DeviceIdentification b { connects[i].deviceconnect().device() };
+				if(a.isSame(b)) {
 					clients[y].disconnectSocket();
 				}
 			}
@@ -216,11 +214,9 @@ void TestHandler::runConnects(size_t index, size_t header, std::string data, boo
 				clients[i].disconnectSocket();
 			} else {
 				for(size_t y = 0; y < i; ++y) {
-					auto a = std::make_shared<structures::DeviceIdentification>(
-						connects[y].deviceconnect().device());
-					auto b = std::make_shared<structures::DeviceIdentification>(
-						connects[i].deviceconnect().device());
-					if(a->isSame(b)) {
+					const structures::DeviceIdentification a { connects[y].deviceconnect().device() };
+					const structures::DeviceIdentification b { connects[i].deviceconnect().device() };
+					if(a.isSame(b)) {
 						clients[y].disconnectSocket();
 					}
 				}
@@ -302,11 +298,9 @@ void TestHandler::runConnects(size_t numberOfErrors) {
 				clients[i].disconnectSocket();
 			} else {
 				for(size_t y = 0; y < i; ++y) {
-					auto a = std::make_shared<structures::DeviceIdentification>(
-						connects[y].deviceconnect().device());
-					auto b = std::make_shared<structures::DeviceIdentification>(
-						connects[i].deviceconnect().device());
-					if(a->isSame(b)) {
+					const structures::DeviceIdentification a { connects[y].deviceconnect().device() };
+					const structures::DeviceIdentification b { connects[i].deviceconnect().device() };
+					if(a.isSame(b)) {
 						clients[y].disconnectSocket();
 					}
 				}

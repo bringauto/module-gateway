@@ -277,7 +277,7 @@ void InternalServer::handleDisconnect(const structures::DeviceIdentification& de
 void InternalServer::connectNewDevice(const std::shared_ptr<structures::Connection> &connection,
 									  const InternalProtocol::InternalClient &connect,
 									  const structures::DeviceIdentification &deviceId) {
-	connection->deviceId = std::make_shared<structures::DeviceIdentification>(deviceId);
+	connection->deviceId = deviceId;
 	connectedDevices_.push_back(connection);
 	fromInternalQueue_.pushAndNotify(structures::InternalClientMessage(false, connect));
 	log::logInfo(
@@ -395,12 +395,12 @@ void InternalServer::removeConnFromMap(const std::shared_ptr<structures::Connect
 	boost::system::error_code error {};
 	connection->socket.shutdown(boost::asio::socket_base::shutdown_both, error);
 	connection->socket.close(error);
-	if(connection->deviceId == nullptr) {
+	if(!connection->deviceId) {
 		return;
 	}
 	const auto it = std::find_if(connectedDevices_.begin(), connectedDevices_.end(),
 								 [&connection](const std::shared_ptr<structures::Connection> &toCompare) {
-									 return connection->deviceId->isSame(toCompare->deviceId);
+									 return connection->deviceId->isSame(*toCompare->deviceId);
 								 });
 
 	if(it != connectedDevices_.end() && (*it)->deviceId->getPriority() == connection->deviceId->getPriority()) {
@@ -420,7 +420,7 @@ InternalServer::findConnection(const structures::DeviceIdentification &deviceId)
 	std::shared_ptr<structures::Connection> connectionFound {};
 	const auto it = std::find_if(connectedDevices_.begin(), connectedDevices_.end(),
 						   [&deviceId](const auto& toCompare) {
-							   return deviceId.isSame(toCompare->deviceId);
+							   return deviceId.isSame(*toCompare->deviceId);
 						   });
 	if(it != connectedDevices_.end()) {
 		connectionFound = *it;

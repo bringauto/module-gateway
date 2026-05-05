@@ -39,10 +39,10 @@ const std::string &DeviceIdentification::getDeviceName() const {
 	return deviceName_;
 }
 
-bool DeviceIdentification::isSame(const std::shared_ptr<DeviceIdentification> &toCompare) const {
-	return module_ == toCompare->getModule() &&
-		   deviceType_ == toCompare->getDeviceType() &&
-		   deviceRole_ == toCompare->getDeviceRole();
+bool DeviceIdentification::isSame(const DeviceIdentification &toCompare) const {
+	return module_ == toCompare.getModule() &&
+		   deviceType_ == toCompare.getDeviceType() &&
+		   deviceRole_ == toCompare.getDeviceRole();
 }
 
 DeviceIdentification& DeviceIdentification::operator=(const InternalProtocol::Device &device) {
