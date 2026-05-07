@@ -28,65 +28,75 @@ void InternalServer::addAsyncAccept() {
 	if(context_.ioContext.stopped()) {
 		return;
 	}
-	auto connection = std::make_shared<structures::Connection>(context_.ioContext);
-	acceptor_.async_accept(connection->socket, [this, connection](const boost::system::error_code &error) {
+	structures::Connection *conn;
+	{
+		std::lock_guard<std::mutex> lock(serverMutex_);
+		connectedDevices_.emplace_back(context_.ioContext);
+		conn = &connectedDevices_.back();
+	}
+	acceptor_.async_accept(conn->socket, [this, conn](const boost::system::error_code &error) {
 		if(error) {
 			log::logError("Error in addAsyncAccept(): {}", error.message());
+			std::lock_guard<std::mutex> lock(serverMutex_);
+			removeConnFromMap(*conn);
 			return;
 		}
 
 		boost::system::error_code optEc;
-		connection->socket.set_option(boost::asio::socket_base::keep_alive(true), optEc);
+		conn->socket.set_option(boost::asio::socket_base::keep_alive(true), optEc);
 		if(optEc) {
 			log::logWarning("Failed to set keep_alive on socket: {}", optEc.message());
 		}
-		connection->socket.set_option(boost::asio::ip::tcp::no_delay(true), optEc);
+		conn->socket.set_option(boost::asio::ip::tcp::no_delay(true), optEc);
 		if(optEc) {
 			log::logWarning("Failed to set no_delay on socket: {}", optEc.message());
 		}
 		log::logInfo("Accepted connection with Internal Client, "
 					 "connection's ip address is {}",
-					 connection->remoteEndpointAddress());
-		addAsyncReceive(connection);
+					 conn->remoteEndpointAddress());
+		addAsyncReceive(*conn);
 		addAsyncAccept();
 	});
 }
 
-void InternalServer::addAsyncReceive(const std::shared_ptr<structures::Connection> &connection) {
-	connection->socket.async_receive(
-			boost::asio::buffer(connection->connContext.buffer),
-			[this, connection](const boost::system::error_code &error,
-							   const std::size_t bytesTransferred) {
-				asyncReceiveHandler(connection, error, bytesTransferred);
+void InternalServer::addAsyncReceive(structures::Connection &connection) {
+	structures::Connection *conn = &connection;
+	connection.socket.async_receive(
+			boost::asio::buffer(connection.connContext.buffer),
+			[this, conn](const boost::system::error_code &error,
+						 const std::size_t bytesTransferred) {
+				asyncReceiveHandler(*conn, error, bytesTransferred);
 			}
 	);
 }
 
 void InternalServer::asyncReceiveHandler(
-		const std::shared_ptr<structures::Connection> &connection,
+		structures::Connection &connection,
 		const boost::system::error_code &error,
 		std::size_t bytesTransferred) {
 	if(error) {
-		if(connection->deviceId && error.value() == boost::asio::error::eof) {
-			log::logWarning(
-					"Internal Client with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})"
-					" has closed connection.", connection->deviceId->getModule(),
-					connection->deviceId->getDeviceType(), connection->deviceId->getDeviceRole(),
-					connection->deviceId->getDeviceName(), connection->deviceId->getPriority());
-		} else if(connection->deviceId){
-			log::logWarning(
-					"Internal Client with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})"
-					" has been disconnected. Reason: {}", connection->deviceId->getModule(),
-					connection->deviceId->getDeviceType(), connection->deviceId->getDeviceRole(),
-					connection->deviceId->getDeviceName(), connection->deviceId->getPriority(),
-					error.message());
-		} else {
-			log::logWarning(
-					"Internal Client with ip address {} has been disconnected. Reason: {}",
-					connection->remoteEndpointAddress(), error.message());
+		if(!connection.markedForRemoval) {
+			if(connection.deviceId && error.value() == boost::asio::error::eof) {
+				log::logWarning(
+						"Internal Client with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})"
+						" has closed connection.", connection.deviceId->getModule(),
+						connection.deviceId->getDeviceType(), connection.deviceId->getDeviceRole(),
+						connection.deviceId->getDeviceName(), connection.deviceId->getPriority());
+			} else if(connection.deviceId) {
+				log::logWarning(
+						"Internal Client with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})"
+						" has been disconnected. Reason: {}", connection.deviceId->getModule(),
+						connection.deviceId->getDeviceType(), connection.deviceId->getDeviceRole(),
+						connection.deviceId->getDeviceName(), connection.deviceId->getPriority(),
+						error.message());
+			} else {
+				log::logWarning(
+						"Internal Client with ip address {} has been disconnected. Reason: {}",
+						connection.remoteEndpointAddress(), error.message());
+			}
 		}
 		std::lock_guard<std::mutex> lock(serverMutex_);
-		removeConnFromMap(*connection);
+		removeConnFromMap(connection);
 		return;
 	}
 
@@ -95,31 +105,31 @@ void InternalServer::asyncReceiveHandler(
 		addAsyncReceive(connection);
 	} else {
 		std::lock_guard<std::mutex> lock(serverMutex_);
-		removeConnFromMap(*connection);
+		removeConnFromMap(connection);
 	}
 }
 
 bool InternalServer::processBufferData(
-		const std::shared_ptr<structures::Connection> &connection,
+		structures::Connection &connection,
 		std::size_t bytesTransferred, std::size_t bufferOffset) {
 	if(bytesTransferred < bufferOffset) {
 		log::logError(
 				"Error in processBufferData(...): bufferOffset: {} is greater than bytesTransferred: {}, "
 				"Invalid bufferOffset: {} received from Internal Client, "
 				"connection's ip address is {}", bufferOffset, bytesTransferred, bufferOffset,
-				connection->remoteEndpointAddress());
+				connection.remoteEndpointAddress());
 		return false;
 	}
 
-	auto &completeMessageSize = connection->connContext.completeMessageSize;
-	auto &completeMessage = connection->connContext.completeMessage;
-	auto &buffer = connection->connContext.buffer;
+	auto &completeMessageSize = connection.connContext.completeMessageSize;
+	auto &completeMessage = connection.connContext.completeMessage;
+	auto &buffer = connection.connContext.buffer;
 	constexpr uint8_t headerSize = settings::header;
 
 	if(bytesTransferred < headerSize && completeMessageSize == 0) {
 		log::logError(
 				"Error in processBufferData(...): Incomplete header received from Internal Client, "
-				"connection's ip address is {}", connection->remoteEndpointAddress());
+				"connection's ip address is {}", connection.remoteEndpointAddress());
 		return false;
 	}
 
@@ -138,7 +148,7 @@ bool InternalServer::processBufferData(
 		if(bytesLeft < headerSize) {
 			log::logError(
 					"Error in processBufferData(...): Incomplete header received from Internal Client, "
-					"connection's ip address is {}", connection->remoteEndpointAddress());
+					"connection's ip address is {}", connection.remoteEndpointAddress());
 			return false;
 		}
 		bytesLeft -= headerSize;
@@ -159,7 +169,7 @@ bool InternalServer::processBufferData(
 	if(bytesLeft < messageBytesLeft) {
 		log::logError("Error in processBufferData(...): messageBytesLeft: {} is greater than bytesLeft: {}, "
 					  "connection's ip address is {}", messageBytesLeft, bytesLeft,
-					  connection->remoteEndpointAddress());
+					  connection.remoteEndpointAddress());
 		return false;
 	}
 	bytesLeft -= messageBytesLeft;
@@ -167,31 +177,31 @@ bool InternalServer::processBufferData(
 	if(bytesTransferred < bytesLeft) {
 		log::logError("Error in processBufferData(...): bytesLeft: {} is greater than bytesTransferred: {}, "
 					  "connection's ip address is {}", bytesLeft, bytesTransferred,
-					  connection->remoteEndpointAddress());
+					  connection.remoteEndpointAddress());
 		return false;
 	}
 	if(bytesLeft && !processBufferData(connection, bytesLeft, bytesTransferred - bytesLeft)) {
 		log::logError("Error in processBufferData(...): "
 					  "Received extra invalid bytes of data: {} from Internal Client, "
 					  "connection's ip address is {}", bytesLeft,
-					  connection->remoteEndpointAddress());
+					  connection.remoteEndpointAddress());
 		return false;
 	}
 	return true;
 }
 
-bool InternalServer::handleMessage(const std::shared_ptr<structures::Connection> &connection) {
+bool InternalServer::handleMessage(structures::Connection &connection) {
 
 	InternalProtocol::InternalClient client {};
-	if(!client.ParseFromArray(connection->connContext.completeMessage.data(),
-							  connection->connContext.completeMessage.size())) {
+	if(!client.ParseFromArray(connection.connContext.completeMessage.data(),
+							  connection.connContext.completeMessage.size())) {
 		log::logError(
 				"Error in handleMessage(...): message received from Internal Client cannot be parsed, "
-				"connection's ip address is {}", connection->remoteEndpointAddress());
+				"connection's ip address is {}", connection.remoteEndpointAddress());
 		return false;
 	}
 	if(client.has_devicestatus()) {
-		if(!handleStatus(*connection, client)) {
+		if(!handleStatus(connection, client)) {
 			return false;
 		}
 	} else if(client.has_deviceconnect()) {
@@ -201,19 +211,19 @@ bool InternalServer::handleMessage(const std::shared_ptr<structures::Connection>
 	} else {
 		log::logError(
 				"Error in handleMessage(...): message received from Internal Client cannot be parsed, "
-				"connection's ip address is {}", connection->remoteEndpointAddress());
+				"connection's ip address is {}", connection.remoteEndpointAddress());
 		return false;
 	}
-	std::unique_lock<std::mutex> lk(connection->connectionMutex);
-	connection->conditionVariable.wait_for(lk, settings::fleet_protocol_timeout_length,
-										   [this, connection]() {
-											   return connection->ready || context_.ioContext.stopped();
-										   });
-	if(!connection->ready) {
+	std::unique_lock<std::mutex> lk(connection.connectionMutex);
+	connection.conditionVariable.wait_for(lk, settings::fleet_protocol_timeout_length,
+										  [this, &connection]() {
+											  return connection.ready || context_.ioContext.stopped();
+										  });
+	if(!connection.ready) {
 		log::logError("Error in handleMessage(...): "
 					  "Module Handler did not respond to a message in time, "
 					  "connection's ip address is {}",
-					  connection->remoteEndpointAddress());
+					  connection.remoteEndpointAddress());
 		return false;
 	}
 	return !context_.ioContext.stopped();
@@ -234,14 +244,14 @@ bool InternalServer::handleStatus(structures::Connection &connection,
 	return true;
 }
 
-bool InternalServer::handleConnection(const std::shared_ptr<structures::Connection> &connection,
+bool InternalServer::handleConnection(structures::Connection &connection,
 									  const InternalProtocol::InternalClient &client) {
 	std::lock_guard<std::mutex> lock(serverMutex_);
-	if(connection->ready) {
+	if(connection.ready) {
 		log::logError("Error in handleConnection(...): "
 					  "Internal Client is sending a connect message while already connected, "
 					  "connection's ip address is {}",
-					  connection->remoteEndpointAddress());
+					  connection.remoteEndpointAddress());
 		return false;
 	}
 
@@ -252,11 +262,11 @@ bool InternalServer::handleConnection(const std::shared_ptr<structures::Connecti
 		connectNewDevice(connection, client, deviceId);
 	} else {
 		if(client.deviceconnect().device().priority() == existingConnection->deviceId->getPriority()) {
-			respondWithAlreadyConnected(*connection, client, deviceId);
+			respondWithAlreadyConnected(connection, client, deviceId);
 			return false;
 		}
 		if(client.deviceconnect().device().priority() > existingConnection->deviceId->getPriority()) {
-			respondWithHigherPriorityConnected(*connection, client, deviceId);
+			respondWithHigherPriorityConnected(connection, client, deviceId);
 			return false;
 		}
 		if(client.deviceconnect().device().priority() < existingConnection->deviceId->getPriority()) {
@@ -268,24 +278,33 @@ bool InternalServer::handleConnection(const std::shared_ptr<structures::Connecti
 
 void InternalServer::handleDisconnect(const structures::DeviceIdentification& deviceId) {
 	std::lock_guard<std::mutex> lock(serverMutex_);
-	const auto connection = findConnection(deviceId);
+	auto *connection = findConnection(deviceId);
 	if(connection) {
-		removeConnFromMap(*connection);
+		connection->markedForRemoval = true;
+		boost::system::error_code ec;
+		connection->socket.shutdown(boost::asio::socket_base::shutdown_both, ec);
+		connection->socket.close(ec);
+		const auto id = *connection->deviceId;
+		log::logInfo(
+				"connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})"
+				" has been closed and erased", id.getModule(),
+				id.getDeviceType(), id.getDeviceRole(),
+				id.getDeviceName(), id.getPriority());
+		fromInternalQueue_.pushAndNotify(structures::InternalClientMessage(id));
 	}
 }
 
-void InternalServer::connectNewDevice(const std::shared_ptr<structures::Connection> &connection,
+void InternalServer::connectNewDevice(structures::Connection &connection,
 									  const InternalProtocol::InternalClient &connect,
 									  const structures::DeviceIdentification &deviceId) {
-	connection->deviceId = deviceId;
-	connectedDevices_.push_back(connection);
+	connection.deviceId = deviceId;
 	fromInternalQueue_.pushAndNotify(structures::InternalClientMessage(false, connect));
 	log::logInfo(
 			"Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
 			"has been added into the vector of active connections",
-			connection->deviceId->getModule(),
-			connection->deviceId->getDeviceType(), connection->deviceId->getDeviceRole(),
-			connection->deviceId->getDeviceName(), connection->deviceId->getPriority());
+			connection.deviceId->getModule(),
+			connection.deviceId->getDeviceType(), connection.deviceId->getDeviceRole(),
+			connection.deviceId->getDeviceName(), connection.deviceId->getPriority());
 }
 
 void InternalServer::respondWithHigherPriorityConnected(structures::Connection &connection,
@@ -318,21 +337,31 @@ void InternalServer::respondWithAlreadyConnected(structures::Connection &connect
 	sendResponse(connection, message);
 }
 
-void InternalServer::changeConnection(const std::shared_ptr<structures::Connection> &newConnection,
+void InternalServer::changeConnection(structures::Connection &newConnection,
 									  const InternalProtocol::InternalClient &connect,
 									  const structures::DeviceIdentification &deviceId) {
-	const auto oldConnection = findConnection(deviceId);
+	auto *oldConnection = findConnection(deviceId);
 	if(oldConnection) {
-		removeConnFromMap(*oldConnection);
+		oldConnection->markedForRemoval = true;
+		boost::system::error_code ec;
+		oldConnection->socket.shutdown(boost::asio::socket_base::shutdown_both, ec);
+		oldConnection->socket.close(ec);
+		const auto id = *oldConnection->deviceId;
+		log::logInfo(
+				"connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})"
+				" has been closed and erased", id.getModule(),
+				id.getDeviceType(), id.getDeviceRole(),
+				id.getDeviceName(), id.getPriority());
+		fromInternalQueue_.pushAndNotify(structures::InternalClientMessage(id));
 	}
 	connectNewDevice(newConnection, connect, deviceId);
 	log::logInfo("Old connection has been removed and replaced with new connection"
 				 " with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})",
-				 newConnection->deviceId->getModule(),
-				 newConnection->deviceId->getDeviceType(),
-				 newConnection->deviceId->getDeviceRole(),
-				 newConnection->deviceId->getDeviceName(),
-				 newConnection->deviceId->getPriority());
+				 newConnection.deviceId->getModule(),
+				 newConnection.deviceId->getDeviceType(),
+				 newConnection.deviceId->getDeviceRole(),
+				 newConnection.deviceId->getDeviceName(),
+				 newConnection.deviceId->getPriority());
 }
 
 bool InternalServer::sendResponse(structures::Connection &connection,
@@ -379,7 +408,7 @@ void InternalServer::validateResponse(const InternalProtocol::InternalServer &me
 		deviceId = message.deviceconnectresponse().device();
 	}
 	std::lock_guard<std::mutex> lock(serverMutex_);
-	const auto connection = findConnection(deviceId);
+	auto *connection = findConnection(deviceId);
 
 	if(connection && connection->deviceId->getPriority() == deviceId.getPriority()) {
 		sendResponse(*connection, message);
@@ -395,35 +424,39 @@ void InternalServer::removeConnFromMap(structures::Connection &connection) {
 	boost::system::error_code error {};
 	connection.socket.shutdown(boost::asio::socket_base::shutdown_both, error);
 	connection.socket.close(error);
-	if(!connection.deviceId) {
+
+	const auto it = std::find_if(connectedDevices_.begin(), connectedDevices_.end(),
+								 [&connection](const structures::Connection &c) { return &c == &connection; });
+	if(it == connectedDevices_.end()) {
 		return;
 	}
-	const auto it = std::find_if(connectedDevices_.begin(), connectedDevices_.end(),
-								 [&connection](const std::shared_ptr<structures::Connection> &toCompare) {
-									 return connection.deviceId->isSame(*toCompare->deviceId);
-								 });
 
-	if(it != connectedDevices_.end() && (*it)->deviceId->getPriority() == connection.deviceId->getPriority()) {
-		const auto deviceId = *connection.deviceId;
+	if(!connection.deviceId) {
 		connectedDevices_.erase(it);
-		log::logInfo(
-				"connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})"
-				" has been closed and erased", deviceId.getModule(),
-				deviceId.getDeviceType(), deviceId.getDeviceRole(),
-				deviceId.getDeviceName(), deviceId.getPriority());
-		fromInternalQueue_.pushAndNotify(structures::InternalClientMessage(deviceId));
+		return;
 	}
 
+	const auto deviceId = *connection.deviceId;
+	const bool notify = !connection.markedForRemoval;
+	connectedDevices_.erase(it);
+	log::logInfo(
+			"connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {})"
+			" has been closed and erased", deviceId.getModule(),
+			deviceId.getDeviceType(), deviceId.getDeviceRole(),
+			deviceId.getDeviceName(), deviceId.getPriority());
+	if(notify) {
+		fromInternalQueue_.pushAndNotify(structures::InternalClientMessage(deviceId));
+	}
 }
 
 structures::Connection*
 InternalServer::findConnection(const structures::DeviceIdentification &deviceId) {
 	const auto it = std::find_if(connectedDevices_.begin(), connectedDevices_.end(),
-						   [&deviceId](const auto& toCompare) {
-							   return deviceId.isSame(*toCompare->deviceId);
+						   [&deviceId](const structures::Connection &c) {
+							   return !c.markedForRemoval && c.deviceId && deviceId.isSame(*c.deviceId);
 						   });
 	if(it != connectedDevices_.end()) {
-		return it->get();
+		return &*it;
 	}
 	return nullptr;
 }

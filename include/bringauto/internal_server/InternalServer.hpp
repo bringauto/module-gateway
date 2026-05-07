@@ -5,10 +5,9 @@
 #include <bringauto/structures/GlobalContext.hpp>
 #include <bringauto/structures/InternalClientMessage.hpp>
 #include <bringauto/structures/ModuleHandlerMessage.hpp>
-#include <bringauto/common_utils/ProtobufUtils.hpp>
 #include <bringauto/structures/DeviceIdentification.hpp>
 
-#include <memory>
+#include <list>
 #include <thread>
 
 
@@ -41,7 +40,7 @@ public:
 
 	/**
 	 * Starts the server.
-	 * - Async acceptor task i added to the io_context,
+	 * - Async acceptor task added to the io_context,
 	 * - Starts Thread that listens to data coming from ModuleHandler
 	 */
 	void run();
@@ -57,7 +56,7 @@ private:
 	 * @brief Asynchronously receives data.
 	 * @param connection connection that data are being sent through
 	 */
-	void addAsyncReceive(const std::shared_ptr<structures::Connection> &connection);
+	void addAsyncReceive(structures::Connection &connection);
 
 	/**
 	 * @brief Handles received data and connection. If error occurs connection is closed and cleaned.
@@ -65,7 +64,7 @@ private:
 	 * @param error possible error code
 	 * @param bytesTransferred size of received data
 	 */
-	void asyncReceiveHandler(const std::shared_ptr<structures::Connection> &connection,
+	void asyncReceiveHandler(structures::Connection &connection,
 							 const boost::system::error_code &error, std::size_t bytesTransferred);
 
 	/**
@@ -75,7 +74,7 @@ private:
 	 * @param bufferOffset offset of buffer where data starts
 	 * @return true if data and whole message is correct in context to fleet protocol
 	 */
-	bool processBufferData(const std::shared_ptr<structures::Connection> &connection,
+	bool processBufferData(structures::Connection &connection,
 						   std::size_t bytesTransferred, std::size_t bufferOffset = 0);
 
 	/**
@@ -85,7 +84,7 @@ private:
 	 * @param connection connection with data to be parsed into message
 	 * @return true if everything was successful and method was notified that response was resent to client
 	 */
-	bool handleMessage(const std::shared_ptr<structures::Connection> &connection);
+	bool handleMessage(structures::Connection &connection);
 
 	/**
 	 * @brief Checks if status is valid. If it is, the message is sent to Module Handler.
@@ -102,7 +101,7 @@ private:
 	 * @param client message to be checked
 	 * @return true if connect is valid.
 	 */
-	bool handleConnection(const std::shared_ptr<structures::Connection> &connection,
+	bool handleConnection(structures::Connection &connection,
 						  const InternalProtocol::InternalClient &client);
 
 	/**
@@ -112,12 +111,12 @@ private:
 	void handleDisconnect(const structures::DeviceIdentification& deviceId);
 
 	/**
-	 * @brief Inserts connection into map of all active connections, sends message to module Handler.
-	 * @param connection connection to be inserted into map
+	 * @brief Activates a connection already in the list: assigns its deviceId and notifies Module Handler.
+	 * @param connection connection to activate
 	 * @param connect message to be sent
 	 * @param deviceId unique device identification
 	 */
-	void connectNewDevice(const std::shared_ptr<structures::Connection> &connection,
+	void connectNewDevice(structures::Connection &connection,
 						  const InternalProtocol::InternalClient &connect,
 						  const structures::DeviceIdentification &deviceId);
 
@@ -142,14 +141,14 @@ private:
 									 const structures::DeviceIdentification &deviceId);
 
 	/**
-	 * Ends all operations of previous connection using same device,
-	 * closes its socket, then replaces it in map with new connection.
+	 * Marks the existing connection for the device as pending removal (closes its socket),
+	 * then activates the new connection.
 	 * Afterward sends new connection message to Module Handler.
-	 * @param newConnection new connection to replace the old one
+	 * @param newConnection new connection to activate
 	 * @param connect message to be sent
 	 * @param deviceId unique device identification
 	 */
-	void changeConnection(const std::shared_ptr<structures::Connection> &newConnection,
+	void changeConnection(structures::Connection &newConnection,
 						  const InternalProtocol::InternalClient &connect,
 						  const structures::DeviceIdentification &deviceId);
 
@@ -163,8 +162,9 @@ private:
 					  const InternalProtocol::InternalServer &message);
 
 	/**
-	 * @brief Removes Connection from the map of active connections and clean up/closes its socket
-	 * @param connection connection to be removed
+	 * @brief Closes the connection's socket and erases it from connectedDevices_.
+	 *        Sends a disconnect notification to Module Handler unless markedForRemoval is set.
+	 * @param connection connection to be removed (caller must hold serverMutex_)
 	 */
 	void removeConnFromMap(structures::Connection &connection);
 
@@ -183,9 +183,9 @@ private:
 	void validateResponse(const InternalProtocol::InternalServer &message);
 
 	/**
-	 * @brief Searches for connection in connectedDevices_ vector with deviceId, which is "same" as given deviceId.
-	 * @param deviceId that will be searched for in the vector
-	 * @return pointer to connection in connectedDevices_ vector, or nullptr if not found (caller must hold serverMutex_)
+	 * @brief Searches for a non-removed connection in connectedDevices_ with a deviceId "same" as the given one.
+	 * @param deviceId that will be searched for in the list
+	 * @return pointer to connection in connectedDevices_, or nullptr if not found (caller must hold serverMutex_)
 	 */
 	structures::Connection* findConnection(const structures::DeviceIdentification &deviceId);
 
@@ -197,8 +197,8 @@ private:
 	structures::AtomicQueue<structures::ModuleHandlerMessage>& toInternalQueue_;
 
 	std::mutex serverMutex_ {};
-	/// Vector of all active connections of devices
-	std::vector<std::shared_ptr<structures::Connection>> connectedDevices_ {};
+	/// All live connections (pending accept + identified devices); stable addresses, never relocated
+	std::list<structures::Connection> connectedDevices_;
 	/// Thread that listens to queue for messages from Module Handler
 	std::jthread listeningThread {};
 };

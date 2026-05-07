@@ -79,6 +79,11 @@ struct Connection {
 	 * @brief variable used to decide if connection can start reading again, after sending message to Module Handler
 	 */
 	bool ready { false };
+	/**
+	 * @brief set when the connection is being torn down by the server side (handleDisconnect / changeConnection);
+	 * prevents a duplicate disconnect notification when the async_receive completion fires afterward
+	 */
+	bool markedForRemoval { false };
 };
 
 }
