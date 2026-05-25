@@ -5,6 +5,7 @@
 #include <bringauto/structures/DeviceIdentification.hpp>
 #include <bringauto/modules/Buffer.hpp>
 
+#include <mutex>
 #include <queue>
 #include <memory>
 
@@ -87,6 +88,8 @@ private:
 	modules::Buffer status_ {};
 
 	modules::Buffer defaultCommand_ {};
+
+	std::unique_ptr<std::mutex> externalCommandMutex_ { std::make_unique<std::mutex>() };
 
 	std::queue<modules::Buffer> externalCommandQueue_ {};
 };
