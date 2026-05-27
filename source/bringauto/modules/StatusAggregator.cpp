@@ -208,11 +208,6 @@ int StatusAggregator::update_command(const Buffer& command, const structures::De
 		log::logError("External command queue is full for device: {} deleting oldest command", device.convertToString());
 	}
 
-	const bool forwarding = devices.at(device).isForwardCommandImmediately();
-	log::logDebug("update_command for device {}: isForwardCommandImmediately={}", device.convertToString(), forwarding);
-	if(forwarding) {
-		return FORWARD_IMMEDIATELY;
-	}
 	return OK;
 }
 
