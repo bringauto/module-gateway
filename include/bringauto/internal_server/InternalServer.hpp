@@ -131,16 +131,6 @@ private:
 						  const structures::DeviceIdentification &deviceId);
 
 	/**
-	 * @brief Sends response to InternalClient, that device is already connected and with same priority.
-	 * @param connection connection response will be sent through
-	 * @param connect message containing data for response message
-	 * @param deviceId unique device identification
-	 */
-	void respondWithAlreadyConnected(const std::shared_ptr<structures::Connection> &connection,
-									 const InternalProtocol::InternalClient &connect,
-									 const structures::DeviceIdentification &deviceId);
-
-	/**
 	 * Ends all operations of previous connection using same device,
 	 * closes its socket, then replaces it in map with new connection.
 	 * Afterward sends new connection message to Module Handler.

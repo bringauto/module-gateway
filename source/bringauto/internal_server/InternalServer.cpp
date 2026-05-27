@@ -46,6 +46,21 @@ void respond_with_higher_priority_connected(const std::shared_ptr<bringauto::str
 	send_response(connection, message);
 }
 
+void respond_with_already_connected(const std::shared_ptr<bringauto::structures::Connection> &connection,
+									const InternalProtocol::InternalClient &connect,
+									const bringauto::structures::DeviceIdentification &deviceId) {
+	const auto message = bringauto::common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(
+			connect.deviceconnect().device(),
+			InternalProtocol::DeviceConnectResponse_ResponseType_ALREADY_CONNECTED);
+	log::logInfo(
+			"Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
+			"cannot be added, same device with same priority is already connected",
+			deviceId.getModule(),
+			deviceId.getDeviceType(), deviceId.getDeviceRole(),
+			deviceId.getDeviceName(), deviceId.getPriority());
+	send_response(connection, message);
+}
+
 } // namespace
 
 namespace bringauto::internal_server {
@@ -294,7 +309,7 @@ bool InternalServer::handleConnection(const std::shared_ptr<structures::Connecti
 		connectNewDevice(connection, client, deviceId);
 	} else {
 		if(client.deviceconnect().device().priority() == existingConnection->deviceId->getPriority()) {
-			respondWithAlreadyConnected(connection, client, deviceId);
+			respond_with_already_connected(connection, client, deviceId);
 			return false;
 		}
 		if(client.deviceconnect().device().priority() > existingConnection->deviceId->getPriority()) {
@@ -328,21 +343,6 @@ void InternalServer::connectNewDevice(const std::shared_ptr<structures::Connecti
 			connection->deviceId->getModule(),
 			connection->deviceId->getDeviceType(), connection->deviceId->getDeviceRole(),
 			connection->deviceId->getDeviceName(), connection->deviceId->getPriority());
-}
-
-void InternalServer::respondWithAlreadyConnected(const std::shared_ptr<structures::Connection> &connection,
-												 const InternalProtocol::InternalClient &connect,
-												 const structures::DeviceIdentification &deviceId) {
-	const auto message = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(
-			connect.deviceconnect().device(),
-			InternalProtocol::DeviceConnectResponse_ResponseType_ALREADY_CONNECTED);
-	log::logInfo(
-			"Connection with DeviceId(module: {}, deviceType: {}, deviceRole: {}, deviceName: {}, priority: {}) "
-			"cannot be added, same device with same priority is already connected",
-			deviceId.getModule(),
-			deviceId.getDeviceType(), deviceId.getDeviceRole(),
-			deviceId.getDeviceName(), deviceId.getPriority());
-	send_response(connection, message);
 }
 
 void InternalServer::changeConnection(const std::shared_ptr<structures::Connection> &newConnection,
