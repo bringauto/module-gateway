@@ -77,12 +77,13 @@ int main(int argc, char **argv) {
 
 	auto toInternalQueue = std::make_shared<bas::AtomicQueue<bas::ModuleHandlerMessage >>();
 	auto fromInternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
+	auto commandForwardingQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
 	auto toExternalQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
 
 	bais::InternalServer internalServer { context, fromInternalQueue, toInternalQueue };
-	bringauto::modules::ModuleHandler moduleHandler { context, moduleLibrary, fromInternalQueue, toInternalQueue,
-													  toExternalQueue };
-	bringauto::external_client::ExternalClient externalClient { context, moduleLibrary, toExternalQueue };
+	bringauto::modules::ModuleHandler moduleHandler { context, moduleLibrary, fromInternalQueue,
+													  commandForwardingQueue, toInternalQueue, toExternalQueue };
+	bringauto::external_client::ExternalClient externalClient { context, moduleLibrary, toExternalQueue, commandForwardingQueue };
 
 	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.run(); });
 	std::jthread externalClientThread([&externalClient]() { externalClient.run(); });

@@ -78,6 +78,8 @@ public:
 
 	int commandDataValid(const Buffer &command, unsigned int device_type) const override;
 
+	int forwardCommandOnReceive(unsigned int device_type) override;
+
 	/**
 	 * @brief Constructs a buffer with the given size
 	 *

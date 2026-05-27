@@ -6,6 +6,7 @@
 
 #include <unordered_map>
 #include <list>
+#include <mutex>
 
 
 
@@ -116,6 +117,16 @@ public:
 					Buffer &command);
 
 	/**
+	 * @brief Get a command for immediate forwarding, using the cached status as input.
+	 * Called when a command arrived and the module requested immediate forwarding.
+	 *
+	 * @param device device identification
+	 * @param command output buffer for the generated command
+	 * @return OK on success, DEVICE_NOT_REGISTERED or COMMAND_INVALID on error
+	 */
+	int get_command_for_forwarding(const structures::DeviceIdentification& device, Buffer& command);
+
+	/**
 	 * @short Get number of the module
 	 *
 	 * @see fleet-protocol/lib/common_headers/include/device_management.h
@@ -197,6 +208,9 @@ private:
 	 * @brief Map of devices timeouts, key is DeviceIdentification
 	 */
 	std::unordered_map<structures::DeviceIdentification, int> deviceTimeouts_ {};
+
+	/// Protects devices and deviceTimeouts_ against concurrent access from ModuleHandler threads and ExternalClient
+	mutable std::recursive_mutex devicesMutex_ {};
 
 	std::atomic_bool timeoutedMessageReady_ { false };
 };

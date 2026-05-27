@@ -56,4 +56,12 @@ int StatusAggregatorDeviceState::addExternalCommand(const modules::Buffer &comma
 	return OK;
 }
 
+void StatusAggregatorDeviceState::enableImmediateCommandForwarding() noexcept {
+	forwardCommandImmediately_ = true;
+}
+
+bool StatusAggregatorDeviceState::isForwardCommandImmediately() const noexcept {
+	return forwardCommandImmediately_;
+}
+
 }

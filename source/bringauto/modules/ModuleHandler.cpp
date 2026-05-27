@@ -5,6 +5,8 @@
 
 #include <fleet_protocol/common_headers/general_error_codes.h>
 
+#include <thread>
+
 
 
 namespace bringauto::modules {
@@ -15,12 +17,16 @@ void ModuleHandler::destroy() const {
 	while(not fromInternalQueue_->empty()) {
 		fromInternalQueue_->pop();
 	}
+	while(not commandForwardingQueue_->empty()) {
+		commandForwardingQueue_->pop();
+	}
 	settings::Logger::logInfo("Module handler stopped");
 }
 
 void ModuleHandler::run() const {
 	settings::Logger::logInfo("Module handler started, constants used: queue_timeout_length: {}, status_aggregation_timeout: {}",
 				 settings::queue_timeout_length.count(), settings::status_aggregation_timeout.count());
+	std::jthread forwardThread([this]() { handleCommandForwards(); });
 	handleMessages();
 }
 
@@ -41,6 +47,16 @@ void ModuleHandler::handleMessages() const {
 			handleStatus(message.getMessage().devicestatus());
 		}
 		fromInternalQueue_->pop();
+	}
+}
+
+void ModuleHandler::handleCommandForwards() const {
+	while(not context_->ioContext.stopped()) {
+		if(commandForwardingQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
+			continue;
+		}
+		handleCommandForward(commandForwardingQueue_->front().getDeviceId());
+		commandForwardingQueue_->pop();
 	}
 }
 
@@ -154,6 +170,27 @@ ModuleHandler::sendConnectResponse(const ip::Device &device, ip::DeviceConnectRe
 	const auto response = common_utils::ProtobufUtils::createInternalServerConnectResponseMessage(device, response_type);
 	toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false,response));
 	settings::Logger::logInfo("New device {} is trying to connect, sending response {}", device.devicename(), static_cast<int>(response_type));
+}
+
+void ModuleHandler::handleCommandForward(const structures::DeviceIdentification &deviceId) const {
+	const auto &moduleNumber = deviceId.getModule();
+	const auto &statusAggregators = moduleLibrary_.statusAggregators;
+	if(not statusAggregators.contains(moduleNumber)) {
+		settings::Logger::logWarning("Module number: {} is not supported in handleCommandForward", moduleNumber);
+		return;
+	}
+
+	const auto &statusAggregator = statusAggregators.at(moduleNumber);
+	Buffer commandBuffer {};
+	if(statusAggregator->get_command_for_forwarding(deviceId, commandBuffer) != OK) {
+		settings::Logger::logWarning("get_command_for_forwarding failed for device: {}", deviceId.getDeviceName());
+		return;
+	}
+
+	const auto device = deviceId.convertToIPDevice();
+	const auto deviceCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(device, commandBuffer);
+	toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false, deviceCommandMessage));
+	settings::Logger::logDebug("Module handler forwarded command immediately for device: {}", deviceId.getDeviceName());
 }
 
 void ModuleHandler::handleStatus(const ip::DeviceStatus &status) const {
