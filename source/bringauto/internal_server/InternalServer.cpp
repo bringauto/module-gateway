@@ -6,6 +6,33 @@
 
 
 
+namespace {
+
+using log = bringauto::settings::Logger;
+
+bool send_response(const std::shared_ptr<bringauto::structures::Connection> &connection,
+				   const InternalProtocol::InternalServer &message) {
+	if(not connection->socket.is_open()) {
+		return false;
+	}
+	auto data = message.SerializeAsString();
+	const uint32_t header = data.size();
+	try {
+		boost::asio::write(connection->socket, boost::asio::buffer(&header, sizeof(uint32_t)));
+		log::logDebug("Sending response to Internal Client, "
+					  "connection's ip address is {}",
+					  connection->remoteEndpointAddress());
+		boost::asio::write(connection->socket, boost::asio::buffer(data));
+	} catch(const std::exception &ex) {
+		log::logError("Error in sendResponse(...): "
+					  "Cannot write to Internal Client: {}", ex.what());
+		return false;
+	}
+	return true;
+}
+
+} // namespace
+
 namespace bringauto::internal_server {
 
 using log = settings::Logger;
@@ -300,7 +327,7 @@ void InternalServer::respondWithHigherPriorityConnected(const std::shared_ptr<st
 			deviceId.getModule(),
 			deviceId.getDeviceType(), deviceId.getDeviceRole(),
 			deviceId.getDeviceName(), deviceId.getPriority());
-	sendResponse(connection, message);
+	send_response(connection, message);
 }
 
 void InternalServer::respondWithAlreadyConnected(const std::shared_ptr<structures::Connection> &connection,
@@ -315,7 +342,7 @@ void InternalServer::respondWithAlreadyConnected(const std::shared_ptr<structure
 			deviceId.getModule(),
 			deviceId.getDeviceType(), deviceId.getDeviceRole(),
 			deviceId.getDeviceName(), deviceId.getPriority());
-	sendResponse(connection, message);
+	send_response(connection, message);
 }
 
 void InternalServer::changeConnection(const std::shared_ptr<structures::Connection> &newConnection,
@@ -333,27 +360,6 @@ void InternalServer::changeConnection(const std::shared_ptr<structures::Connecti
 				 newConnection->deviceId->getDeviceRole(),
 				 newConnection->deviceId->getDeviceName(),
 				 newConnection->deviceId->getPriority());
-}
-
-bool InternalServer::sendResponse(const std::shared_ptr<structures::Connection> &connection,
-								  const InternalProtocol::InternalServer &message) {
-	if(not connection->socket.is_open()) {
-		return false;
-	}
-	auto data = message.SerializeAsString();
-	const uint32_t header = data.size();
-	try {
-		boost::asio::write(connection->socket, boost::asio::buffer(&header, sizeof(uint32_t)));
-		log::logDebug("Sending response to Internal Client, "
-					  "connection's ip address is {}",
-					  connection->remoteEndpointAddress());
-		boost::asio::write(connection->socket, boost::asio::buffer(data));
-	} catch(const std::exception &ex) {
-		log::logError("Error in sendResponse(...): "
-					  "Cannot write to Internal Client: {}", ex.what());
-		return false;
-	}
-	return true;
 }
 
 void InternalServer::listenToQueue() {
@@ -382,7 +388,7 @@ void InternalServer::validateResponse(const InternalProtocol::InternalServer &me
 	const auto connection = findConnection(deviceId);
 
 	if(connection && connection->deviceId->getPriority() == deviceId.getPriority()) {
-		sendResponse(connection, message);
+		send_response(connection, message);
 		{
 			std::lock_guard<std::mutex> lk(connection->connectionMutex);
 			connection->ready = true;

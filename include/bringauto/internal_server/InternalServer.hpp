@@ -163,15 +163,6 @@ private:
 						  const structures::DeviceIdentification &deviceId);
 
 	/**
-	 * @brief Writes messages to Internal client.
-	 * @param connection connection message will be sent through
-	 * @param message message to be sent
-	 * @return true if writes are successful
-	 */
-	bool sendResponse(const std::shared_ptr<structures::Connection> &connection,
-					  const InternalProtocol::InternalServer &message);
-
-	/**
 	 * @brief Removes Connection from the map of active connections and clean up/closes its socket
 	 * @param connection connection to be removed
 	 */
