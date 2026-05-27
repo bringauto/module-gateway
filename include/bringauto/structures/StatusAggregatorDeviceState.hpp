@@ -80,6 +80,17 @@ public:
 	 */
 	int addExternalCommand(const modules::Buffer &commandBuffer);
 
+	/**
+	 * @brief Mark this device as requiring immediate command forwarding.
+	 * Called once at device registration based on the module's forwardCommandOnReceive response.
+	 */
+	void enableImmediateCommandForwarding() noexcept;
+
+	/**
+	 * @brief Returns true if this device requires commands to be forwarded immediately upon receipt.
+	 */
+	[[nodiscard]] bool isForwardCommandImmediately() const noexcept;
+
 private:
 	std::unique_ptr<ThreadTimer> timer_ {};
 
@@ -92,6 +103,8 @@ private:
 	std::unique_ptr<std::mutex> externalCommandMutex_ { std::make_unique<std::mutex>() };
 
 	std::queue<modules::Buffer> externalCommandQueue_ {};
+
+	bool forwardCommandImmediately_ { false };
 };
 
 }

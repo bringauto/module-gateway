@@ -24,7 +24,8 @@ public:
 
 	ExternalClient(const std::shared_ptr<structures::GlobalContext> &context,
 				   structures::ModuleLibrary &moduleLibrary,
-				   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue);
+				   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue,
+				   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &commandForwardingQueue);
 
 	/**
 	 * @brief Initialize connections, error aggregators
@@ -95,10 +96,12 @@ private:
 	std::unordered_map<unsigned int, std::reference_wrapper<connection::ExternalConnection>> externalConnectionMap_ {};
 	/// List of external connections, each device can have its own connection or multiple devices can share one connection
 	std::list<connection::ExternalConnection> externalConnectionsList_ {};
-	/// Queue for  messages from module handler to external client to be sent to external server
+	/// Queue for messages from module handler to external client to be sent to external server
 	std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> toExternalQueue_;
 	/// Queue for device commands received by external client to module handler
 	std::shared_ptr<structures::AtomicQueue<InternalProtocol::DeviceCommand>> fromExternalQueue_ {};
+	/// Queue shared with ModuleHandler; used to push command-forward events for immediate dispatch
+	std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> commandForwardingQueue_ {};
 
 	std::shared_ptr<structures::AtomicQueue<structures::ReconnectQueueItem>> reconnectQueue_ {};
 

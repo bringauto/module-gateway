@@ -2,6 +2,7 @@
 
 #include <bringauto/modules/Buffer.hpp>
 
+#include <fleet_protocol/common_headers/general_error_codes.h>
 #include <fleet_protocol/common_headers/memory_management.h>
 
 #include <functional>
@@ -102,6 +103,17 @@ public:
 	 * @return OK if valid, NOT_OK otherwise
 	 */
 	virtual int commandDataValid(const Buffer &command, unsigned int device_type) const = 0;
+
+	/**
+	 * @brief Determine whether Module Gateway should forward a received command to the device
+	 * immediately upon receipt, without waiting for the next status message.
+	 *
+	 * Optional — modules that do not implement this default to NOT_OK (existing behaviour).
+	 *
+	 * @param device_type device type
+	 * @return OK to forward immediately, NOT_OK to forward on next status
+	 */
+	virtual int forwardCommandOnReceive(unsigned int /*device_type*/) { return NOT_OK; }
 
 	/**
 	 * @brief Constructs a buffer with the given size

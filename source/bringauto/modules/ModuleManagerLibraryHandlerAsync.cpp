@@ -210,6 +210,10 @@ int ModuleManagerLibraryHandlerAsync::commandDataValid(const Buffer &command, un
 	return aeronClient_.callFunc(fp_async::commandDataValidAsync, command_raw_buffer, device_type).value_or(NOT_OK);
 }
 
+int ModuleManagerLibraryHandlerAsync::forwardCommandOnReceive(unsigned int /*device_type*/) {
+	return NOT_OK;
+}
+
 Buffer ModuleManagerLibraryHandlerAsync::constructBuffer(std::size_t size) {
 	if(size == 0) {
 		return Buffer {};

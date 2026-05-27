@@ -8,6 +8,7 @@
 #include <bringauto/settings/LoggerId.hpp>
 
 #include <fleet_protocol/common_headers/general_error_codes.h>
+#include <fleet_protocol/module_gateway/error_codes.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -20,8 +21,10 @@ namespace ip = InternalProtocol;
 
 ExternalClient::ExternalClient(const std::shared_ptr<structures::GlobalContext> &context,
 							   structures::ModuleLibrary &moduleLibrary,
-							   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue):
+							   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &toExternalQueue,
+							   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &commandForwardingQueue):
 		toExternalQueue_ { toExternalQueue },
+		commandForwardingQueue_ { commandForwardingQueue },
 		context_ { context },
 		moduleLibrary_ { moduleLibrary },
 		timer_ { context->ioContext } {
@@ -65,8 +68,11 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 
 
 	const auto deviceId = structures::DeviceIdentification(device);
-	int ret = it->second->update_command(commandBuffer, deviceId);
-	if (ret == OK) {
+	const int ret = it->second->update_command(commandBuffer, deviceId);
+	if (ret == FORWARD_IMMEDIATELY) {
+		settings::Logger::logInfo("Command for device {} was added to queue, forwarding immediately", device.devicename());
+		commandForwardingQueue_->pushAndNotify(structures::InternalClientMessage::makeCommandForward(deviceId));
+	} else if (ret == OK) {
 		settings::Logger::logInfo("Command for device {} was added to queue", device.devicename());
 	}
 }

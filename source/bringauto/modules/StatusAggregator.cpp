@@ -10,6 +10,7 @@ namespace bringauto::modules {
 using log = settings::Logger;
 
 int StatusAggregator::clear_device(const structures::DeviceIdentification &device) {
+	std::lock_guard lock(devicesMutex_);
 	if(is_device_valid(device) == NOT_OK) {
 		return DEVICE_NOT_REGISTERED;
 	}
@@ -59,6 +60,7 @@ int StatusAggregator::destroy_status_aggregator() {
 }
 
 int StatusAggregator::clear_all_devices() {
+	std::lock_guard lock(devicesMutex_);
 	for(auto &[key, device]: devices) {
 		clear_device(key);
 	}
@@ -66,18 +68,22 @@ int StatusAggregator::clear_all_devices() {
 }
 
 int StatusAggregator::remove_device(const structures::DeviceIdentification& device) {
+	std::lock_guard lock(devicesMutex_);
 	if(is_device_valid(device) == NOT_OK) {
 		return DEVICE_NOT_REGISTERED;
 	}
 	clear_device(device);
 
-	// WUT, maybe becose there can be multiple context running so by this we ensure no rece condition?
-	boost::asio::post(context_->ioContext, [this, device]() { devices.erase(device); });
+	boost::asio::post(context_->ioContext, [this, device]() {
+		std::lock_guard postLock(devicesMutex_);
+		devices.erase(device);
+	});
 	return OK;
 }
 
 int StatusAggregator::add_status_to_aggregator(const Buffer& status,
 											   const structures::DeviceIdentification& device) {
+	std::lock_guard lock(devicesMutex_);
 	const auto &device_type = device.getDeviceType();
 	if(is_device_type_supported(device_type) == NOT_OK) {
 		log::logError("Trying to add status to unsupported device type: {}", device_type);
@@ -101,6 +107,13 @@ int StatusAggregator::add_status_to_aggregator(const Buffer& status,
 		devices.emplace(
 				device, structures::StatusAggregatorDeviceState(context_, timeouted_force_aggregation, device, commandBuffer, status));
 
+		const int forwardOnReceive = module_->forwardCommandOnReceive(device_type);
+		log::logInfo("forwardCommandOnReceive for device {} (type={}): rc={}", device.convertToString(), device_type, forwardOnReceive);
+		if(forwardOnReceive == OK) {
+			devices.at(device).enableImmediateCommandForwarding();
+			log::logInfo("Immediate command forwarding ENABLED for device {}", device.convertToString());
+		}
+
 		force_aggregation_on_device(device);
 		return 1;
 	}
@@ -119,6 +132,7 @@ int StatusAggregator::add_status_to_aggregator(const Buffer& status,
 
 int StatusAggregator::get_aggregated_status(Buffer &generated_status,
 											const structures::DeviceIdentification& device) {
+	std::lock_guard lock(devicesMutex_);
 	if(is_device_valid(device) == NOT_OK) {
 		log::logError("Trying to get aggregated status from unregistered device");
 		return DEVICE_NOT_REGISTERED;
@@ -135,6 +149,7 @@ int StatusAggregator::get_aggregated_status(Buffer &generated_status,
 }
 
 int StatusAggregator::get_unique_devices(std::list<structures::DeviceIdentification> &unique_devices_list) {
+	std::lock_guard lock(devicesMutex_);
 	const auto devicesSize = devices.size();
 	if (devicesSize == 0) {
 		return 0;
@@ -148,6 +163,7 @@ int StatusAggregator::get_unique_devices(std::list<structures::DeviceIdentificat
 }
 
 int StatusAggregator::force_aggregation_on_device(const structures::DeviceIdentification& device) {
+	std::lock_guard lock(devicesMutex_);
 	if(is_device_valid(device) == NOT_OK) {
 		log::logError("Trying to force aggregation on unregistered device: {}", device.convertToString());
 		return DEVICE_NOT_REGISTERED;
@@ -160,6 +176,7 @@ int StatusAggregator::force_aggregation_on_device(const structures::DeviceIdenti
 }
 
 int StatusAggregator::is_device_valid(const structures::DeviceIdentification& device) {
+	std::lock_guard lock(devicesMutex_);
 	if(is_device_type_supported(device.getDeviceType()) == OK &&
 	   devices.contains(device)) {
 		return OK;
@@ -170,6 +187,7 @@ int StatusAggregator::is_device_valid(const structures::DeviceIdentification& de
 int StatusAggregator::get_module_number() { return module_->getModuleNumber(); }
 
 int StatusAggregator::update_command(const Buffer& command, const structures::DeviceIdentification& device) {
+	std::lock_guard lock(devicesMutex_);
 	const auto &device_type = device.getDeviceType();
 	if(is_device_type_supported(device_type) == NOT_OK) {
 		log::logError("Device type {} is not supported", device_type);
@@ -189,11 +207,18 @@ int StatusAggregator::update_command(const Buffer& command, const structures::De
 	if (devices.at(device).addExternalCommand(command) == NOT_OK) {
 		log::logError("External command queue is full for device: {} deleting oldest command", device.convertToString());
 	}
+
+	const bool forwarding = devices.at(device).isForwardCommandImmediately();
+	log::logDebug("update_command for device {}: isForwardCommandImmediately={}", device.convertToString(), forwarding);
+	if(forwarding) {
+		return FORWARD_IMMEDIATELY;
+	}
 	return OK;
 }
 
 int StatusAggregator::get_command(const Buffer& status, const structures::DeviceIdentification& device,
 								  Buffer& command) {
+	std::lock_guard lock(devicesMutex_);
 	const auto &device_type = device.getDeviceType();
 	if(is_device_type_supported(device_type) == NOT_OK) {
 		log::logError("Device type {} is not supported", device_type);
@@ -210,6 +235,16 @@ int StatusAggregator::get_command(const Buffer& status, const structures::Device
 	return OK;
 }
 
+int StatusAggregator::get_command_for_forwarding(const structures::DeviceIdentification &device, Buffer &command) {
+	std::lock_guard lock(devicesMutex_);
+	if(is_device_valid(device) == NOT_OK) {
+		log::logError("Trying to get forwarding command for unregistered device: {}", device.convertToString());
+		return DEVICE_NOT_REGISTERED;
+	}
+	const auto &cachedStatus = devices.at(device).getStatus();
+	return get_command(cachedStatus, device, command);
+}
+
 int StatusAggregator::is_device_type_supported(unsigned int device_type) {
 	return module_->isDeviceTypeSupported(device_type);
 }
@@ -223,6 +258,7 @@ bool StatusAggregator::getTimeoutedMessageReady() const {
 }
 
 int StatusAggregator::getDeviceTimeoutCount(const structures::DeviceIdentification &device) const {
+	std::lock_guard lock(devicesMutex_);
 	if(const auto it = deviceTimeouts_.find(device); it != deviceTimeouts_.end()) {
 		return it->second;
 	}

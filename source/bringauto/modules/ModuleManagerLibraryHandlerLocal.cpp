@@ -57,6 +57,11 @@ void ModuleManagerLibraryHandlerLocal::loadLibrary(const std::filesystem::path &
 			"allocate"));
 	deallocate_ = reinterpret_cast<FunctionTypeDeducer<decltype(deallocate_)>::fncptr>(checkFunction(
 			"deallocate"));
+	forwardCommandOnReceive_ = reinterpret_cast<FunctionTypeDeducer<decltype(forwardCommandOnReceive_)>::fncptr>(
+			checkOptionalFunction("forward_command_on_receive"));
+	if(forwardCommandOnReceive_) {
+		log::logDebug("Library " + path.string() + " supports forward_command_on_receive");
+	}
 	log::logDebug("Library " + path.string() + " was successfully loaded");
 }
 
@@ -66,6 +71,10 @@ void *ModuleManagerLibraryHandlerLocal::checkFunction(const char *functionName) 
 		throw std::runtime_error {"Function " + std::string(functionName) + " is not included in library"};
 	}
 	return function;
+}
+
+void *ModuleManagerLibraryHandlerLocal::checkOptionalFunction(const char *functionName) const {
+	return dlsym(module_, functionName);
 }
 
 int ModuleManagerLibraryHandlerLocal::getModuleNumber() const {
@@ -194,6 +203,13 @@ int ModuleManagerLibraryHandlerLocal::commandDataValid(const Buffer &command, un
 		raw_buffer = command.getStructBuffer();
 	}
 	return commandDataValid_(raw_buffer, device_type);
+}
+
+int ModuleManagerLibraryHandlerLocal::forwardCommandOnReceive(unsigned int device_type) {
+	if(!forwardCommandOnReceive_) {
+		return NOT_OK;
+	}
+	return forwardCommandOnReceive_(device_type);
 }
 
 int ModuleManagerLibraryHandlerLocal::allocate(struct buffer *buffer_pointer, size_t size_in_bytes) const {

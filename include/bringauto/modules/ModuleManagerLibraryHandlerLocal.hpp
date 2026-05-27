@@ -53,6 +53,8 @@ public:
 
 	int commandDataValid(const Buffer &command, unsigned int device_type) const override;
 
+	int forwardCommandOnReceive(unsigned int device_type) override;
+
 	/**
 	 * @brief Constructs a buffer with the given size
 	 *
@@ -68,6 +70,12 @@ private:
 	void deallocate(struct buffer *buffer) const;
 
 	void *checkFunction(const char *functionName) const;
+
+	/**
+	 * @brief Look up an optional symbol in the loaded library.
+	 * @return function pointer, or nullptr if the symbol is not exported
+	 */
+	void *checkOptionalFunction(const char *functionName) const;
 
 	/**
 	 * @brief Constructs a buffer with the same raw c buffer as provided
@@ -93,6 +101,8 @@ private:
 	std::function<int(struct buffer *, struct buffer, struct buffer, struct buffer, unsigned int)> generateCommand_ {};
 	std::function<int(struct buffer *, size_t)> allocate_ {};
 	std::function<void(struct buffer *)> deallocate_ {};
+	/// Optional — nullptr when the module does not export forward_command_on_receive
+	std::function<int(unsigned int)> forwardCommandOnReceive_ {};
 };
 
 }
