@@ -69,11 +69,13 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 
 	const auto deviceId = structures::DeviceIdentification(device);
 	const int ret = it->second->update_command(commandBuffer, deviceId);
-	if (ret == FORWARD_IMMEDIATELY) {
-		settings::Logger::logInfo("Command for device {} was added to queue, forwarding immediately", device.devicename());
-		commandForwardingQueue_->pushAndNotify(structures::InternalClientMessage::makeCommandForward(deviceId));
-	} else if (ret == OK) {
-		settings::Logger::logInfo("Command for device {} was added to queue", device.devicename());
+	if (ret == OK) {
+		if (moduleLibraryHandler->forwardCommandOnReceive(deviceId.getDeviceType()) == OK) {
+			settings::Logger::logInfo("Command for device {} was added to queue, forwarding immediately", device.devicename());
+			commandForwardingQueue_->pushAndNotify(structures::InternalClientMessage::makeCommandForward(deviceId));
+		} else {
+			settings::Logger::logInfo("Command for device {} was added to queue", device.devicename());
+		}
 	}
 }
 
