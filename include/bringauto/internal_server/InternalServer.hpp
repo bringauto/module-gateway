@@ -131,16 +131,6 @@ private:
 						  const structures::DeviceIdentification &deviceId);
 
 	/**
-	 * @brief Sends response to InternalClient, that device is already connected and with higher priority.
-	 * @param connection connection response will be sent through
-	 * @param connect message containing data for response message
-	 * @param deviceId unique device identification
-	 */
-	void respondWithHigherPriorityConnected(const std::shared_ptr<structures::Connection> &connection,
-											const InternalProtocol::InternalClient &connect,
-											const structures::DeviceIdentification &deviceId);
-
-	/**
 	 * @brief Sends response to InternalClient, that device is already connected and with same priority.
 	 * @param connection connection response will be sent through
 	 * @param connect message containing data for response message
