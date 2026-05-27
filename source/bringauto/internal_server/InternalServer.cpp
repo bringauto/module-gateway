@@ -102,12 +102,11 @@ void InternalServer::asyncReceiveHandler(
 bool InternalServer::processBufferData(
 		const std::shared_ptr<structures::Connection> &connection,
 		std::size_t bytesTransferred, std::size_t bufferOffset) {
-	if(bytesTransferred < bufferOffset) {
+	if(bufferOffset + bytesTransferred > connection->connContext.buffer.size()) {
 		log::logError(
-				"Error in processBufferData(...): bufferOffset: {} is greater than bytesTransferred: {}, "
-				"Invalid bufferOffset: {} received from Internal Client, "
-				"connection's ip address is {}", bufferOffset, bytesTransferred, bufferOffset,
-				connection->remoteEndpointAddress());
+				"Error in processBufferData(...): bufferOffset: {} + bytesTransferred: {} exceeds buffer size: {}, "
+				"connection's ip address is {}", bufferOffset, bytesTransferred,
+				connection->connContext.buffer.size(), connection->remoteEndpointAddress());
 		return false;
 	}
 
@@ -170,7 +169,7 @@ bool InternalServer::processBufferData(
 					  connection->remoteEndpointAddress());
 		return false;
 	}
-	if(bytesLeft && !processBufferData(connection, bytesLeft, bytesTransferred - bytesLeft)) {
+	if(bytesLeft && !processBufferData(connection, bytesLeft, bufferOffset + (bytesTransferred - bytesLeft))) {
 		log::logError("Error in processBufferData(...): "
 					  "Received extra invalid bytes of data: {} from Internal Client, "
 					  "connection's ip address is {}", bytesLeft,
