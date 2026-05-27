@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bringauto/internal_server/ConnectedDevices.hpp>
 #include <bringauto/structures/AtomicQueue.hpp>
 #include <bringauto/structures/Connection.hpp>
 #include <bringauto/structures/GlobalContext.hpp>
@@ -121,34 +122,6 @@ private:
 	void handleDisconnect(const structures::DeviceIdentification& deviceId);
 
 	/**
-	 * @brief Inserts connection into map of all active connections, sends message to module Handler.
-	 * @param connection connection to be inserted into map
-	 * @param connect message to be sent
-	 * @param deviceId unique device identification
-	 */
-	void connectNewDevice(const std::shared_ptr<structures::Connection> &connection,
-						  const InternalProtocol::InternalClient &connect,
-						  const structures::DeviceIdentification &deviceId);
-
-	/**
-	 * Ends all operations of previous connection using same device,
-	 * closes its socket, then replaces it in map with new connection.
-	 * Afterward sends new connection message to Module Handler.
-	 * @param newConnection new connection to replace the old one
-	 * @param connect message to be sent
-	 * @param deviceId unique device identification
-	 */
-	void changeConnection(const std::shared_ptr<structures::Connection> &newConnection,
-						  const InternalProtocol::InternalClient &connect,
-						  const structures::DeviceIdentification &deviceId);
-
-	/**
-	 * @brief Removes Connection from the map of active connections and clean up/closes its socket
-	 * @param connection connection to be removed
-	 */
-	void removeConnFromMap(const std::shared_ptr<structures::Connection> &connection);
-
-	/**
 	 * Periodically checks for new messages received from module handler through queue.
 	 * If message is received calls validatesResponse(...).
 	 * Runs until stop() is called.
@@ -162,13 +135,6 @@ private:
 	 */
 	void validateResponse(const InternalProtocol::InternalServer &message);
 
-	/**
-	 * @brief Searches for connection in connectedDevices_ vector with deviceId, which is "same" as given deviceId.
-	 * @param deviceId that will be searched for in the vector
-	 * @return connection in connectedDevices_ vector
-	 */
-	std::shared_ptr<structures::Connection> findConnection(const structures::DeviceIdentification &deviceId);
-
 	std::shared_ptr<structures::GlobalContext> context_ {};
 	boost::asio::ip::tcp::acceptor acceptor_;
 	/// Queue for messages from Module Handler to Internal Client
@@ -176,9 +142,7 @@ private:
 	/// Queue for messages from Internal Client to Module Handler
 	std::shared_ptr<structures::AtomicQueue<structures::ModuleHandlerMessage>> toInternalQueue_ {};
 
-	std::mutex serverMutex_ {};
-	/// Vector of all active connections of devices
-	std::vector<std::shared_ptr<structures::Connection>> connectedDevices_ {};
+	ConnectedDevices connectedDevices_ {};
 	/// Thread that listens to queue for messages from Module Handler
 	std::jthread listeningThread {};
 };
