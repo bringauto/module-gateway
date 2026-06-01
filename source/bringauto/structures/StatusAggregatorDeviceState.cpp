@@ -33,11 +33,15 @@ void StatusAggregatorDeviceState::setDefaultCommand(const modules::Buffer &comma
 	defaultCommand_ = commandBuffer;
 }
 
-const modules::Buffer &StatusAggregatorDeviceState::getCommand() {
+std::optional<modules::Buffer> StatusAggregatorDeviceState::consumeCommand() {
 	std::lock_guard lock { *externalCommandMutex_ };
 	if (!externalCommandQueue_.empty()) {
 		defaultCommand_ = externalCommandQueue_.front();
 		externalCommandQueue_.pop();
+		return defaultCommand_;
+	}
+	if (forwardCommandImmediately_) {
+		return std::nullopt;
 	}
 	return defaultCommand_;
 }
