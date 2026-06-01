@@ -4,6 +4,7 @@
 #include <bringauto/common_utils/ProtobufUtils.hpp>
 
 #include <fleet_protocol/common_headers/general_error_codes.h>
+#include <fleet_protocol/module_gateway/error_codes.h>
 
 #include <thread>
 
@@ -182,7 +183,12 @@ void ModuleHandler::handleCommandForward(const structures::DeviceIdentification 
 
 	const auto &statusAggregator = statusAggregators.at(moduleNumber);
 	Buffer commandBuffer {};
-	if(statusAggregator->get_command_for_forwarding(deviceId, commandBuffer) != OK) {
+	const int forwardRc = statusAggregator->get_command_for_forwarding(deviceId, commandBuffer);
+	if(forwardRc == NO_MESSAGE_AVAILABLE) {
+		settings::Logger::logDebug("Command already consumed by status path for push-only device: {}", deviceId.getDeviceName());
+		return;
+	}
+	if(forwardRc != OK) {
 		settings::Logger::logWarning("get_command_for_forwarding failed for device: {}", deviceId.getDeviceName());
 		return;
 	}
@@ -233,6 +239,15 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) const {
 																									commandBuffer);
 		toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false, deviceCommandMessage));
 		settings::Logger::logDebug("Module handler successfully retrieved command and sent it to device: {}", deviceName);
+	} else if(getCommandRc == NO_MESSAGE_AVAILABLE) {
+		// Push-only device with no fresh command from ES. Send an empty DeviceCommand to
+		// satisfy the InternalProtocol 250ms response requirement. The bridge will detect
+		// empty commanddata and not forward it to the vehicle, letting the vehicle's own
+		// timeout trigger the safe-stop.
+		const auto emptyCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(
+			device, Buffer{});
+		toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false, emptyCommandMessage));
+		settings::Logger::logDebug("No fresh command for push-only device {}, sending empty response", deviceName);
 	} else {
 		settings::Logger::logWarning("Retrieving command failed with return code: {}", getCommandRc);
 		return;

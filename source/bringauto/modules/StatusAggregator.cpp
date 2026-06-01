@@ -221,7 +221,11 @@ int StatusAggregator::get_command(const Buffer& status, const structures::Device
 	}
 
 	auto &deviceState = devices.at(device);
-	if (module_->generateCommand(command, status, deviceState.getStatus(), deviceState.getCommand(), device_type) != OK) {
+	auto currentCommand = deviceState.consumeCommand();
+	if (!currentCommand.has_value()) {
+		return NO_MESSAGE_AVAILABLE;
+	}
+	if (module_->generateCommand(command, status, deviceState.getStatus(), *currentCommand, device_type) != OK) {
 		log::logError("Error occurred while generating command for device: {}", device.convertToString());
 		return COMMAND_INVALID;
 	}

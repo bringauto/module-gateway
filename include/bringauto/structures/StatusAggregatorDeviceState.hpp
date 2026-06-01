@@ -6,6 +6,7 @@
 #include <bringauto/modules/Buffer.hpp>
 
 #include <mutex>
+#include <optional>
 #include <queue>
 #include <memory>
 
@@ -55,14 +56,17 @@ public:
 	void setDefaultCommand(const modules::Buffer &commandBuffer);
 
 	/**
-	 * @brief Gets the most relevant command buffer.
-	 * If there are external commands in the queue, they will be used first.
-	 * Otherwise, the default command buffer will be used.
-	 * Commands received from the queue are removed from it.
+	 * @brief Consumes and returns the most relevant command buffer.
+	 * If there are external commands in the queue, they will be dequeued and returned.
+	 * For push-only devices (forwardCommandOnReceive == OK) with an empty queue,
+	 * returns std::nullopt — the caller must send an empty DeviceCommand to satisfy the
+	 * InternalProtocol response requirement without forwarding anything to the vehicle.
+	 * For pull devices, falls back to the default command buffer when the queue is empty.
+	 * Commands dequeued from the external queue are removed from it.
 	 *
-	 * @return const Buffer&
+	 * @return command buffer, or std::nullopt when push-only device has no pending command
 	 */
-	[[nodiscard]] const modules::Buffer &getCommand();
+	[[nodiscard]] std::optional<modules::Buffer> consumeCommand();
 
 	/**
 	 * @brief Get aggregated messages queue
