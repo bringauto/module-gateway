@@ -217,7 +217,7 @@ Buffer ModuleManagerLibraryHandlerAsync::constructBuffer(std::size_t size) {
 	auto data = std::make_unique<char[]>(size);
 	struct ::buffer buff { .data = data.release(), .size_in_bytes = size };
 	return { buff, [](struct ::buffer *b) {
-		delete[] static_cast<char *>(b->data);
+		delete[] static_cast<char *>(b->data); // NOSONAR cpp:S5025 - raw buffer ownership; delete[] matches the make_unique<char[]> allocation above
 		b->data = nullptr;
 		b->size_in_bytes = 0;
 	}};
