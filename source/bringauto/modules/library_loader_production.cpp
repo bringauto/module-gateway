@@ -1,5 +1,8 @@
 #include <bringauto/modules/library_loader.hpp>
 
+#define _GNU_SOURCE
+#include <dlfcn.h>
+
 
 
 namespace bringauto::modules::library_loader {

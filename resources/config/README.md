@@ -28,7 +28,7 @@ Note: at least one logging sink needs to be used
 * company : company name used as identification in external connection (string)
 * vehicle-name : vehicle name used as identification in external connection (string)
 * endpoints : array of objects listing possible ways to connect to external server
-  - protocol-type : string (only mqtt and quic are supported)
+  - protocol-type : string (only MQTT and QUIC are supported; case-insensitive)
   - server-ip : ip of the external connection (string)
   - port : port of the external connection (int)
   - modules : array of integers that represent module numbers to be used on this connection
