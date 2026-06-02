@@ -44,8 +44,7 @@ namespace bringauto::external_client::connection::communication {
 		                           common_utils::EnumUtils::connectionStateToString(connectionState_));
 
 		ConnectionState expected = ConnectionState::NOT_CONNECTED;
-		if (!connectionState_.
-			compare_exchange_strong(expected, ConnectionState::CONNECTING, std::memory_order_acq_rel)) {
+		if (!connectionState_.compare_exchange_strong(expected, ConnectionState::CONNECTING)) {
 			settings::Logger::logError("Connection already in progress or established");
 			return;
 		}
@@ -89,6 +88,7 @@ namespace bringauto::external_client::connection::communication {
 	}
 
 	std::shared_ptr<ExternalProtocol::ExternalServer> QuicCommunication::receiveMessage() {
+		using enum ConnectionState;
 		std::unique_lock lock(inboundMutex_);
 
 		// Wait for a message or transition out of allowed states
@@ -98,12 +98,13 @@ namespace bringauto::external_client::connection::communication {
 			lock,
 			settings::receive_message_timeout,
 			[this] {
+				using enum ConnectionState;
 				auto state = connectionState_.load();
 				return !inboundQueue_.empty() ||
 				       cancelReceive_.load() ||
-				       (state != ConnectionState::CONNECTING &&
-				        state != ConnectionState::CLOSING &&
-				        state != ConnectionState::CONNECTED);
+				       (state != CONNECTING &&
+				        state != CLOSING &&
+				        state != CONNECTED);
 			}
 		)) {
 			return nullptr;
@@ -111,9 +112,9 @@ namespace bringauto::external_client::connection::communication {
 
 		// Check if we stopped waiting due to invalid state or empty queue
 		auto state = connectionState_.load();
-		if ((state != ConnectionState::CONNECTING &&
-		     state != ConnectionState::CLOSING &&
-		     state != ConnectionState::CONNECTED) ||
+		if ((state != CONNECTING &&
+		     state != CLOSING &&
+		     state != CONNECTED) ||
 		    inboundQueue_.empty()) {
 			return nullptr;
 		}
@@ -300,7 +301,7 @@ namespace bringauto::external_client::connection::communication {
 		settings::Logger::logDebug("[quic] [stream {}] Message sent", streamId ? *streamId : 0);
 	}
 
-	QUIC_STATUS QUIC_API QuicCommunication::connectionCallback(HQUIC connection, void *context,
+	QUIC_STATUS QUIC_API QuicCommunication::connectionCallback(HQUIC connection, void *context, // NOSONAR cpp:S5008 - void* required by QUIC_CONNECTION_CALLBACK C API
 	                                                           QUIC_CONNECTION_EVENT *event) {
 		auto *self = static_cast<QuicCommunication *>(context);
 
@@ -371,7 +372,7 @@ namespace bringauto::external_client::connection::communication {
 		return QUIC_STATUS_SUCCESS;
 	}
 
-	QUIC_STATUS QUIC_API QuicCommunication::streamCallback(HQUIC stream, void *context, QUIC_STREAM_EVENT *event) {
+	QUIC_STATUS QUIC_API QuicCommunication::streamCallback(HQUIC stream, void *context, QUIC_STREAM_EVENT *event) { // NOSONAR cpp:S5008 - void* required by QUIC_STREAM_CALLBACK C API
 		auto *self = static_cast<QuicCommunication *>(context);
 		auto streamId = self->getStreamId(stream);
 
