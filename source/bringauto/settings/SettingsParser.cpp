@@ -208,11 +208,8 @@ void SettingsParser::fillExternalConnectionSettings(const nlohmann::json &file) 
 		
 		if(!settingsName.empty() && endpoint.find(settingsName) != endpoint.end()) {
 			for(auto &[key, val]: endpoint[settingsName].items()) {
-				if (val.is_string()) {
-					externalConnectionSettings.protocolSettings[key] = val.get<std::string>();
-					continue;
-				}
-				externalConnectionSettings.protocolSettings[key] = to_string(val);
+				externalConnectionSettings.protocolSettings[key] =
+					val.is_string() ? val.get<std::string>() : to_string(val);
 			}
 		}
 

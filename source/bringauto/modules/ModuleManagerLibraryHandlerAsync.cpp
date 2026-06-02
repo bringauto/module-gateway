@@ -41,8 +41,7 @@ ModuleManagerLibraryHandlerAsync::~ModuleManagerLibraryHandlerAsync() {
 	::kill(moduleBinaryProcess_.id(), SIGTERM);
 	try {
 		moduleBinaryProcess_.wait();
-	} catch (const boost::process::process_error&) {
-		// wait() failed — process already reaped or unreachable. Nothing to do.
+	} catch (const boost::process::process_error&) { // NOSONAR cpp:S2486 - process already reaped or unreachable; no recovery possible in destructor
 	}
 }
 

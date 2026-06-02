@@ -27,8 +27,7 @@ public:
 
 	void closeConnection() override;
 
-	// Paho MQTT does not expose a blocking-consumer interrupt; shutdown waits up to receive_message_timeout.
-	void cancelReceive() override {}
+	void cancelReceive() override { /* Paho MQTT does not expose a blocking-consumer interrupt; shutdown waits up to receive_message_timeout */ }
 
 	bool consumeServerDisconnectNotification() override;
 
