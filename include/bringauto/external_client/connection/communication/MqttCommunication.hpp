@@ -4,6 +4,7 @@
 
 #include <mqtt/async_client.h>
 
+#include <atomic>
 #include <string>
 
 

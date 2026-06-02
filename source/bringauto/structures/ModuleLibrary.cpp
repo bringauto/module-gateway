@@ -22,11 +22,12 @@ void ModuleLibrary::loadLibraries(const std::unordered_map<int, std::filesystem:
 			handler = std::make_shared<modules::ModuleManagerLibraryHandlerAsync>(moduleBinaryPath, key);
 		}
 		handler->loadLibrary(path);
-		if (handler->getModuleNumber() != key)
+		const int moduleNumber = handler->getModuleNumber();
+		if (moduleNumber != key)
 		{
 			settings::Logger::logError(
 				"Module number from shared library {} does not match the module number from config. Config: {},"
-				" binary: {}.", path.string(), key, handler->getModuleNumber());
+				" binary: {}.", path.string(), key, moduleNumber);
 			throw std::runtime_error{ // NOSONAR - generic exception is sufficient, error is unrecoverable and always propagates to top level
 				"Module numbers from config are not corresponding to binaries. Unable to continue."
 				" Fix configuration file."

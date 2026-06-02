@@ -1,5 +1,7 @@
 #include <bringauto/modules/library_loader.hpp>
 
+#include <dlfcn.h>
+
 
 
 namespace bringauto::modules::library_loader {

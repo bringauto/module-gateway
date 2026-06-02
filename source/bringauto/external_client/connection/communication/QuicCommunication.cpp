@@ -26,8 +26,12 @@ namespace bringauto::external_client::connection::communication {
 		alpnBuffer_.Length = static_cast<uint32_t>(alpn_.size());
 
 		loadMsQuic();
-		initRegistration();
-		initConfiguration();
+		if (quic_) {
+			initRegistration();
+		}
+		if (quic_ && registration_) {
+			initConfiguration();
+		}
 
 		settings::Logger::logInfo("[quic] Initialize QUIC communication to {}:{} for {}/{}", settings.serverIp,
 		                          settings.port, company, vehicleName);
@@ -52,6 +56,7 @@ namespace bringauto::external_client::connection::communication {
 		QUIC_STATUS status = quic_->ConnectionOpen(registration_, connectionCallback, this, &connection_);
 		if (QUIC_FAILED(status)) {
 			settings::Logger::logError("ConnectionOpen failed (status=0x{:x})", status);
+			connectionState_.store(ConnectionState::NOT_CONNECTED);
 			return;
 		}
 
@@ -65,10 +70,12 @@ namespace bringauto::external_client::connection::communication {
 
 		if (QUIC_FAILED(status)) {
 			settings::Logger::logError("ConnectionStart failed (status=0x{:x})", status);
+			quic_->ConnectionClose(connection_);
+			connection_ = nullptr;
+			connectionState_.store(ConnectionState::NOT_CONNECTED);
 			return;
 		}
-
-		connectionState_ = ConnectionState::CONNECTING;
+		// connectionState_ is already CONNECTING from the CAS above; the redundant assignment is removed
 	}
 
 	bool QuicCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
@@ -270,6 +277,7 @@ namespace bringauto::external_client::connection::communication {
 
 		if (!message.SerializeToArray(sendBuffer->storage.data(), static_cast<int>(size))) {
 			settings::Logger::logError("[quic] Message serialization failed");
+			quic_->StreamShutdown(stream, QUIC_STREAM_SHUTDOWN_FLAG_ABORT, 0);
 			return;
 		}
 
@@ -349,7 +357,9 @@ namespace bringauto::external_client::connection::communication {
 					self->senderThread_.request_stop();
 				}
 
-				self->quic_->ConnectionClose(connection);
+				if (self->quic_) {
+					self->quic_->ConnectionClose(connection);
+				}
 				self->connection_ = nullptr;
 				break;
 			}
@@ -517,7 +527,7 @@ namespace bringauto::external_client::connection::communication {
 		}
 	}
 
-	std::optional<uint64_t> QuicCommunication::getStreamId(HQUIC stream) {
+	std::optional<uint64_t> QuicCommunication::getStreamId(HQUIC stream) const {
 		uint64_t streamId = 0;
 		uint32_t streamIdLen = sizeof(streamId);
 

@@ -34,7 +34,7 @@ protected:
 			moduleLibrary_->loadLibraries(context_->settings->modulePaths);
 			moduleLibrary_->initStatusAggregators(context_);
 		} catch(std::exception &e) {
-			GTEST_SKIP() << "Module initialization failed: " << e.what();
+			GTEST_FAIL() << "Module initialization failed: " << e.what();
 		}
 
 		fromExternalQueue_ = std::make_shared<bringauto::structures::AtomicQueue<InternalProtocol::DeviceCommand >>();

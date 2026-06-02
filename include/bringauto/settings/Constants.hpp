@@ -214,8 +214,8 @@ public:
 	inline static constexpr std::string_view STREAM_MODE { "stream-mode" };
 
 	inline static constexpr std::string_view MODULES { "modules" };
-	inline static constexpr std::string_view AERON_CONNECTION { "aeron:ipc"};
-	inline static constexpr std::string_view SEPARATOR { ":::" };
+	inline static constexpr std::string_view AERON_CONNECTION = AeronClientConstants::aeron_connection;
+	inline static constexpr std::string_view SEPARATOR = AeronClientConstants::separator;
 };
 
 }

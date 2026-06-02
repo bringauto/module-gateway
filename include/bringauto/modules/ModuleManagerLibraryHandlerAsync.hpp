@@ -1,9 +1,11 @@
 #pragma once
 
 #include <bringauto/modules/IModuleManagerLibraryHandler.hpp>
+#include <bringauto/fleet_protocol/async_function_execution_definitions/AsyncModuleFunctionDefinitions.hpp>
 
 #include <boost/process.hpp>
 
+#include <chrono>
 #include <filesystem>
 #include <mutex>
 #include <span>
@@ -98,8 +100,15 @@ private:
 	std::filesystem::path moduleBinaryPath_ {};
 	/// Process of the module binary
 	boost::process::child moduleBinaryProcess_ {};
-	/// TODO find a way to not need this
-	mutable std::mutex tmpMutex_ {};
+	/// Per-instance Aeron IPC executor; each module number has its own connection
+	fleet_protocol::async_function_execution_definitions::ModuleFunctionExecutor aeronClient_ {
+		async_function_execution::Config {
+			.isProducer = true,
+			.defaultTimeout = std::chrono::seconds(1),
+		},
+		fleet_protocol::async_function_execution_definitions::moduleFunctionList
+	};
+	mutable std::mutex callMutex_ {};
 };
 
 }

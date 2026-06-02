@@ -49,7 +49,7 @@ Tests use port 8888 for the internal server — it must be free when running `In
 
 The gateway bridges internal device clients with external servers. Three main components cooperate via `AtomicQueue`-based message passing:
 
-```
+```text
 Internal Client ──► Internal Server ──► [fromInternalQueue] ──► Module Handler
                                                                        │
                                                               Module Libraries &

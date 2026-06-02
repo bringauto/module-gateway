@@ -336,7 +336,7 @@ namespace bringauto::external_client::connection::communication {
 		 * @param stream Valid QUIC stream handle.
 		 * @return Stream identifier on success, or std::nullopt if the query fails.
 		 */
-		std::optional<uint64_t> getStreamId(HQUIC stream);
+		std::optional<uint64_t> getStreamId(HQUIC stream) const;
 
 		/**
 		 * @brief Retrieves a protocol setting value as a plain string.
