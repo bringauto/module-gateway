@@ -1,6 +1,5 @@
 #include <bringauto/modules/ModuleManagerLibraryHandlerLocal.hpp>
 #include <bringauto/modules/library_loader.hpp>
-#include <bringauto/modules/ModuleBinaryException.hpp>
 #include <bringauto/settings/LoggerId.hpp>
 
 #include <fleet_protocol/common_headers/general_error_codes.h>
@@ -34,7 +33,7 @@ void ModuleManagerLibraryHandlerLocal::loadLibrary(const std::filesystem::path &
 	module_ = library_loader::load(path);
 	if(module_ == nullptr) {
 		const char* const err = ::dlerror();
-		throw ModuleBinaryException {"Unable to load library " + path.string() + ": " + (err ? err : "unknown error")};
+		throw std::runtime_error {"Unable to load library " + path.string() + ": " + (err ? err : "unknown error")};
 	}
 	isDeviceTypeSupported_ = reinterpret_cast<FunctionTypeDeducer<decltype(isDeviceTypeSupported_)>::fncptr>(checkFunction(
 			"is_device_type_supported"));
