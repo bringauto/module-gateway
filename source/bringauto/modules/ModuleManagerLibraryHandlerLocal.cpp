@@ -33,7 +33,7 @@ void ModuleManagerLibraryHandlerLocal::loadLibrary(const std::filesystem::path &
 	module_ = library_loader::load(path);
 	if(module_ == nullptr) {
 		const char* const err = ::dlerror();
-		throw std::runtime_error {"Unable to load library " + path.string() + ": " + (err ? err : "unknown error")};
+		throw std::runtime_error {"Unable to load library " + path.string() + ": " + (err ? err : "unknown error")}; // NOSONAR cpp:S112 - no dedicated exception type warranted for dl load failure
 	}
 	isDeviceTypeSupported_ = reinterpret_cast<FunctionTypeDeducer<decltype(isDeviceTypeSupported_)>::fncptr>(checkFunction(
 			"is_device_type_supported"));
