@@ -101,7 +101,7 @@ private:
 	/// Process of the module binary
 	boost::process::child moduleBinaryProcess_ {};
 	/// Per-instance Aeron IPC executor; each module number has its own connection
-	fleet_protocol::async_function_execution_definitions::ModuleFunctionExecutor aeronClient_ {
+	mutable fleet_protocol::async_function_execution_definitions::ModuleFunctionExecutor aeronClient_ {
 		async_function_execution::Config {
 			.isProducer = true,
 			.defaultTimeout = std::chrono::seconds(1),
