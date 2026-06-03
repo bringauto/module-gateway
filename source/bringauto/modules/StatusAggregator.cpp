@@ -9,9 +9,8 @@ namespace bringauto::modules {
 
 using log = settings::Logger;
 
-int StatusAggregator::clear_device(const structures::DeviceIdentification &device) {
-	std::lock_guard lock(devicesMutex_);
-	if(is_device_valid(device) == NOT_OK) {
+int StatusAggregator::clearDeviceUnlocked(const structures::DeviceIdentification &device) {
+	if(isDeviceValidUnlocked(device) == NOT_OK) {
 		return DEVICE_NOT_REGISTERED;
 	}
 	auto &deviceState = devices.at(device);
@@ -20,6 +19,11 @@ int StatusAggregator::clear_device(const structures::DeviceIdentification &devic
 		aggregatedMessages.pop();
 	}
 	return OK;
+}
+
+int StatusAggregator::clear_device(const structures::DeviceIdentification &device) {
+	std::lock_guard lock(devicesMutex_);
+	return clearDeviceUnlocked(device);
 }
 
 Buffer
@@ -62,17 +66,17 @@ int StatusAggregator::destroy_status_aggregator() {
 int StatusAggregator::clear_all_devices() {
 	std::lock_guard lock(devicesMutex_);
 	for(auto &[key, device]: devices) {
-		clear_device(key);
+		clearDeviceUnlocked(key);
 	}
 	return OK;
 }
 
 int StatusAggregator::remove_device(const structures::DeviceIdentification& device) {
 	std::lock_guard lock(devicesMutex_);
-	if(is_device_valid(device) == NOT_OK) {
+	if(isDeviceValidUnlocked(device) == NOT_OK) {
 		return DEVICE_NOT_REGISTERED;
 	}
-	clear_device(device);
+	clearDeviceUnlocked(device);
 
 	boost::asio::post(context_->ioContext, [this, device]() {
 		std::lock_guard postLock(devicesMutex_);
@@ -104,8 +108,7 @@ int StatusAggregator::add_status_to_aggregator(const Buffer& status,
 					deviceTimeouts_[deviceId]++;
 					return force_aggregation_on_device(deviceId);
 		};
-		devices.emplace(
-				device, structures::StatusAggregatorDeviceState(context_, timeouted_force_aggregation, device, commandBuffer, status));
+		devices.try_emplace(device, context_, timeouted_force_aggregation, device, commandBuffer, status);
 
 		const int forwardOnReceive = module_->forwardCommandOnReceive(device_type);
 		log::logInfo("forwardCommandOnReceive for device {} (type={}): rc={}", device.convertToString(), device_type, forwardOnReceive);
@@ -114,7 +117,7 @@ int StatusAggregator::add_status_to_aggregator(const Buffer& status,
 			log::logInfo("Immediate command forwarding ENABLED for device {}", device.convertToString());
 		}
 
-		force_aggregation_on_device(device);
+		forceAggregationOnDeviceUnlocked(device);
 		return 1;
 	}
 
@@ -133,7 +136,7 @@ int StatusAggregator::add_status_to_aggregator(const Buffer& status,
 int StatusAggregator::get_aggregated_status(Buffer &generated_status,
 											const structures::DeviceIdentification& device) {
 	std::lock_guard lock(devicesMutex_);
-	if(is_device_valid(device) == NOT_OK) {
+	if(isDeviceValidUnlocked(device) == NOT_OK) {
 		log::logError("Trying to get aggregated status from unregistered device");
 		return DEVICE_NOT_REGISTERED;
 	}
@@ -162,9 +165,8 @@ int StatusAggregator::get_unique_devices(std::list<structures::DeviceIdentificat
 	return devicesSize;
 }
 
-int StatusAggregator::force_aggregation_on_device(const structures::DeviceIdentification& device) {
-	std::lock_guard lock(devicesMutex_);
-	if(is_device_valid(device) == NOT_OK) {
+int StatusAggregator::forceAggregationOnDeviceUnlocked(const structures::DeviceIdentification& device) {
+	if(isDeviceValidUnlocked(device) == NOT_OK) {
 		log::logError("Trying to force aggregation on unregistered device: {}", device.convertToString());
 		return DEVICE_NOT_REGISTERED;
 	}
@@ -175,13 +177,22 @@ int StatusAggregator::force_aggregation_on_device(const structures::DeviceIdenti
 	return aggregatedMessages.size();
 }
 
-int StatusAggregator::is_device_valid(const structures::DeviceIdentification& device) {
+int StatusAggregator::force_aggregation_on_device(const structures::DeviceIdentification& device) {
 	std::lock_guard lock(devicesMutex_);
+	return forceAggregationOnDeviceUnlocked(device);
+}
+
+int StatusAggregator::isDeviceValidUnlocked(const structures::DeviceIdentification& device) {
 	if(is_device_type_supported(device.getDeviceType()) == OK &&
 	   devices.contains(device)) {
 		return OK;
 	}
 	return NOT_OK;
+}
+
+int StatusAggregator::is_device_valid(const structures::DeviceIdentification& device) {
+	std::lock_guard lock(devicesMutex_);
+	return isDeviceValidUnlocked(device);
 }
 
 int StatusAggregator::get_module_number() { return module_->getModuleNumber(); }
@@ -211,9 +222,8 @@ int StatusAggregator::update_command(const Buffer& command, const structures::De
 	return OK;
 }
 
-int StatusAggregator::get_command(const Buffer& status, const structures::DeviceIdentification& device,
-								  Buffer& command) {
-	std::lock_guard lock(devicesMutex_);
+int StatusAggregator::getCommandUnlocked(const Buffer& status, const structures::DeviceIdentification& device,
+										  Buffer& command) {
 	const auto &device_type = device.getDeviceType();
 	if(is_device_type_supported(device_type) == NOT_OK) {
 		log::logError("Device type {} is not supported", device_type);
@@ -234,14 +244,20 @@ int StatusAggregator::get_command(const Buffer& status, const structures::Device
 	return OK;
 }
 
+int StatusAggregator::get_command(const Buffer& status, const structures::DeviceIdentification& device,
+								  Buffer& command) {
+	std::lock_guard lock(devicesMutex_);
+	return getCommandUnlocked(status, device, command);
+}
+
 int StatusAggregator::get_command_for_forwarding(const structures::DeviceIdentification &device, Buffer &command) {
 	std::lock_guard lock(devicesMutex_);
-	if(is_device_valid(device) == NOT_OK) {
+	if(isDeviceValidUnlocked(device) == NOT_OK) {
 		log::logError("Trying to get forwarding command for unregistered device: {}", device.convertToString());
 		return DEVICE_NOT_REGISTERED;
 	}
 	const auto &cachedStatus = devices.at(device).getStatus();
-	return get_command(cachedStatus, device, command);
+	return getCommandUnlocked(cachedStatus, device, command);
 }
 
 int StatusAggregator::is_device_type_supported(unsigned int device_type) {
