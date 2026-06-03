@@ -65,16 +65,16 @@ void ModuleManagerLibraryHandlerLocal::loadLibrary(const std::filesystem::path &
 	log::logDebug("Library " + path.string() + " was successfully loaded");
 }
 
-void *ModuleManagerLibraryHandlerLocal::checkFunction(const char *functionName) const {
-	const auto function = dlsym(module_, functionName);
+FunctionPtr ModuleManagerLibraryHandlerLocal::checkFunction(const char *functionName) const {
+	const auto function = reinterpret_cast<FunctionPtr>(dlsym(module_, functionName));
 	if(not function) {
 		throw std::runtime_error {"Function " + std::string(functionName) + " is not included in library"};
 	}
 	return function;
 }
 
-void *ModuleManagerLibraryHandlerLocal::checkOptionalFunction(const char *functionName) const {
-	return dlsym(module_, functionName);
+FunctionPtr ModuleManagerLibraryHandlerLocal::checkOptionalFunction(const char *functionName) const {
+	return reinterpret_cast<FunctionPtr>(dlsym(module_, functionName));
 }
 
 int ModuleManagerLibraryHandlerLocal::getModuleNumber() const {
