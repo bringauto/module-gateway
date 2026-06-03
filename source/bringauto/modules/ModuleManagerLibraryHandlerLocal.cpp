@@ -57,7 +57,7 @@ void ModuleManagerLibraryHandlerLocal::loadLibrary(const std::filesystem::path &
 			"allocate"));
 	deallocate_ = reinterpret_cast<FunctionTypeDeducer<decltype(deallocate_)>::fncptr>(checkFunction(
 			"deallocate"));
-	forwardCommandOnReceive_ = reinterpret_cast<FunctionTypeDeducer<decltype(forwardCommandOnReceive_)>::fncptr>(
+	forwardCommandOnReceive_ = reinterpret_cast<FunctionTypeDeducer<decltype(forwardCommandOnReceive_)>::fncptr>( // NOSONAR: dlsym returns void* by POSIX API contract; reinterpret_cast to function pointer is unavoidable here
 			checkOptionalFunction("forward_command_on_receive"));
 	if(forwardCommandOnReceive_) {
 		log::logDebug("Library " + path.string() + " supports forward_command_on_receive");
