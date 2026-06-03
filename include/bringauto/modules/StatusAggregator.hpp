@@ -164,6 +164,40 @@ public:
 private:
 
 	/**
+	 * @brief Check if device is valid without acquiring devicesMutex_. Caller must hold the lock.
+	 *
+	 * @param device device identification
+	 * @return OK if device is registered and its type is supported, NOT_OK otherwise
+	 */
+	int isDeviceValidUnlocked(const structures::DeviceIdentification& device);
+
+	/**
+	 * @brief Force status message aggregation on a device without acquiring devicesMutex_. Caller must hold the lock.
+	 *
+	 * @param device device identification
+	 * @return number of queued aggregated messages on success, DEVICE_NOT_REGISTERED if device is unknown
+	 */
+	int forceAggregationOnDeviceUnlocked(const structures::DeviceIdentification& device);
+
+	/**
+	 * @brief Clear state and messages for a device without acquiring devicesMutex_. Caller must hold the lock.
+	 *
+	 * @param device device identification
+	 * @return OK on success, DEVICE_NOT_REGISTERED if device is unknown
+	 */
+	int clearDeviceUnlocked(const structures::DeviceIdentification& device);
+
+	/**
+	 * @brief Get command for a device without acquiring devicesMutex_. Caller must hold the lock.
+	 *
+	 * @param status current status buffer
+	 * @param device device identification
+	 * @param command output buffer for the generated command
+	 * @return OK on success, DEVICE_NOT_SUPPORTED, NO_MESSAGE_AVAILABLE, or COMMAND_INVALID on error
+	 */
+	int getCommandUnlocked(const Buffer& status, const structures::DeviceIdentification& device, Buffer& command);
+
+	/**
 	 * @brief Aggregate status message
 	 *
 	 * @param deviceState device state
@@ -210,7 +244,7 @@ private:
 	std::unordered_map<structures::DeviceIdentification, int> deviceTimeouts_ {};
 
 	/// Protects devices and deviceTimeouts_ against concurrent access from ModuleHandler threads and ExternalClient
-	mutable std::recursive_mutex devicesMutex_ {};
+	mutable std::mutex devicesMutex_ {};
 
 	std::atomic_bool timeoutedMessageReady_ { false };
 };

@@ -104,7 +104,7 @@ private:
 
 	modules::Buffer defaultCommand_ {};
 
-	std::unique_ptr<std::mutex> externalCommandMutex_ { std::make_unique<std::mutex>() };
+	std::mutex externalCommandMutex_ {};
 
 	std::queue<modules::Buffer> externalCommandQueue_ {};
 

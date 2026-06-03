@@ -34,7 +34,7 @@ void StatusAggregatorDeviceState::setDefaultCommand(const modules::Buffer &comma
 }
 
 std::optional<modules::Buffer> StatusAggregatorDeviceState::consumeCommand() {
-	std::lock_guard lock { *externalCommandMutex_ };
+	std::lock_guard lock { externalCommandMutex_ };
 	if (!externalCommandQueue_.empty()) {
 		defaultCommand_ = externalCommandQueue_.front();
 		externalCommandQueue_.pop();
@@ -51,7 +51,7 @@ std::queue<struct modules::Buffer> &StatusAggregatorDeviceState::aggregatedMessa
 }
 
 int StatusAggregatorDeviceState::addExternalCommand(const modules::Buffer &commandBuffer) {
-	std::lock_guard lock { *externalCommandMutex_ };
+	std::lock_guard lock { externalCommandMutex_ };
 	externalCommandQueue_.push(commandBuffer);
 	if (externalCommandQueue_.size() > settings::max_external_commands) {
 		externalCommandQueue_.pop();
