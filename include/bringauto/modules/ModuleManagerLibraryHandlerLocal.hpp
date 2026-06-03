@@ -6,6 +6,9 @@
 
 namespace bringauto::modules {
 
+/// Generic function pointer type used as the return type of dlsym lookups.
+using FunctionPtr = void(*)();
+
 /**
  * @brief Class used to load and handle library created by module maintainer
  */
@@ -69,13 +72,13 @@ private:
 
 	void deallocate(struct buffer *buffer) const;
 
-	void *checkFunction(const char *functionName) const;
+	FunctionPtr checkFunction(const char *functionName) const;
 
 	/**
 	 * @brief Look up an optional symbol in the loaded library.
 	 * @return function pointer, or nullptr if the symbol is not exported
 	 */
-	void *checkOptionalFunction(const char *functionName) const;
+	FunctionPtr checkOptionalFunction(const char *functionName) const;
 
 	/**
 	 * @brief Constructs a buffer with the same raw c buffer as provided
