@@ -122,7 +122,8 @@ public:
 	 *
 	 * @param device device identification
 	 * @param command output buffer for the generated command
-	 * @return OK on success, DEVICE_NOT_REGISTERED or COMMAND_INVALID on error
+	 * @return OK on success; NO_MESSAGE_AVAILABLE when no pending command;
+	 *         DEVICE_NOT_REGISTERED, DEVICE_NOT_SUPPORTED, or COMMAND_INVALID on error
 	 */
 	int get_command_for_forwarding(const structures::DeviceIdentification& device, Buffer& command);
 
