@@ -105,8 +105,9 @@ int StatusAggregator::add_status_to_aggregator(const Buffer& status,
 		const std::function<int(const structures::DeviceIdentification&)> timeouted_force_aggregation = [this](
 				const structures::DeviceIdentification& deviceId) {
 					timeoutedMessageReady_.store(true);
+					std::lock_guard lock(devicesMutex_);
 					deviceTimeouts_[deviceId]++;
-					return force_aggregation_on_device(deviceId);
+					return forceAggregationOnDeviceUnlocked(deviceId);
 		};
 		devices.try_emplace(device, context_, timeouted_force_aggregation, device, commandBuffer, status);
 
