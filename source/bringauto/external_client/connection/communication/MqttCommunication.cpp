@@ -2,7 +2,60 @@
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/settings/LoggerId.hpp>
 
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
+#include <dirent.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <sys/socket.h>
 
+namespace {
+    /**
+     * Iterates /proc/self/fd and sets TCP_NODELAY on every TCP socket whose peer port
+     * matches targetPort. Called immediately after paho MQTT connect() returns so that
+     * the library socket is already established but not yet used for traffic.
+     */
+    void applyTcpNoDelay(int targetPort) {
+        DIR* dirHandle = opendir("/proc/self/fd");
+        if (dirHandle == nullptr) {
+            return;
+        }
+
+        dirent* entry = nullptr;
+        while ((entry = readdir(dirHandle)) != nullptr) {
+            char* parseEnd = nullptr;
+            const long fileDescriptor = std::strtol(entry->d_name, &parseEnd, 10);
+            if (*parseEnd != '\0') {
+                continue;
+            }
+
+            sockaddr_storage peerAddress{};
+            socklen_t peerLength = sizeof(peerAddress);
+            if (getpeername(static_cast<int>(fileDescriptor),
+                            reinterpret_cast<sockaddr*>(&peerAddress), &peerLength) != 0) {
+                continue;
+            }
+
+            int peerPort = 0;
+            if (peerAddress.ss_family == AF_INET) {
+                peerPort = ntohs(reinterpret_cast<const sockaddr_in*>(&peerAddress)->sin_port);
+            } else if (peerAddress.ss_family == AF_INET6) {
+                peerPort = ntohs(reinterpret_cast<const sockaddr_in6*>(&peerAddress)->sin6_port);
+            } else {
+                continue;
+            }
+
+            if (peerPort != targetPort) {
+                continue;
+            }
+
+            int flag = 1;
+            setsockopt(static_cast<int>(fileDescriptor), IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
+        }
+        closedir(dirHandle);
+    }
+}
 
 namespace bringauto::external_client::connection::communication {
 
@@ -80,6 +133,15 @@ void MqttCommunication::connect() {
 	const auto conntok = client_->connect(connopts_);
 	conntok->wait();
 	settings::Logger::logInfo("Connected to MQTT server {}", serverAddress_);
+
+	const auto portSeparatorPosition = serverAddress_.rfind(':');
+	if (portSeparatorPosition != std::string::npos) {
+		try {
+			applyTcpNoDelay(std::stoi(serverAddress_.substr(portSeparatorPosition + 1)));
+		} catch (const std::exception& exception) {
+			settings::Logger::logWarning("Could not apply TCP_NODELAY on MQTT socket: {}", exception.what());
+		}
+	}
 
 	const auto substok = client_->subscribe(subscribeTopic_, qos);
 	substok->wait();
