@@ -75,7 +75,35 @@ namespace bringauto::external_client::connection::communication {
 			connectionState_.store(ConnectionState::NOT_CONNECTED);
 			return;
 		}
-		// connectionState_ is already CONNECTING from the CAS above; the redundant assignment is removed
+
+		// ConnectionStart only INITIATES the QUIC handshake; the CONNECTED callback fires later and
+		// flips connectionState_ CONNECTING -> CONNECTED. Block here until that happens (or the
+		// connection fails / times out) so initializeConnection honours the same synchronous
+		// "connected on return" contract as the MQTT channel. Without this the caller runs the
+		// fleet-protocol connect sequence (send devices / read connect response) on a not-yet-connected
+		// transport, which fails every cycle and leaves the connection stuck in CONNECTING.
+		{
+			std::unique_lock lock(outboundMutex_);
+			outboundCv_.wait_for(lock, settings::receive_message_timeout, [this] {
+				return connectionState_.load() != ConnectionState::CONNECTING;
+			});
+		}
+		if (connectionState_.load() != ConnectionState::CONNECTED) {
+			settings::Logger::logError("[quic] handshake did not complete (state={})",
+			                           common_utils::EnumUtils::connectionStateToString(connectionState_));
+			// Close under outboundMutex_ so this races safely with the SHUTDOWN_COMPLETE callback (which
+			// also closes + nulls connection_ under the same lock): whichever runs first closes the
+			// handle exactly once; the other sees nullptr and skips. Avoids a double ConnectionClose
+			// and the data race on connection_.
+			{
+				std::lock_guard lock(outboundMutex_);
+				if (connection_ != nullptr) {
+					quic_->ConnectionClose(connection_);
+					connection_ = nullptr;
+				}
+			}
+			connectionState_.store(ConnectionState::NOT_CONNECTED);
+		}
 	}
 
 	bool QuicCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
@@ -351,7 +379,6 @@ namespace bringauto::external_client::connection::communication {
 				settings::Logger::logInfo("[quic] Connection shutdown complete");
 
 				self->connectionState_ = ConnectionState::NOT_CONNECTED;
-				self->outboundCv_.notify_all();
 
 				if (self->senderThread_.joinable()) {
 					self->senderThread_.request_stop();
@@ -360,7 +387,14 @@ namespace bringauto::external_client::connection::communication {
 				if (self->quic_) {
 					self->quic_->ConnectionClose(connection);
 				}
-				self->connection_ = nullptr;
+				// Null connection_ under outboundMutex_ and notify LAST, so a thread waiting in
+				// initializeConnection wakes only after connection_ is cleared — this is the sole
+				// ConnectionClose for the handle; the waiter then observes nullptr and never re-closes it.
+				{
+					std::lock_guard lock(self->outboundMutex_);
+					self->connection_ = nullptr;
+				}
+				self->outboundCv_.notify_all();
 				break;
 			}
 
