@@ -53,6 +53,12 @@ namespace bringauto::external_client::connection::communication {
 			return;
 		}
 
+		// Now that we own a fresh connection attempt, drop any messages left over from a previous
+		// session: on a reconnect a stale frame would otherwise be consumed as the "connect response"
+		// (-> "doesn't have connect response type") and the connect sequence would fail forever.
+		{ std::scoped_lock lock(inboundMutex_); while (!inboundQueue_.empty()) { inboundQueue_.pop(); } }
+		{ std::scoped_lock lock(outboundMutex_); while (!outboundQueue_.empty()) { outboundQueue_.pop(); } }
+
 		QUIC_STATUS status = quic_->ConnectionOpen(registration_, connectionCallback, this, &connection_);
 		if (QUIC_FAILED(status)) {
 			settings::Logger::logError("ConnectionOpen failed (status=0x{:x})", status);
@@ -226,6 +232,10 @@ namespace bringauto::external_client::connection::communication {
 	}
 
 	void QuicCommunication::closeConnection() {
+		// Hold outboundMutex_ across the read + ConnectionShutdown so this can't race the
+		// SHUTDOWN_COMPLETE callback (which closes + nulls connection_ under the same lock). msquic
+		// delivers SHUTDOWN_COMPLETE on a worker thread (not inline), so there is no recursive deadlock.
+		std::lock_guard lock(outboundMutex_);
 		if (!connection_) {
 			return;
 		}
@@ -384,14 +394,16 @@ namespace bringauto::external_client::connection::communication {
 					self->senderThread_.request_stop();
 				}
 
-				if (self->quic_) {
-					self->quic_->ConnectionClose(connection);
-				}
-				// Null connection_ under outboundMutex_ and notify LAST, so a thread waiting in
-				// initializeConnection wakes only after connection_ is cleared — this is the sole
-				// ConnectionClose for the handle; the waiter then observes nullptr and never re-closes it.
+				// Close the handle AND null connection_ under outboundMutex_, serialized with
+				// closeConnection() (which holds the same lock around its ConnectionShutdown). This is the
+				// sole ConnectionClose for the handle: a concurrent closeConnection() either runs first
+				// (Shutdown on a still-valid handle) or after (sees nullptr and skips) — no double close,
+				// no use-after-free. notify LAST so a waiter in initializeConnection wakes after the reset.
 				{
 					std::lock_guard lock(self->outboundMutex_);
+					if (self->quic_) {
+						self->quic_->ConnectionClose(connection);
+					}
 					self->connection_ = nullptr;
 				}
 				self->outboundCv_.notify_all();

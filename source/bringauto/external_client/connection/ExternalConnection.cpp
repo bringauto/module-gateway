@@ -120,18 +120,21 @@ int ExternalConnection::initializeConnection(const std::vector<structures::Devic
 	log::logInfo("Connect sequence: 1st step (sending list of devices)");
 	if(connectMessageHandle(connectedDevices) != OK) {
 		log::logError("Connect sequence to server {}:{}, failed in 1st step", settings_.serverIp, settings_.port);
+		communicationChannel_->closeConnection();
 		state_.exchange(ConnectionState::NOT_CONNECTED);
 		return NOT_OK;
 	}
 	log::logInfo("Connect sequence: 2nd step (sending statuses of all connected devices)");
 	if(statusMessageHandle(connectedDevices) != OK) {
 		log::logError("Connect sequence to server {}:{}, failed in 2nd step", settings_.serverIp, settings_.port);
+		communicationChannel_->closeConnection();
 		state_.exchange(ConnectionState::NOT_CONNECTED);
 		return NOT_OK;
 	}
 	log::logInfo("Connect sequence: 3rd step (receiving commands for devices in previous step)");
 	if(commandMessageHandle(connectedDevices) != OK) {
 		log::logError("Connect sequence to server {}:{}, failed in 3rd step", settings_.serverIp, settings_.port);
+		communicationChannel_->closeConnection();
 		state_.exchange(ConnectionState::NOT_CONNECTED);
 		return NOT_OK;
 	}
