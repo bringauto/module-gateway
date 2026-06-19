@@ -435,34 +435,44 @@ namespace bringauto::external_client::connection::communication {
 		switch (event->Type) {
 			/// Raised when the peer sends stream data and MsQuic delivers received bytes to the application.
 			case QUIC_STREAM_EVENT_RECEIVE: {
-				if (event->RECEIVE.BufferCount == 0) {
-					settings::Logger::logDebug(
-						"[quic] [stream {}] End of stream received",
-						streamId ? *streamId : 0
-					);
+				// Accumulate this stream's bytes and parse ONLY when the FIN flag arrives. Each inbound
+				// unidirectional stream carries exactly one ExternalServer message delimited by FIN, but
+				// msquic may split it across multiple RECEIVE events; parsing each event individually
+				// corrupts messages under load ("Failed to parse ExternalServer message").
+				// Upper bound on a reassembled message (defense-in-depth): a stream that never FINs would
+				// otherwise grow unbounded. A teleop command/status is a few hundred bytes; 1 MiB is ample.
+				static constexpr std::size_t kMaxInboundMessageBytes = 1U << 20;
+				std::vector<std::uint8_t> complete;  // populated only on FIN
+				bool overflow = false;
+				{
+					std::lock_guard lock(self->streamRecvMutex_);
+					auto &buf = self->streamRecvBuffers_[stream];
+					for (uint32_t i = 0; i < event->RECEIVE.BufferCount; ++i) {
+						const auto &b = event->RECEIVE.Buffers[i];
+						buf.insert(buf.end(), b.Buffer, b.Buffer + b.Length);
+					}
+					if (buf.size() > kMaxInboundMessageBytes) {
+						self->streamRecvBuffers_.erase(stream);
+						overflow = true;
+					} else if ((event->RECEIVE.Flags & QUIC_RECEIVE_FLAG_FIN) != 0U) {
+						complete = std::move(buf);
+						self->streamRecvBuffers_.erase(stream);
+					}
+				}
+				if (overflow) {
+					settings::Logger::logError("[quic] [stream {}] inbound message exceeded {} bytes, aborting stream",
+					                           streamId ? *streamId : 0, kMaxInboundMessageBytes);
+					self->quic_->StreamShutdown(stream, QUIC_STREAM_SHUTDOWN_FLAG_ABORT, 0);
 					break;
 				}
-
-				settings::Logger::logDebug(
-					"[quic] [stream {}] Received {:d} bytes in {:d} buffers",
-					streamId ? *streamId : 0,
-					event->RECEIVE.TotalBufferLength,
-					event->RECEIVE.BufferCount
-				);
-
-				std::vector<uint8_t> data;
-				data.reserve(event->RECEIVE.TotalBufferLength);
-
-				for (uint32_t i = 0; i < event->RECEIVE.BufferCount; ++i) {
-					const auto &b = event->RECEIVE.Buffers[i];
-					data.insert(data.end(), b.Buffer, b.Buffer + b.Length);
-				}
-
-				auto msg = std::make_shared<ExternalProtocol::ExternalServer>();
-				if (!msg->ParseFromArray(data.data(), static_cast<int>(data.size()))) {
-					settings::Logger::logError("[quic] Failed to parse ExternalServer message");
-				} else {
-					self->onMessageDecoded(std::move(msg));
+				if (!complete.empty()) {
+					auto msg = std::make_shared<ExternalProtocol::ExternalServer>();
+					if (msg->ParseFromArray(complete.data(), static_cast<int>(complete.size()))) {
+						self->onMessageDecoded(std::move(msg));
+					} else {
+						settings::Logger::logError("[quic] Failed to parse ExternalServer message ({} bytes)",
+						                           complete.size());
+					}
 				}
 
 				break;
@@ -532,6 +542,11 @@ namespace bringauto::external_client::connection::communication {
 			/// and the stream lifecycle is fully complete.
 			case QUIC_STREAM_EVENT_SHUTDOWN_COMPLETE: {
 				settings::Logger::logDebug("[quic] [stream {}] Stream shutdown complete", streamId ? *streamId : 0);
+				{
+					// Drop any partial reassembly buffer (e.g. stream aborted before FIN) so it can't leak.
+					std::lock_guard lock(self->streamRecvMutex_);
+					self->streamRecvBuffers_.erase(stream);
+				}
 				self->quic_->StreamClose(stream);
 				break;
 			}

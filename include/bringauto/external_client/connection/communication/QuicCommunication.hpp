@@ -7,9 +7,12 @@
 #include <nlohmann/json.hpp>
 
 #include <condition_variable>
+#include <cstdint>
 #include <filesystem>
 #include <queue>
 #include <thread>
+#include <unordered_map>
+#include <vector>
 
 
 namespace bringauto::external_client::connection::communication {
@@ -132,6 +135,13 @@ namespace bringauto::external_client::connection::communication {
 		std::mutex inboundMutex_;
 		/// Condition variable for signaling inbound message availability
 		std::condition_variable inboundCv_;
+		/// Per-stream reassembly buffers. Each inbound unidirectional stream carries exactly one
+		/// ExternalServer message delimited by the stream FIN (no length prefix), but msquic may deliver
+		/// it across several RECEIVE events. Accumulate bytes per stream and parse only once the FIN
+		/// arrives — parsing each RECEIVE event individually corrupts messages under load.
+		std::unordered_map<HQUIC, std::vector<std::uint8_t> > streamRecvBuffers_;
+		/// Mutex protecting streamRecvBuffers_ (stream callbacks for different streams may run concurrently)
+		std::mutex streamRecvMutex_;
 		/// @}
 
 		/// @name Outbound (this → peer)
