@@ -2,27 +2,80 @@
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/settings/LoggerId.hpp>
 
-#include <cerrno>
+#include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <string>
+#include <vector>
 #include <dirent.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 
 namespace {
+    /// True when both socket addresses refer to the same IP family, address, and port.
+    bool sameEndpoint(const sockaddr_storage& lhs, const sockaddr_storage& rhs) {
+        if (lhs.ss_family != rhs.ss_family) {
+            return false;
+        }
+        if (lhs.ss_family == AF_INET) {
+            sockaddr_in a{};
+            sockaddr_in b{};
+            std::memcpy(&a, &lhs, sizeof(a));
+            std::memcpy(&b, &rhs, sizeof(b));
+            return a.sin_port == b.sin_port && a.sin_addr.s_addr == b.sin_addr.s_addr;
+        }
+        if (lhs.ss_family == AF_INET6) {
+            sockaddr_in6 a{};
+            sockaddr_in6 b{};
+            std::memcpy(&a, &lhs, sizeof(a));
+            std::memcpy(&b, &rhs, sizeof(b));
+            return a.sin6_port == b.sin6_port &&
+                   std::ranges::equal(a.sin6_addr.s6_addr, b.sin6_addr.s6_addr);
+        }
+        return false;
+    }
+
+    /// Resolve host:port into the candidate socket addresses paho may have connected to.
+    std::vector<sockaddr_storage> resolveEndpoints(const std::string& host, std::uint16_t port) {
+        std::vector<sockaddr_storage> endpoints;
+        addrinfo hints{};
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_STREAM;
+
+        addrinfo* resolved = nullptr;
+        if (getaddrinfo(host.c_str(), std::to_string(port).c_str(), &hints, &resolved) != 0) {
+            return endpoints;
+        }
+        for (const addrinfo* it = resolved; it != nullptr; it = it->ai_next) {
+            sockaddr_storage storage{};
+            std::memcpy(&storage, it->ai_addr, it->ai_addrlen);
+            endpoints.push_back(storage);
+        }
+        freeaddrinfo(resolved);
+        return endpoints;
+    }
+
     /**
-     * Iterates /proc/self/fd and sets TCP_NODELAY on every TCP socket whose peer port
-     * matches targetPort. Called immediately after paho MQTT connect() returns so that
-     * the library socket is already established but not yet used for traffic.
+     * Iterates /proc/self/fd and sets TCP_NODELAY on the socket connected to the MQTT server,
+     * matched by the full peer endpoint (family + address + port) rather than the port alone so
+     * an unrelated connection to the same port is not affected. Called immediately after paho MQTT
+     * connect() returns so that the library socket is already established but not yet carrying traffic.
      */
-    void applyTcpNoDelay(int targetPort) {
+    void applyTcpNoDelay(const std::string& targetHost, std::uint16_t targetPort) {
+        const std::vector<sockaddr_storage> endpoints = resolveEndpoints(targetHost, targetPort);
+        if (endpoints.empty()) {
+            return;
+        }
+
         DIR* dirHandle = opendir("/proc/self/fd");
         if (dirHandle == nullptr) {
             return;
         }
 
-        dirent* entry = nullptr;
+        const dirent* entry = nullptr;
         while ((entry = readdir(dirHandle)) != nullptr) {
             char* parseEnd = nullptr;
             const long fileDescriptor = std::strtol(entry->d_name, &parseEnd, 10);
@@ -31,26 +84,22 @@ namespace {
             }
 
             sockaddr_storage peerAddress{};
-            socklen_t peerLength = sizeof(peerAddress);
-            if (getpeername(static_cast<int>(fileDescriptor),
-                            reinterpret_cast<sockaddr*>(&peerAddress), &peerLength) != 0) {
+            // sockaddr_storage is the portable buffer for getpeername; reach its sockaddr view
+            // through void* (a static_cast pair) to avoid type-punning via reinterpret_cast.
+            if (socklen_t peerLength = sizeof(peerAddress);
+                getpeername(static_cast<int>(fileDescriptor),
+                            static_cast<sockaddr*>(static_cast<void*>(&peerAddress)), &peerLength) != 0) {
                 continue;
             }
 
-            int peerPort = 0;
-            if (peerAddress.ss_family == AF_INET) {
-                peerPort = ntohs(reinterpret_cast<const sockaddr_in*>(&peerAddress)->sin_port);
-            } else if (peerAddress.ss_family == AF_INET6) {
-                peerPort = ntohs(reinterpret_cast<const sockaddr_in6*>(&peerAddress)->sin6_port);
-            } else {
+            if (!std::ranges::any_of(endpoints,
+                    [&peerAddress](const sockaddr_storage& endpoint) {
+                        return sameEndpoint(peerAddress, endpoint);
+                    })) {
                 continue;
             }
 
-            if (peerPort != targetPort) {
-                continue;
-            }
-
-            int flag = 1;
+            const int flag = 1;
             setsockopt(static_cast<int>(fileDescriptor), IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
         }
         closedir(dirHandle);
@@ -134,14 +183,7 @@ void MqttCommunication::connect() {
 	conntok->wait();
 	settings::Logger::logInfo("Connected to MQTT server {}", serverAddress_);
 
-	const auto portSeparatorPosition = serverAddress_.rfind(':');
-	if (portSeparatorPosition != std::string::npos) {
-		try {
-			applyTcpNoDelay(std::stoi(serverAddress_.substr(portSeparatorPosition + 1)));
-		} catch (const std::exception& exception) {
-			settings::Logger::logWarning("Could not apply TCP_NODELAY on MQTT socket: {}", exception.what());
-		}
-	}
+	applyTcpNoDelay(settings_.serverIp, settings_.port);
 
 	const auto substok = client_->subscribe(subscribeTopic_, qos);
 	substok->wait();

@@ -97,17 +97,13 @@ namespace bringauto::external_client::connection::communication {
 		if (connectionState_.load() != ConnectionState::CONNECTED) {
 			settings::Logger::logError("[quic] handshake did not complete (state={})",
 			                           common_utils::EnumUtils::connectionStateToString(connectionState_));
-			// Close under outboundMutex_ so this races safely with the SHUTDOWN_COMPLETE callback (which
-			// also closes + nulls connection_ under the same lock): whichever runs first closes the
-			// handle exactly once; the other sees nullptr and skips. Avoids a double ConnectionClose
-			// and the data race on connection_.
-			{
-				std::lock_guard lock(outboundMutex_);
-				if (connection_ != nullptr) {
-					quic_->ConnectionClose(connection_);
-					connection_ = nullptr;
-				}
-			}
+			// Request an async ConnectionShutdown (same path as closeConnection) and let the
+			// SHUTDOWN_COMPLETE callback perform the single ConnectionClose + null connection_.
+			// Do NOT call the blocking ConnectionClose here: it frees the handle and blocks until the
+			// connection's callbacks complete, and SHUTDOWN_COMPLETE runs on a worker thread that also
+			// acquires outboundMutex_ — closing under the lock would deadlock. Routing through Shutdown
+			// also leaves the callback as the sole closer, so the handle is closed exactly once.
+			closeConnection();
 			connectionState_.store(ConnectionState::NOT_CONNECTED);
 		}
 	}
@@ -567,22 +563,23 @@ namespace bringauto::external_client::connection::communication {
 		while (connectionState_.load() == ConnectionState::CONNECTED) {
 			std::unique_ptr<ExternalProtocol::ExternalClient> msg;
 
-			std::unique_lock lock(outboundMutex_);
+			{
+				std::unique_lock lock(outboundMutex_);
 
-			settings::Logger::logDebug("[quic] Sender thread loop waiting for outbound queue");
-			outboundCv_.wait(lock, [this] {
-				return !outboundQueue_.empty() ||
-				       connectionState_.load() != ConnectionState::CONNECTED;
-			});
+				settings::Logger::logDebug("[quic] Sender thread loop waiting for outbound queue");
+				outboundCv_.wait(lock, [this] {
+					return !outboundQueue_.empty() ||
+					       connectionState_.load() != ConnectionState::CONNECTED;
+				});
 
-			if (connectionState_.load() != ConnectionState::CONNECTED) {
-				break;
+				if (connectionState_.load() != ConnectionState::CONNECTED) {
+					break;
+				}
+
+				settings::Logger::logDebug("[quic] Sender thread loop sending outbound queue");
+				msg = std::move(outboundQueue_.front());
+				outboundQueue_.pop();
 			}
-
-			settings::Logger::logDebug("[quic] Sender thread loop sending outbound queue");
-			msg = std::move(outboundQueue_.front());
-			outboundQueue_.pop();
-			lock.unlock();
 
 			sendViaQuicStream(*msg);
 		}
