@@ -53,6 +53,12 @@ namespace bringauto::external_client::connection::communication {
 			return;
 		}
 
+		// Now that we own a fresh connection attempt, drop any messages left over from a previous
+		// session: on a reconnect a stale frame would otherwise be consumed as the "connect response"
+		// (-> "doesn't have connect response type") and the connect sequence would fail forever.
+		{ std::scoped_lock lock(inboundMutex_); while (!inboundQueue_.empty()) { inboundQueue_.pop(); } }
+		{ std::scoped_lock lock(outboundMutex_); while (!outboundQueue_.empty()) { outboundQueue_.pop(); } }
+
 		QUIC_STATUS status = quic_->ConnectionOpen(registration_, connectionCallback, this, &connection_);
 		if (QUIC_FAILED(status)) {
 			settings::Logger::logError("ConnectionOpen failed (status=0x{:x})", status);
@@ -75,7 +81,31 @@ namespace bringauto::external_client::connection::communication {
 			connectionState_.store(ConnectionState::NOT_CONNECTED);
 			return;
 		}
-		// connectionState_ is already CONNECTING from the CAS above; the redundant assignment is removed
+
+		// ConnectionStart only INITIATES the QUIC handshake; the CONNECTED callback fires later and
+		// flips connectionState_ CONNECTING -> CONNECTED. Block here until that happens (or the
+		// connection fails / times out) so initializeConnection honours the same synchronous
+		// "connected on return" contract as the MQTT channel. Without this the caller runs the
+		// fleet-protocol connect sequence (send devices / read connect response) on a not-yet-connected
+		// transport, which fails every cycle and leaves the connection stuck in CONNECTING.
+		{
+			std::unique_lock lock(outboundMutex_);
+			outboundCv_.wait_for(lock, settings::receive_message_timeout, [this] {
+				return connectionState_.load() != ConnectionState::CONNECTING;
+			});
+		}
+		if (connectionState_.load() != ConnectionState::CONNECTED) {
+			settings::Logger::logError("[quic] handshake did not complete (state={})",
+			                           common_utils::EnumUtils::connectionStateToString(connectionState_));
+			// Request an async ConnectionShutdown (same path as closeConnection) and let the
+			// SHUTDOWN_COMPLETE callback perform the single ConnectionClose + null connection_.
+			// Do NOT call the blocking ConnectionClose here: it frees the handle and blocks until the
+			// connection's callbacks complete, and SHUTDOWN_COMPLETE runs on a worker thread that also
+			// acquires outboundMutex_ — closing under the lock would deadlock. Routing through Shutdown
+			// also leaves the callback as the sole closer, so the handle is closed exactly once.
+			closeConnection();
+			connectionState_.store(ConnectionState::NOT_CONNECTED);
+		}
 	}
 
 	bool QuicCommunication::sendMessage(ExternalProtocol::ExternalClient *message) {
@@ -198,6 +228,10 @@ namespace bringauto::external_client::connection::communication {
 	}
 
 	void QuicCommunication::closeConnection() {
+		// Hold outboundMutex_ across the read + ConnectionShutdown so this can't race the
+		// SHUTDOWN_COMPLETE callback (which closes + nulls connection_ under the same lock). msquic
+		// delivers SHUTDOWN_COMPLETE on a worker thread (not inline), so there is no recursive deadlock.
+		std::lock_guard lock(outboundMutex_);
 		if (!connection_) {
 			return;
 		}
@@ -351,16 +385,24 @@ namespace bringauto::external_client::connection::communication {
 				settings::Logger::logInfo("[quic] Connection shutdown complete");
 
 				self->connectionState_ = ConnectionState::NOT_CONNECTED;
-				self->outboundCv_.notify_all();
 
 				if (self->senderThread_.joinable()) {
 					self->senderThread_.request_stop();
 				}
 
-				if (self->quic_) {
-					self->quic_->ConnectionClose(connection);
+				// Close the handle AND null connection_ under outboundMutex_, serialized with
+				// closeConnection() (which holds the same lock around its ConnectionShutdown). This is the
+				// sole ConnectionClose for the handle: a concurrent closeConnection() either runs first
+				// (Shutdown on a still-valid handle) or after (sees nullptr and skips) — no double close,
+				// no use-after-free. notify LAST so a waiter in initializeConnection wakes after the reset.
+				{
+					std::lock_guard lock(self->outboundMutex_);
+					if (self->quic_) {
+						self->quic_->ConnectionClose(connection);
+					}
+					self->connection_ = nullptr;
 				}
-				self->connection_ = nullptr;
+				self->outboundCv_.notify_all();
 				break;
 			}
 
@@ -389,34 +431,44 @@ namespace bringauto::external_client::connection::communication {
 		switch (event->Type) {
 			/// Raised when the peer sends stream data and MsQuic delivers received bytes to the application.
 			case QUIC_STREAM_EVENT_RECEIVE: {
-				if (event->RECEIVE.BufferCount == 0) {
-					settings::Logger::logDebug(
-						"[quic] [stream {}] End of stream received",
-						streamId ? *streamId : 0
-					);
+				// Accumulate this stream's bytes and parse ONLY when the FIN flag arrives. Each inbound
+				// unidirectional stream carries exactly one ExternalServer message delimited by FIN, but
+				// msquic may split it across multiple RECEIVE events; parsing each event individually
+				// corrupts messages under load ("Failed to parse ExternalServer message").
+				// Upper bound on a reassembled message (defense-in-depth): a stream that never FINs would
+				// otherwise grow unbounded. A teleop command/status is a few hundred bytes; 1 MiB is ample.
+				static constexpr std::size_t kMaxInboundMessageBytes = 1U << 20;
+				std::vector<std::uint8_t> complete;  // populated only on FIN
+				bool overflow = false;
+				{
+					std::lock_guard lock(self->streamRecvMutex_);
+					auto &buf = self->streamRecvBuffers_[stream];
+					for (uint32_t i = 0; i < event->RECEIVE.BufferCount; ++i) {
+						const auto &b = event->RECEIVE.Buffers[i];
+						buf.insert(buf.end(), b.Buffer, b.Buffer + b.Length);
+					}
+					if (buf.size() > kMaxInboundMessageBytes) {
+						self->streamRecvBuffers_.erase(stream);
+						overflow = true;
+					} else if ((event->RECEIVE.Flags & QUIC_RECEIVE_FLAG_FIN) != 0U) {
+						complete = std::move(buf);
+						self->streamRecvBuffers_.erase(stream);
+					}
+				}
+				if (overflow) {
+					settings::Logger::logError("[quic] [stream {}] inbound message exceeded {} bytes, aborting stream",
+					                           streamId ? *streamId : 0, kMaxInboundMessageBytes);
+					self->quic_->StreamShutdown(stream, QUIC_STREAM_SHUTDOWN_FLAG_ABORT, 0);
 					break;
 				}
-
-				settings::Logger::logDebug(
-					"[quic] [stream {}] Received {:d} bytes in {:d} buffers",
-					streamId ? *streamId : 0,
-					event->RECEIVE.TotalBufferLength,
-					event->RECEIVE.BufferCount
-				);
-
-				std::vector<uint8_t> data;
-				data.reserve(event->RECEIVE.TotalBufferLength);
-
-				for (uint32_t i = 0; i < event->RECEIVE.BufferCount; ++i) {
-					const auto &b = event->RECEIVE.Buffers[i];
-					data.insert(data.end(), b.Buffer, b.Buffer + b.Length);
-				}
-
-				auto msg = std::make_shared<ExternalProtocol::ExternalServer>();
-				if (!msg->ParseFromArray(data.data(), static_cast<int>(data.size()))) {
-					settings::Logger::logError("[quic] Failed to parse ExternalServer message");
-				} else {
-					self->onMessageDecoded(std::move(msg));
+				if (!complete.empty()) {
+					auto msg = std::make_shared<ExternalProtocol::ExternalServer>();
+					if (msg->ParseFromArray(complete.data(), static_cast<int>(complete.size()))) {
+						self->onMessageDecoded(std::move(msg));
+					} else {
+						settings::Logger::logError("[quic] Failed to parse ExternalServer message ({} bytes)",
+						                           complete.size());
+					}
 				}
 
 				break;
@@ -486,6 +538,11 @@ namespace bringauto::external_client::connection::communication {
 			/// and the stream lifecycle is fully complete.
 			case QUIC_STREAM_EVENT_SHUTDOWN_COMPLETE: {
 				settings::Logger::logDebug("[quic] [stream {}] Stream shutdown complete", streamId ? *streamId : 0);
+				{
+					// Drop any partial reassembly buffer (e.g. stream aborted before FIN) so it can't leak.
+					std::lock_guard lock(self->streamRecvMutex_);
+					self->streamRecvBuffers_.erase(stream);
+				}
 				self->quic_->StreamClose(stream);
 				break;
 			}
@@ -506,22 +563,23 @@ namespace bringauto::external_client::connection::communication {
 		while (connectionState_.load() == ConnectionState::CONNECTED) {
 			std::unique_ptr<ExternalProtocol::ExternalClient> msg;
 
-			std::unique_lock lock(outboundMutex_);
+			{
+				std::unique_lock lock(outboundMutex_);
 
-			settings::Logger::logDebug("[quic] Sender thread loop waiting for outbound queue");
-			outboundCv_.wait(lock, [this] {
-				return !outboundQueue_.empty() ||
-				       connectionState_.load() != ConnectionState::CONNECTED;
-			});
+				settings::Logger::logDebug("[quic] Sender thread loop waiting for outbound queue");
+				outboundCv_.wait(lock, [this] {
+					return !outboundQueue_.empty() ||
+					       connectionState_.load() != ConnectionState::CONNECTED;
+				});
 
-			if (connectionState_.load() != ConnectionState::CONNECTED) {
-				break;
+				if (connectionState_.load() != ConnectionState::CONNECTED) {
+					break;
+				}
+
+				settings::Logger::logDebug("[quic] Sender thread loop sending outbound queue");
+				msg = std::move(outboundQueue_.front());
+				outboundQueue_.pop();
 			}
-
-			settings::Logger::logDebug("[quic] Sender thread loop sending outbound queue");
-			msg = std::move(outboundQueue_.front());
-			outboundQueue_.pop();
-			lock.unlock();
 
 			sendViaQuicStream(*msg);
 		}

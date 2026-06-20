@@ -120,18 +120,21 @@ int ExternalConnection::initializeConnection(const std::vector<structures::Devic
 	log::logInfo("Connect sequence: 1st step (sending list of devices)");
 	if(connectMessageHandle(connectedDevices) != OK) {
 		log::logError("Connect sequence to server {}:{}, failed in 1st step", settings_.serverIp, settings_.port);
+		communicationChannel_->closeConnection();
 		state_.exchange(ConnectionState::NOT_CONNECTED);
 		return NOT_OK;
 	}
 	log::logInfo("Connect sequence: 2nd step (sending statuses of all connected devices)");
 	if(statusMessageHandle(connectedDevices) != OK) {
 		log::logError("Connect sequence to server {}:{}, failed in 2nd step", settings_.serverIp, settings_.port);
+		communicationChannel_->closeConnection();
 		state_.exchange(ConnectionState::NOT_CONNECTED);
 		return NOT_OK;
 	}
 	log::logInfo("Connect sequence: 3rd step (receiving commands for devices in previous step)");
 	if(commandMessageHandle(connectedDevices) != OK) {
 		log::logError("Connect sequence to server {}:{}, failed in 3rd step", settings_.serverIp, settings_.port);
+		communicationChannel_->closeConnection();
 		state_.exchange(ConnectionState::NOT_CONNECTED);
 		return NOT_OK;
 	}
@@ -303,11 +306,18 @@ int ExternalConnection::handleCommand(const ExternalProtocol::Command &commandMe
 		log::logError("Command {} has incorrect sessionId", messageCounter);
 		return COMMAND_INVALID;
 	}
-	if(serverMessageCounter_ != 0) {
-		if(serverMessageCounter_ + 1 != messageCounter) {
-			log::logError("Command {} is out of order", messageCounter);
-			return COMMAND_INVALID;
-		}
+	// QUIC delivers each command on its own unidirectional stream with no cross-stream ordering, so under
+	// load commands can arrive out of order. Teleop is latest-wins: accept any command newer than the last
+	// processed one, and ACK-but-skip stale/duplicate/reordered ones (counter <= last) instead of tearing
+	// down the connection. On an ordered transport (MQTT) every command is newest, so behaviour is unchanged.
+	if(serverMessageCounter_ != 0 && messageCounter <= serverMessageCounter_) {
+		// logDebug, not logWarning: under reordering this can fire often (commands ~70/s) and would flood.
+		log::logDebug("Command {} is stale/out-of-order (last processed {}), acknowledging and skipping",
+		              messageCounter, serverMessageCounter_);
+		auto staleResponse = common_utils::ProtobufUtils::createExternalClientCommandResponse(
+			sessionId_, ExternalProtocol::CommandResponse_Type_OK, messageCounter);
+		communicationChannel_->sendMessage(&staleResponse);
+		return OK;
 	}
 	serverMessageCounter_ = messageCounter;
 
