@@ -211,7 +211,6 @@ public:
 	inline static constexpr std::string_view CLIENT_CERT { "client-cert" };
 	inline static constexpr std::string_view CLIENT_KEY { "client-key" };
 	inline static constexpr std::string_view ALPN { "alpn" };
-	inline static constexpr std::string_view STREAM_MODE { "stream-mode" };
 
 	inline static constexpr std::string_view MODULES { "modules" };
 	inline static constexpr std::string_view AERON_CONNECTION = AeronClientConstants::aeron_connection;

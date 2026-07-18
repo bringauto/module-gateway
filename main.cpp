@@ -10,6 +10,8 @@
 #include <bringauto/structures/ModuleHandlerMessage.hpp>
 #include <bringauto/settings/LoggerId.hpp>
 
+#include <bringauto/quic/Logger.hpp>
+
 #include <InternalProtocol.pb.h>
 #include <libbringauto_logger/bringauto/logging/FileSink.hpp>
 #include <libbringauto_logger/bringauto/logging/ConsoleSink.hpp>
@@ -25,6 +27,7 @@ void initLogger(const bringauto::structures::LoggingSettings &settings) {
 	if(settings.console.use) {
 		bringauto::logging::ConsoleSink::Params paramConsoleSink { settings.console.level };
 		bringauto::settings::Logger::addSink<bringauto::logging::ConsoleSink>(paramConsoleSink);
+		bringauto::quic::Logger::addSink<bringauto::logging::ConsoleSink>(paramConsoleSink);
 	}
 	if(settings.file.use) {
 		bringauto::logging::FileSink::Params paramFileSink { settings.file.path, "ModuleGateway.log" };
@@ -33,9 +36,15 @@ void initLogger(const bringauto::structures::LoggingSettings &settings) {
 		paramFileSink.numberOfRotatedFiles = 5;
 		paramFileSink.verbosity = settings.file.level;
 		bringauto::settings::Logger::addSink<FileSink>(paramFileSink);
+		bringauto::quic::Logger::addSink<FileSink>(paramFileSink);
 	}
 
 	bringauto::settings::Logger::init("ModuleGateway");
+	// ba-quic-lib uses its own separate logger instance (LoggerId "ba-quic-lib") --
+	// without this init() call its internal trace/warning logs are silently swallowed.
+	bringauto::quic::Logger::init({"ModuleGateway",
+	                               bringauto::settings::toLoggerVerbosity(
+	                                       BRINGAUTO_MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY)});
 }
 
 int main(int argc, char **argv) {

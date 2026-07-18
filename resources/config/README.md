@@ -44,8 +44,13 @@ Note: at least one logging sink needs to be used
 * client-cert : path to the client certificate file (string)
 * client-key : path to the client private key file (string)
 * alpn : Application-Layer Protocol Negotiation identifier (string), must match the ALPN configured on the server
-  
+* any other key is passed straight through to msquic's own `QUIC_SETTINGS` (e.g. `IdleTimeoutMs`,
+  `HandshakeIdleTimeoutMs`, `DisconnectTimeoutMs`, `PeerUnidiStreamCount`) using msquic's own field
+  names verbatim; unrecognized keys are logged as a warning and otherwise ignored
+
 Note: QUIC uses TLS 1.3 internally. All certificate files must be provided in a format supported by MsQuic/OpenSSL.
+Note: every QUIC message is sent on its own unidirectional stream (bidirectional streams are not
+supported) — there is no longer a "stream-mode" setting.
 
 ## Examples
 
