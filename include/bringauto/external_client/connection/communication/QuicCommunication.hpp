@@ -3,16 +3,13 @@
 #include <bringauto/external_client/connection/communication/ICommunicationChannel.hpp>
 #include <bringauto/external_client/connection/ConnectionState.hpp>
 
-#include <msquic.h>
+#include <bringauto/quic/QuicClient.hpp>
+
 #include <nlohmann/json.hpp>
 
 #include <condition_variable>
-#include <cstdint>
-#include <filesystem>
 #include <queue>
 #include <thread>
-#include <unordered_map>
-#include <vector>
 
 
 namespace bringauto::external_client::connection::communication {
@@ -29,13 +26,16 @@ namespace bringauto::external_client::connection::communication {
 		 * Attempts to establish a new QUIC connection.
 		 * It first atomically verifies that the current connection state is
 		 * NOT_CONNECTED and transitions it to CONNECTING in order to prevent
-		 * concurrent connection attempts.
+		 * concurrent connection attempts. Any messages left over from a previous
+		 * session are dropped so a stale frame can't be consumed as this
+		 * session's connect response.
 		 *
-		 * After the state transition, it opens a QUIC connection handle and
-		 * starts the connection using the configured server address, port,
-		 * and QUIC configuration.
+		 * After the state transition, it starts the underlying QUIC client
+		 * connection attempt and blocks until the handshake completes (or times
+		 * out), so callers observe the same synchronous "connected on return"
+		 * contract as the MQTT channel.
 		 *
-		 * Any failures during the connection open or start process are logged.
+		 * Any failures are logged.
 		 */
 		void initializeConnection() override;
 
@@ -76,8 +76,7 @@ namespace bringauto::external_client::connection::communication {
 		 * If no connection is currently established, the function returns immediately.
 		 *
 		 * The shutdown is performed asynchronously. Completion is signaled via the
-		 * QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE event, which is handled in
-		 * the connectionCallback.
+		 * transport's onDisconnected callback.
 		 */
 		void closeConnection() override;
 
@@ -86,41 +85,6 @@ namespace bringauto::external_client::connection::communication {
 		bool consumeServerDisconnectNotification() override { return false; }
 
 	private:
-		/// Directionality of QUIC streams created or accepted by this connection
-		enum class StreamMode {
-			/// Stream can only send data in one direction.
-			/// In this mode each sendMessage() call opens a new outbound stream that is
-			/// immediately closed after the send (START | FIN flags). The peer opens
-			/// separate streams in the opposite direction for responses. Many short-lived
-			/// streams are created over the connection lifetime, but QUIC stream creation
-			/// is lightweight and has no significant impact on performance.
-			Unidirectional,
-			/// Stream supports bidirectional send and receive
-			Bidirectional
-		};
-
-		/// Pointer to the MsQuic API function table
-		const QUIC_API_TABLE *quic_{nullptr};
-		/// QUIC registration handle associated with the application
-		HQUIC registration_{nullptr};
-		/// QUIC configuration handle (ALPN, credentials, transport settings)
-		HQUIC config_{nullptr};
-		/// Active QUIC connection handle
-		HQUIC connection_{nullptr};
-		/// Application-Layer Protocol Negotiation (ALPN) string
-		std::string alpn_;
-		/// QUIC buffer wrapping the ALPN string
-		QUIC_BUFFER alpnBuffer_{};
-
-		/// Path to the client certificate file
-		std::filesystem::path certFile_;
-		/// Path to the client private key file
-		std::filesystem::path keyFile_;
-		/// Path to the CA certificate file
-		std::filesystem::path caFile_;
-
-		StreamMode streamMode_{StreamMode::Bidirectional};
-
 		/// Atomic state of the connection used for synchronization across threads
 		std::atomic<ConnectionState> connectionState_{ConnectionState::NOT_CONNECTED};
 
@@ -135,13 +99,6 @@ namespace bringauto::external_client::connection::communication {
 		std::mutex inboundMutex_;
 		/// Condition variable for signaling inbound message availability
 		std::condition_variable inboundCv_;
-		/// Per-stream reassembly buffers. Each inbound unidirectional stream carries exactly one
-		/// ExternalServer message delimited by the stream FIN (no length prefix), but msquic may deliver
-		/// it across several RECEIVE events. Accumulate bytes per stream and parse only once the FIN
-		/// arrives — parsing each RECEIVE event individually corrupts messages under load.
-		std::unordered_map<HQUIC, std::vector<std::uint8_t> > streamRecvBuffers_;
-		/// Mutex protecting streamRecvBuffers_ (stream callbacks for different streams may run concurrently)
-		std::mutex streamRecvMutex_;
 		/// @}
 
 		/// @name Outbound (this → peer)
@@ -150,97 +107,74 @@ namespace bringauto::external_client::connection::communication {
 		std::queue<std::unique_ptr<ExternalProtocol::ExternalClient> > outboundQueue_;
 		/// Mutex protecting access to the outbound message queue
 		std::mutex outboundMutex_;
-		/// Condition variable for signaling outbound message availability
+		/// Condition variable for signaling outbound message availability. Also used to wake
+		/// initializeConnection()'s wait for the handshake to complete -- onConnected()/
+		/// onDisconnected() both notify it.
 		std::condition_variable outboundCv_;
-		/// Dedicated sender thread responsible for transmitting outbound messages
-		std::jthread senderThread_;
 		/// @}
 
-		/**
-		 * @brief Owns memory for a single MsQuic StreamSend operation.
-		 *
-		 * SendBuffer wraps a QUIC_BUFFER together with its backing storage.
-		 * The memory must remain valid until MsQuic signals
-		 * QUIC_STREAM_EVENT_SEND_COMPLETE, at which point it can be safely freed.
-		 *
-		 * Instances of this struct are typically allocated on the heap and passed
-		 * to MsQuic via the StreamSend ClientContext pointer.
-		 */
-		struct SendBuffer {
-			QUIC_BUFFER buffer{};
-			std::string storage;
+		/// Shared, transport-only QUIC client. Owns the msquic registration/connection
+		/// lifecycle, credential setup, and per-message unidirectional stream framing + reassembly.
+		///
+		/// Declared after connectionState_/cancelReceive_/the queues+condvars: msquic's
+		/// RegistrationClose (invoked from ~QuicClient(), which runs as this member is destroyed)
+		/// blocks until every in-flight callback for this client has fully returned, and one such
+		/// callback can still be onDisconnected() racing in on an msquic worker thread concurrently
+		/// with our own destructor. Because those other members are declared (and therefore
+		/// destroyed) *after* quicClient_, they are still alive for the whole time quicClient_'s
+		/// destructor can possibly touch them.
+		std::unique_ptr<bringauto::quic::QuicClient> quicClient_;
 
-			/**
-			 * @brief Constructs a SendBuffer with zero-initialized storage.
-			 *
-			 * Allocates storage of the given size, fills it with zero bytes,
-			 * and initializes the QUIC_BUFFER to point to this storage.
-			 *
-			 * @param size Number of bytes to allocate for the send buffer.
-			 */
-			explicit SendBuffer(size_t size)
-				: storage(size, '\0') {
-				buffer.Length = static_cast<uint32_t>(storage.size());
-				buffer.Buffer = reinterpret_cast<uint8_t *>(storage.data());
-			}
-		};
+		/// True once quicClient_ was constructed and quicClient_->initialize() succeeded. When false,
+		/// initializeConnection() is a no-op (invalid config or transport init failure was already
+		/// logged during construction).
+		bool initialized_{false};
+
+		/// Dedicated sender thread responsible for transmitting outbound messages. Needed because
+		/// ExternalConnection enqueues the Fleet-protocol Connect message immediately after
+		/// initializeConnection() returns, before the QUIC handshake completes -- this thread only
+		/// starts draining the queue once the transport reports CONNECTED. Declared after
+		/// quicClient_ so it (and its last use of quicClient_) is joined before quicClient_ is
+		/// destroyed.
+		std::jthread senderThread_;
 
 		/**
-		 * @brief Loads and initializes the MsQuic API.
-		 *
-		 * Initializes the MsQuic library and retrieves the
-		 * QUIC API function table. The resulting table is stored for later
-		 * use when creating registrations, configurations, and connections.
-		 *
-		 * If the initialization fails, an error is logged.
+		 * @brief Builds the shared client's endpoint configuration (host/port/ALPN/credentials)
+		 * from this connection's settings.
 		 */
-		void loadMsQuic();
+		static bringauto::quic::QuicEndpointConfig buildEndpointConfig(const structures::ExternalConnectionSettings &settings);
 
 		/**
-		 * @brief Initializes a QUIC registration.
-		 *
-		 * Creates a QUIC registration with the specified application name and
-		 * a low-latency execution profile. The registration is required for
-		 * creating QUIC configurations and connections.
-		 *
-		 * If registration creation fails, an error is logged.
+		 * @brief Builds the shared client's transport settings from the "quic-settings" protocol
+		 * settings. Unrecognized keys (e.g. a leftover "stream-mode" from before this migration) are
+		 * logged as warnings rather than silently ignored.
 		 */
-		void initRegistration();
+		static bringauto::quic::QuicSettings buildQuicSettings(const structures::ExternalConnectionSettings &settings);
 
 		/**
-		 * @brief Initializes the QUIC configuration and loads client credentials.
-		 *
-		 * Opens a QUIC configuration using the configured ALPN and default QUIC
-		 * transport settings. Client TLS credentials are then set up using a
-		 * certificate file, private key file, and CA certificate file.
-		 *
-		 * If configuration creation or credential loading fails, an error is logged.
+		 * @brief Fired once the QUIC handshake completes. Transitions CONNECTING -> CONNECTED and
+		 * starts the sender thread.
 		 */
-		void initConfiguration();
+		void onConnected();
 
 		/**
-		 * @brief Opens a QUIC configuration.
-		 *
-		 * Creates a QUIC configuration associated with the current registration,
-		 * configured ALPN, and optional transport settings.
-		 *
-		 * If settings are not provided, default QUIC settings are used.
-		 * On failure, an error is logged.
+		 * @brief Fired once a terminal disconnect is reported (graceful drop or a connect attempt
+		 * that never completed). Transitions to NOT_CONNECTED and wakes both queues.
 		 */
-		void configurationOpen();
+		void onDisconnected();
 
 		/**
-		 * @brief Loads TLS credentials into the QUIC configuration.
-		 *
-		 * Loads client-side TLS credentials into the active QUIC configuration.
-		 * The credentials define the certificate, private key, and CA certificate
-		 * used for secure communication.
-		 *
-		 * If credential loading fails, an error is logged.
-		 *
-		 * @param credential Pointer to the QUIC credential configuration.
+		 * @brief Fired when the peer initiates a graceful shutdown. Transitions to CLOSING so a
+		 * pending receiveMessage() keeps waiting for the final onDisconnected() instead of erroring
+		 * out immediately.
 		 */
-		void configurationLoadCredential(const QUIC_CREDENTIAL_CONFIG *credential) const;
+		void onShutdownInitiatedByPeer();
+
+		/**
+		 * @brief Fired once per fully-reassembled inbound frame. Parses it as an ExternalServer
+		 * message and enqueues it, mirroring the old streamCallback's RECEIVE case.
+		 */
+		void onBytesReceived(std::vector<std::uint8_t> bytes);
 
 		/**
 		 * @brief Handles a successfully decoded incoming message.
@@ -254,77 +188,20 @@ namespace bringauto::external_client::connection::communication {
 		void onMessageDecoded(std::unique_ptr<ExternalProtocol::ExternalServer> msg);
 
 		/**
-		 * @brief Sends a message to the peer using a QUIC stream.
-		 *
-		 * Opens a new QUIC stream on the active connection and serializes the
-		 * provided ExternalClient message into a byte buffer.
-		 * The message is sent using a single StreamSend call with START and FIN
-		 * flags, effectively opening, sending, and closing the stream.
-		 *
-		 * The allocated send buffer is released asynchronously in the
-		 * QUIC_STREAM_EVENT_SEND_COMPLETE callback.
+		 * @brief Sends a message to the peer via the shared QUIC client.
 		 *
 		 * @param message Message to be sent to the peer.
 		 */
-		void sendViaQuicStream(const ExternalProtocol::ExternalClient& message);
-
-		/**
-		 * @brief Closes the active QUIC configuration.
-		 */
-		void closeConfiguration();
-
-		/**
-		 * @brief Closes the QUIC registration.
-		 */
-		void closeRegistration();
-
-		/**
-		 * @brief Closes the MsQuic API and releases associated resources.
-		 */
-		void closeMsQuic();
+		void sendViaQuicClient(const ExternalProtocol::ExternalClient &message);
 
 		/**
 		 * @brief Stops the QUIC communication and releases all resources.
 		 *
-		 * Initiates connection shutdown and closes the QUIC configuration,
-		 * registration, and MsQuic API in the correct order.
-		 * All waiting sender and receiver threads are unblocked by notifying
-		 * the associated condition variables.
+		 * Requests connection shutdown and unblocks any waiting sender and
+		 * receiver threads so the sender thread can join cleanly before
+		 * quicClient_ itself is destroyed.
 		 */
 		void stop();
-
-		/**
-		 * @brief Handles QUIC connection-level events.
-		 *
-		 * Processes connection lifecycle events reported by MsQuic, including
-		 * successful connection establishment, peer-initiated shutdown, and
-		 * shutdown completion.
-		 *
-		 * All QUIC_CONNECTION_EVENT cases are documented at
-		 * https://microsoft.github.io/msquic/msquicdocs/docs/api/QUIC_CONNECTION_EVENT.html
-		 *
-		 * @param connection QUIC connection handle.
-		 * @param context User-defined context pointer (QuicCommunication instance).
-		 * @param event Connection event information provided by MsQuic.
-		 * @return QUIC_STATUS_SUCCESS to indicate successful event handling.
-		 */
-		static QUIC_STATUS QUIC_API connectionCallback(HQUIC connection, void *context, QUIC_CONNECTION_EVENT *event); // NOSONAR - void* required by QUIC_CONNECTION_CALLBACK C API
-
-		/**
-		 * @brief Handles QUIC stream-level events.
-		 *
-		 * Processes stream events reported by MsQuic, including data reception,
-		 * send completion, stream startup, and shutdown notifications.
-		 *
-		 * All QUIC_STREAM_EVENT cases are documented at
-		 * https://microsoft.github.io/msquic/msquicdocs/docs/api/QUIC_STREAM_EVENT.html
-		 *
-		 * @param stream QUIC stream handle associated with the event.
-		 * @param context User-defined context pointer (QuicCommunication instance).
-		 * @param event Stream event information provided by MsQuic.
-		 * @return QUIC_STATUS_SUCCESS to indicate successful event handling.
-		 */
-		static QUIC_STATUS QUIC_API streamCallback(HQUIC stream, void *context, QUIC_STREAM_EVENT *event); // NOSONAR - void* required by QUIC_STREAM_CALLBACK C API
 
 		/**
 		 * @brief Sender thread main loop for outbound messages.
@@ -332,21 +209,9 @@ namespace bringauto::external_client::connection::communication {
 		 * Waits for outbound messages while the connection is in the CONNECTED state.
 		 * Messages are dequeued and sent over individual QUIC streams.
 		 *
-		 * If sending fails, the message is re-enqueued for a later retry.
 		 * The loop terminates when the connection leaves the CONNECTED state.
 		 */
 		void senderLoop();
-
-		/**
-		 * @brief Retrieves the QUIC stream identifier for the given stream handle.
-		 *
-		 * Queries MsQuic for the stream ID associated with the provided HQUIC stream.
-		 * If the parameter query fails, an empty optional is returned.
-		 *
-		 * @param stream Valid QUIC stream handle.
-		 * @return Stream identifier on success, or std::nullopt if the query fails.
-		 */
-		std::optional<uint64_t> getStreamId(HQUIC stream) const;
 
 		/**
 		 * @brief Retrieves a protocol setting value as a plain string.
@@ -371,20 +236,5 @@ namespace bringauto::external_client::connection::communication {
 			std::string_view key,
 			std::string defaultValue = {}
 		);
-
-		/**
-		 * @brief Parses QUIC stream mode from protocol settings.
-		 *
-		 * Reads the stream mode from the external connection settings and determines
-		 * whether QUIC streams should be unidirectional or bidirectional.
-		 *
-		 * Supported values:
-		 *  - "unidirectional", "unidir" → Unidirectional streams
-		 *  - any other value or missing setting → Bidirectional streams (default)
-		 *
-		 * @param settings External connection settings containing QUIC protocol options
-		 * @return StreamMode Parsed stream mode (defaults to Bidirectional)
-		 */
-		static StreamMode parseStreamMode(const structures::ExternalConnectionSettings &settings);
 	};
 }

@@ -2,35 +2,34 @@
 #include <bringauto/external_client/connection/communication/QuicCommunication.hpp>
 #include <bringauto/settings/Constants.hpp>
 #include <bringauto/settings/LoggerId.hpp>
-#include <bringauto/settings/QuicSettingsParser.hpp>
+
+#include <span>
+#include <unordered_set>
 
 
 namespace bringauto::external_client::connection::communication {
 	QuicCommunication::QuicCommunication(const structures::ExternalConnectionSettings &settings,
 	                                     const std::string &company,
-	                                     const std::string &vehicleName) : ICommunicationChannel(settings),
-	                                                                       alpn_(getProtocolSettingsString(
-		                                                                       settings,
-		                                                                       settings::Constants::ALPN)),
-	                                                                       certFile_(getProtocolSettingsString(
-		                                                                       settings,
-		                                                                       settings::Constants::CLIENT_CERT)),
-	                                                                       keyFile_(getProtocolSettingsString(
-		                                                                       settings,
-		                                                                       settings::Constants::CLIENT_KEY)),
-	                                                                       caFile_(getProtocolSettingsString(
-		                                                                       settings,
-		                                                                       settings::Constants::CA_FILE)),
-	                                                                       streamMode_(parseStreamMode(settings)) {
-		alpnBuffer_.Buffer = reinterpret_cast<uint8_t *>(alpn_.data());
-		alpnBuffer_.Length = static_cast<uint32_t>(alpn_.size());
+	                                     const std::string &vehicleName) : ICommunicationChannel(settings) {
+		bringauto::quic::QuicClientCallbacks callbacks;
+		callbacks.onConnected = [this]() { onConnected(); };
+		callbacks.onDisconnected = [this]() { onDisconnected(); };
+		callbacks.onShutdownInitiatedByPeer = [this](QUIC_UINT62) { onShutdownInitiatedByPeer(); };
+		callbacks.onBytesReceived = [this](std::vector<std::uint8_t> bytes) { onBytesReceived(std::move(bytes)); };
 
-		loadMsQuic();
-		if (quic_) {
-			initRegistration();
+		bringauto::quic::QuicSettings quicSettings;
+		try {
+			quicSettings = buildQuicSettings(settings);
+		} catch (const nlohmann::json::exception &e) {
+			settings::Logger::logCritical("[quic] Invalid QUIC settings in config: {}", e.what());
+			return;
 		}
-		if (quic_ && registration_) {
-			initConfiguration();
+
+		quicClient_ = std::make_unique<bringauto::quic::QuicClient>(buildEndpointConfig(settings),
+		                                                            std::move(quicSettings), std::move(callbacks));
+		initialized_ = quicClient_->initialize();
+		if (!initialized_) {
+			settings::Logger::logCritical("[quic] Transport initialize() failed");
 		}
 
 		settings::Logger::logInfo("[quic] Initialize QUIC communication to {}:{} for {}/{}", settings.serverIp,
@@ -39,6 +38,43 @@ namespace bringauto::external_client::connection::communication {
 
 	QuicCommunication::~QuicCommunication() {
 		stop();
+	}
+
+	bringauto::quic::QuicEndpointConfig QuicCommunication::buildEndpointConfig(
+		const structures::ExternalConnectionSettings &settings
+	) {
+		bringauto::quic::QuicEndpointConfig config;
+		config.host = settings.serverIp;
+		config.port = static_cast<std::uint16_t>(settings.port);
+		config.alpn = getProtocolSettingsString(settings, settings::Constants::ALPN);
+		config.certPath = getProtocolSettingsString(settings, settings::Constants::CLIENT_CERT);
+		config.keyPath = getProtocolSettingsString(settings, settings::Constants::CLIENT_KEY);
+		config.caCertsPath = getProtocolSettingsString(settings, settings::Constants::CA_FILE);
+		return config;
+	}
+
+	bringauto::quic::QuicSettings QuicCommunication::buildQuicSettings(
+		const structures::ExternalConnectionSettings &settings
+	) {
+		static const std::unordered_set<std::string_view> endpointConfigKeys {
+			settings::Constants::CA_FILE, settings::Constants::CLIENT_CERT, settings::Constants::CLIENT_KEY,
+			settings::Constants::ALPN
+		};
+
+		nlohmann::json json = nlohmann::json::object();
+		for (const auto &[key, raw]: settings.protocolSettings) {
+			if (endpointConfigKeys.contains(key)) {
+				continue;
+			}
+			json[key] = nlohmann::json::accept(raw) ? nlohmann::json::parse(raw) : nlohmann::json(raw);
+		}
+
+		std::vector<std::string> unrecognizedKeys;
+		auto quicSettings = bringauto::quic::QuicSettings::fromJson(json, &unrecognizedKeys);
+		for (const auto &key: unrecognizedKeys) {
+			settings::Logger::logWarning("[quic] Unrecognized QUIC setting '{}', ignored", key);
+		}
+		return quicSettings;
 	}
 
 	void QuicCommunication::initializeConnection() {
@@ -59,35 +95,19 @@ namespace bringauto::external_client::connection::communication {
 		{ std::scoped_lock lock(inboundMutex_); while (!inboundQueue_.empty()) { inboundQueue_.pop(); } }
 		{ std::scoped_lock lock(outboundMutex_); while (!outboundQueue_.empty()) { outboundQueue_.pop(); } }
 
-		QUIC_STATUS status = quic_->ConnectionOpen(registration_, connectionCallback, this, &connection_);
-		if (QUIC_FAILED(status)) {
-			settings::Logger::logError("ConnectionOpen failed (status=0x{:x})", status);
+		if (!initialized_ || !quicClient_->connect()) {
+			settings::Logger::logError("[quic] Failed to start connection attempt");
 			connectionState_.store(ConnectionState::NOT_CONNECTED);
 			return;
 		}
 
-		status = quic_->ConnectionStart(
-			connection_,
-			config_,
-			QUIC_ADDRESS_FAMILY_INET,
-			settings_.serverIp.c_str(),
-			settings_.port
-		);
-
-		if (QUIC_FAILED(status)) {
-			settings::Logger::logError("ConnectionStart failed (status=0x{:x})", status);
-			quic_->ConnectionClose(connection_);
-			connection_ = nullptr;
-			connectionState_.store(ConnectionState::NOT_CONNECTED);
-			return;
-		}
-
-		// ConnectionStart only INITIATES the QUIC handshake; the CONNECTED callback fires later and
-		// flips connectionState_ CONNECTING -> CONNECTED. Block here until that happens (or the
-		// connection fails / times out) so initializeConnection honours the same synchronous
-		// "connected on return" contract as the MQTT channel. Without this the caller runs the
-		// fleet-protocol connect sequence (send devices / read connect response) on a not-yet-connected
-		// transport, which fails every cycle and leaves the connection stuck in CONNECTING.
+		// connect() only INITIATES the QUIC handshake; onConnected() fires later (from an msquic
+		// worker thread) and flips connectionState_ CONNECTING -> CONNECTED. Block here until that
+		// happens (or the connection fails / times out) so initializeConnection honours the same
+		// synchronous "connected on return" contract as the MQTT channel. Without this the caller
+		// runs the fleet-protocol connect sequence (send devices / read connect response) on a
+		// not-yet-connected transport, which fails every cycle and leaves the connection stuck in
+		// CONNECTING.
 		{
 			std::unique_lock lock(outboundMutex_);
 			outboundCv_.wait_for(lock, settings::receive_message_timeout, [this] {
@@ -97,12 +117,6 @@ namespace bringauto::external_client::connection::communication {
 		if (connectionState_.load() != ConnectionState::CONNECTED) {
 			settings::Logger::logError("[quic] handshake did not complete (state={})",
 			                           common_utils::EnumUtils::connectionStateToString(connectionState_));
-			// Request an async ConnectionShutdown (same path as closeConnection) and let the
-			// SHUTDOWN_COMPLETE callback perform the single ConnectionClose + null connection_.
-			// Do NOT call the blocking ConnectionClose here: it frees the handle and blocks until the
-			// connection's callbacks complete, and SHUTDOWN_COMPLETE runs on a worker thread that also
-			// acquires outboundMutex_ — closing under the lock would deadlock. Routing through Shutdown
-			// also leaves the callback as the sole closer, so the handle is closed exactly once.
 			closeConnection();
 			connectionState_.store(ConnectionState::NOT_CONNECTED);
 		}
@@ -161,123 +175,36 @@ namespace bringauto::external_client::connection::communication {
 		return msg;
 	}
 
-	void QuicCommunication::loadMsQuic() {
-		QUIC_STATUS status = MsQuicOpen2(&quic_);
-		if (QUIC_FAILED(status)) {
-			settings::Logger::logError("[quic] Failed to open QUIC; QUIC_STATUS => {:x}", status);
-			return;
-		}
-	}
-
-	constexpr auto quicRegistrationAppName = "module-gateway-quic-client";
-
-	void QuicCommunication::initRegistration() {
-		QUIC_REGISTRATION_CONFIG config{};
-		config.AppName = quicRegistrationAppName;
-		config.ExecutionProfile = QUIC_EXECUTION_PROFILE_LOW_LATENCY;
-
-		QUIC_STATUS status = quic_->RegistrationOpen(&config, &registration_);
-		if (QUIC_FAILED(status)) {
-			settings::Logger::logError("[quic] Failed to open QUIC registration; QUIC_STATUS => {:x}", status);
-			return;
-		}
-	}
-
-	void QuicCommunication::initConfiguration() {
-		configurationOpen();
-
-		QUIC_CERTIFICATE_FILE certificate{};
-		certificate.CertificateFile = certFile_.c_str();
-		certificate.PrivateKeyFile = keyFile_.c_str();
-
-		QUIC_CREDENTIAL_CONFIG credential{};
-		credential.Type = QUIC_CREDENTIAL_TYPE_CERTIFICATE_FILE;
-		credential.Flags = QUIC_CREDENTIAL_FLAG_CLIENT | QUIC_CREDENTIAL_FLAG_SET_CA_CERTIFICATE_FILE;
-		credential.CertificateFile = &certificate;
-		credential.CaCertificateFile = caFile_.c_str();
-
-		configurationLoadCredential(&credential);
-	}
-
-	void QuicCommunication::configurationOpen() {
-		const QUIC_SETTINGS settings = settings::QuicSettingsParser::parse(settings_);
-		const uint32_t settingsSize = sizeof(QUIC_SETTINGS);
-
-		QUIC_STATUS status = quic_->ConfigurationOpen(
-			registration_,
-			&alpnBuffer_,
-			1,
-			&settings,
-			settingsSize,
-			nullptr,
-			&config_
-		);
-
-		if (QUIC_FAILED(status)) {
-			settings::Logger::logError("[quic] Failed to open QUIC configuration; QUIC_STATUS => {:x}", status);
-			return;
-		}
-	}
-
-	void QuicCommunication::configurationLoadCredential(const QUIC_CREDENTIAL_CONFIG *credential) const {
-		const QUIC_STATUS status = quic_->ConfigurationLoadCredential(config_, credential);
-		if (QUIC_FAILED(status)) {
-			settings::Logger::logError("[quic] Failed to load QUIC credential; QUIC_STATUS => {:x}", status);
-			return;
-		}
-	}
-
 	void QuicCommunication::closeConnection() {
-		// Hold outboundMutex_ across the read + ConnectionShutdown so this can't race the
-		// SHUTDOWN_COMPLETE callback (which closes + nulls connection_ under the same lock). msquic
-		// delivers SHUTDOWN_COMPLETE on a worker thread (not inline), so there is no recursive deadlock.
-		std::lock_guard lock(outboundMutex_);
-		if (!connection_) {
-			return;
+		if (quicClient_) {
+			quicClient_->disconnect();
 		}
-
-		quic_->ConnectionShutdown(connection_, QUIC_CONNECTION_SHUTDOWN_FLAG_NONE, 0);
-
-		/// Asynchronously waiting for QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE event, then continue in connectionCallback
+		/// Asynchronously waiting for the transport's onDisconnected callback, then continue there
 	}
 
 	void QuicCommunication::cancelReceive() {
-		cancelReceive_.store(true);
+		{
+			std::lock_guard lock(inboundMutex_);
+			cancelReceive_.store(true);
+		}
 		inboundCv_.notify_all();
-	}
-
-	void QuicCommunication::closeConfiguration() {
-		if (config_) {
-			quic_->ConfigurationClose(config_);
-		}
-
-		config_ = nullptr;
-	}
-
-	void QuicCommunication::closeRegistration() {
-		if (registration_) {
-			quic_->RegistrationClose(registration_);
-		}
-
-		registration_ = nullptr;
-	}
-
-	void QuicCommunication::closeMsQuic() {
-		if (quic_) {
-			MsQuicClose(quic_);
-		}
-
-		quic_ = nullptr;
 	}
 
 	void QuicCommunication::stop() {
-		QuicCommunication::closeConnection();
-		closeConfiguration();
-		closeRegistration();
-		closeMsQuic();
-
-		inboundCv_.notify_all();
-		outboundCv_.notify_all();
+		if (quicClient_) {
+			quicClient_->disconnect();
+		}
+		connectionState_.store(ConnectionState::NOT_CONNECTED);
+		// Notify under the guarding mutexes so the sender thread (which waits without a timeout)
+		// can't miss this NOT_CONNECTED transition and hang the destructor that joins it.
+		{
+			std::lock_guard lock(inboundMutex_);
+			inboundCv_.notify_all();
+		}
+		{
+			std::lock_guard lock(outboundMutex_);
+			outboundCv_.notify_all();
+		}
 
 		settings::Logger::logInfo("[quic] Connection stopped");
 	}
@@ -293,268 +220,67 @@ namespace bringauto::external_client::connection::communication {
 		inboundCv_.notify_one();
 	}
 
-	void QuicCommunication::sendViaQuicStream(const ExternalProtocol::ExternalClient& message) {
-		HQUIC stream{nullptr};
-
-		QUIC_STREAM_OPEN_FLAGS flags = streamMode_ == StreamMode::Unidirectional
-			                               ? QUIC_STREAM_OPEN_FLAG_UNIDIRECTIONAL
-			                               : QUIC_STREAM_OPEN_FLAG_NONE;
-
-		if (QUIC_FAILED(
-			quic_->StreamOpen(connection_, flags, streamCallback, this, &stream))) {
-			settings::Logger::logError("[quic] StreamOpen failed");
-			return;
-		}
-
-		const size_t size = message.ByteSizeLong();
-		auto sendBuffer = std::make_unique<SendBuffer>(size);
-
-		if (!message.SerializeToArray(sendBuffer->storage.data(), static_cast<int>(size))) {
+	void QuicCommunication::sendViaQuicClient(const ExternalProtocol::ExternalClient &message) {
+		std::string serialized;
+		if (!message.SerializeToString(&serialized)) {
 			settings::Logger::logError("[quic] Message serialization failed");
-			quic_->StreamShutdown(stream, QUIC_STREAM_SHUTDOWN_FLAG_ABORT, 0);
 			return;
 		}
 
-		const SendBuffer *raw = sendBuffer.get();
-		const QUIC_BUFFER *quicBuf = &raw->buffer;
-		SendBuffer *quicBufContext = sendBuffer.release();
-
-		const QUIC_STATUS status = quic_->StreamSend(
-			stream,
-			quicBuf,
-			1,
-			/**
-			 * START => Simulates quic_->StreamStart before send
-			 * FIN => Simulates quic_->StreamShutdown after send
-			 */
-			QUIC_SEND_FLAG_START | QUIC_SEND_FLAG_FIN,
-			quicBufContext
-		);
-
-		if (QUIC_FAILED(status)) {
-			std::unique_ptr<SendBuffer> reclaim{quicBufContext};
-
-			quic_->StreamShutdown(stream, QUIC_STREAM_SHUTDOWN_FLAG_ABORT, 0);
-			settings::Logger::logError("[quic] Failed to send QUIC stream; QUIC_STATUS => {:x}", status);
+		const std::span<const std::uint8_t> bytes(reinterpret_cast<const std::uint8_t *>(serialized.data()),
+		                                           serialized.size());
+		if (!quicClient_->send(bytes)) {
+			settings::Logger::logError("[quic] Failed to send message, message dropped");
 			return;
 		}
 
-		auto streamId = getStreamId(stream);
-		settings::Logger::logDebug("[quic] [stream {}] Message sent", streamId ? *streamId : 0);
+		settings::Logger::logDebug("[quic] Message sent");
 	}
 
-	QUIC_STATUS QUIC_API QuicCommunication::connectionCallback(HQUIC connection, void *context, // NOSONAR cpp:S5008 - void* required by QUIC_CONNECTION_CALLBACK C API
-	                                                           QUIC_CONNECTION_EVENT *event) {
-		auto *self = static_cast<QuicCommunication *>(context);
+	void QuicCommunication::onConnected() {
+		settings::Logger::logInfo("[quic] Connected to server");
 
-		switch (event->Type) {
-			/// Fired when the QUIC handshake is complete and the connection is ready
-			/// for stream creation and data transfer.
-			case QUIC_CONNECTION_EVENT_CONNECTED: {
-				settings::Logger::logInfo("[quic] Connected to server");
-
-				auto expected = ConnectionState::CONNECTING;
-				if (self->connectionState_.compare_exchange_strong(expected, ConnectionState::CONNECTED)) {
-					/// Start sender thread only after connection is fully established
-					self->senderThread_ = std::jthread(&QuicCommunication::senderLoop, self);
-					self->outboundCv_.notify_all();
-				}
-				break;
-			}
-
-			/// Fired when peer open new stream on connection, stream handler need to be def
-			case QUIC_CONNECTION_EVENT_PEER_STREAM_STARTED: {
-				auto streamId = self->getStreamId(event->PEER_STREAM_STARTED.Stream);
-
-				settings::Logger::logDebug(
-					"[quic] [stream {}] Peer stream started",
-					streamId.value_or(0)
-				);
-
-				self->quic_->SetCallbackHandler(event->PEER_STREAM_STARTED.Stream,
-				                                reinterpret_cast<void *>(streamCallback), // NOSONAR - MsQuic C API requires passing function pointer as void*
-				                                context);
-
-				self->quic_->StreamReceiveSetEnabled(event->PEER_STREAM_STARTED.Stream, TRUE);
-				break;
-			}
-
-			/// Final notification that the connection has been fully shut down.
-			/// This is the last event delivered for the connection handle.
-			case QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE: {
-				settings::Logger::logInfo("[quic] Connection shutdown complete");
-
-				self->connectionState_ = ConnectionState::NOT_CONNECTED;
-
-				if (self->senderThread_.joinable()) {
-					self->senderThread_.request_stop();
-				}
-
-				// Close the handle AND null connection_ under outboundMutex_, serialized with
-				// closeConnection() (which holds the same lock around its ConnectionShutdown). This is the
-				// sole ConnectionClose for the handle: a concurrent closeConnection() either runs first
-				// (Shutdown on a still-valid handle) or after (sees nullptr and skips) — no double close,
-				// no use-after-free. notify LAST so a waiter in initializeConnection wakes after the reset.
-				{
-					std::lock_guard lock(self->outboundMutex_);
-					if (self->quic_) {
-						self->quic_->ConnectionClose(connection);
-					}
-					self->connection_ = nullptr;
-				}
-				self->outboundCv_.notify_all();
-				break;
-			}
-
-			/// Peer or transport initiated connection shutdown (error or graceful close).
-			/// Further sends may fail after this event.
-			case QUIC_CONNECTION_EVENT_SHUTDOWN_INITIATED_BY_PEER: {
-				settings::Logger::logWarning("[quic] Connection shutdown initiated by peer");
-				self->connectionState_ = ConnectionState::CLOSING;
-				break;
-			}
-
-			default: {
-				settings::Logger::logDebug("[quic] Unhandled connection event 0x{:x}",
-				                           static_cast<unsigned>(event->Type));
-				break;
-			}
+		auto expected = ConnectionState::CONNECTING;
+		if (connectionState_.compare_exchange_strong(expected, ConnectionState::CONNECTED)) {
+			/// Start sender thread only after connection is fully established
+			senderThread_ = std::jthread(&QuicCommunication::senderLoop, this);
+			// Notify under outboundMutex_: the CONNECTED transition above must not slip between
+			// initializeConnection()'s predicate check and its wait_for(), or the wakeup is lost
+			// and the connect blocks for the full timeout.
+			std::lock_guard lock(outboundMutex_);
+			outboundCv_.notify_all();
 		}
-
-		return QUIC_STATUS_SUCCESS;
 	}
 
-	QUIC_STATUS QUIC_API QuicCommunication::streamCallback(HQUIC stream, void *context, QUIC_STREAM_EVENT *event) { // NOSONAR cpp:S5008 - void* required by QUIC_STREAM_CALLBACK C API
-		auto *self = static_cast<QuicCommunication *>(context);
-		auto streamId = self->getStreamId(stream);
+	void QuicCommunication::onDisconnected() {
+		settings::Logger::logInfo("[quic] Connection shutdown complete");
 
-		switch (event->Type) {
-			/// Raised when the peer sends stream data and MsQuic delivers received bytes to the application.
-			case QUIC_STREAM_EVENT_RECEIVE: {
-				// Accumulate this stream's bytes and parse ONLY when the FIN flag arrives. Each inbound
-				// unidirectional stream carries exactly one ExternalServer message delimited by FIN, but
-				// msquic may split it across multiple RECEIVE events; parsing each event individually
-				// corrupts messages under load ("Failed to parse ExternalServer message").
-				// Upper bound on a reassembled message (defense-in-depth): a stream that never FINs would
-				// otherwise grow unbounded. A teleop command/status is a few hundred bytes; 1 MiB is ample.
-				static constexpr std::size_t kMaxInboundMessageBytes = 1U << 20;
-				std::vector<std::uint8_t> complete;  // populated only on FIN
-				bool overflow = false;
-				{
-					std::lock_guard lock(self->streamRecvMutex_);
-					auto &buf = self->streamRecvBuffers_[stream];
-					for (uint32_t i = 0; i < event->RECEIVE.BufferCount; ++i) {
-						const auto &b = event->RECEIVE.Buffers[i];
-						buf.insert(buf.end(), b.Buffer, b.Buffer + b.Length);
-					}
-					if (buf.size() > kMaxInboundMessageBytes) {
-						self->streamRecvBuffers_.erase(stream);
-						overflow = true;
-					} else if ((event->RECEIVE.Flags & QUIC_RECEIVE_FLAG_FIN) != 0U) {
-						complete = std::move(buf);
-						self->streamRecvBuffers_.erase(stream);
-					}
-				}
-				if (overflow) {
-					settings::Logger::logError("[quic] [stream {}] inbound message exceeded {} bytes, aborting stream",
-					                           streamId ? *streamId : 0, kMaxInboundMessageBytes);
-					self->quic_->StreamShutdown(stream, QUIC_STREAM_SHUTDOWN_FLAG_ABORT, 0);
-					break;
-				}
-				if (!complete.empty()) {
-					auto msg = std::make_unique<ExternalProtocol::ExternalServer>();
-					if (msg->ParseFromArray(complete.data(), static_cast<int>(complete.size()))) {
-						self->onMessageDecoded(std::move(msg));
-					} else {
-						settings::Logger::logError("[quic] Failed to parse ExternalServer message ({} bytes)",
-						                           complete.size());
-					}
-				}
-
-				break;
-			}
-
-			/// Raised when the peer has finished sending on this stream
-			/// (peer's FIN has been fully received and processed).
-			case QUIC_STREAM_EVENT_PEER_SEND_SHUTDOWN: {
-				settings::Logger::logDebug("[quic] [stream {}] Peer stream send shutdown", streamId ? *streamId : 0);
-				break;
-			}
-
-			/// Raised when the local send direction is fully shut down
-			/// and the peer has acknowledged the FIN.
-			case QUIC_STREAM_EVENT_SEND_SHUTDOWN_COMPLETE: {
-				settings::Logger::logDebug("[quic] [stream {}] Stream send shutdown complete",
-				                           streamId ? *streamId : 0);
-				break;
-			}
-
-			/// Raised after StreamStart completes successfully
-			/// and the stream becomes active with a valid stream ID.
-			case QUIC_STREAM_EVENT_START_COMPLETE: {
-				settings::Logger::logDebug("[quic] [stream {}] Stream start completed", streamId ? *streamId : 0);
-				break;
-			}
-
-			/// Raised when a single StreamSend operation completes
-			/// (data was accepted, acknowledged, or the send was canceled).
-			case QUIC_STREAM_EVENT_SEND_COMPLETE: {
-				/**
-				 * This event is raised when MsQuic has finished processing
-				 * a single StreamSend request.
-				 *
-				 * Meaning:
-				 *  - MsQuic no longer needs the application-provided buffer:
-				 *      - the data has been acknowledged (ACKed) by the peer
-				 *        at the QUIC transport level and will not be retransmitted
-				 *      - OR the send was canceled (Canceled == TRUE), e.g. due to
-				 *        stream or connection shutdown
-				 *
-				 * Reliability semantics:
-				 *  - the ACK is strictly a QUIC transport-level acknowledgment
-				 *  - it does NOT mean the peer application has read or processed
-				 *    the data
-				 *
-				 * Practical consequence:
-				 *  - this is the only correct place to safely free the memory
-				 *    passed to StreamSend (via ClientContext)
-				 */
-				if (event->SEND_COMPLETE.Canceled) {
-					settings::Logger::logDebug("[quic] [stream {}] Stream send canceled",
-					                           streamId ? *streamId : 0);
-				} else {
-					settings::Logger::logDebug("[quic] [stream {}] Stream send completed",
-					                           streamId ? *streamId : 0);
-				}
-
-				std::unique_ptr<SendBuffer> sendBuf{
-					static_cast<SendBuffer *>(event->SEND_COMPLETE.ClientContext)
-				};
-
-				break;
-			}
-
-			/// Raised when both send and receive directions are closed
-			/// and the stream lifecycle is fully complete.
-			case QUIC_STREAM_EVENT_SHUTDOWN_COMPLETE: {
-				settings::Logger::logDebug("[quic] [stream {}] Stream shutdown complete", streamId ? *streamId : 0);
-				{
-					// Drop any partial reassembly buffer (e.g. stream aborted before FIN) so it can't leak.
-					std::lock_guard lock(self->streamRecvMutex_);
-					self->streamRecvBuffers_.erase(stream);
-				}
-				self->quic_->StreamClose(stream);
-				break;
-			}
-
-			default: {
-				settings::Logger::logDebug("[quic] [stream {}] Unhandled stream event 0x{:x}", streamId ? *streamId : 0,
-				                           static_cast<unsigned>(event->Type));
-				break;
-			}
+		connectionState_.store(ConnectionState::NOT_CONNECTED);
+		// Notify each condition variable while holding the mutex that guards its wait predicate,
+		// so the NOT_CONNECTED transition can't be missed between a waiter's predicate check and
+		// its wait() (a lost wakeup would hang the sender thread, which waits without a timeout).
+		{
+			std::lock_guard lock(outboundMutex_);
+			outboundCv_.notify_all();
 		}
+		{
+			std::lock_guard lock(inboundMutex_);
+			inboundCv_.notify_all();
+		}
+	}
 
-		return QUIC_STATUS_SUCCESS;
+	void QuicCommunication::onShutdownInitiatedByPeer() {
+		settings::Logger::logWarning("[quic] Connection shutdown initiated by peer");
+		connectionState_.store(ConnectionState::CLOSING);
+	}
+
+	void QuicCommunication::onBytesReceived(std::vector<std::uint8_t> bytes) {
+		auto msg = std::make_unique<ExternalProtocol::ExternalServer>();
+		if (!msg->ParseFromArray(bytes.data(), static_cast<int>(bytes.size()))) {
+			settings::Logger::logError("[quic] Failed to parse ExternalServer message");
+			return;
+		}
+		onMessageDecoded(std::move(msg));
 	}
 
 	void QuicCommunication::senderLoop() {
@@ -581,23 +307,8 @@ namespace bringauto::external_client::connection::communication {
 				outboundQueue_.pop();
 			}
 
-			sendViaQuicStream(*msg);
+			sendViaQuicClient(*msg);
 		}
-	}
-
-	std::optional<uint64_t> QuicCommunication::getStreamId(HQUIC stream) const {
-		uint64_t streamId = 0;
-		uint32_t streamIdLen = sizeof(streamId);
-
-		if (QUIC_FAILED(quic_->GetParam(
-			stream,
-			QUIC_PARAM_STREAM_ID,
-			&streamIdLen,
-			&streamId))) {
-			return std::nullopt;
-		}
-
-		return streamId;
 	}
 
 	std::string QuicCommunication::getProtocolSettingsString(
@@ -625,16 +336,5 @@ namespace bringauto::external_client::connection::communication {
 			settings::Logger::logWarning("[quic] Protocol setting '{}' contains invalid JSON, using default", key);
 			return defaultValue;
 		}
-	}
-
-	QuicCommunication::StreamMode QuicCommunication::parseStreamMode(
-		const structures::ExternalConnectionSettings &settings
-	) {
-		const std::string mode = getProtocolSettingsString(settings, settings::Constants::STREAM_MODE);
-
-		if (mode == "unidirectional" || mode == "unidir")
-			return StreamMode::Unidirectional;
-
-		return StreamMode::Bidirectional;
 	}
 }

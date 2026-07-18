@@ -12,7 +12,6 @@ BA_PACKAGE_LIBRARY(zlib                     v1.3.2 OUTPUT_PATH_VAR ZLIB_DIR)
 BA_PACKAGE_LIBRARY(fleet-protocol-cpp       v1.2.0)
 BA_PACKAGE_LIBRARY(aeron                    v1.48.6)
 BA_PACKAGE_LIBRARY(async-function-execution v1.0.0)
-BA_PACKAGE_LIBRARY(msquic                   v2.5.6)
 
 IF (BRINGAUTO_TESTS)
     BA_PACKAGE_LIBRARY(gtest v1.12.1)
