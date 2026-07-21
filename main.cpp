@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
 
 	bas::AtomicQueue<bas::ModuleHandlerMessage> toInternalQueue;
 	bas::AtomicQueue<bas::InternalClientMessage> fromInternalQueue;
-	auto commandForwardingQueue = std::make_shared<bas::AtomicQueue<bas::InternalClientMessage >>();
+	bas::AtomicQueue<bas::InternalClientMessage> commandForwardingQueue;
 	bas::AtomicQueue<bas::InternalClientMessage> toExternalQueue;
 
 	bais::InternalServer internalServer { context, fromInternalQueue, toInternalQueue };

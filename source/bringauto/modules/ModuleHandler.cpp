@@ -14,13 +14,18 @@ namespace bringauto::modules {
 
 namespace ip = InternalProtocol;
 
-void ModuleHandler::destroy() const {
-	while(not fromInternalQueue_.empty()) {
-		fromInternalQueue_.pop();
-	}
-	while(not commandForwardingQueue_->empty()) {
-		commandForwardingQueue_->pop();
-	}
+ModuleHandler::ModuleHandler(structures::GlobalContext& context, structures::ModuleLibrary& moduleLibrary,
+	structures::AtomicQueue<structures::InternalClientMessage>& fromInternalQueue,
+	structures::AtomicQueue<structures::InternalClientMessage>& commandForwardingQueue,
+	structures::AtomicQueue<structures::ModuleHandlerMessage>& toInternalQueue,
+	structures::AtomicQueue<structures::InternalClientMessage>& toExternalQueue): context_{context}, moduleLibrary_{moduleLibrary}, fromInternalQueue_{fromInternalQueue},
+	commandForwardingQueue_{commandForwardingQueue},
+	toInternalQueue_{toInternalQueue},
+	toExternalQueue_{toExternalQueue}
+{
+}
+
+ModuleHandler::~ModuleHandler() {
 	settings::Logger::logInfo("Module handler stopped");
 }
 
@@ -53,11 +58,11 @@ void ModuleHandler::handleMessages() const {
 
 void ModuleHandler::handleCommandForwards() const {
 	while(not context_.ioContext.stopped()) {
-		if(commandForwardingQueue_->waitForValueWithTimeout(settings::queue_timeout_length)) {
+		if(commandForwardingQueue_.waitForValueWithTimeout(settings::queue_timeout_length)) {
 			continue;
 		}
-		handleCommandForward(commandForwardingQueue_->front().getDeviceId());
-		commandForwardingQueue_->pop();
+		handleCommandForward(commandForwardingQueue_.front().getDeviceId());
+		commandForwardingQueue_.pop();
 	}
 }
 
@@ -246,7 +251,7 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) const {
 		// timeout trigger the safe-stop.
 		const auto emptyCommandMessage = common_utils::ProtobufUtils::createInternalServerCommandMessage(
 			device, Buffer{});
-		toInternalQueue_->pushAndNotify(structures::ModuleHandlerMessage(false, emptyCommandMessage));
+		toInternalQueue_.pushAndNotify(structures::ModuleHandlerMessage(false, emptyCommandMessage));
 		settings::Logger::logDebug("No fresh command for push-only device {}, sending empty response", deviceName);
 	} else {
 		settings::Logger::logWarning("Retrieving command failed with return code: {}", getCommandRc);
@@ -262,9 +267,6 @@ void ModuleHandler::handleStatus(const ip::DeviceStatus &status) const {
 void ModuleHandler::checkExternalQueueSize() const {
 	if(toExternalQueue_.size() > settings::max_external_queue_size) {
 		settings::Logger::logError("External queue size is too big, external client is not handling messages");
-		//temporarily disabled to verify if the bug related to deadlocks is fixed
-		//destroy();
-		//throw std::runtime_error("External queue size is too big");
 	}
 }
 
