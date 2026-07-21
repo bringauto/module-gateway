@@ -25,7 +25,7 @@ public:
 	ExternalClient(structures::GlobalContext &context,
 				   structures::ModuleLibrary &moduleLibrary,
 				   structures::AtomicQueue<structures::InternalClientMessage>& toExternalQueue,
-				   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &commandForwardingQueue);
+				   structures::AtomicQueue<structures::InternalClientMessage>& commandForwardingQueue);
 
 	~ExternalClient();
 
@@ -98,7 +98,7 @@ private:
 	/// Queue for device commands received by external client to module handler
 	structures::AtomicQueue<InternalProtocol::DeviceCommand> fromExternalQueue_;
 	/// Queue shared with ModuleHandler; used to push command-forward events for immediate dispatch
-	std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> commandForwardingQueue_ {};
+	structures::AtomicQueue<structures::InternalClientMessage>& commandForwardingQueue_;
 
 	structures::AtomicQueue<structures::ReconnectQueueItem> reconnectQueue_;
 

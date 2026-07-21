@@ -16,15 +16,12 @@ namespace bringauto::modules {
 class ModuleHandler {
 public:
 	ModuleHandler(
-			structures::GlobalContext &context,
-			structures::ModuleLibrary &moduleLibrary,
-			structures::AtomicQueue<structures::InternalClientMessage>& fromInternalQueue,
-			const std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> &commandForwardingQueue,
-			structures::AtomicQueue<structures::ModuleHandlerMessage>& toInternalQueue,
-			structures::AtomicQueue<structures::InternalClientMessage>& toExternalQueue)
-			: context_ { context }, moduleLibrary_ { moduleLibrary }, fromInternalQueue_ { fromInternalQueue },
-			  toInternalQueue_ { toInternalQueue }, commandForwardingQueue_ { commandForwardingQueue },
-			  toExternalQueue_ { toExternalQueue } {}
+		structures::GlobalContext& context,
+		structures::ModuleLibrary& moduleLibrary,
+		structures::AtomicQueue<structures::InternalClientMessage>& fromInternalQueue,
+		structures::AtomicQueue<structures::InternalClientMessage>& commandForwardingQueue,
+		structures::AtomicQueue<structures::ModuleHandlerMessage>& toInternalQueue,
+		structures::AtomicQueue<structures::InternalClientMessage>& toExternalQueue);
 
 	~ModuleHandler();
 
@@ -113,7 +110,7 @@ private:
 	/// Queue for incoming messages from internal server (connect/status/disconnect)
 	structures::AtomicQueue<structures::InternalClientMessage>& fromInternalQueue_;
 	/// Queue for command-forward events from external client
-	std::shared_ptr <structures::AtomicQueue<structures::InternalClientMessage>> commandForwardingQueue_ {};
+	structures::AtomicQueue<structures::InternalClientMessage>& commandForwardingQueue_;
 	/// Queue for outgoing messages to internal server to be forwarded to devices
 	structures::AtomicQueue<structures::ModuleHandlerMessage>& toInternalQueue_;
 	/// Queue for outgoing messages to external server to be forwarded to external server

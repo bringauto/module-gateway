@@ -22,7 +22,7 @@ namespace ip = InternalProtocol;
 ExternalClient::ExternalClient(structures::GlobalContext &context,
 							   structures::ModuleLibrary &moduleLibrary,
 							   structures::AtomicQueue<structures::InternalClientMessage>& toExternalQueue,
-							   const std::shared_ptr<structures::AtomicQueue<structures::InternalClientMessage>> &commandForwardingQueue):
+							   structures::AtomicQueue<structures::InternalClientMessage>& commandForwardingQueue):
 		toExternalQueue_ { toExternalQueue },
 		commandForwardingQueue_ { commandForwardingQueue },
 		context_ { context },
@@ -70,7 +70,7 @@ void ExternalClient::handleCommand(const InternalProtocol::DeviceCommand &device
 	if (ret == OK) {
 		if (moduleLibraryHandler->forwardCommandOnReceive(deviceId.getDeviceType()) == OK) {
 			settings::Logger::logInfo("Command for device {} was added to queue, forwarding immediately", device.devicename());
-			commandForwardingQueue_->pushAndNotify(structures::InternalClientMessage::makeCommandForward(deviceId));
+			commandForwardingQueue_.pushAndNotify(structures::InternalClientMessage::makeCommandForward(deviceId));
 		} else {
 			settings::Logger::logInfo("Command for device {} was added to queue", device.devicename());
 		}
