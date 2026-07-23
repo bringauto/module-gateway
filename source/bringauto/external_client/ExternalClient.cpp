@@ -89,6 +89,11 @@ ExternalClient::~ExternalClient() {
 	settings::Logger::logInfo("External client stopped");
 }
 
+void ExternalClient::requestStop() {
+	reconnectQueue_.interrupt();
+	fromExternalQueue_.interrupt();
+}
+
 void ExternalClient::run() {
 	settings::Logger::logInfo("External client started, constants used: reconnect_delay: {}, queue_timeout_length: {}, "
 				 "immediate_disconnect_timeout: {}, status_response_timeout: {}",

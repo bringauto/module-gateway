@@ -34,6 +34,11 @@ public:
 	 */
 	void run();
 
+	/**
+	 * @brief Interrupt the internal queues so blocked waits wake up immediately on shutdown
+	 */
+	void requestStop();
+
 private:
 
 	/**

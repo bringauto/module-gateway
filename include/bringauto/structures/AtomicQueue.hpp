@@ -30,14 +30,25 @@ public:
 	}
 
 	/**
-	 * @brief Waits for timeout or till being notified that queue is not empty.
+	 * @brief Waits for timeout or till being notified that queue is not empty
+	 * or that the queue has been interrupted.
 	 * @param timeout length of timeout
 	 * @return true if the queue is empty
 	 */
 	bool waitForValueWithTimeout(const std::chrono::seconds &timeout) {
 		std::unique_lock<std::mutex> lock(mtx_);
-		cv_.wait_for(lock, timeout, [this]() { return !queue_.empty(); });
+		cv_.wait_for(lock, timeout, [this]() { return !queue_.empty() || interrupted_; });
 		return queue_.empty();
+	}
+
+	/**
+	 * @brief Wakes all threads blocked in waitForValueWithTimeout() immediately and keeps
+	 * every subsequent wait from blocking. Used to unblock waiters during shutdown.
+	 */
+	void interrupt() {
+		std::lock_guard<std::mutex> lock(mtx_);
+		interrupted_ = true;
+		cv_.notify_all();
 	}
 
 	/**
@@ -88,6 +99,7 @@ private:
 	std::queue<T> queue_ {};
 	std::mutex mtx_ {};
 	std::condition_variable cv_ {};
+	bool interrupted_ { false };
 };
 
 }
