@@ -63,11 +63,7 @@ FIND_PACKAGE(fleet-protocol-cxx-helpers-static 1.2.0 REQUIRED)
 FIND_PACKAGE(aeron 1.48.6 REQUIRED)
 FIND_PACKAGE(async-function-execution-shared 1.0.0 REQUIRED)
 
-# Resolve the prebuilt msquic BEFORE BAQuicLib: ba-quic-lib's bundled FindBAMsquic returns early on
-# an already-defined `msquic` target (`if(TARGET msquic) return()`), so this makes it reuse the
-# prebuilt package instead of FetchContent-building msquic + quictls/OpenSSL from source.
-FIND_PACKAGE(msquic CONFIG REQUIRED)
-
+# msquic is provided transitively by ba-quic-lib (linked PUBLIC), not resolved directly here.
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 FIND_PACKAGE(BAQuicLib REQUIRED)
 
