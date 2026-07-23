@@ -12,6 +12,10 @@ BA_PACKAGE_LIBRARY(zlib                     v1.3.2 OUTPUT_PATH_VAR ZLIB_DIR)
 BA_PACKAGE_LIBRARY(fleet-protocol-cpp       v1.2.0)
 BA_PACKAGE_LIBRARY(aeron                    v1.48.6)
 BA_PACKAGE_LIBRARY(async-function-execution v1.0.0)
+# Prebuilt msquic package. ba-quic-lib consumes msquic and would otherwise FetchContent-build it
+# (and its vendored quictls/OpenSSL) from source; providing it in scope here lets ba-quic-lib's
+# FindBAMsquic resolve the existing `msquic` target instead. See CMakeLists.txt ordering note.
+BA_PACKAGE_LIBRARY(msquic                   v2.5.6)
 
 IF (BRINGAUTO_TESTS)
     BA_PACKAGE_LIBRARY(gtest v1.12.1)
