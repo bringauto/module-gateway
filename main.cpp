@@ -74,9 +74,6 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	boost::asio::signal_set signals(context.ioContext, SIGINT, SIGTERM);
-	signals.async_wait([&context](auto, auto) { context.ioContext.stop(); });
-
 	bas::AtomicQueue<bas::ModuleHandlerMessage> toInternalQueue;
 	bas::AtomicQueue<bas::InternalClientMessage> fromInternalQueue;
 	bas::AtomicQueue<bas::InternalClientMessage> commandForwardingQueue;
@@ -87,6 +84,19 @@ int main(int argc, char **argv) {
 													  commandForwardingQueue, toInternalQueue, toExternalQueue };
 	bringauto::external_client::ExternalClient externalClient { context, moduleLibrary, toExternalQueue, commandForwardingQueue };
 
+	// Stop the io_context and wake every queue wait so all worker threads exit promptly
+	auto requestShutdown = [&]() {
+		context.ioContext.stop();
+		toInternalQueue.interrupt();
+		fromInternalQueue.interrupt();
+		commandForwardingQueue.interrupt();
+		toExternalQueue.interrupt();
+		externalClient.requestStop();
+	};
+
+	boost::asio::signal_set signals(context.ioContext, SIGINT, SIGTERM);
+	signals.async_wait([&](auto, auto) { requestShutdown(); });
+
 	std::jthread moduleHandlerThread([&moduleHandler]() { moduleHandler.run(); });
 	std::jthread externalClientThread([&externalClient]() { externalClient.run(); });
 	std::jthread contextThread2([&context]() { context.ioContext.run(); });
@@ -95,7 +105,7 @@ int main(int argc, char **argv) {
 		internalServer.run();
 	} catch(boost::system::system_error &e) {
 		baset::Logger::logError("Error during run {}", e.what());
-		context.ioContext.stop();
+		requestShutdown();
 	}
 
 	contextThread2.join();
