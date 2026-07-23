@@ -156,7 +156,7 @@ namespace bringauto::external_client::connection::communication {
 			return nullptr;
 		}
 
-		auto msg = std::make_unique<ExternalProtocol::ExternalServer>(*inboundQueue_.front());
+		auto msg = std::move(inboundQueue_.front());
 		inboundQueue_.pop();
 		return msg;
 	}
@@ -283,7 +283,7 @@ namespace bringauto::external_client::connection::communication {
 	}
 
 	void QuicCommunication::onMessageDecoded(
-		std::shared_ptr<ExternalProtocol::ExternalServer> msg
+		std::unique_ptr<ExternalProtocol::ExternalServer> msg
 	) {
 		{
 			std::scoped_lock lock(inboundMutex_);
@@ -462,7 +462,7 @@ namespace bringauto::external_client::connection::communication {
 					break;
 				}
 				if (!complete.empty()) {
-					auto msg = std::make_shared<ExternalProtocol::ExternalServer>();
+					auto msg = std::make_unique<ExternalProtocol::ExternalServer>();
 					if (msg->ParseFromArray(complete.data(), static_cast<int>(complete.size()))) {
 						self->onMessageDecoded(std::move(msg));
 					} else {
