@@ -64,7 +64,7 @@ namespace bringauto::external_client::connection::communication {
 		 * Otherwise, it retrieves and removes the next message from the inbound
 		 * queue and returns it.
 		 *
-		 * @return A shared pointer to the received ExternalServer message,
+		 * @return A unique pointer to the received ExternalServer message,
 		 *         or nullptr if no message is available or the connection is not active.
 		 */
 		std::unique_ptr<ExternalProtocol::ExternalServer> receiveMessage() override;
@@ -130,7 +130,7 @@ namespace bringauto::external_client::connection::communication {
 		/// @name Inbound (peer → this)
 		/// @{
 		/// Queue of incoming messages received from the peer
-		std::queue<std::shared_ptr<ExternalProtocol::ExternalServer> > inboundQueue_;
+		std::queue<std::unique_ptr<ExternalProtocol::ExternalServer> > inboundQueue_;
 		/// Mutex protecting access to the inbound message queue
 		std::mutex inboundMutex_;
 		/// Condition variable for signaling inbound message availability
@@ -251,7 +251,7 @@ namespace bringauto::external_client::connection::communication {
 		 *
 		 * @param msg Decoded message received from the peer.
 		 */
-		void onMessageDecoded(std::shared_ptr<ExternalProtocol::ExternalServer> msg);
+		void onMessageDecoded(std::unique_ptr<ExternalProtocol::ExternalServer> msg);
 
 		/**
 		 * @brief Sends a message to the peer using a QUIC stream.
