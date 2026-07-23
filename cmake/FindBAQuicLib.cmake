@@ -28,16 +28,25 @@ FetchContent_Declare(ba-quic-lib
     GIT_TAG        v0.1.0
     GIT_SHALLOW    TRUE
     OVERRIDE_FIND_PACKAGE)
-# ba-quic-lib's own CMakeLists.txt declares an `option(BRINGAUTO_TESTS ...)` with the same name as
-# this repo's. Since FetchContent pulls it in via add_subdirectory, an already-cached
-# BRINGAUTO_TESTS=ON from *this* repo would otherwise also build ba-quic-lib's own test suite
-# (pulling in gtest, generating its test certs, etc.) as an unwanted side effect. Shadow it with a
-# plain (non-cache) variable for the duration of this add_subdirectory only -- CMake resolves the
-# nearest-scope normal variable before falling back to the cache entry, and a child directory
-# inherits the parent's normal-variable values at the point it's added.
+# ba-quic-lib's own CMakeLists.txt declares `option(BRINGAUTO_TESTS ...)` and
+# `option(BRINGAUTO_INSTALL ...)` with the same names as this repo's. Since FetchContent pulls it in
+# via add_subdirectory, an already-cached value from *this* repo would otherwise leak into it:
+#  - BRINGAUTO_TESTS=ON would also build ba-quic-lib's own test suite (gtest, test certs, etc.).
+#  - BRINGAUTO_INSTALL=ON (set by this repo's CMDEF packaging) would run ba-quic-lib's
+#    install(EXPORT ba-quic-lib-targets), which fails at generate time: the exported ba-quic-lib
+#    target links msquic PUBLIC, but msquic (also a FetchContent subdir target) is in no export set,
+#    and CMake forbids exporting a target whose public dependency isn't exported too. We link
+#    ba-quic-lib statically in-tree and never consume its install/export, so force both OFF.
+# Shadow them with plain (non-cache) variables for the duration of this add_subdirectory only --
+# CMake resolves the nearest-scope normal variable before falling back to the cache entry, and a
+# child directory inherits the parent's normal-variable values at the point it's added.
 set(_ba_quic_lib_saved_tests_flag "${BRINGAUTO_TESTS}")
+set(_ba_quic_lib_saved_install_flag "${BRINGAUTO_INSTALL}")
 set(BRINGAUTO_TESTS OFF)
+set(BRINGAUTO_INSTALL OFF)
 FetchContent_MakeAvailable(ba-quic-lib)
 set(BRINGAUTO_TESTS "${_ba_quic_lib_saved_tests_flag}")
+set(BRINGAUTO_INSTALL "${_ba_quic_lib_saved_install_flag}")
 unset(_ba_quic_lib_saved_tests_flag)
+unset(_ba_quic_lib_saved_install_flag)
 set(BAQuicLib_FOUND TRUE)
