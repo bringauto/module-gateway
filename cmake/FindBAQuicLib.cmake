@@ -23,11 +23,9 @@ endif()
 
 message(STATUS "[BA] ba-quic-lib: system package not found, fetching via FetchContent")
 include(FetchContent)
-# TODO: ba-quic-lib has no version tag yet -- swap GIT_TAG to a real vX.Y.Z once one exists,
-# instead of tracking the master branch head.
 FetchContent_Declare(ba-quic-lib
     GIT_REPOSITORY https://gitlab.bringauto.com/bring-auto/libraries/quic-lib.git
-    GIT_TAG        master
+    GIT_TAG        v0.1.0
     GIT_SHALLOW    TRUE
     OVERRIDE_FIND_PACKAGE)
 # ba-quic-lib's own CMakeLists.txt declares an `option(BRINGAUTO_TESTS ...)` with the same name as
