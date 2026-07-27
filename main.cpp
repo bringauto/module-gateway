@@ -42,7 +42,7 @@ void initLogger(const bringauto::structures::LoggingSettings &settings) {
 	bringauto::settings::Logger::init("ModuleGateway");
 	// ba-quic-lib uses its own separate logger instance (LoggerId "ba-quic-lib") --
 	// without this init() call its internal trace/warning logs are silently swallowed.
-	bringauto::quic::Logger::init({"ModuleGateway",
+	bringauto::quic::Logger::init({std::string(bringauto::quic::kLoggerId.id),
 	                               bringauto::settings::toLoggerVerbosity(
 	                                       BRINGAUTO_MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY)});
 }
