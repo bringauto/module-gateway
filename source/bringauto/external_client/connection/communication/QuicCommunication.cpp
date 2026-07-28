@@ -20,7 +20,7 @@ namespace bringauto::external_client::connection::communication {
 		bringauto::quic::QuicSettings quicSettings;
 		try {
 			quicSettings = buildQuicSettings(settings);
-		} catch (const std::exception &e) {
+		} catch (const nlohmann::json::exception &e) {
 			settings::Logger::logCritical("[quic] Invalid QUIC settings in config: {}", e.what());
 			return;
 		}
@@ -135,7 +135,7 @@ namespace bringauto::external_client::connection::communication {
 				});
 			}
 
-			ConnectionState expected = ConnectionState::CONNECTING;
+			expected = ConnectionState::CONNECTING;
 			connectionState_.compare_exchange_strong(expected, ConnectionState::NOT_CONNECTED);
 		}
 	}
@@ -365,7 +365,7 @@ namespace bringauto::external_client::connection::communication {
 		std::string_view key,
 		std::string defaultValue
 	) {
-		const auto it = settings.protocolSettings.find(std::string(key));
+		const auto it = settings.protocolSettings.find(key);
 		if (it == settings.protocolSettings.end()) {
 			settings::Logger::logWarning("[quic] Protocol setting '{}' not found, using default", key);
 			return defaultValue;
