@@ -1,5 +1,7 @@
 #pragma once
 
+#include <bringauto/structures/ExternalConnectionSettings.hpp>
+
 #include <filesystem>
 #include <format>
 #include <iostream>
@@ -49,7 +51,8 @@ public:
 				std::string server_ip { "localhost" };
 				int port { 1883 };
 				
-				std::unordered_map<std::string, std::string> mqtt_settings {
+				std::unordered_map<std::string, std::string, bringauto::structures::TransparentStringHash,
+				                   std::equal_to<>> mqtt_settings {
 					{ "ssl", "false" },
 					{ "ca-file", "ca.pem" },
 					{ "client-cert", "client.pem" },

@@ -1,7 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -26,11 +28,26 @@ enum class ProtocolType {
 	DUMMY
 };
 
+/**
+ * @brief Transparent, heterogeneous hasher for std::string keys.
+ *
+ * Lets associative containers be looked up with std::string_view (or const char *) without
+ * constructing a temporary std::string, as long as the container's key_equal is also transparent
+ * (e.g. std::equal_to<>).
+ */
+struct TransparentStringHash {
+	using is_transparent = void;
+
+	std::size_t operator()(std::string_view value) const noexcept {
+		return std::hash<std::string_view> {}(value);
+	}
+};
+
 struct ExternalConnectionSettings {
 	/// Communication protocol
 	ProtocolType protocolType { ProtocolType::INVALID };
 	/// Map of protocol specific settings, taken from config, a pair of key and value
-	std::unordered_map<std::string, std::string> protocolSettings {};
+	std::unordered_map<std::string, std::string, TransparentStringHash, std::equal_to<>> protocolSettings {};
 	/// Ip address of the external server
 	std::string serverIp {};
 	/// Port of the external server

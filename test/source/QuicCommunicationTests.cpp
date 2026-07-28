@@ -5,7 +5,8 @@
 
 namespace {
 bringauto::structures::ExternalConnectionSettings makeSettings(
-	std::unordered_map<std::string, std::string> protocolSettings
+	std::unordered_map<std::string, std::string, bringauto::structures::TransparentStringHash,
+	                   std::equal_to<>> protocolSettings
 ) {
 	return bringauto::structures::ExternalConnectionSettings {
 		.protocolType = bringauto::structures::ProtocolType::QUIC,
