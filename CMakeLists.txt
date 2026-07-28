@@ -47,6 +47,17 @@ IF(NOT BRINGAUTO_SYSTEM_DEP)
     INCLUDE(cmake/Dependencies.cmake)
 ENDIF()
 
+# Must be resolved before FIND_PACKAGE(BAQuicLib REQUIRED) below: ba-quic-lib vendors its own
+# FindBALogger.cmake, which only defines bringauto_logger::bringauto_logger (a partial shim, not the
+# full exported target set) if that target doesn't already exist. Resolving our own
+# libbringauto_logger package first makes the real bringauto_logger::bringauto_logger /
+# bringauto_logger_spdlog / bringauto_logger_api targets exist already, so ba-quic-lib's
+# FindBALogger.cmake sees the target present and skips its own definition. Doing it the other way
+# round leaves the shim's partial target in place, and the later libbringauto_logger CONFIG import
+# then fails at configure time with "Some (but not all) targets in this export set were already
+# defined".
+FIND_PACKAGE(libbringauto_logger 2.0.0 REQUIRED)
+
 # msquic is provided transitively by ba-quic-lib (linked PUBLIC), not resolved directly here.
 # Resolved before the BRINGAUTO_GET_PACKAGES_ONLY early-return below so the Dockerfile's
 # cmlib_cache_builder stage (which builds with that flag set) also pre-fetches ba-quic-lib instead
@@ -65,7 +76,6 @@ FIND_PACKAGE(cxxopts 3.3.1 REQUIRED)
 FIND_PACKAGE(nlohmann_json 3.12.0 REQUIRED)
 FIND_PACKAGE(PahoMqttCpp REQUIRED)
 FIND_PACKAGE(eclipse-paho-mqtt-c REQUIRED)
-FIND_PACKAGE(libbringauto_logger 2.0.0 REQUIRED)
 FIND_PACKAGE(fleet-protocol-interface 2.0.0 REQUIRED)
 FIND_PACKAGE(ZLIB 1.3.2 REQUIRED)
 FIND_PACKAGE(fleet-protocol-cxx-helpers-static 1.2.0 REQUIRED)
