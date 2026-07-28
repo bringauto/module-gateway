@@ -20,7 +20,7 @@ namespace bringauto::external_client::connection::communication {
 		bringauto::quic::QuicSettings quicSettings;
 		try {
 			quicSettings = buildQuicSettings(settings);
-		} catch (const nlohmann::json::exception &e) {
+		} catch (const std::exception &e) {
 			settings::Logger::logCritical("[quic] Invalid QUIC settings in config: {}", e.what());
 			return;
 		}
@@ -45,7 +45,7 @@ namespace bringauto::external_client::connection::communication {
 	) {
 		bringauto::quic::QuicEndpointConfig config;
 		config.host = settings.serverIp;
-		config.port = static_cast<std::uint16_t>(settings.port);
+		config.port = settings.port;
 		config.alpn = getProtocolSettingsString(settings, settings::Constants::ALPN);
 		config.certPath = getProtocolSettingsString(settings, settings::Constants::CLIENT_CERT);
 		config.keyPath = getProtocolSettingsString(settings, settings::Constants::CLIENT_KEY);
@@ -66,6 +66,11 @@ namespace bringauto::external_client::connection::communication {
 			if (endpointConfigKeys.contains(key)) {
 				continue;
 			}
+			// NOTE: SettingsParser stores string values unquoted, so a string-typed setting whose
+			// value happens to look numeric/boolean/null (e.g. "1000") is indistinguishable here from
+			// a genuinely numeric one and gets parsed as JSON rather than kept as a string. Every QUIC
+			// setting is currently numeric, so this is harmless today; it would need a typed lookup
+			// (not raw-string re-parsing) the moment a string-typed QUIC setting is added.
 			json[key] = nlohmann::json::accept(raw) ? nlohmann::json::parse(raw) : nlohmann::json(raw);
 		}
 
@@ -118,7 +123,20 @@ namespace bringauto::external_client::connection::communication {
 			settings::Logger::logError("[quic] handshake did not complete (state={})",
 			                           common_utils::EnumUtils::connectionStateToString(connectionState_));
 			closeConnection();
-			connectionState_.store(ConnectionState::NOT_CONNECTED);
+
+			// closeConnection() only requests the disconnect; give onDisconnected() a bounded chance
+			// to arrive before giving up, so a late onConnected() isn't left racing a hard
+			// NOT_CONNECTED store below (which would otherwise desync gateway state from the
+			// transport -- see the CAS instead of an unconditional store).
+			{
+				std::unique_lock lock(outboundMutex_);
+				outboundCv_.wait_for(lock, settings::receive_message_timeout, [this] {
+					return connectionState_.load() == ConnectionState::NOT_CONNECTED;
+				});
+			}
+
+			ConnectionState expected = ConnectionState::CONNECTING;
+			connectionState_.compare_exchange_strong(expected, ConnectionState::NOT_CONNECTED);
 		}
 	}
 
@@ -205,6 +223,17 @@ namespace bringauto::external_client::connection::communication {
 			std::lock_guard lock(outboundMutex_);
 			outboundCv_.notify_all();
 		}
+		// Explicitly stop+join here so ~QuicCommunication() never relies on senderThread_'s own
+		// destructor doing this implicitly, while a late onConnected() from an msquic worker thread
+		// could still be assigning to the same member -- see senderThreadMutex_. This also guarantees
+		// the sender thread is fully stopped before quicClient_ is torn down by the destructor.
+		{
+			std::lock_guard senderLock(senderThreadMutex_);
+			if (senderThread_.joinable()) {
+				senderThread_.request_stop();
+				senderThread_.join();
+			}
+		}
 
 		settings::Logger::logInfo("[quic] Connection stopped");
 	}
@@ -229,7 +258,7 @@ namespace bringauto::external_client::connection::communication {
 
 		const std::span<const std::uint8_t> bytes(reinterpret_cast<const std::uint8_t *>(serialized.data()),
 		                                           serialized.size());
-		if (!quicClient_->send(bytes)) {
+		if (!quicClient_ || !quicClient_->send(bytes)) {
 			settings::Logger::logError("[quic] Failed to send message, message dropped");
 			return;
 		}
@@ -243,7 +272,10 @@ namespace bringauto::external_client::connection::communication {
 		auto expected = ConnectionState::CONNECTING;
 		if (connectionState_.compare_exchange_strong(expected, ConnectionState::CONNECTED)) {
 			/// Start sender thread only after connection is fully established
-			senderThread_ = std::jthread(&QuicCommunication::senderLoop, this);
+			{
+				std::lock_guard senderLock(senderThreadMutex_);
+				senderThread_ = std::jthread(&QuicCommunication::senderLoop, this);
+			}
 			// Notify under outboundMutex_: the CONNECTED transition above must not slip between
 			// initializeConnection()'s predicate check and its wait_for(), or the wakeup is lost
 			// and the connect blocks for the full timeout.
@@ -267,11 +299,28 @@ namespace bringauto::external_client::connection::communication {
 			std::lock_guard lock(inboundMutex_);
 			inboundCv_.notify_all();
 		}
+		// Explicitly stop+join the sender thread now rather than leaving it to the next
+		// onConnected()'s move-assign (or ~QuicCommunication()'s implicit destruction). The state
+		// change above already woke senderLoop's untimed wait, so this join is bounded -- it does not
+		// block on an in-flight quicClient_->send(). Guarded by senderThreadMutex_ against a
+		// concurrent onConnected() assigning a new thread from another msquic worker callback.
+		{
+			std::lock_guard senderLock(senderThreadMutex_);
+			if (senderThread_.joinable()) {
+				senderThread_.request_stop();
+				senderThread_.join();
+			}
+		}
 	}
 
 	void QuicCommunication::onShutdownInitiatedByPeer() {
 		settings::Logger::logWarning("[quic] Connection shutdown initiated by peer");
 		connectionState_.store(ConnectionState::CLOSING);
+		// Wake senderLoop's untimed wait: its predicate already treats CLOSING as "stop looping", but
+		// it only re-checks the predicate when notified, so without this it stays blocked until
+		// onDisconnected() arrives instead of unwinding as soon as the peer starts closing.
+		std::lock_guard lock(outboundMutex_);
+		outboundCv_.notify_all();
 	}
 
 	void QuicCommunication::onBytesReceived(std::vector<std::uint8_t> bytes) {

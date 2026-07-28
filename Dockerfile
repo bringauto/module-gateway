@@ -6,6 +6,7 @@ ARG CMLIB_REQUIRED_ENV_TMP_PATH=/home/bringauto/cmlib_cache
 COPY CMakeLists.txt /home/bringauto/module-gateway/CMakeLists.txt
 COPY CMLibStorage.cmake /home/bringauto/module-gateway/CMLibStorage.cmake
 COPY cmake/Dependencies.cmake /home/bringauto/module-gateway/cmake/Dependencies.cmake
+COPY cmake/FindBAQuicLib.cmake /home/bringauto/module-gateway/cmake/FindBAQuicLib.cmake
 
 WORKDIR /home/bringauto/module-gateway/build
 RUN cmake .. -DCMAKE_BUILD_TYPE=Release -DBRINGAUTO_GET_PACKAGES_ONLY=ON

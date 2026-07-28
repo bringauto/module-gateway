@@ -41,11 +41,20 @@ IF(BRINGAUTO_PACKAGE)
     ENDIF()
 ENDIF()
 
+LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
 IF(NOT BRINGAUTO_SYSTEM_DEP)
     INCLUDE(cmake/Dependencies.cmake)
-    IF(BRINGAUTO_GET_PACKAGES_ONLY)
-        RETURN()
-    ENDIF()
+ENDIF()
+
+# msquic is provided transitively by ba-quic-lib (linked PUBLIC), not resolved directly here.
+# Resolved before the BRINGAUTO_GET_PACKAGES_ONLY early-return below so the Dockerfile's
+# cmlib_cache_builder stage (which builds with that flag set) also pre-fetches ba-quic-lib instead
+# of only reaching it during the real build stage.
+FIND_PACKAGE(BAQuicLib REQUIRED)
+
+IF(NOT BRINGAUTO_SYSTEM_DEP AND BRINGAUTO_GET_PACKAGES_ONLY)
+    RETURN()
 ENDIF()
 
 SET(Protobuf_USE_STATIC_LIBS ON)
@@ -62,10 +71,6 @@ FIND_PACKAGE(ZLIB 1.3.2 REQUIRED)
 FIND_PACKAGE(fleet-protocol-cxx-helpers-static 1.2.0 REQUIRED)
 FIND_PACKAGE(aeron 1.48.6 REQUIRED)
 FIND_PACKAGE(async-function-execution-shared 1.0.0 REQUIRED)
-
-# msquic is provided transitively by ba-quic-lib (linked PUBLIC), not resolved directly here.
-LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-FIND_PACKAGE(BAQuicLib REQUIRED)
 
 FILE(GLOB_RECURSE source_files "source/*")
 ADD_LIBRARY(module-gateway-lib STATIC "${source_files}")

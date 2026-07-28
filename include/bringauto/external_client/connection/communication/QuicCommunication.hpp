@@ -8,12 +8,15 @@
 #include <nlohmann/json.hpp>
 
 #include <condition_variable>
+#include <mutex>
 #include <queue>
 #include <thread>
 
 
 namespace bringauto::external_client::connection::communication {
 	class QuicCommunication : public ICommunicationChannel {
+		friend class QuicCommunicationTests;
+
 	public:
 		explicit QuicCommunication(const structures::ExternalConnectionSettings &settings, const std::string &company,
 		                           const std::string &vehicleName);
@@ -130,12 +133,20 @@ namespace bringauto::external_client::connection::communication {
 		/// logged during construction).
 		bool initialized_{false};
 
+		/// Guards senderThread_: onConnected() (an msquic worker thread) assigns a new thread here,
+		/// while onDisconnected()/stop() (threads we own) explicitly request_stop()+join() the
+		/// previous one. Without this, those two accesses could race on the same jthread object.
+		std::mutex senderThreadMutex_;
+
 		/// Dedicated sender thread responsible for transmitting outbound messages. Needed because
 		/// ExternalConnection enqueues the Fleet-protocol Connect message immediately after
 		/// initializeConnection() returns, before the QUIC handshake completes -- this thread only
-		/// starts draining the queue once the transport reports CONNECTED. Declared after
-		/// quicClient_ so it (and its last use of quicClient_) is joined before quicClient_ is
-		/// destroyed.
+		/// starts draining the queue once the transport reports CONNECTED. Always accessed under
+		/// senderThreadMutex_. onDisconnected() and stop() explicitly stop+join it themselves rather
+		/// than relying on jthread's implicit stop+join on move-assignment/destruction: that implicit
+		/// join could otherwise run concurrently with -- or be triggered from -- an msquic worker
+		/// thread (a fresh onConnected() reassigning this member, or quicClient_'s own destructor
+		/// tearing down while a callback is still in flight).
 		std::jthread senderThread_;
 
 		/**

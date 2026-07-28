@@ -1,5 +1,3 @@
-include_guard(GLOBAL)
-
 # Provides: ba-quic-lib::ba-quic-lib
 # Resolution order: in-scope target -> system config package -> FetchContent source build.
 #
@@ -11,9 +9,11 @@ if(TARGET ba-quic-lib::ba-quic-lib)
     return()
 endif()
 
-if(ba-quic-lib_DIR MATCHES "${CMAKE_BINARY_DIR}")
+string(FIND "${ba-quic-lib_DIR}" "${CMAKE_BINARY_DIR}" _ba_quic_lib_dir_idx)
+if(_ba_quic_lib_dir_idx EQUAL 0)
     unset(ba-quic-lib_DIR CACHE)
 endif()
+unset(_ba_quic_lib_dir_idx)
 find_package(ba-quic-lib QUIET CONFIG)
 if(ba-quic-lib_FOUND)
     message(STATUS "[BA] ba-quic-lib: found via system package")
@@ -37,16 +37,18 @@ FetchContent_Declare(ba-quic-lib
 #    target links msquic PUBLIC, but msquic (also a FetchContent subdir target) is in no export set,
 #    and CMake forbids exporting a target whose public dependency isn't exported too. We link
 #    ba-quic-lib statically in-tree and never consume its install/export, so force both OFF.
-# Shadow them with plain (non-cache) variables for the duration of this add_subdirectory only --
-# CMake resolves the nearest-scope normal variable before falling back to the cache entry, and a
-# child directory inherits the parent's normal-variable values at the point it's added.
+# Force both cache entries OFF for the duration of this add_subdirectory, then restore them
+# afterwards. A plain-variable shadow would be simpler but silently depends on CMP0077=NEW being in
+# effect *inside ba-quic-lib's own directory scope*, which is decided by ba-quic-lib's own
+# cmake_minimum_required(), not anything we control or can reliably assert from here. FORCE-writing
+# the cache is more verbose but works unconditionally.
 set(_ba_quic_lib_saved_tests_flag "${BRINGAUTO_TESTS}")
 set(_ba_quic_lib_saved_install_flag "${BRINGAUTO_INSTALL}")
-set(BRINGAUTO_TESTS OFF)
-set(BRINGAUTO_INSTALL OFF)
+set(BRINGAUTO_TESTS OFF CACHE BOOL "" FORCE)
+set(BRINGAUTO_INSTALL OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(ba-quic-lib)
-set(BRINGAUTO_TESTS "${_ba_quic_lib_saved_tests_flag}")
-set(BRINGAUTO_INSTALL "${_ba_quic_lib_saved_install_flag}")
+set(BRINGAUTO_TESTS "${_ba_quic_lib_saved_tests_flag}" CACHE BOOL "Enable tests" FORCE)
+set(BRINGAUTO_INSTALL "${_ba_quic_lib_saved_install_flag}" CACHE BOOL "Enable install" FORCE)
 unset(_ba_quic_lib_saved_tests_flag)
 unset(_ba_quic_lib_saved_install_flag)
 set(BAQuicLib_FOUND TRUE)
