@@ -13,9 +13,13 @@
 #include <thread>
 
 
+/// Forward declaration so the qualified friend declaration below refers to the test fixture at
+/// global scope, not one that would otherwise be introduced inside this header's own namespace.
+class QuicCommunicationTests;
+
 namespace bringauto::external_client::connection::communication {
 	class QuicCommunication : public ICommunicationChannel {
-		friend class QuicCommunicationTests;
+		friend class ::QuicCommunicationTests;
 
 	public:
 		explicit QuicCommunication(const structures::ExternalConnectionSettings &settings, const std::string &company,
