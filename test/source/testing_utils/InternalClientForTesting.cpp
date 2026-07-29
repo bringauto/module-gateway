@@ -30,9 +30,14 @@ bool ClientForTesting::isOpen() {
 void ClientForTesting::sendMessage(const InternalProtocol::InternalClient &message) {
 	std::string data = message.SerializeAsString();
 	uint32_t header = data.size();
-	auto headerWSize = socket->write_some(boost::asio::buffer(&header, sizeof(uint32_t)));
+	// Non-throwing overload: if the server already closed this socket, a throwing write_some()
+	// would abort the whole test process instead of just failing this one assertion.
+	boost::system::error_code er {};
+	auto headerWSize = socket->write_some(boost::asio::buffer(&header, sizeof(uint32_t)), er);
+	ASSERT_FALSE(er);
 	ASSERT_EQ(headerWSize, sizeof(uint32_t));
-	auto dataWSize = socket->write_some(boost::asio::buffer(data));
+	auto dataWSize = socket->write_some(boost::asio::buffer(data), er);
+	ASSERT_FALSE(er);
 	ASSERT_EQ(dataWSize, header);
 }
 
@@ -86,13 +91,19 @@ void ClientForTesting::receiveMessage(InternalProtocol::InternalServer &message)
 }
 
 void ClientForTesting::sendMessage(uint32_t header, std::string data, bool recastHeader) {
+	// See the other sendMessage overload above: non-throwing write_some() so a write to an
+	// already-closed socket fails this assertion instead of aborting the test process.
+	boost::system::error_code er {};
 	if(recastHeader) {
-		socket->write_some(boost::asio::buffer(&header, sizeof(uint16_t)));
+		socket->write_some(boost::asio::buffer(&header, sizeof(uint16_t)), er);
+		ASSERT_FALSE(er);
 		return;
 	}
-	auto headerWSize = socket->write_some(boost::asio::buffer(&header, sizeof(uint32_t)));
+	auto headerWSize = socket->write_some(boost::asio::buffer(&header, sizeof(uint32_t)), er);
+	ASSERT_FALSE(er);
 	ASSERT_EQ(headerWSize, sizeof(uint32_t));
-	auto dataWSize = socket->write_some(boost::asio::buffer(data));
+	auto dataWSize = socket->write_some(boost::asio::buffer(data), er);
+	ASSERT_FALSE(er);
 	ASSERT_EQ(dataWSize, data.size());
 }
 
