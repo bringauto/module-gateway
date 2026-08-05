@@ -1,4 +1,3 @@
-
 #include <bringauto/external_client/ExternalClient.hpp>
 #include <bringauto/internal_server/InternalServer.hpp>
 #include <bringauto/modules/ModuleHandler.hpp>
@@ -23,6 +22,14 @@
 #endif
 
 
+/**
+ * @brief Configures and initializes the module gateway and QUIC loggers.
+ *
+ * Adds the enabled console and file sinks from the logging settings. File
+ * logging uses 50 MiB rotation with five rotated files.
+ *
+ * @param settings Logging sink configuration for the module gateway and QUIC loggers.
+ */
 void initLogger(const bringauto::structures::LoggingSettings &settings) {
 	if(settings.console.use) {
 		bringauto::logging::ConsoleSink::Params paramConsoleSink { settings.console.level };
@@ -47,6 +54,14 @@ void initLogger(const bringauto::structures::LoggingSettings &settings) {
 	                                       BRINGAUTO_MODULE_GATEWAY_MINIMUM_LOGGER_VERBOSITY)});
 }
 
+/**
+ * @brief Runs the module gateway application.
+ *
+ * @param argc Number of command-line arguments.
+ * @param argv Command-line arguments used to configure the application.
+ * @return 0 if execution completes normally or configuration requests termination;
+ *         1 if configuration or module initialization fails.
+ */
 int main(int argc, char **argv) {
 	namespace bais = bringauto::internal_server;
 	namespace bas = bringauto::structures;

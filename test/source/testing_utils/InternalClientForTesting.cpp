@@ -27,6 +27,11 @@ bool ClientForTesting::isOpen() {
 	return socket->is_open();
 }
 
+/**
+ * @brief Sends a serialized client message over the socket.
+ *
+ * @param message Client message to serialize and send.
+ */
 void ClientForTesting::sendMessage(const InternalProtocol::InternalClient &message) {
 	std::string data = message.SerializeAsString();
 	uint32_t header = data.size();
@@ -41,6 +46,14 @@ void ClientForTesting::sendMessage(const InternalProtocol::InternalClient &messa
 	ASSERT_EQ(dataWSize, header);
 }
 
+/**
+ * @brief Reads a framed server message and parses it into the provided object.
+ *
+ * The socket is closed if the message is not received within the configured
+ * timeout. Read, framing, and parsing failures trigger test assertions.
+ *
+ * @param message Object populated with the received server message.
+ */
 void ClientForTesting::receiveMessage(InternalProtocol::InternalServer &message) {
 	boost::system::error_code er {};
 	bool readFinished = false;
@@ -90,6 +103,13 @@ void ClientForTesting::receiveMessage(InternalProtocol::InternalServer &message)
 	ASSERT_TRUE(message.ParseFromArray(vector.data(), size));
 }
 
+/**
+ * @brief Sends a framed message using the specified header format.
+ *
+ * @param header Message length header.
+ * @param data Message payload.
+ * @param recastHeader Whether to send a 16-bit header instead of a 32-bit header.
+ */
 void ClientForTesting::sendMessage(uint32_t header, std::string data, bool recastHeader) {
 	// See the other sendMessage overload above: non-throwing boost::asio::write() so a write to an
 	// already-closed socket fails this assertion instead of aborting the test process.
