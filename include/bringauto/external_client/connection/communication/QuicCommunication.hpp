@@ -89,7 +89,12 @@ namespace bringauto::external_client::connection::communication {
 
 		void cancelReceive() override;
 
-		bool consumeServerDisconnectNotification() override { return false; }
+		/**
+ * @brief Indicates whether a server disconnect notification is available.
+ *
+ * @return false because server disconnect notifications are unavailable.
+ */
+bool consumeServerDisconnectNotification() override { return false; }
 
 	private:
 		/// Atomic state of the connection used for synchronization across threads

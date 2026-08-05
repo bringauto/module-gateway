@@ -8,6 +8,16 @@
 
 
 namespace bringauto::external_client::connection::communication {
+	/**
+	 * @brief Initializes QUIC communication for the specified endpoint and vehicle.
+	 *
+	 * Invalid QUIC settings or transport initialization failures leave the channel
+	 * uninitialized.
+	 *
+	 * @param settings External connection and QUIC transport settings.
+	 * @param company Company associated with the connection.
+	 * @param vehicleName Vehicle associated with the connection.
+	 */
 	QuicCommunication::QuicCommunication(const structures::ExternalConnectionSettings &settings,
 	                                     const std::string &company,
 	                                     const std::string &vehicleName) : ICommunicationChannel(settings) {
@@ -36,10 +46,19 @@ namespace bringauto::external_client::connection::communication {
 		                          settings.port, company, vehicleName);
 	}
 
+	/**
+	 * @brief Stops communication and releases the QUIC client resources.
+	 */
 	QuicCommunication::~QuicCommunication() {
 		stop();
 	}
 
+	/**
+	 * @brief Builds the QUIC endpoint configuration from external connection settings.
+	 *
+	 * @param settings Connection settings containing the server address, port, and TLS parameters.
+	 * @return QUIC endpoint configuration populated with the connection and certificate settings.
+	 */
 	bringauto::quic::QuicEndpointConfig QuicCommunication::buildEndpointConfig(
 		const structures::ExternalConnectionSettings &settings
 	) {
@@ -53,6 +72,12 @@ namespace bringauto::external_client::connection::communication {
 		return config;
 	}
 
+	/**
+	 * @brief Builds QUIC transport settings from external connection settings.
+	 *
+	 * @param settings Connection settings containing QUIC protocol options.
+	 * @return Parsed QUIC transport settings.
+	 */
 	bringauto::quic::QuicSettings QuicCommunication::buildQuicSettings(
 		const structures::ExternalConnectionSettings &settings
 	) {
@@ -82,6 +107,13 @@ namespace bringauto::external_client::connection::communication {
 		return quicSettings;
 	}
 
+	/**
+	 * @brief Establishes a QUIC connection and waits for the handshake to complete.
+	 *
+	 * Clears messages from any previous session before starting the connection attempt.
+	 * If the connection cannot be established within the configured timeout, requests
+	 * disconnection and restores the disconnected state.
+	 */
 	void QuicCommunication::initializeConnection() {
 		cancelReceive_.store(false);
 
@@ -156,6 +188,14 @@ namespace bringauto::external_client::connection::communication {
 		return true;
 	}
 
+	/**
+	 * @brief Retrieves the next message received from the server.
+	 *
+	 * Waits until a message is available, receive cancellation occurs, the connection
+	 * enters an invalid state, or the receive timeout expires.
+	 *
+	 * @return The next queued server message, or nullptr if no message is available.
+	 */
 	std::unique_ptr<ExternalProtocol::ExternalServer> QuicCommunication::receiveMessage() {
 		using enum ConnectionState;
 		std::unique_lock lock(inboundMutex_);
@@ -193,6 +233,9 @@ namespace bringauto::external_client::connection::communication {
 		return msg;
 	}
 
+	/**
+	 * @brief Requests asynchronous disconnection from the QUIC server.
+	 */
 	void QuicCommunication::closeConnection() {
 		if (quicClient_) {
 			quicClient_->disconnect();
@@ -200,6 +243,11 @@ namespace bringauto::external_client::connection::communication {
 		/// Asynchronously waiting for the transport's onDisconnected callback, then continue there
 	}
 
+	/**
+	 * @brief Cancels pending receive operations.
+	 *
+	 * Wakes threads waiting for inbound messages so they can observe the cancellation.
+	 */
 	void QuicCommunication::cancelReceive() {
 		{
 			std::lock_guard lock(inboundMutex_);
@@ -208,6 +256,9 @@ namespace bringauto::external_client::connection::communication {
 		inboundCv_.notify_all();
 	}
 
+	/**
+	 * @brief Stops the QUIC communication channel and waits for its sender thread to finish.
+	 */
 	void QuicCommunication::stop() {
 		if (quicClient_) {
 			quicClient_->disconnect();
@@ -238,6 +289,11 @@ namespace bringauto::external_client::connection::communication {
 		settings::Logger::logInfo("[quic] Connection stopped");
 	}
 
+	/**
+	 * @brief Queues a decoded server message and wakes a waiting receiver.
+	 *
+	 * @param msg Decoded server message to enqueue.
+	 */
 	void QuicCommunication::onMessageDecoded(
 		std::unique_ptr<ExternalProtocol::ExternalServer> msg
 	) {
@@ -249,6 +305,13 @@ namespace bringauto::external_client::connection::communication {
 		inboundCv_.notify_one();
 	}
 
+	/**
+	 * @brief Serializes and sends a client message through the QUIC connection.
+	 *
+	 * Messages that cannot be serialized or sent are dropped and logged.
+	 *
+	 * @param message Client message to send.
+	 */
 	void QuicCommunication::sendViaQuicClient(const ExternalProtocol::ExternalClient &message) {
 		std::string serialized;
 		if (!message.SerializeToString(&serialized)) {
@@ -266,6 +329,12 @@ namespace bringauto::external_client::connection::communication {
 		settings::Logger::logDebug("[quic] Message sent");
 	}
 
+	/**
+	 * @brief Handles successful QUIC connection establishment.
+	 *
+	 * Transitions the connection to the connected state, starts the sender thread,
+	 * and wakes operations waiting for the connection.
+	 */
 	void QuicCommunication::onConnected() {
 		settings::Logger::logInfo("[quic] Connected to server");
 
@@ -284,6 +353,12 @@ namespace bringauto::external_client::connection::communication {
 		}
 	}
 
+	/**
+	 * @brief Completes connection shutdown and releases the sender thread.
+	 *
+	 * Marks the connection as disconnected, wakes threads waiting for inbound or
+	 * outbound activity, and stops and joins the sender thread.
+	 */
 	void QuicCommunication::onDisconnected() {
 		settings::Logger::logInfo("[quic] Connection shutdown complete");
 
@@ -313,6 +388,11 @@ namespace bringauto::external_client::connection::communication {
 		}
 	}
 
+	/**
+	 * @brief Handles a connection shutdown initiated by the peer.
+	 *
+	 * Marks the connection as closing and wakes the outbound sender loop.
+	 */
 	void QuicCommunication::onShutdownInitiatedByPeer() {
 		settings::Logger::logWarning("[quic] Connection shutdown initiated by peer");
 		connectionState_.store(ConnectionState::CLOSING);
@@ -323,6 +403,11 @@ namespace bringauto::external_client::connection::communication {
 		outboundCv_.notify_all();
 	}
 
+	/**
+	 * @brief Processes bytes received from the QUIC connection as an external server message.
+	 *
+	 * @param bytes Serialized external server message data.
+	 */
 	void QuicCommunication::onBytesReceived(std::vector<std::uint8_t> bytes) {
 		auto msg = std::make_unique<ExternalProtocol::ExternalServer>();
 		if (!msg->ParseFromArray(bytes.data(), static_cast<int>(bytes.size()))) {
@@ -332,6 +417,9 @@ namespace bringauto::external_client::connection::communication {
 		onMessageDecoded(std::move(msg));
 	}
 
+	/**
+	 * @brief Sends queued client messages while the QUIC connection is active.
+	 */
 	void QuicCommunication::senderLoop() {
 		settings::Logger::logDebug("[quic] Sender thread loop started");
 
@@ -360,6 +448,14 @@ namespace bringauto::external_client::connection::communication {
 		}
 	}
 
+	/**
+	 * @brief Retrieves a protocol setting and converts JSON string values to plain strings.
+	 *
+	 * @param settings Connection settings containing the protocol setting.
+	 * @param key Name of the protocol setting to retrieve.
+	 * @param defaultValue Value returned when the setting is missing or contains invalid JSON.
+	 * @return The setting value, with JSON string values unwrapped, or `defaultValue` when unavailable or invalid.
+	 */
 	std::string QuicCommunication::getProtocolSettingsString(
 		const structures::ExternalConnectionSettings &settings,
 		std::string_view key,

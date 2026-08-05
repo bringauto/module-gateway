@@ -38,6 +38,11 @@ enum class ProtocolType {
 struct TransparentStringHash {
 	using is_transparent = void;
 
+	/**
+	 * @brief Hashes a string view.
+	 *
+	 * @return std::size_t Hash value for the string view.
+	 */
 	std::size_t operator()(std::string_view value) const noexcept {
 		return std::hash<std::string_view> {}(value);
 	}
