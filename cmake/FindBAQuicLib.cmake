@@ -25,7 +25,7 @@ message(STATUS "[BA] ba-quic-lib: system package not found, fetching via FetchCo
 include(FetchContent)
 FetchContent_Declare(ba-quic-lib
     GIT_REPOSITORY "https://gitlab.bringauto.com/bring-auto/libraries/quic-lib.git"
-    GIT_TAG        v0.1.1
+    GIT_TAG        v0.1.2
     GIT_SHALLOW    TRUE
     OVERRIDE_FIND_PACKAGE)
 # ba-quic-lib's own CMakeLists.txt declares `option(BRINGAUTO_TESTS ...)` and
