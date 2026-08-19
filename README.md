@@ -57,6 +57,20 @@ make
 ./module-gateway-app --config-path=../resources/config/default.json
 ```
 
+### Connecting a device module to a cloud external server
+
+Each module the gateway carries needs its plugin in `module-paths` **and** its number listed in the
+endpoint's `modules`; a module with no endpoint is logged as
+`Module with number: N does not have endpoint, so skipping this module` and its devices are then
+refused with `DeviceConnect rejected`. `external-connection.vehicle-name` must match a car the
+external server has configured, or the server answers
+`Received Connect message for unknown vehicle`.
+
+For the teleoperation streaming-control path that means module `3` (transparent) in both places, a
+`QUIC` endpoint pointing at the external server's vehicle leg, and its mTLS material in
+`quic-settings` — see [QUIC Example](./resources/config/quic_example.json) and the
+[config README](./resources/config/README.md).
+
 ### Arguments
 
 * Required arguments:
@@ -112,3 +126,14 @@ The bug is already [reported](https://bugs.kde.org/show_bug.cgi?id=358980).
 ## Dockerfile
 
 Port 1636 is exposed in the dockerfile.
+
+Building the image outside CI currently fails in the first stage with
+`CMCONF[FLEET_PROTOCOL] - Cannot find configuration for system 'FLEET_PROTOCOL'`: nothing in the
+Dockerfile supplies the FLEET_PROTOCOL CMCONF configuration that `CMCONF_INIT_SYSTEM` requires, and
+the `bringauto/cpp-build-environment:latest` base does not carry it. Build from source for now.
+
+## Published images vs. QUIC
+
+The images published to Docker Hub up to and including `v1.3.4` are **MQTT-only** — they reject a
+QUIC endpoint at startup with `Invalid protocol type: "QUIC"`. Talking QUIC to an external server
+therefore needs a build from source of a version that supports it.
