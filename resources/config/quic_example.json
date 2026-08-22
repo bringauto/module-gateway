@@ -28,6 +28,8 @@
           "client-key" : "build/certs/client-key.pem",
 	      "alpn" : "sample",
           "DisconnectTimeoutMs" : 800,
+          "IdleTimeoutMs" : 4000,
+          "KeepAliveIntervalMs" : 1000,
           "PeerUnidiStreamCount" : 100
         },
         "modules": [1,2,3]
