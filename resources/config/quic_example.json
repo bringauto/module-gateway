@@ -27,7 +27,7 @@
           "client-cert" : "build/certs/client.pem",
           "client-key" : "build/certs/client-key.pem",
 	      "alpn" : "sample",
-          "DisconnectTimeoutMs" : 800,
+          "DisconnectTimeoutMs" : 3000,
           "IdleTimeoutMs" : 4000,
           "KeepAliveIntervalMs" : 1000,
           "PeerUnidiStreamCount" : 100
