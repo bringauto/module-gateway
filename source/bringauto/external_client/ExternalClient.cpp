@@ -161,22 +161,25 @@ void ExternalClient::handleAggregatedMessages() {
 		auto message = std::move(toExternalQueue_.front());
 		toExternalQueue_.pop();
 		if(not sendStatus(message)) {
-			// Wait for either a fresh device status (a device is connected and sending data
-			// again) or an explicit reconnect signal (e.g. MQTT server-disconnect notification),
-			// whichever comes first, instead of blindly sleeping out the full
-			// immediate_disconnect_timeout. toExternalQueue_ wakes this immediately via its own
-			// pushAndNotify() as soon as any device sends a status, so a device reconnecting
-			// sooner is handled right away rather than waiting on a periodic check.
-			// reconnectQueue_ has no such producer for QUIC, so it is only polled every second.
-			const auto disconnectDeadline = std::chrono::steady_clock::now() + settings::immediate_disconnect_timeout;
-			while(not context_.ioContext.stopped() && std::chrono::steady_clock::now() < disconnectDeadline) {
-				if(not toExternalQueue_.waitForValueWithTimeout(std::chrono::seconds(1))) {
-					break;
-				}
-				if(not reconnectQueue_.empty()) {
-					break;
-				}
-			}
+			waitForReconnectSignal();
+		}
+	}
+}
+
+void ExternalClient::waitForReconnectSignal() {
+	// Wait for either a fresh device status (a device is connected and sending data again) or an
+	// explicit reconnect signal (e.g. MQTT server-disconnect notification), whichever comes first,
+	// instead of blindly sleeping out the full immediate_disconnect_timeout. toExternalQueue_ wakes
+	// this immediately via its own pushAndNotify() as soon as any device sends a status, so a
+	// device reconnecting sooner is handled right away rather than waiting on a periodic check.
+	// reconnectQueue_ has no such producer for QUIC, so it is only polled every second.
+	const auto disconnectDeadline = std::chrono::steady_clock::now() + settings::immediate_disconnect_timeout;
+	while(not context_.ioContext.stopped() && std::chrono::steady_clock::now() < disconnectDeadline) {
+		if(not toExternalQueue_.waitForValueWithTimeout(std::chrono::seconds(1))) {
+			return;
+		}
+		if(not reconnectQueue_.empty()) {
+			return;
 		}
 	}
 }
