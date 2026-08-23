@@ -145,9 +145,20 @@ namespace bringauto::external_client::connection::communication {
 		// runs the fleet-protocol connect sequence (send devices / read connect response) on a
 		// not-yet-connected transport, which fails every cycle and leaves the connection stuck in
 		// CONNECTING.
+		//
+		// Deliberately an untimed wait, NOT settings::receive_message_timeout (a fixed 5s constant):
+		// that used to race the configured, per-endpoint quic-settings.DisconnectTimeoutMs (the value
+		// msquic itself uses to bound how long it keeps retrying the handshake before firing
+		// onDisconnected/shutdown). On a link whose real handshake RTT sits close to or above 5s
+		// (observed on a cellular path: ~6s to first server response), the fixed 5s cap fired first,
+		// tearing down an attempt msquic would otherwise have completed a moment later - and since
+		// closeConnection() below also can't finish faster than the transport unwinds, every cycle
+		// paid the timeout twice for no benefit. msquic guarantees a terminal onConnected/onDisconnected
+		// callback within DisconnectTimeoutMs regardless, so that's the only bound this should honour -
+		// waiting here without a second, disconnected deadline makes it the single source of truth.
 		{
 			std::unique_lock lock(outboundMutex_);
-			outboundCv_.wait_for(lock, settings::receive_message_timeout, [this] {
+			outboundCv_.wait(lock, [this] {
 				return connectionState_.load() != ConnectionState::CONNECTING;
 			});
 		}
