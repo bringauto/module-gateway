@@ -70,6 +70,12 @@ private:
 	void handleAggregatedMessages();
 
 	/**
+	 * @brief Wait for either a fresh device status or an explicit reconnect signal after a failed
+	 * send, whichever comes first, instead of blocking for the full immediate_disconnect_timeout
+	 */
+	void waitForReconnectSignal();
+
+	/**
 	 * @brief Handle commands messages from an external server
 	 */
 	void handleCommands();
