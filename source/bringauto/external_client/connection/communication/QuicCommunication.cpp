@@ -156,9 +156,18 @@ namespace bringauto::external_client::connection::communication {
 		// paid the timeout twice for no benefit. msquic guarantees a terminal onConnected/onDisconnected
 		// callback within DisconnectTimeoutMs regardless, so that's the only bound this should honour -
 		// waiting here without a second, disconnected deadline makes it the single source of truth.
+		//
+		// Update: reintroduced a bounded wait below, using settings::connect_handshake_backstop_timeout
+		// instead of the old fixed 5s settings::receive_message_timeout. "msquic guarantees a terminal
+		// callback" above does not hold unconditionally - this same connection has previously hung with
+		// no callback ever firing (root-caused inside msquic itself, not application code), and nothing
+		// else recovers this wait during normal operation (ExternalClient only cancels a stuck connect
+		// attempt when the app is already shutting down). connect_handshake_backstop_timeout is set well
+		// above DisconnectTimeoutMs so msquic's own callback is expected to win this race every time in
+		// the common case; this bound only exists to eventually recover if it does not.
 		{
 			std::unique_lock lock(outboundMutex_);
-			outboundCv_.wait(lock, [this] {
+			outboundCv_.wait_for(lock, settings::connect_handshake_backstop_timeout, [this] {
 				return connectionState_.load() != ConnectionState::CONNECTING;
 			});
 		}
