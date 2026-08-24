@@ -56,6 +56,17 @@ constexpr std::chrono::seconds receive_message_timeout { 5 };
 constexpr std::chrono::seconds immediate_disconnect_timeout { 10 };
 
 /**
+ * @brief Last-resort backstop for QuicCommunication::initializeConnection()'s connect-wait.
+ * Under normal operation msquic's own per-endpoint DisconnectTimeoutMs (a few seconds) fires a
+ * terminal onConnected/onDisconnected callback well before this - including the ~6s cellular RTT
+ * worst case, since that is a slow handshake, not a silent one. This only matters if msquic hangs
+ * with no callback at all (observed once, root-caused inside msquic, not application code): it
+ * exists purely so a stuck connect attempt eventually recovers on its own instead of blocking
+ * forever, not to be tuned against real handshake RTT.
+ */
+constexpr std::chrono::seconds connect_handshake_backstop_timeout { 15 };
+
+/**
  * @brief Fleet Protocol defines messages as always starting with 4 bytes header
  */
 constexpr uint8_t header { 4 };
